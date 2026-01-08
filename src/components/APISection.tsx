@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useState } from "react";
-import { Copy, Check, Terminal, ChevronDown, ChevronRight } from "lucide-react";
+import { Terminal, ChevronDown, ChevronRight } from "lucide-react";
+import CodeBlock from "@/components/CodeBlock";
 
 const codeExamples = {
   inference: `# Simple Inference Request
@@ -134,30 +135,6 @@ const apiEndpoints = [
     params: ["start_date", "end_date", "group_by"],
   },
 ];
-
-const CodeBlock = ({ code, language = "bash" }: { code: string; language?: string }) => {
-  const [copied, setCopied] = useState(false);
-
-  const handleCopy = () => {
-    navigator.clipboard.writeText(code);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <div className="relative group">
-      <pre className="p-4 rounded-lg bg-background/80 border border-border overflow-x-auto text-sm">
-        <code className="font-mono text-muted-foreground">{code}</code>
-      </pre>
-      <button
-        onClick={handleCopy}
-        className="absolute top-3 right-3 p-2 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity"
-      >
-        {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
-      </button>
-    </div>
-  );
-};
 
 const APISection = () => {
   const [activeTab, setActiveTab] = useState<keyof typeof codeExamples>("inference");

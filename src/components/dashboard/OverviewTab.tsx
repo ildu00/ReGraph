@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Zap, Cpu, DollarSign, Clock } from "lucide-react";
+import CodeBlock from "@/components/CodeBlock";
 
 const stats = [
   {
@@ -28,6 +29,15 @@ const stats = [
     change: "Last 24h",
   },
 ];
+
+const exampleCode = `curl -X POST https://api.neuralgrid.io/v1/inference \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "llama-3.1-70b",
+    "prompt": "Hello, world!",
+    "max_tokens": 100
+  }'`;
 
 const OverviewTab = () => {
   const { user } = useAuth();
@@ -104,16 +114,7 @@ const OverviewTab = () => {
       {/* Code Example */}
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Example Request</h2>
-        <pre className="bg-secondary rounded-lg p-4 overflow-x-auto text-sm font-mono">
-          <code className="text-foreground">{`curl -X POST https://api.neuralgrid.io/v1/inference \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{
-    "model": "llama-3.1-70b",
-    "prompt": "Hello, world!",
-    "max_tokens": 100
-  }'`}</code>
-        </pre>
+        <CodeBlock code={exampleCode} language="bash" />
       </div>
     </div>
   );
