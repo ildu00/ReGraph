@@ -9,7 +9,7 @@ interface CodeBlockProps {
   showCopy?: boolean;
 }
 
-const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps) => {
+const CodeBlock = ({ code, language = "shell", showCopy = true }: CodeBlockProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
