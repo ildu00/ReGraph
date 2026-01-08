@@ -1,4 +1,6 @@
-import { Highlight, themes } from "prism-react-renderer";
+import { Highlight, Prism, themes } from "prism-react-renderer";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-json";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -9,7 +11,7 @@ interface CodeBlockProps {
   showCopy?: boolean;
 }
 
-const CodeBlock = ({ code, language = "shell", showCopy = true }: CodeBlockProps) => {
+const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -20,13 +22,13 @@ const CodeBlock = ({ code, language = "shell", showCopy = true }: CodeBlockProps
 
   return (
     <div className="relative group">
-      <Highlight theme={themes.nightOwl} code={code.trim()} language={language}>
+      <Highlight prism={Prism} theme={themes.nightOwl} code={code.trim()} language={language}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} rounded-lg p-4 overflow-x-auto text-sm font-mono`}
             style={{
               ...style,
-              backgroundColor: "hsl(0 0% 8%)",
+              backgroundColor: "hsl(var(--secondary))",
               margin: 0,
             }}
           >
@@ -48,7 +50,7 @@ const CodeBlock = ({ code, language = "shell", showCopy = true }: CodeBlockProps
           onClick={handleCopy}
         >
           {copied ? (
-            <Check className="h-4 w-4 text-green-500" />
+            <Check className="h-4 w-4 text-primary" />
           ) : (
             <Copy className="h-4 w-4" />
           )}
