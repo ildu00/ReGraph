@@ -31,15 +31,22 @@ const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps)
   const [copied, setCopied] = useState(false);
 
   const highlighted = useMemo(() => {
+    const codeTrim = code.trim();
     const lang = normalizeLanguage(language);
+
     try {
-      if (hljs.getLanguage(lang)) {
-        return hljs.highlight(code.trim(), { language: lang }).value;
-      }
-      return hljs.highlightAuto(code.trim()).value;
+      const direct = hljs.getLanguage(lang)
+        ? hljs.highlight(codeTrim, { language: lang, ignoreIllegals: true }).value
+        : "";
+
+      // Если подсветка не дала токенов (иногда бывает на bash), пробуем авто-режим.
+      const value = direct && direct.includes("hljs-")
+        ? direct
+        : hljs.highlightAuto(codeTrim, [lang, "bash", "json"]).value;
+
+      return value;
     } catch {
-      return code
-        .trim()
+      return codeTrim
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
         .replace(/>/g, "&gt;");
@@ -52,11 +59,13 @@ const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps)
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const langClass = `language-${normalizeLanguage(language)}`;
+
   return (
     <div className="relative group">
-      <pre className="rounded-lg p-4 overflow-x-auto text-sm font-mono hljs">
+      <pre className={`rounded-lg p-4 overflow-x-auto text-sm font-mono hljs ${langClass}`}>
         <code
-          className="hljs"
+          className={`hljs ${langClass}`}
           dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </pre>
