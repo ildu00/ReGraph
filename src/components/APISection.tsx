@@ -1,0 +1,299 @@
+import { motion } from "framer-motion";
+import { useState } from "react";
+import { Copy, Check, Terminal, ChevronDown, ChevronRight } from "lucide-react";
+
+const codeExamples = {
+  inference: `# Simple Inference Request
+curl -X POST https://api.neuralgrid.io/v1/inference \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "meta-llama/Llama-3-70B",
+    "messages": [
+      {"role": "user", "content": "Explain quantum computing"}
+    ],
+    "max_tokens": 512,
+    "stream": true
+  }'`,
+  
+  training: `# Submit Training Job
+curl -X POST https://api.neuralgrid.io/v1/training/jobs \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "meta-llama/Llama-3-8B",
+    "dataset": "s3://your-bucket/training-data.jsonl",
+    "config": {
+      "epochs": 3,
+      "learning_rate": 2e-5,
+      "batch_size": 8,
+      "lora_rank": 16
+    },
+    "hardware": {
+      "gpu_type": "A100",
+      "gpu_count": 4,
+      "max_budget_usd": 50
+    }
+  }'`,
+
+  batch: `# Batch Processing
+curl -X POST https://api.neuralgrid.io/v1/batch \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "stabilityai/stable-diffusion-xl",
+    "inputs": [
+      {"prompt": "A sunset over mountains", "size": "1024x1024"},
+      {"prompt": "A futuristic city", "size": "1024x1024"},
+      {"prompt": "An underwater scene", "size": "1024x1024"}
+    ],
+    "callback_url": "https://your-api.com/webhook",
+    "priority": "low"
+  }'`,
+
+  provider: `# Register as Hardware Provider
+curl -X POST https://api.neuralgrid.io/v1/provider/register \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "hardware": {
+      "type": "gpu",
+      "model": "NVIDIA RTX 4090",
+      "vram_gb": 24,
+      "count": 2
+    },
+    "availability": {
+      "hours_per_day": 20,
+      "timezone": "UTC"
+    },
+    "pricing": {
+      "min_hourly_rate_usd": 0.10
+    }
+  }'`,
+};
+
+const apiEndpoints = [
+  {
+    method: "POST",
+    path: "/v1/inference",
+    description: "Run inference on any model with streaming support",
+    params: ["model", "messages", "max_tokens", "temperature", "stream"],
+  },
+  {
+    method: "POST",
+    path: "/v1/training/jobs",
+    description: "Submit fine-tuning or training jobs",
+    params: ["model", "dataset", "config", "hardware", "callback_url"],
+  },
+  {
+    method: "GET",
+    path: "/v1/training/jobs/{id}",
+    description: "Check training job status and progress",
+    params: ["id"],
+  },
+  {
+    method: "POST",
+    path: "/v1/batch",
+    description: "Submit batch inference requests at lower cost",
+    params: ["model", "inputs", "callback_url", "priority"],
+  },
+  {
+    method: "GET",
+    path: "/v1/models",
+    description: "List all available models with pricing info",
+    params: ["category", "min_context", "page"],
+  },
+  {
+    method: "POST",
+    path: "/v1/models/deploy",
+    description: "Deploy a custom model to the network",
+    params: ["model_url", "framework", "config"],
+  },
+  {
+    method: "POST",
+    path: "/v1/provider/register",
+    description: "Register hardware to earn from compute jobs",
+    params: ["hardware", "availability", "pricing"],
+  },
+  {
+    method: "GET",
+    path: "/v1/provider/earnings",
+    description: "View earnings and payout history",
+    params: ["start_date", "end_date"],
+  },
+  {
+    method: "POST",
+    path: "/v1/hardware/rent",
+    description: "Rent dedicated hardware by the hour",
+    params: ["gpu_type", "gpu_count", "duration_hours", "region"],
+  },
+  {
+    method: "GET",
+    path: "/v1/usage",
+    description: "Get detailed usage and billing information",
+    params: ["start_date", "end_date", "group_by"],
+  },
+];
+
+const CodeBlock = ({ code, language = "bash" }: { code: string; language?: string }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(code);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="relative group">
+      <pre className="p-4 rounded-lg bg-background/80 border border-border overflow-x-auto text-sm">
+        <code className="font-mono text-muted-foreground">{code}</code>
+      </pre>
+      <button
+        onClick={handleCopy}
+        className="absolute top-3 right-3 p-2 rounded-md bg-card border border-border opacity-0 group-hover:opacity-100 transition-opacity"
+      >
+        {copied ? <Check className="h-4 w-4 text-primary" /> : <Copy className="h-4 w-4" />}
+      </button>
+    </div>
+  );
+};
+
+const APISection = () => {
+  const [activeTab, setActiveTab] = useState<keyof typeof codeExamples>("inference");
+  const [expandedEndpoint, setExpandedEndpoint] = useState<number | null>(null);
+
+  return (
+    <section className="relative py-24 overflow-hidden" id="api">
+      <div className="absolute inset-0 bg-grid opacity-20" />
+      
+      <div className="container relative z-10 px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card mb-6">
+            <Terminal className="h-4 w-4 text-primary" />
+            <span className="font-mono text-sm">Developer-First API</span>
+          </div>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
+            Powerful API
+          </h2>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            Integrate in minutes with our comprehensive REST API. OpenAI-compatible endpoints available.
+          </p>
+        </motion.div>
+
+        {/* Code Examples */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="mb-16"
+        >
+          <div className="flex flex-wrap gap-2 mb-6">
+            {(Object.keys(codeExamples) as Array<keyof typeof codeExamples>).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-lg font-mono text-sm transition-colors ${
+                  activeTab === tab
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card border border-border hover:border-primary/50"
+                }`}
+              >
+                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              </button>
+            ))}
+          </div>
+          <CodeBlock code={codeExamples[activeTab]} />
+        </motion.div>
+
+        {/* API Reference */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 }}
+        >
+          <h3 className="text-2xl font-semibold mb-6">API Reference</h3>
+          <div className="space-y-3">
+            {apiEndpoints.map((endpoint, i) => (
+              <div
+                key={i}
+                className="border border-border rounded-lg bg-card/50 overflow-hidden"
+              >
+                <button
+                  onClick={() => setExpandedEndpoint(expandedEndpoint === i ? null : i)}
+                  className="w-full flex items-center gap-4 p-4 hover:bg-card transition-colors"
+                >
+                  <span className={`font-mono text-xs font-bold px-2 py-1 rounded ${
+                    endpoint.method === "GET" 
+                      ? "bg-blue-500/20 text-blue-400" 
+                      : "bg-green-500/20 text-green-400"
+                  }`}>
+                    {endpoint.method}
+                  </span>
+                  <code className="font-mono text-sm text-foreground">{endpoint.path}</code>
+                  <span className="text-muted-foreground text-sm flex-1 text-left hidden md:block">
+                    {endpoint.description}
+                  </span>
+                  {expandedEndpoint === i ? (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  )}
+                </button>
+                {expandedEndpoint === i && (
+                  <div className="px-4 pb-4 border-t border-border bg-background/50">
+                    <p className="text-muted-foreground text-sm mb-3 md:hidden pt-3">
+                      {endpoint.description}
+                    </p>
+                    <div className="pt-3">
+                      <span className="text-xs font-mono text-muted-foreground">Parameters:</span>
+                      <div className="flex flex-wrap gap-2 mt-2">
+                        {endpoint.params.map((param) => (
+                          <span
+                            key={param}
+                            className="px-2 py-1 bg-card rounded text-xs font-mono text-primary border border-border"
+                          >
+                            {param}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* SDK Links */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.4 }}
+          className="mt-12 text-center"
+        >
+          <p className="text-muted-foreground mb-4">Official SDKs available for</p>
+          <div className="flex flex-wrap justify-center gap-4">
+            {["Python", "Node.js", "Go", "Rust", "Java", "C#"].map((lang) => (
+              <span
+                key={lang}
+                className="px-4 py-2 rounded-lg bg-card border border-border font-mono text-sm hover:border-primary/50 transition-colors cursor-pointer"
+              >
+                {lang}
+              </span>
+            ))}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
+
+export default APISection;
