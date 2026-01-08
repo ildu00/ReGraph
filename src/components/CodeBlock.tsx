@@ -1,6 +1,4 @@
-import { Highlight, Prism, themes } from "prism-react-renderer";
-import "prismjs/components/prism-bash";
-import "prismjs/components/prism-json";
+import { Highlight, themes } from "prism-react-renderer";
 import { Copy, Check } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,7 +20,7 @@ const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps)
 
   return (
     <div className="relative group">
-      <Highlight prism={Prism} theme={themes.nightOwl} code={code.trim()} language={language}>
+      <Highlight theme={themes.nightOwl} code={code.trim()} language={language}>
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <pre
             className={`${className} rounded-lg p-4 overflow-x-auto text-sm font-mono`}
