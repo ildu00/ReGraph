@@ -263,7 +263,7 @@ const APISection = () => {
   const [expandedEndpoint, setExpandedEndpoint] = useState<number | null>(null);
 
   return (
-    <section className="relative py-24 overflow-hidden" id="api">
+    <section className="relative py-16 overflow-hidden" id="api">
       <div className="absolute inset-0 bg-grid opacity-20" />
       
       <div className="container relative z-10 px-4">
@@ -271,7 +271,7 @@ const APISection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-border bg-card mb-6">
             <Terminal className="h-4 w-4 text-primary" />
@@ -290,7 +290,7 @@ const APISection = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mb-16"
+          className="mb-10"
         >
           <div className="flex flex-wrap gap-2 mb-6">
             {(Object.keys(codeExamples) as Array<keyof typeof codeExamples>).map((tab) => (

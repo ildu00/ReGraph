@@ -4,7 +4,7 @@ import { ArrowRight, Github, Twitter, Zap } from "lucide-react";
 
 const CTASection = () => {
   return (
-    <section className="relative py-32 overflow-hidden">
+    <section className="relative py-20 overflow-hidden">
       {/* Glow effect */}
       <div className="absolute inset-0 bg-gradient-radial" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/10 blur-3xl" />
