@@ -66,7 +66,49 @@
   code, pre, .font-mono {
     font-family: var(--font-mono);
   }
+
+  /* Code highlighting (highlight.js) */
+  .hljs {
+    background: hsl(var(--secondary));
+    color: hsl(var(--foreground));
+  }
+
+  .hljs-comment,
+  .hljs-quote {
+    color: hsl(var(--muted-foreground));
+    font-style: italic;
+  }
+
+  .hljs-keyword,
+  .hljs-selector-tag,
+  .hljs-literal {
+    color: hsl(var(--primary));
+  }
+
+  .hljs-string,
+  .hljs-attr,
+  .hljs-addition {
+    color: hsl(var(--accent));
+  }
+
+  .hljs-number,
+  .hljs-built_in,
+  .hljs-type {
+    color: hsl(var(--primary));
+  }
+
+  .hljs-title,
+  .hljs-section {
+    color: hsl(var(--primary));
+    font-weight: 600;
+  }
+
+  .hljs-meta,
+  .hljs-doctag {
+    color: hsl(var(--muted-foreground));
+  }
 }
+
 
 @layer utilities {
   .text-gradient {
