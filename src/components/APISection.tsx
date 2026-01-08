@@ -3,74 +3,96 @@ import { useState } from "react";
 import { Terminal, ChevronDown, ChevronRight } from "lucide-react";
 import CodeBlock from "@/components/CodeBlock";
 
-const codeExamples = {
-  inference: `# Simple Inference Request
+type CodeExample = {
+  label: string;
+  shell: string;
+  body?: string;
+};
+
+const codeExamples: Record<string, CodeExample> = {
+  inference: {
+    label: "Inference",
+    shell: `# Simple Inference Request
 curl -X POST https://api.neuralgrid.io/v1/inference \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "model": "meta-llama/Llama-3-70B",
-    "messages": [
-      {"role": "user", "content": "Explain quantum computing"}
-    ],
-    "max_tokens": 512,
-    "stream": true
-  }'`,
-  
-  training: `# Submit Training Job
+  -d @payload.json`,
+    body: `{
+  "model": "meta-llama/Llama-3-70B",
+  "messages": [
+    {"role": "user", "content": "Explain quantum computing"}
+  ],
+  "max_tokens": 512,
+  "stream": true
+}`,
+  },
+
+  training: {
+    label: "Training",
+    shell: `# Submit Training Job
 curl -X POST https://api.neuralgrid.io/v1/training/jobs \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "model": "meta-llama/Llama-3-8B",
-    "dataset": "s3://your-bucket/training-data.jsonl",
-    "config": {
-      "epochs": 3,
-      "learning_rate": 2e-5,
-      "batch_size": 8,
-      "lora_rank": 16
-    },
-    "hardware": {
-      "gpu_type": "A100",
-      "gpu_count": 4,
-      "max_budget_usd": 50
-    }
-  }'`,
+  -d @payload.json`,
+    body: `{
+  "model": "meta-llama/Llama-3-8B",
+  "dataset": "s3://your-bucket/training-data.jsonl",
+  "config": {
+    "epochs": 3,
+    "learning_rate": 2e-5,
+    "batch_size": 8,
+    "lora_rank": 16
+  },
+  "hardware": {
+    "gpu_type": "A100",
+    "gpu_count": 4,
+    "max_budget_usd": 50
+  }
+}`,
+  },
 
-  batch: `# Batch Processing
+  batch: {
+    label: "Batch",
+    shell: `# Batch Processing
 curl -X POST https://api.neuralgrid.io/v1/batch \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "model": "stabilityai/stable-diffusion-xl",
-    "inputs": [
-      {"prompt": "A sunset over mountains", "size": "1024x1024"},
-      {"prompt": "A futuristic city", "size": "1024x1024"},
-      {"prompt": "An underwater scene", "size": "1024x1024"}
-    ],
-    "callback_url": "https://your-api.com/webhook",
-    "priority": "low"
-  }'`,
+  -d @payload.json`,
+    body: `{
+  "model": "stabilityai/stable-diffusion-xl",
+  "inputs": [
+    {"prompt": "A sunset over mountains", "size": "1024x1024"},
+    {"prompt": "A futuristic city", "size": "1024x1024"},
+    {"prompt": "An underwater scene", "size": "1024x1024"}
+  ],
+  "callback_url": "https://your-api.com/webhook",
+  "priority": "low"
+}`,
+  },
 
-  provider: `# Register as Hardware Provider
+  provider: {
+    label: "Provider",
+    shell: `# Register as Hardware Provider
 curl -X POST https://api.neuralgrid.io/v1/provider/register \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
-  -d '{
-    "hardware": {
-      "type": "gpu",
-      "model": "NVIDIA RTX 4090",
-      "vram_gb": 24,
-      "count": 2
-    },
-    "availability": {
-      "hours_per_day": 20,
-      "timezone": "UTC"
-    },
-    "pricing": {
-      "min_hourly_rate_usd": 0.10
-    }
-  }'`,
+  -d @payload.json`,
+    body: `{
+  "hardware": {
+    "type": "gpu",
+    "model": "NVIDIA RTX 4090",
+    "vram_gb": 24,
+    "count": 2
+  },
+  "availability": {
+    "hours_per_day": 20,
+    "timezone": "UTC"
+  },
+  "pricing": {
+    "min_hourly_rate_usd": 0.10
+  }
+}`,
+  },
 };
 
 const apiEndpoints = [
@@ -181,11 +203,26 @@ const APISection = () => {
                     : "bg-card border border-border hover:border-primary/50"
                 }`}
               >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                {codeExamples[tab].label}
               </button>
             ))}
           </div>
-          <CodeBlock code={codeExamples[activeTab]} />
+          {(() => {
+            const example = codeExamples[activeTab];
+            return (
+              <div className="space-y-4">
+                <CodeBlock code={example.shell} language="bash" />
+                {example.body ? (
+                  <div className="space-y-2">
+                    <div className="text-xs font-mono text-muted-foreground">
+                      Request body (JSON)
+                    </div>
+                    <CodeBlock code={example.body} language="json" />
+                  </div>
+                ) : null}
+              </div>
+            );
+          })()}
         </motion.div>
 
         {/* API Reference */}
