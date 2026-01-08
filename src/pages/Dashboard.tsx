@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
@@ -22,6 +22,17 @@ import OverviewTab from "@/components/dashboard/OverviewTab";
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
+
+  const navItems = useMemo(
+    () => [
+      { value: "overview", label: "Overview", icon: BarChart3 },
+      { value: "api-keys", label: "API Keys", icon: Key },
+      { value: "usage", label: "Usage", icon: BarChart3 },
+      { value: "settings", label: "Settings", icon: Settings },
+    ],
+    [],
+  );
 
   if (loading) {
     return (
@@ -40,9 +51,10 @@ const Dashboard = () => {
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
             className="md:hidden"
+            aria-label="Toggle menu"
           >
             {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </button>
@@ -72,10 +84,29 @@ const Dashboard = () => {
 
       {/* Sidebar - Desktop */}
       <aside className="hidden md:block fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4">
-        <nav className="space-y-2">
-          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            Dashboard
-          </div>
+        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+          Dashboard
+        </div>
+        <nav className="mt-2 space-y-1">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = activeTab === item.value;
+            return (
+              <button
+                key={item.value}
+                type="button"
+                onClick={() => setActiveTab(item.value)}
+                className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                  isActive
+                    ? "bg-secondary text-foreground"
+                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
       </aside>
 
@@ -97,10 +128,32 @@ const Dashboard = () => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 md:hidden"
             >
-              <nav className="space-y-2">
-                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Dashboard
-                </div>
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Dashboard
+              </div>
+              <nav className="mt-2 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.value;
+                  return (
+                    <button
+                      key={item.value}
+                      type="button"
+                      onClick={() => {
+                        setActiveTab(item.value);
+                        setIsSidebarOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
+                        isActive
+                          ? "bg-secondary text-foreground"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
               </nav>
             </motion.aside>
           </>
@@ -109,7 +162,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
-        <Tabs defaultValue="overview" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary">
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -151,3 +204,4 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
+
