@@ -55,12 +55,14 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" size="sm">
-                Sign In
+              <Button variant="ghost" size="sm" asChild>
+                <a href="/auth">Sign In</a>
               </Button>
-              <Button size="sm" className="glow-primary">
-                <Zap className="mr-1 h-4 w-4" />
-                Get Started
+              <Button size="sm" className="glow-primary" asChild>
+                <a href="/auth">
+                  <Zap className="mr-1 h-4 w-4" />
+                  Get Started
+                </a>
               </Button>
             </div>
 
@@ -96,12 +98,14 @@ const Navbar = () => {
                 </a>
               ))}
               <div className="flex flex-col gap-3 mt-4">
-                <Button variant="outline" size="lg">
-                  Sign In
+                <Button variant="outline" size="lg" asChild>
+                  <a href="/auth">Sign In</a>
                 </Button>
-                <Button size="lg" className="glow-primary">
-                  <Zap className="mr-2 h-5 w-5" />
-                  Get Started Free
+                <Button size="lg" className="glow-primary" asChild>
+                  <a href="/auth">
+                    <Zap className="mr-2 h-5 w-5" />
+                    Get Started Free
+                  </a>
                 </Button>
               </div>
             </div>
