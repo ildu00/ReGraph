@@ -42,7 +42,16 @@
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 6%) 0%, hsl(0 0% 3%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 5%) 100%);
     --gradient-glow: radial-gradient(ellipse at center, hsl(180 100% 50% / 0.05) 0%, transparent 70%);
-    
+
+    /* Code palette (syntax highlighting) */
+    --code-bg: var(--secondary);
+    --code-fg: var(--foreground);
+    --code-comment: var(--muted-foreground);
+    --code-keyword: 180 100% 60%;
+    --code-string: 38 100% 65%;
+    --code-number: 285 85% 70%;
+    --code-fn: 140 60% 55%;
+
     --font-mono: 'JetBrains Mono', monospace;
     --font-sans: 'Inter', sans-serif;
   }
@@ -69,13 +78,13 @@
 
   /* Code highlighting (highlight.js) */
   .hljs {
-    background: hsl(var(--secondary));
-    color: hsl(var(--foreground));
+    background: hsl(var(--code-bg));
+    color: hsl(var(--code-fg));
   }
 
   .hljs-comment,
   .hljs-quote {
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--code-comment));
     font-style: italic;
   }
 
@@ -87,35 +96,45 @@
   .hljs-operator,
   .hljs-variable,
   .hljs-template-variable,
-  .hljs-symbol {
-    color: hsl(var(--primary));
+  .hljs-symbol,
+  .hljs-name,
+  .hljs-tag,
+  .hljs-selector-id,
+  .hljs-selector-class {
+    color: hsl(var(--code-keyword));
   }
 
   .hljs-string,
   .hljs-attr,
   .hljs-attribute,
-  .hljs-addition {
-    color: hsl(var(--accent));
+  .hljs-addition,
+  .hljs-regexp,
+  .hljs-link {
+    color: hsl(var(--code-string));
   }
 
-  .hljs-number {
-    color: hsl(var(--primary));
+  .hljs-number,
+  .hljs-params,
+  .hljs-bullet {
+    color: hsl(var(--code-number));
+  }
+
+  .hljs-title,
+  .hljs-section,
+  .hljs-function,
+  .hljs-built_in {
+    color: hsl(var(--code-fn));
+    font-weight: 600;
   }
 
   .hljs-punctuation,
   .hljs-subst {
-    color: hsl(var(--muted-foreground));
-  }
-
-  .hljs-title,
-  .hljs-section {
-    color: hsl(var(--primary));
-    font-weight: 600;
+    color: hsl(var(--code-comment));
   }
 
   .hljs-meta,
   .hljs-doctag {
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--code-comment));
   }
 }
 
