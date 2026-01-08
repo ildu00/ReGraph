@@ -34,6 +34,7 @@ import {
   Zap,
 } from "lucide-react";
 import { toast } from "sonner";
+import CodeBlock from "@/components/CodeBlock";
 
 type DeviceType = "gpu" | "tpu" | "npu" | "cpu" | "smartphone";
 type DeviceStatus = "pending" | "online" | "offline" | "maintenance";
@@ -509,23 +510,20 @@ const ProviderTab = () => {
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium mb-2">Linux / macOS:</p>
-            <pre className="bg-secondary rounded-lg p-4 overflow-x-auto text-sm font-mono">
-              <code>curl -sSL https://neuralgrid.io/install.sh | bash</code>
-            </pre>
+            <CodeBlock code="curl -sSL https://neuralgrid.io/install.sh | bash" language="bash" />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">Docker:</p>
-            <pre className="bg-secondary rounded-lg p-4 overflow-x-auto text-sm font-mono">
-              <code>{`docker run -d --gpus all \\
+            <CodeBlock 
+              code={`docker run -d --gpus all \\
   -e NEURALGRID_KEY=YOUR_CONNECTION_KEY \\
-  neuralgrid/agent:latest`}</code>
-            </pre>
+  neuralgrid/agent:latest`} 
+              language="bash" 
+            />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">Windows (PowerShell):</p>
-            <pre className="bg-secondary rounded-lg p-4 overflow-x-auto text-sm font-mono">
-              <code>irm https://neuralgrid.io/install.ps1 | iex</code>
-            </pre>
+            <CodeBlock code="irm https://neuralgrid.io/install.ps1 | iex" language="powershell" />
           </div>
         </div>
       </div>
