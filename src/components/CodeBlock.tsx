@@ -7,11 +7,22 @@ import bash from "highlight.js/lib/languages/bash";
 import json from "highlight.js/lib/languages/json";
 import powershell from "highlight.js/lib/languages/powershell";
 
-hljs.registerLanguage("bash", bash);
-hljs.registerLanguage("shell", bash);
-hljs.registerLanguage("sh", bash);
-hljs.registerLanguage("json", json);
-hljs.registerLanguage("powershell", powershell);
+const safeRegister = (name: string, lang: any) => {
+  // Vite HMR can evaluate this module multiple times; highlight.js throws on duplicate registration.
+  if (!hljs.getLanguage(name)) {
+    try {
+      hljs.registerLanguage(name, lang);
+    } catch {
+      // Ignore duplicate/registration errors to avoid breaking highlighting.
+    }
+  }
+};
+
+safeRegister("bash", bash);
+safeRegister("shell", bash);
+safeRegister("sh", bash);
+safeRegister("json", json);
+safeRegister("powershell", powershell);
 
 interface CodeBlockProps {
   code: string;
