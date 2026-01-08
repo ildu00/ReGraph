@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Navigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -37,27 +37,15 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Mobile Header */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-card border-b border-border z-50 flex items-center justify-between px-4">
-        <a href="/" className="flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" />
-          <span className="font-bold">
-            <span className="text-gradient">Neural</span>
-            <span className="text-primary">Grid</span>
-          </span>
-        </a>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)}>
-          {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
-      </div>
-
-      {/* Sidebar */}
-      <motion.aside
-        initial={false}
-        animate={{ x: isSidebarOpen ? 0 : -280 }}
-        className={`fixed top-0 left-0 h-full w-64 bg-card border-r border-border z-40 pt-4 md:translate-x-0 md:pt-0`}
-      >
-        <div className="p-6 hidden md:block">
+      {/* Header */}
+      <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+            className="md:hidden"
+          >
+            {isSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
           <a href="/" className="flex items-center gap-2">
             <Zap className="h-6 w-6 text-primary" />
             <span className="font-bold">
@@ -66,32 +54,61 @@ const Dashboard = () => {
             </span>
           </a>
         </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground hidden sm:block">
+            {user.email}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={signOut}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
+        </div>
+      </header>
 
-        <nav className="mt-4 md:mt-0 pt-16 md:pt-0">
-          <div className="px-4 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+      {/* Sidebar - Desktop */}
+      <aside className="hidden md:block fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4">
+        <nav className="space-y-2">
+          <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Dashboard
           </div>
         </nav>
+      </aside>
 
-        <div className="absolute bottom-4 left-4 right-4">
-          <div className="p-4 bg-secondary/50 rounded-lg mb-4">
-            <p className="text-sm text-muted-foreground truncate">
-              {user.email}
-            </p>
-          </div>
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-muted-foreground hover:text-foreground"
-            onClick={signOut}
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
-      </motion.aside>
+      {/* Sidebar - Mobile */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 z-30 md:hidden"
+              onClick={() => setIsSidebarOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 md:hidden"
+            >
+              <nav className="space-y-2">
+                <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Dashboard
+                </div>
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
-      <main className="md:ml-64 pt-20 md:pt-8 px-4 md:px-8 pb-8">
+      <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary">
@@ -129,14 +146,6 @@ const Dashboard = () => {
           </TabsContent>
         </Tabs>
       </main>
-
-      {/* Mobile overlay */}
-      {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-background/80 z-30 md:hidden"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
     </div>
   );
 };
