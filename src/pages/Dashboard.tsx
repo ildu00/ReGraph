@@ -13,11 +13,13 @@ import {
   Menu,
   X,
   Loader2,
+  Server,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
 import SettingsTab from "@/components/dashboard/SettingsTab";
 import OverviewTab from "@/components/dashboard/OverviewTab";
+import ProviderTab from "@/components/dashboard/ProviderTab";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -28,6 +30,7 @@ const Dashboard = () => {
     () => [
       { value: "overview", label: "Overview", icon: BarChart3 },
       { value: "api-keys", label: "API Keys", icon: Key },
+      { value: "provider", label: "Provider", icon: Server },
       { value: "usage", label: "Usage", icon: BarChart3 },
       { value: "settings", label: "Settings", icon: Settings },
     ],
@@ -163,7 +166,7 @@ const Dashboard = () => {
       {/* Main Content */}
       <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="bg-card border border-border">
+          <TabsList className="bg-card border border-border flex-wrap">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary">
               <BarChart3 className="mr-2 h-4 w-4" />
               Overview
@@ -171,6 +174,10 @@ const Dashboard = () => {
             <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary">
               <Key className="mr-2 h-4 w-4" />
               API Keys
+            </TabsTrigger>
+            <TabsTrigger value="provider" className="data-[state=active]:bg-secondary">
+              <Server className="mr-2 h-4 w-4" />
+              Provider
             </TabsTrigger>
             <TabsTrigger value="usage" className="data-[state=active]:bg-secondary">
               <BarChart3 className="mr-2 h-4 w-4" />
@@ -188,6 +195,10 @@ const Dashboard = () => {
 
           <TabsContent value="api-keys">
             <ApiKeysTab />
+          </TabsContent>
+
+          <TabsContent value="provider">
+            <ProviderTab />
           </TabsContent>
 
           <TabsContent value="usage">

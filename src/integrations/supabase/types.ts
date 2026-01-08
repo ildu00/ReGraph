@@ -71,6 +71,90 @@ export type Database = {
         }
         Relationships: []
       }
+      provider_devices: {
+        Row: {
+          connection_key: string | null
+          created_at: string
+          device_model: string | null
+          device_name: string
+          device_type: Database["public"]["Enums"]["device_type"]
+          id: string
+          last_seen_at: string | null
+          price_per_hour: number
+          status: Database["public"]["Enums"]["device_status"]
+          total_compute_hours: number
+          total_earnings: number
+          updated_at: string
+          user_id: string
+          vram_gb: number | null
+        }
+        Insert: {
+          connection_key?: string | null
+          created_at?: string
+          device_model?: string | null
+          device_name: string
+          device_type: Database["public"]["Enums"]["device_type"]
+          id?: string
+          last_seen_at?: string | null
+          price_per_hour?: number
+          status?: Database["public"]["Enums"]["device_status"]
+          total_compute_hours?: number
+          total_earnings?: number
+          updated_at?: string
+          user_id: string
+          vram_gb?: number | null
+        }
+        Update: {
+          connection_key?: string | null
+          created_at?: string
+          device_model?: string | null
+          device_name?: string
+          device_type?: Database["public"]["Enums"]["device_type"]
+          id?: string
+          last_seen_at?: string | null
+          price_per_hour?: number
+          status?: Database["public"]["Enums"]["device_status"]
+          total_compute_hours?: number
+          total_earnings?: number
+          updated_at?: string
+          user_id?: string
+          vram_gb?: number | null
+        }
+        Relationships: []
+      }
+      provider_profiles: {
+        Row: {
+          company_name: string | null
+          created_at: string
+          id: string
+          is_verified: boolean
+          payout_address: string | null
+          total_earnings: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          payout_address?: string | null
+          total_earnings?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company_name?: string | null
+          created_at?: string
+          id?: string
+          is_verified?: boolean
+          payout_address?: string | null
+          total_earnings?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           api_key_id: string | null
@@ -120,7 +204,8 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      device_status: "pending" | "online" | "offline" | "maintenance"
+      device_type: "gpu" | "tpu" | "npu" | "cpu" | "smartphone"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -247,6 +332,9 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      device_status: ["pending", "online", "offline", "maintenance"],
+      device_type: ["gpu", "tpu", "npu", "cpu", "smartphone"],
+    },
   },
 } as const
