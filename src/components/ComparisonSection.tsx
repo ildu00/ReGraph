@@ -116,65 +116,75 @@ const ComparisonSection = () => {
           transition={{ delay: 0.2 }}
           className="overflow-x-auto"
         >
-          <table className="w-full min-w-[800px] border-collapse">
+          <table className="w-full min-w-[700px] border-collapse">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left py-4 px-4 font-mono text-sm text-muted-foreground">Provider</th>
-                <th className="text-center py-4 px-4 font-mono text-sm text-muted-foreground">GPU/hour</th>
-                <th className="text-center py-4 px-4 font-mono text-sm text-muted-foreground">Inference/req</th>
-                <th className="text-center py-4 px-4 font-mono text-sm text-muted-foreground">Min Commit</th>
-                <th className="text-center py-4 px-4 font-mono text-sm text-muted-foreground">Setup</th>
-                {Object.keys(featureLabels).map((key) => (
-                  <th key={key} className="text-center py-4 px-4 font-mono text-sm text-muted-foreground">
-                    {featureLabels[key as keyof typeof featureLabels]}
+                <th className="text-left py-4 px-4 font-mono text-sm text-muted-foreground"></th>
+                {competitors.map((comp) => (
+                  <th 
+                    key={comp.name} 
+                    className={`text-center py-4 px-3 font-mono text-sm ${
+                      comp.highlight ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center gap-1">
+                      <span className={comp.highlight ? "font-bold" : ""}>{comp.name}</span>
+                      {comp.highlight && (
+                        <span className="text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
+                          YOU'RE HERE
+                        </span>
+                      )}
+                    </div>
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {competitors.map((comp, i) => (
-                <motion.tr
-                  key={comp.name}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className={`border-b border-border transition-colors ${
-                    comp.highlight 
-                      ? "bg-primary/5 border-primary/30" 
-                      : "hover:bg-card/50"
-                  }`}
-                >
-                  <td className="py-5 px-4">
-                    <span className={`font-semibold ${comp.highlight ? "text-primary" : ""}`}>
-                      {comp.name}
-                    </span>
-                    {comp.highlight && (
-                      <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full font-mono">
-                        YOU'RE HERE
-                      </span>
-                    )}
-                  </td>
-                  <td className={`text-center py-5 px-4 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
+              {/* Pricing rows */}
+              <tr className="border-b border-border hover:bg-card/50 transition-colors">
+                <td className="py-4 px-4 font-mono text-sm text-muted-foreground">GPU/hour</td>
+                {competitors.map((comp) => (
+                  <td key={comp.name} className={`text-center py-4 px-3 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
                     {comp.gpuHour}
                   </td>
-                  <td className={`text-center py-5 px-4 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
+                ))}
+              </tr>
+              <tr className="border-b border-border hover:bg-card/50 transition-colors">
+                <td className="py-4 px-4 font-mono text-sm text-muted-foreground">Inference/req</td>
+                {competitors.map((comp) => (
+                  <td key={comp.name} className={`text-center py-4 px-3 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
                     {comp.inference}
                   </td>
-                  <td className={`text-center py-5 px-4 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
+                ))}
+              </tr>
+              <tr className="border-b border-border hover:bg-card/50 transition-colors">
+                <td className="py-4 px-4 font-mono text-sm text-muted-foreground">Min Commit</td>
+                {competitors.map((comp) => (
+                  <td key={comp.name} className={`text-center py-4 px-3 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
                     {comp.minCommit}
                   </td>
-                  <td className={`text-center py-5 px-4 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
+                ))}
+              </tr>
+              <tr className="border-b border-border hover:bg-card/50 transition-colors">
+                <td className="py-4 px-4 font-mono text-sm text-muted-foreground">Setup Fee</td>
+                {competitors.map((comp) => (
+                  <td key={comp.name} className={`text-center py-4 px-3 font-mono ${comp.highlight ? "text-primary font-bold" : ""}`}>
                     {comp.setupFee}
                   </td>
-                  {Object.keys(comp.features).map((key) => (
-                    <td key={key} className="text-center py-5 px-4">
+                ))}
+              </tr>
+              {/* Feature rows */}
+              {(Object.keys(featureLabels) as Array<keyof typeof featureLabels>).map((key) => (
+                <tr key={key} className="border-b border-border hover:bg-card/50 transition-colors">
+                  <td className="py-4 px-4 font-mono text-sm text-muted-foreground">{featureLabels[key]}</td>
+                  {competitors.map((comp) => (
+                    <td key={comp.name} className="text-center py-4 px-3">
                       <div className="flex justify-center">
-                        <FeatureIcon value={comp.features[key as keyof typeof comp.features]} />
+                        <FeatureIcon value={comp.features[key]} />
                       </div>
                     </td>
                   ))}
-                </motion.tr>
+                </tr>
               ))}
             </tbody>
           </table>
