@@ -91,7 +91,7 @@ const FeatureIcon = ({ value }: { value: boolean | string }) => {
 
 const ComparisonSection = () => {
   return (
-    <section className="relative py-24 overflow-hidden">
+    <section className="relative py-16 overflow-hidden">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-card/50 to-background" />
       
       <div className="container relative z-10 px-4">
@@ -99,7 +99,7 @@ const ComparisonSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="text-gradient">Up to 80% cheaper</span> than alternatives

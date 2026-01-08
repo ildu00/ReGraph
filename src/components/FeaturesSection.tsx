@@ -46,7 +46,7 @@ const features = [
 
 const FeaturesSection = () => {
   return (
-    <section className="relative py-24 overflow-hidden" id="features">
+    <section className="relative py-16 overflow-hidden" id="features">
       <div className="absolute inset-0 bg-gradient-to-b from-card/30 via-background to-card/30" />
       
       <div className="container relative z-10 px-4">
@@ -54,7 +54,7 @@ const FeaturesSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-16"
+          className="text-center mb-10"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
             <span className="text-gradient">Built for Scale</span>

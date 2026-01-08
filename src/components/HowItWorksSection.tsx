@@ -65,7 +65,7 @@ const StepCard = ({ step, index, delay }: { step: typeof providerSteps[0]; index
 
 const HowItWorksSection = () => {
   return (
-    <section className="relative py-24 overflow-hidden" id="how-it-works">
+    <section className="relative py-16 overflow-hidden" id="how-it-works">
       <div className="absolute inset-0 bg-grid opacity-20" />
       
       <div className="container relative z-10 px-4">
@@ -73,7 +73,7 @@ const HowItWorksSection = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-12"
         >
           <h2 className="text-4xl md:text-5xl font-bold mb-4 text-gradient">
             How It Works
@@ -84,7 +84,7 @@ const HowItWorksSection = () => {
         </motion.div>
 
         {/* For Providers */}
-        <div className="mb-20">
+        <div className="mb-12">
           <motion.div
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
