@@ -232,7 +232,8 @@ const ApiKeysTab = () => {
         </div>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-border text-sm font-medium text-muted-foreground">
+          {/* Desktop table header */}
+          <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-border text-sm font-medium text-muted-foreground">
             <div className="col-span-4">Name</div>
             <div className="col-span-3">Key</div>
             <div className="col-span-2">Created</div>
@@ -246,29 +247,58 @@ const ApiKeysTab = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="grid grid-cols-12 gap-4 p-4 border-b border-border last:border-0 items-center"
+                className="border-b border-border last:border-0"
               >
-                <div className="col-span-4 font-medium truncate">{key.name}</div>
-                <div className="col-span-3 font-mono text-sm text-muted-foreground">
-                  {key.key_prefix}
+                {/* Mobile card view */}
+                <div className="md:hidden p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium truncate flex-1">{key.name}</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteApiKey(key.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="font-mono text-sm text-muted-foreground bg-secondary/50 px-2 py-1 rounded">
+                    {key.key_prefix}
+                  </div>
+                  <div className="flex justify-between text-sm text-muted-foreground">
+                    <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
+                    <span>
+                      Used: {key.last_used_at
+                        ? new Date(key.last_used_at).toLocaleDateString()
+                        : "Never"}
+                    </span>
+                  </div>
                 </div>
-                <div className="col-span-2 text-sm text-muted-foreground">
-                  {new Date(key.created_at).toLocaleDateString()}
-                </div>
-                <div className="col-span-2 text-sm text-muted-foreground">
-                  {key.last_used_at
-                    ? new Date(key.last_used_at).toLocaleDateString()
-                    : "Never"}
-                </div>
-                <div className="col-span-1 flex justify-end">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => deleteApiKey(key.id)}
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+
+                {/* Desktop row view */}
+                <div className="hidden md:grid grid-cols-12 gap-4 p-4 items-center">
+                  <div className="col-span-4 font-medium truncate">{key.name}</div>
+                  <div className="col-span-3 font-mono text-sm text-muted-foreground">
+                    {key.key_prefix}
+                  </div>
+                  <div className="col-span-2 text-sm text-muted-foreground">
+                    {new Date(key.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="col-span-2 text-sm text-muted-foreground">
+                    {key.last_used_at
+                      ? new Date(key.last_used_at).toLocaleDateString()
+                      : "Never"}
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteApiKey(key.id)}
+                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}
