@@ -42,48 +42,62 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Scroll spy - detect which section is in view
+  // Scroll spy - highlight current section while scrolling on the landing page
   useEffect(() => {
     if (location.pathname !== "/") return;
 
-    const sectionIds = navItems
+    const hashIds = navItems
       .filter((item) => !item.isRoute)
       .map((item) => item.href.replace("#", ""));
 
-    // Function to find which section is currently in view
+    type SectionInfo = { id: string; top: number };
+    let sections: SectionInfo[] = [];
+
+    const computeSections = () => {
+      sections = hashIds
+        .map((id) => {
+          const el = document.getElementById(id);
+          return el ? { id, top: el.offsetTop } : null;
+        })
+        .filter((v): v is SectionInfo => Boolean(v))
+        .sort((a, b) => a.top - b.top);
+    };
+
     const findActiveSection = () => {
-      const scrollPosition = window.scrollY + window.innerHeight * 0.3;
-      
-      // If at the very top, clear active hash
-      if (window.scrollY < 100) {
+      // Clear highlight when we're at the very top (hero)
+      if (window.scrollY < 40) {
         setActiveHash("");
         return;
       }
 
-      for (const id of sectionIds) {
-        const element = document.getElementById(id);
-        if (element) {
-          const rect = element.getBoundingClientRect();
-          const elementTop = rect.top + window.scrollY;
-          const elementBottom = elementTop + rect.height;
-          
-          if (scrollPosition >= elementTop && scrollPosition < elementBottom) {
-            setActiveHash(`#${id}`);
-            return;
-          }
-        }
+      const headerOffset = 80; // fixed navbar + a bit of breathing room
+      const position = window.scrollY + headerOffset;
+
+      let current = "";
+      for (const section of sections) {
+        if (position >= section.top) current = `#${section.id}`;
+        else break;
       }
+      setActiveHash(current);
     };
 
-    // Run once on mount to set initial state based on scroll position
-    const timeoutId = setTimeout(findActiveSection, 100);
+    const refresh = () => {
+      computeSections();
+      findActiveSection();
+    };
 
-    // Listen to scroll events
-    window.addEventListener("scroll", findActiveSection);
-    
+    // Initial calculation (after layout settles)
+    const t1 = window.setTimeout(refresh, 0);
+    const t2 = window.setTimeout(refresh, 200);
+
+    window.addEventListener("scroll", findActiveSection, { passive: true });
+    window.addEventListener("resize", refresh);
+
     return () => {
-      clearTimeout(timeoutId);
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
       window.removeEventListener("scroll", findActiveSection);
+      window.removeEventListener("resize", refresh);
     };
   }, [location.pathname]);
 
