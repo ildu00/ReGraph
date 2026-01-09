@@ -7,8 +7,7 @@ import {
   Shield,
   Webhook,
   Database,
-  PlayCircle,
-  Menu
+  PlayCircle
 } from "lucide-react";
 import {
   Sidebar,
@@ -22,7 +21,6 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 interface DocsSidebarProps {
   activeSection: string;
@@ -80,11 +78,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
     <Sidebar collapsible="icon" className="border-r border-border/50">
       <SidebarContent className="pt-4">
         <div className="px-3 mb-2">
-          <SidebarTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <Menu className="h-4 w-4" />
-            </Button>
-          </SidebarTrigger>
+          <SidebarTrigger />
         </div>
 
         <SidebarGroup>
