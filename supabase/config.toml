@@ -1,1 +1,4 @@
 project_id = "rwzyvgralronyuzqwyhu"
+
+[functions.api-playground]
+verify_jwt = false
