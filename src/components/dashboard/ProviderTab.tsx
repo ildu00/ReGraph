@@ -139,7 +139,7 @@ const ProviderTab = () => {
 
   const generateConnectionKey = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let key = "ngc_";
+    let key = "rgc_";
     for (let i = 0; i < 32; i++) {
       key += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -220,7 +220,7 @@ const ProviderTab = () => {
           </div>
           <h2 className="text-xl font-semibold mb-2">Monetize Your Hardware</h2>
           <p className="text-muted-foreground mb-6">
-            Connect your GPUs, TPUs, NPUs, or even smartphones to the NeuralGrid network.
+            Connect your GPUs, TPUs, NPUs, or even smartphones to the ReGraph network.
             Earn credits for every inference task completed on your devices.
           </p>
 
@@ -505,25 +505,25 @@ const ProviderTab = () => {
       <div className="bg-card border border-border rounded-xl p-6">
         <h2 className="text-lg font-semibold mb-4">Quick Setup</h2>
         <p className="text-muted-foreground mb-4">
-          Install the NeuralGrid agent on your device to start receiving tasks:
+          Install the ReGraph agent on your device to start receiving tasks:
         </p>
         <div className="space-y-4">
           <div>
             <p className="text-sm font-medium mb-2">Linux / macOS:</p>
-            <CodeBlock code="curl -sSL https://neuralgrid.io/install.sh | bash" language="bash" />
+            <CodeBlock code="curl -sSL https://regraph.tech/scripts/install.sh | bash" language="bash" />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">Docker:</p>
             <CodeBlock 
               code={`docker run -d --gpus all \\
-  -e NEURALGRID_KEY=YOUR_CONNECTION_KEY \\
-  neuralgrid/agent:latest`} 
+  -e REGRAPH_KEY=YOUR_CONNECTION_KEY \\
+  regraph/agent:latest`} 
               language="bash" 
             />
           </div>
           <div>
             <p className="text-sm font-medium mb-2">Windows (PowerShell):</p>
-            <CodeBlock code="irm https://neuralgrid.io/install.ps1 | iex" language="powershell" />
+            <CodeBlock code="irm https://regraph.tech/scripts/install.ps1 | iex" language="powershell" />
           </div>
         </div>
       </div>
