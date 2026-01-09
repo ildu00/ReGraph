@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -23,6 +24,7 @@ import Footer from "@/components/Footer";
 import CodeBlock from "@/components/CodeBlock";
 import ApiPlayground from "@/components/docs/ApiPlayground";
 import DocsSidebar from "@/components/docs/DocsSidebar";
+import SupportForm from "@/components/SupportForm";
 
 const Docs = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -669,14 +671,16 @@ volumes:
                     Our team is here to help you integrate ReGraph into your applications.
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
-                    <Button variant="outline" asChild>
-                      <a href="mailto:support@regraph.tech">Contact Support</a>
-                    </Button>
+                    <SupportForm
+                      trigger={
+                        <Button variant="outline">Contact Support</Button>
+                      }
+                    />
                     <Button className="glow-primary" asChild>
-                      <a href="/dashboard">
+                      <Link to="/dashboard">
                         <Terminal className="mr-2 h-4 w-4" />
                         Go to Dashboard
-                      </a>
+                      </Link>
                     </Button>
                   </div>
                 </section>
