@@ -265,7 +265,7 @@ const ProviderTab = () => {
           <DialogTrigger asChild>
             <Button
               size="icon"
-              className="glow-primary sm:hidden"
+              className="glow-primary sm:hidden rounded-none"
               aria-label="Add Device"
             >
               <Plus className="h-4 w-4" />
