@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
 
 const navItems = [
-  { label: "Features", href: "#features" },
-  { label: "How It Works", href: "#how-it-works" },
-  { label: "Pricing", href: "#pricing" },
-  { label: "API", href: "#api" },
-  { label: "Docs", href: "/docs" },
+  { label: "Features", href: "#features", isRoute: false },
+  { label: "How It Works", href: "#how-it-works", isRoute: false },
+  { label: "Pricing", href: "#pricing", isRoute: false },
+  { label: "API", href: "#api", isRoute: false },
+  { label: "Docs", href: "/docs", isRoute: true },
 ];
 
 const Navbar = () => {
@@ -35,37 +36,47 @@ const Navbar = () => {
         <div className="container px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <a href="/" className="flex items-center gap-2">
+            <Link to="/" className="flex items-center gap-2">
               <Zap className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">
                 <span className="text-gradient">Re</span>
                 <span className="text-primary">Graph</span>
               </span>
-            </a>
+            </Link>
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navItems.map((item) =>
+                item.isRoute ? (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
             </div>
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
               <Button variant="ghost" size="sm" asChild>
-                <a href="/auth">Sign In</a>
+                <Link to="/auth">Sign In</Link>
               </Button>
               <Button size="sm" className="glow-primary" asChild>
-                <a href="/auth">
+                <Link to="/auth">
                   <Zap className="mr-1 h-4 w-4" />
                   Get Started
-                </a>
+                </Link>
               </Button>
             </div>
 
@@ -90,25 +101,36 @@ const Navbar = () => {
             className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-20 px-4 md:hidden"
           >
             <div className="flex flex-col gap-4">
-              {navItems.map((item) => (
-                <a
-                  key={item.label}
-                  href={item.href}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="text-lg py-3 border-b border-border text-foreground"
-                >
-                  {item.label}
-                </a>
-              ))}
+              {navItems.map((item) =>
+                item.isRoute ? (
+                  <Link
+                    key={item.label}
+                    to={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-lg py-3 border-b border-border text-foreground"
+                  >
+                    {item.label}
+                  </Link>
+                ) : (
+                  <a
+                    key={item.label}
+                    href={item.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="text-lg py-3 border-b border-border text-foreground"
+                  >
+                    {item.label}
+                  </a>
+                )
+              )}
               <div className="flex flex-col gap-3 mt-4">
                 <Button variant="outline" size="lg" asChild>
-                  <a href="/auth">Sign In</a>
+                  <Link to="/auth">Sign In</Link>
                 </Button>
                 <Button size="lg" className="glow-primary" asChild>
-                  <a href="/auth">
+                  <Link to="/auth">
                     <Zap className="mr-2 h-5 w-5" />
                     Get Started Free
-                  </a>
+                  </Link>
                 </Button>
               </div>
             </div>
