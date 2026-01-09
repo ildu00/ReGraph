@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
 
@@ -15,6 +15,8 @@ const navItems = [
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeHash, setActiveHash] = useState("");
+  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -23,6 +25,21 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    setActiveHash(location.hash);
+  }, [location.hash]);
+
+  const isActive = (item: typeof navItems[0]) => {
+    if (item.isRoute) {
+      return location.pathname === item.href || location.pathname.startsWith(item.href + "/");
+    }
+    // For hash links, only check if we're on the home page
+    if (location.pathname === "/") {
+      return activeHash === item.href;
+    }
+    return false;
+  };
 
   return (
     <>
@@ -51,7 +68,11 @@ const Navbar = () => {
                   <Link
                     key={item.label}
                     to={item.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    className={`text-sm transition-colors ${
+                      isActive(item) 
+                        ? "text-primary font-medium" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
                     {item.label}
                   </Link>
@@ -59,7 +80,12 @@ const Navbar = () => {
                   <a
                     key={item.label}
                     href={item.href}
-                    className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                    onClick={() => setActiveHash(item.href)}
+                    className={`text-sm transition-colors ${
+                      isActive(item) 
+                        ? "text-primary font-medium" 
+                        : "text-muted-foreground hover:text-foreground"
+                    }`}
                   >
                     {item.label}
                   </a>
@@ -107,7 +133,9 @@ const Navbar = () => {
                     key={item.label}
                     to={item.href}
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-lg py-3 border-b border-border text-foreground"
+                    className={`text-lg py-3 border-b border-border ${
+                      isActive(item) ? "text-primary font-medium" : "text-foreground"
+                    }`}
                   >
                     {item.label}
                   </Link>
@@ -115,8 +143,13 @@ const Navbar = () => {
                   <a
                     key={item.label}
                     href={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="text-lg py-3 border-b border-border text-foreground"
+                    onClick={() => {
+                      setActiveHash(item.href);
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className={`text-lg py-3 border-b border-border ${
+                      isActive(item) ? "text-primary font-medium" : "text-foreground"
+                    }`}
                   >
                     {item.label}
                   </a>
