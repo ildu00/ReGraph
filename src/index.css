@@ -15,8 +15,8 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 180 100% 50%;
-    --primary-foreground: 0 0% 3%;
+    --primary: 270 80% 60%;
+    --primary-foreground: 0 0% 98%;
 
     --secondary: 0 0% 12%;
     --secondary-foreground: 0 0% 98%;
@@ -24,30 +24,30 @@
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 55%;
 
-    --accent: 180 70% 45%;
-    --accent-foreground: 0 0% 3%;
+    --accent: 280 70% 50%;
+    --accent-foreground: 0 0% 98%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 0 0% 14%;
     --input: 0 0% 14%;
-    --ring: 180 100% 50%;
+    --ring: 270 80% 60%;
 
     --radius: 0.5rem;
 
     /* Custom tokens */
-    --glow-primary: 0 0 40px hsl(180 100% 50% / 0.3);
-    --glow-subtle: 0 0 60px hsl(180 100% 50% / 0.1);
+    --glow-primary: 0 0 40px hsl(270 80% 60% / 0.3);
+    --glow-subtle: 0 0 60px hsl(270 80% 60% / 0.1);
     --gradient-dark: linear-gradient(180deg, hsl(0 0% 6%) 0%, hsl(0 0% 3%) 100%);
     --gradient-card: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(0 0% 5%) 100%);
-    --gradient-glow: radial-gradient(ellipse at center, hsl(180 100% 50% / 0.05) 0%, transparent 70%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(270 80% 60% / 0.05) 0%, transparent 70%);
 
     /* Code palette (syntax highlighting) */
     --code-bg: var(--secondary);
     --code-fg: var(--foreground);
     --code-comment: var(--muted-foreground);
-    --code-keyword: 180 100% 60%;
+    --code-keyword: 270 80% 70%;
     --code-string: 38 100% 65%;
     --code-number: 285 85% 70%;
     --code-fn: 140 60% 55%;
@@ -147,7 +147,7 @@
 
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(180 100% 60%) 0%, hsl(180 100% 40%) 100%);
+    background-image: linear-gradient(135deg, hsl(270 80% 70%) 0%, hsl(280 70% 50%) 100%);
   }
 
   .glow-primary {
@@ -170,7 +170,7 @@
   }
 
   .border-glow {
-    border-color: hsl(180 100% 50% / 0.3);
+    border-color: hsl(270 80% 60% / 0.3);
   }
 
   .animate-pulse-glow {
@@ -179,10 +179,10 @@
 
   @keyframes pulse-glow {
     0%, 100% {
-      box-shadow: 0 0 20px hsl(180 100% 50% / 0.2);
+      box-shadow: 0 0 20px hsl(270 80% 60% / 0.2);
     }
     50% {
-      box-shadow: 0 0 40px hsl(180 100% 50% / 0.4);
+      box-shadow: 0 0 40px hsl(270 80% 60% / 0.4);
     }
   }
 
