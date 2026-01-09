@@ -14,11 +14,13 @@ import {
   Cpu,
   Shield,
   Webhook,
-  Database
+  Database,
+  PlayCircle
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CodeBlock from "@/components/CodeBlock";
+import ApiPlayground from "@/components/docs/ApiPlayground";
 
 const Docs = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -118,6 +120,7 @@ volumes:
   const sidebarItems = [
     { id: "getting-started", label: "Getting Started", icon: Book },
     { id: "provider-setup", label: "Provider Setup", icon: Server },
+    { id: "api-playground", label: "API Playground", icon: PlayCircle },
     { id: "api-reference", label: "API Reference", icon: Webhook },
     { id: "authentication", label: "Authentication", icon: Key },
     { id: "inference", label: "Inference API", icon: Zap },
@@ -326,6 +329,19 @@ volumes:
                       <li>• <strong>Network:</strong> Stable internet connection, 100Mbps+ recommended</li>
                     </ul>
                   </div>
+                </section>
+
+                {/* API Playground */}
+                <section id="api-playground" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <PlayCircle className="h-8 w-8 text-primary" />
+                    API Playground
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Test API requests interactively. Select an endpoint, configure parameters, and see the response in real-time.
+                  </p>
+
+                  <ApiPlayground />
                 </section>
 
                 {/* API Reference */}
