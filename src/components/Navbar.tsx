@@ -126,13 +126,26 @@ const Navbar = () => {
         <div className="container px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">
-                <span className="text-gradient">Re</span>
-                <span className="text-primary">Graph</span>
-              </span>
-            </Link>
+            {location.pathname === "/" ? (
+              <button
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                className="flex items-center gap-2"
+              >
+                <Zap className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold">
+                  <span className="text-gradient">Re</span>
+                  <span className="text-primary">Graph</span>
+                </span>
+              </button>
+            ) : (
+              <Link to="/" className="flex items-center gap-2">
+                <Zap className="h-6 w-6 text-primary" />
+                <span className="text-xl font-bold">
+                  <span className="text-gradient">Re</span>
+                  <span className="text-primary">Graph</span>
+                </span>
+              </Link>
+            )}
 
             {/* Desktop Nav */}
             <div className="hidden md:flex items-center gap-8">
