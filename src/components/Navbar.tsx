@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
 
@@ -17,6 +17,22 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeHash, setActiveHash] = useState("");
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault();
+    if (location.pathname !== "/") {
+      // Navigate to home page with hash
+      navigate("/" + href);
+    } else {
+      // Already on home page, just scroll
+      setActiveHash(href);
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,8 +96,8 @@ const Navbar = () => {
                   <a
                     key={item.label}
                     href={item.href}
-                    onClick={() => setActiveHash(item.href)}
-                    className={`text-sm transition-colors ${
+                    onClick={(e) => handleAnchorClick(e, item.href)}
+                    className={`text-sm transition-colors cursor-pointer ${
                       isActive(item) 
                         ? "text-primary font-medium" 
                         : "text-muted-foreground hover:text-foreground"
@@ -143,11 +159,11 @@ const Navbar = () => {
                   <a
                     key={item.label}
                     href={item.href}
-                    onClick={() => {
-                      setActiveHash(item.href);
+                    onClick={(e) => {
+                      handleAnchorClick(e, item.href);
                       setIsMobileMenuOpen(false);
                     }}
-                    className={`text-lg py-3 border-b border-border ${
+                    className={`text-lg py-3 border-b border-border cursor-pointer ${
                       isActive(item) ? "text-primary font-medium" : "text-foreground"
                     }`}
                   >
