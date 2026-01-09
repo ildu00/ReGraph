@@ -134,9 +134,18 @@ const ApiKeysTab = () => {
           else setIsDialogOpen(true);
         }}>
           <DialogTrigger asChild>
-            <Button className="glow-primary w-10 h-10 p-0 sm:w-auto sm:h-auto sm:px-4 sm:py-2" aria-label="Create Key">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Create Key</span>
+            <Button
+              size="icon"
+              className="glow-primary sm:hidden"
+              aria-label="Create Key"
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </DialogTrigger>
+          <DialogTrigger asChild>
+            <Button className="glow-primary hidden sm:inline-flex" aria-label="Create Key">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Key
             </Button>
           </DialogTrigger>
           <DialogContent className="bg-card border-border">
