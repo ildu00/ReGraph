@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SidebarProvider } from "@/components/ui/sidebar";
 import { 
   Book, 
   Terminal, 
@@ -21,6 +22,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CodeBlock from "@/components/CodeBlock";
 import ApiPlayground from "@/components/docs/ApiPlayground";
+import DocsSidebar from "@/components/docs/DocsSidebar";
 
 const Docs = () => {
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
@@ -117,55 +119,22 @@ volumes:
     "webhook_url": "https://your-app.com/webhook"
   }'`;
 
-  const sidebarItems = [
-    { id: "getting-started", label: "Getting Started", icon: Book },
-    { id: "provider-setup", label: "Provider Setup", icon: Server },
-    { id: "api-playground", label: "API Playground", icon: PlayCircle },
-    { id: "api-reference", label: "API Reference", icon: Webhook },
-    { id: "authentication", label: "Authentication", icon: Key },
-    { id: "inference", label: "Inference API", icon: Zap },
-    { id: "training", label: "Training API", icon: Cpu },
-    { id: "batch", label: "Batch Processing", icon: Database },
-    { id: "security", label: "Security", icon: Shield },
-  ];
-
   const [activeSection, setActiveSection] = useState("getting-started");
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      <div className="pt-20 pb-16">
-        <div className="container px-4">
-          <div className="flex gap-8">
-            {/* Sidebar */}
-            <aside className="hidden lg:block w-64 shrink-0">
-              <div className="sticky top-24 space-y-1">
-                <h3 className="text-sm font-semibold text-muted-foreground mb-4 uppercase tracking-wider">
-                  Documentation
-                </h3>
-                {sidebarItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveSection(item.id);
-                      document.getElementById(item.id)?.scrollIntoView({ behavior: "smooth" });
-                    }}
-                    className={`w-full flex items-center gap-3 px-3 py-2 text-sm rounded-lg transition-colors ${
-                      activeSection === item.id
-                        ? "bg-primary/10 text-primary"
-                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </aside>
-
-            {/* Main Content */}
-            <main className="flex-1 max-w-4xl">
+      <div className="pt-16">
+        <SidebarProvider defaultOpen={true}>
+          <div className="flex min-h-[calc(100vh-4rem)] w-full">
+            <DocsSidebar 
+              activeSection={activeSection} 
+              onSectionChange={setActiveSection} 
+            />
+            
+            <main className="flex-1 overflow-auto">
+              <div className="container px-4 py-8 max-w-4xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -712,9 +681,10 @@ volumes:
                   </div>
                 </section>
               </motion.div>
+              </div>
             </main>
           </div>
-        </div>
+        </SidebarProvider>
       </div>
 
       <Footer />
