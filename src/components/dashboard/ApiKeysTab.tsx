@@ -136,14 +136,14 @@ const ApiKeysTab = () => {
           <DialogTrigger asChild>
             <Button
               size="icon"
-              className="glow-primary sm:hidden rounded-none"
+              className="glow-primary rounded-none aspect-square h-10 w-10 md:hidden"
               aria-label="Create Key"
             >
               <Plus className="h-4 w-4" />
             </Button>
           </DialogTrigger>
           <DialogTrigger asChild>
-            <Button className="glow-primary hidden sm:inline-flex" aria-label="Create Key">
+            <Button className="glow-primary hidden md:inline-flex" aria-label="Create Key">
               <Plus className="mr-2 h-4 w-4" />
               Create Key
             </Button>
