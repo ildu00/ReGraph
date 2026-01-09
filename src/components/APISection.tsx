@@ -13,7 +13,7 @@ const codeExamples: Record<string, CodeExample> = {
   inference: {
     label: "Inference",
     shell: `# Simple Inference Request
-curl -X POST https://api.neuralgrid.io/v1/inference \\
+curl -X POST https://api.regraph.io/v1/inference \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d @payload.json`,
@@ -30,7 +30,7 @@ curl -X POST https://api.neuralgrid.io/v1/inference \\
   training: {
     label: "Training",
     shell: `# Submit Training Job
-curl -X POST https://api.neuralgrid.io/v1/training/jobs \\
+curl -X POST https://api.regraph.io/v1/training/jobs \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d @payload.json`,
@@ -54,7 +54,7 @@ curl -X POST https://api.neuralgrid.io/v1/training/jobs \\
   batch: {
     label: "Batch",
     shell: `# Batch Processing
-curl -X POST https://api.neuralgrid.io/v1/batch \\
+curl -X POST https://api.regraph.io/v1/batch \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d @payload.json`,
@@ -73,7 +73,7 @@ curl -X POST https://api.neuralgrid.io/v1/batch \\
   provider: {
     label: "Provider",
     shell: `# Register as Hardware Provider
-curl -X POST https://api.neuralgrid.io/v1/provider/register \\
+curl -X POST https://api.regraph.io/v1/provider/register \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d @payload.json`,
@@ -101,7 +101,7 @@ const apiEndpoints = [
     path: "/v1/inference",
     description: "Run inference on any model with streaming support",
     params: ["model", "messages", "max_tokens", "temperature", "stream"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/inference \\
+    request: `curl -X POST https://api.regraph.io/v1/inference \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model": "meta-llama/Llama-3-70B", "messages": [{"role": "user", "content": "Hello"}]}'`,
@@ -117,7 +117,7 @@ const apiEndpoints = [
     path: "/v1/training/jobs",
     description: "Submit fine-tuning or training jobs",
     params: ["model", "dataset", "config", "hardware", "callback_url"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/training/jobs \\
+    request: `curl -X POST https://api.regraph.io/v1/training/jobs \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model": "meta-llama/Llama-3-8B", "dataset": "s3://bucket/data.jsonl"}'`,
@@ -134,7 +134,7 @@ const apiEndpoints = [
     path: "/v1/training/jobs/{id}",
     description: "Check training job status and progress",
     params: ["id"],
-    request: `curl https://api.neuralgrid.io/v1/training/jobs/job_xyz789 \\
+    request: `curl https://api.regraph.io/v1/training/jobs/job_xyz789 \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
     response: `{
   "id": "job_xyz789",
@@ -150,7 +150,7 @@ const apiEndpoints = [
     path: "/v1/batch",
     description: "Submit batch inference requests at lower cost",
     params: ["model", "inputs", "callback_url", "priority"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/batch \\
+    request: `curl -X POST https://api.regraph.io/v1/batch \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model": "stabilityai/sdxl", "inputs": [{"prompt": "A sunset"}]}'`,
@@ -166,7 +166,7 @@ const apiEndpoints = [
     path: "/v1/models",
     description: "List all available models with pricing info",
     params: ["category", "min_context", "page"],
-    request: `curl https://api.neuralgrid.io/v1/models?category=llm \\
+    request: `curl https://api.regraph.io/v1/models?category=llm \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
     response: `{
   "models": [
@@ -182,7 +182,7 @@ const apiEndpoints = [
     path: "/v1/models/deploy",
     description: "Deploy a custom model to the network",
     params: ["model_url", "framework", "config"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/models/deploy \\
+    request: `curl -X POST https://api.regraph.io/v1/models/deploy \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model_url": "s3://bucket/model.safetensors", "framework": "transformers"}'`,
@@ -198,13 +198,13 @@ const apiEndpoints = [
     path: "/v1/provider/register",
     description: "Register hardware to earn from compute jobs",
     params: ["hardware", "availability", "pricing"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/provider/register \\
+    request: `curl -X POST https://api.regraph.io/v1/provider/register \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"hardware": {"type": "gpu", "model": "RTX 4090", "vram_gb": 24}}'`,
     response: `{
   "provider_id": "prov_jkl345",
-  "connection_key": "ng_conn_abc123xyz",
+  "connection_key": "rg_conn_abc123xyz",
   "status": "pending_verification",
   "estimated_hourly_earnings": 0.35
 }`,
@@ -214,7 +214,7 @@ const apiEndpoints = [
     path: "/v1/provider/earnings",
     description: "View earnings and payout history",
     params: ["start_date", "end_date"],
-    request: `curl "https://api.neuralgrid.io/v1/provider/earnings?start_date=2024-01-01" \\
+    request: `curl "https://api.regraph.io/v1/provider/earnings?start_date=2024-01-01" \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
     response: `{
   "total_earnings_usd": 245.67,
@@ -228,14 +228,14 @@ const apiEndpoints = [
     path: "/v1/hardware/rent",
     description: "Rent dedicated hardware by the hour",
     params: ["gpu_type", "gpu_count", "duration_hours", "region"],
-    request: `curl -X POST https://api.neuralgrid.io/v1/hardware/rent \\
+    request: `curl -X POST https://api.regraph.io/v1/hardware/rent \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"gpu_type": "A100", "gpu_count": 4, "duration_hours": 2}'`,
     response: `{
   "rental_id": "rent_mno678",
   "status": "provisioning",
-  "ssh_command": "ssh user@node-123.neuralgrid.io",
+  "ssh_command": "ssh user@node-123.regraph.io",
   "expires_at": "2024-01-15T12:30:00Z",
   "total_cost_usd": 8.00
 }`,
@@ -245,7 +245,7 @@ const apiEndpoints = [
     path: "/v1/usage",
     description: "Get detailed usage and billing information",
     params: ["start_date", "end_date", "group_by"],
-    request: `curl "https://api.neuralgrid.io/v1/usage?start_date=2024-01-01&group_by=day" \\
+    request: `curl "https://api.regraph.io/v1/usage?start_date=2024-01-01&group_by=day" \\
   -H "Authorization: Bearer YOUR_API_KEY"`,
     response: `{
   "total_cost_usd": 42.15,

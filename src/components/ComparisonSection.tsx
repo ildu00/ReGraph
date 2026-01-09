@@ -3,7 +3,7 @@ import { Check, X, Minus } from "lucide-react";
 
 const competitors = [
   {
-    name: "NeuralGrid",
+    name: "ReGraph",
     highlight: true,
     gpuHour: "$0.15",
     inference: "$0.0001",
@@ -105,7 +105,7 @@ const ComparisonSection = () => {
             <span className="text-gradient">Up to 80% cheaper</span> than alternatives
           </h2>
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Compare our pricing with major cloud providers and see why developers choose NeuralGrid
+            Compare our pricing with major cloud providers and see why developers choose ReGraph
           </p>
         </motion.div>
 

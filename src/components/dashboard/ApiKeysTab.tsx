@@ -56,7 +56,7 @@ const ApiKeysTab = () => {
 
   const generateApiKey = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-    let key = "ng_";
+    let key = "rg_";
     for (let i = 0; i < 48; i++) {
       key += chars.charAt(Math.floor(Math.random() * chars.length));
     }
@@ -126,7 +126,7 @@ const ApiKeysTab = () => {
         <div>
           <h1 className="text-2xl font-bold">API Keys</h1>
           <p className="text-muted-foreground">
-            Manage your API keys for accessing NeuralGrid services.
+            Manage your API keys for accessing ReGraph services.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={(open) => {
@@ -218,7 +218,7 @@ const ApiKeysTab = () => {
           <Key className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-lg font-semibold mb-2">No API Keys</h3>
           <p className="text-muted-foreground mb-4">
-            Create your first API key to start using NeuralGrid.
+            Create your first API key to start using ReGraph.
           </p>
         </div>
       ) : (
