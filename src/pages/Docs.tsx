@@ -124,18 +124,18 @@ volumes:
   const [activeSection, setActiveSection] = useState("getting-started");
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <Navbar />
       
-      <div className="pt-16">
+      <div className="pt-16 flex-1">
         <SidebarProvider defaultOpen={true}>
-          <div className="flex min-h-[calc(100vh-4rem)] w-full">
+          <div className="flex w-full">
             <DocsSidebar 
               activeSection={activeSection} 
               onSectionChange={setActiveSection} 
             />
             
-            <main className="flex-1 overflow-auto">
+            <main className="flex-1">
               <div className="container px-4 py-8 max-w-4xl mx-auto">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
