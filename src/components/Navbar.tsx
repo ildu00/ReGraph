@@ -35,9 +35,12 @@ const Navbar = () => {
         <div className="container px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <a href="/" className="text-xl font-bold">
-              <span className="text-gradient">Neural</span>
-              <span className="text-primary">Grid</span>
+            <a href="/" className="flex items-center gap-2">
+              <Zap className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">
+                <span className="text-gradient">Neural</span>
+                <span className="text-primary">Grid</span>
+              </span>
             </a>
 
             {/* Desktop Nav */}
