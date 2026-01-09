@@ -50,38 +50,42 @@ const Navbar = () => {
       .filter((item) => !item.isRoute)
       .map((item) => item.href.replace("#", ""));
 
-    const observerOptions = {
-      root: null,
-      rootMargin: "-20% 0px -70% 0px", // Trigger when section is in upper portion of viewport
-      threshold: 0,
-    };
-
-    const observerCallback: IntersectionObserverCallback = (entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          setActiveHash(`#${entry.target.id}`);
-        }
-      });
-    };
-
-    const observer = new IntersectionObserver(observerCallback, observerOptions);
-
-    sectionIds.forEach((id) => {
-      const element = document.getElementById(id);
-      if (element) {
-        observer.observe(element);
+    // Function to find which section is currently in view
+    const findActiveSection = () => {
+      const scrollPosition = window.scrollY + window.innerHeight * 0.3;
+      
+      // If at the very top, clear active hash
+      if (window.scrollY < 100) {
+        setActiveHash("");
+        return;
       }
-    });
 
-    return () => observer.disconnect();
+      for (const id of sectionIds) {
+        const element = document.getElementById(id);
+        if (element) {
+          const rect = element.getBoundingClientRect();
+          const elementTop = rect.top + window.scrollY;
+          const elementBottom = elementTop + rect.height;
+          
+          if (scrollPosition >= elementTop && scrollPosition < elementBottom) {
+            setActiveHash(`#${id}`);
+            return;
+          }
+        }
+      }
+    };
+
+    // Run once on mount to set initial state based on scroll position
+    const timeoutId = setTimeout(findActiveSection, 100);
+
+    // Listen to scroll events
+    window.addEventListener("scroll", findActiveSection);
+    
+    return () => {
+      clearTimeout(timeoutId);
+      window.removeEventListener("scroll", findActiveSection);
+    };
   }, [location.pathname]);
-
-  useEffect(() => {
-    // Only set from URL hash on initial load or navigation
-    if (location.hash) {
-      setActiveHash(location.hash);
-    }
-  }, [location.hash]);
 
   const isActive = (item: typeof navItems[0]) => {
     if (item.isRoute) {
