@@ -30,8 +30,8 @@ const HeroSection = () => {
 
           {/* Headline */}
           <h1 className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tight mb-6">
-            <span className="text-gradient">Neural</span>
-            <span className="text-primary">Grid</span>
+            <span className="text-gradient">Re</span>
+            <span className="text-primary">Graph</span>
           </h1>
 
           <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-8 leading-relaxed">

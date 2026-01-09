@@ -38,8 +38,8 @@ const Navbar = () => {
             <a href="/" className="flex items-center gap-2">
               <Zap className="h-6 w-6 text-primary" />
               <span className="text-xl font-bold">
-                <span className="text-gradient">Neural</span>
-                <span className="text-primary">Grid</span>
+                <span className="text-gradient">Re</span>
+                <span className="text-primary">Graph</span>
               </span>
             </a>
 

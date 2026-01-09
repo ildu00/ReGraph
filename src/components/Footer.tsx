@@ -15,8 +15,8 @@ const Footer = () => {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <div className="text-2xl font-bold mb-4">
-              <span className="text-gradient">Neural</span>
-              <span className="text-primary">Grid</span>
+              <span className="text-gradient">Re</span>
+              <span className="text-primary">Graph</span>
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Decentralized AI compute for everyone.
@@ -60,7 +60,7 @@ const Footer = () => {
         {/* Bottom */}
         <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2026 NeuralGrid. All rights reserved.
+            © 2026 ReGraph. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
             <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>

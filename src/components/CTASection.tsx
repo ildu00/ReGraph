@@ -26,7 +26,7 @@ const CTASection = () => {
           </h2>
 
           <p className="text-xl text-muted-foreground mb-10 leading-relaxed">
-            Join 10,000+ developers and 5,000+ hardware providers already on NeuralGrid. 
+            Join 10,000+ developers and 5,000+ hardware providers already on ReGraph. 
             No credit card required to start.
           </p>
 
