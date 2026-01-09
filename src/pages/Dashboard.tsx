@@ -167,25 +167,25 @@ const Dashboard = () => {
       <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="bg-card border border-border">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 sm:px-3">
-              <BarChart3 className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Overview</span>
+            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <BarChart3 className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2 sm:px-3">
-              <Key className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">API Keys</span>
+            <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <Key className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">API Keys</span>
             </TabsTrigger>
-            <TabsTrigger value="provider" className="data-[state=active]:bg-secondary px-2 sm:px-3">
-              <Server className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Provider</span>
+            <TabsTrigger value="provider" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <Server className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Provider</span>
             </TabsTrigger>
-            <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2 sm:px-3">
-              <BarChart3 className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Usage</span>
+            <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <BarChart3 className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Usage</span>
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-secondary px-2 sm:px-3">
-              <Settings className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Settings</span>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <Settings className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Settings</span>
             </TabsTrigger>
           </TabsList>
 
