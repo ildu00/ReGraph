@@ -11,7 +11,19 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Plus, Copy, Trash2, Key, Eye, EyeOff, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -97,6 +109,8 @@ const ApiKeysTab = () => {
     setIsCreating(false);
   };
 
+  const [deleteKeyId, setDeleteKeyId] = useState<string | null>(null);
+
   const deleteApiKey = async (id: string) => {
     const { error } = await supabase.from("api_keys").delete().eq("id", id);
 
@@ -106,6 +120,7 @@ const ApiKeysTab = () => {
       setApiKeys(apiKeys.filter((key) => key.id !== id));
       toast.success("API key deleted");
     }
+    setDeleteKeyId(null);
   };
 
   const copyToClipboard = (text: string) => {
@@ -253,14 +268,34 @@ const ApiKeysTab = () => {
                 <div className="md:hidden p-4 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="font-medium truncate flex-1">{key.name}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteApiKey(key.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 shrink-0"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{key.name}"? This action cannot be undone and any applications using this key will stop working.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteApiKey(key.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                   <div className="font-mono text-sm text-muted-foreground bg-secondary/50 px-2 py-1 rounded">
                     {key.key_prefix}
@@ -290,14 +325,34 @@ const ApiKeysTab = () => {
                       : "Never"}
                   </div>
                   <div className="col-span-1 flex justify-end">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => deleteApiKey(key.id)}
-                      className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{key.name}"? This action cannot be undone and any applications using this key will stop working.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteApiKey(key.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
                   </div>
                 </div>
               </motion.div>
