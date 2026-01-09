@@ -5,9 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, Zap } from "lucide-react";
 
 const navItems = [
-  { label: "Features", href: "#features", isRoute: false },
-  { label: "How It Works", href: "#how-it-works", isRoute: false },
   { label: "Pricing", href: "#pricing", isRoute: false },
+  { label: "How It Works", href: "#how-it-works", isRoute: false },
+  { label: "Features", href: "#features", isRoute: false },
   { label: "API", href: "#api", isRoute: false },
   { label: "Docs", href: "/docs", isRoute: true },
 ];
