@@ -42,8 +42,45 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Scroll spy - detect which section is in view
   useEffect(() => {
-    setActiveHash(location.hash);
+    if (location.pathname !== "/") return;
+
+    const sectionIds = navItems
+      .filter((item) => !item.isRoute)
+      .map((item) => item.href.replace("#", ""));
+
+    const observerOptions = {
+      root: null,
+      rootMargin: "-20% 0px -70% 0px", // Trigger when section is in upper portion of viewport
+      threshold: 0,
+    };
+
+    const observerCallback: IntersectionObserverCallback = (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          setActiveHash(`#${entry.target.id}`);
+        }
+      });
+    };
+
+    const observer = new IntersectionObserver(observerCallback, observerOptions);
+
+    sectionIds.forEach((id) => {
+      const element = document.getElementById(id);
+      if (element) {
+        observer.observe(element);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [location.pathname]);
+
+  useEffect(() => {
+    // Only set from URL hash on initial load or navigation
+    if (location.hash) {
+      setActiveHash(location.hash);
+    }
   }, [location.hash]);
 
   const isActive = (item: typeof navItems[0]) => {
