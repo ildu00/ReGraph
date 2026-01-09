@@ -2,7 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap } from "lucide-react";
+import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
   { label: "Pricing", href: "#pricing", isRoute: false },
@@ -18,6 +19,7 @@ const Navbar = () => {
   const [activeHash, setActiveHash] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -166,15 +168,26 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
-              <Button variant="ghost" size="sm" asChild>
-                <Link to="/auth">Sign In</Link>
-              </Button>
-              <Button size="sm" className="glow-primary" asChild>
-                <Link to="/auth">
-                  <Zap className="mr-1 h-4 w-4" />
-                  Get Started
-                </Link>
-              </Button>
+              {!loading && user ? (
+                <Button size="sm" className="glow-primary" asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-1 h-4 w-4" />
+                    Dashboard
+                  </Link>
+                </Button>
+              ) : (
+                <>
+                  <Button variant="ghost" size="sm" asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </Button>
+                  <Button size="sm" className="glow-primary" asChild>
+                    <Link to="/auth">
+                      <Zap className="mr-1 h-4 w-4" />
+                      Get Started
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
 
             {/* Mobile Menu Button */}
@@ -227,15 +240,26 @@ const Navbar = () => {
                 )
               )}
               <div className="flex flex-col gap-3 mt-4">
-                <Button variant="outline" size="lg" asChild>
-                  <Link to="/auth">Sign In</Link>
-                </Button>
-                <Button size="lg" className="glow-primary" asChild>
-                  <Link to="/auth">
-                    <Zap className="mr-2 h-5 w-5" />
-                    Get Started Free
-                  </Link>
-                </Button>
+                {!loading && user ? (
+                  <Button size="lg" className="glow-primary" asChild>
+                    <Link to="/dashboard">
+                      <LayoutDashboard className="mr-2 h-5 w-5" />
+                      Dashboard
+                    </Link>
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" size="lg" asChild>
+                      <Link to="/auth">Sign In</Link>
+                    </Button>
+                    <Button size="lg" className="glow-primary" asChild>
+                      <Link to="/auth">
+                        <Zap className="mr-2 h-5 w-5" />
+                        Get Started Free
+                      </Link>
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </motion.div>
