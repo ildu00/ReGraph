@@ -5,7 +5,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
-import { Play, Loader2, Copy, Check, AlertCircle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Play, Loader2, Copy, Check, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import CodeBlock from "@/components/CodeBlock";
 
 type Endpoint = "inference" | "training" | "batch" | "models";
@@ -56,8 +58,11 @@ const ApiPlayground = () => {
   const [temperature, setTemperature] = useState([0.7]);
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<string | null>(null);
+  const [responseStatus, setResponseStatus] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [useLiveApi, setUseLiveApi] = useState(false);
+  const [latency, setLatency] = useState<number | null>(null);
 
   const generateCurlCommand = () => {
     const baseUrl = "https://api.regraph.tech";
@@ -110,20 +115,41 @@ const ApiPlayground = () => {
     return "";
   };
 
-  const handleRun = async () => {
-    if (!apiKey) {
-      setError("Please enter your API key to test requests");
-      return;
+  const buildRequestBody = () => {
+    if (endpoint === "models") return undefined;
+
+    if (endpoint === "inference") {
+      return {
+        model,
+        prompt,
+        max_tokens: maxTokens[0],
+        temperature: temperature[0]
+      };
     }
 
-    setIsLoading(true);
-    setError(null);
-    setResponse(null);
+    if (endpoint === "training") {
+      return {
+        base_model: model,
+        dataset_url: "https://your-storage.com/dataset.jsonl",
+        hyperparameters: {
+          epochs: 3,
+          learning_rate: 2e-5,
+          batch_size: 4
+        }
+      };
+    }
 
-    // Simulate API call (in production, this would hit the actual API)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    if (endpoint === "batch") {
+      return {
+        requests: [{ model, prompt }],
+        webhook_url: "https://your-app.com/webhook"
+      };
+    }
 
-    // Mock response based on endpoint
+    return undefined;
+  };
+
+  const getMockResponse = (): object => {
     const mockResponses: Record<Endpoint, object> = {
       inference: {
         id: "inf_" + Math.random().toString(36).substr(2, 9),
@@ -174,8 +200,66 @@ const ApiPlayground = () => {
       }
     };
 
-    setResponse(JSON.stringify(mockResponses[endpoint], null, 2));
-    setIsLoading(false);
+    return mockResponses[endpoint];
+  };
+
+  const handleRun = async () => {
+    if (!apiKey && useLiveApi) {
+      setError("Please enter your API key to test requests");
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+    setResponse(null);
+    setResponseStatus(null);
+    setLatency(null);
+
+    const startTime = performance.now();
+
+    try {
+      if (useLiveApi) {
+        // Make real API call through edge function
+        const config = endpoints[endpoint];
+        const { data, error: fnError } = await supabase.functions.invoke("api-playground", {
+          body: {
+            endpoint: config.path,
+            method: config.method,
+            apiKey,
+            body: buildRequestBody()
+          }
+        });
+
+        const endTime = performance.now();
+        setLatency(Math.round(endTime - startTime));
+
+        if (fnError) {
+          throw new Error(fnError.message);
+        }
+
+        if (data.error) {
+          setError(data.error);
+          setResponseStatus(data.status || 500);
+        } else {
+          setResponseStatus(data.status);
+          setResponse(JSON.stringify(data.data, null, 2));
+        }
+      } else {
+        // Simulate API call
+        await new Promise((resolve) => setTimeout(resolve, 800 + Math.random() * 700));
+        const endTime = performance.now();
+        setLatency(Math.round(endTime - startTime));
+        setResponseStatus(200);
+        setResponse(JSON.stringify(getMockResponse(), null, 2));
+      }
+    } catch (err) {
+      const endTime = performance.now();
+      setLatency(Math.round(endTime - startTime));
+      setError(err instanceof Error ? err.message : "An error occurred");
+      setResponseStatus(500);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleCopy = () => {
@@ -184,8 +268,37 @@ const ApiPlayground = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const getStatusColor = (status: number | null) => {
+    if (!status) return "text-muted-foreground";
+    if (status >= 200 && status < 300) return "text-green-500";
+    if (status >= 400 && status < 500) return "text-yellow-500";
+    return "text-red-500";
+  };
+
   return (
     <div className="space-y-6">
+      {/* Live API Toggle */}
+      <div className="glass-card p-4 rounded-xl flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          {useLiveApi ? (
+            <Wifi className="h-5 w-5 text-green-500" />
+          ) : (
+            <WifiOff className="h-5 w-5 text-muted-foreground" />
+          )}
+          <div>
+            <p className="font-medium">
+              {useLiveApi ? "Live API Mode" : "Simulation Mode"}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {useLiveApi
+                ? "Requests will be sent to the actual ReGraph API"
+                : "Using simulated responses for testing"}
+            </p>
+          </div>
+        </div>
+        <Switch checked={useLiveApi} onCheckedChange={setUseLiveApi} />
+      </div>
+
       {/* Endpoint Selection */}
       <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -211,14 +324,17 @@ const ApiPlayground = () => {
         </div>
 
         <div className="space-y-2">
-          <Label>API Key</Label>
+          <Label>API Key {useLiveApi && <span className="text-red-500">*</span>}</Label>
           <Input
             type="password"
             placeholder="rg_your_api_key_here"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
+            className={useLiveApi && !apiKey ? "border-yellow-500/50" : ""}
           />
-          <p className="text-xs text-muted-foreground">Your API key from the dashboard</p>
+          <p className="text-xs text-muted-foreground">
+            {useLiveApi ? "Required for live requests" : "Optional for simulation mode"}
+          </p>
         </div>
       </div>
 
@@ -313,12 +429,12 @@ const ApiPlayground = () => {
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Sending Request...
+              {useLiveApi ? "Sending Request..." : "Simulating..."}
             </>
           ) : (
             <>
               <Play className="mr-2 h-4 w-4" />
-              Run Request
+              {useLiveApi ? "Send Request" : "Run Simulation"}
             </>
           )}
         </Button>
@@ -328,7 +444,10 @@ const ApiPlayground = () => {
       {error && (
         <div className="glass-card p-4 rounded-xl border-l-4 border-l-red-500 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-red-500 shrink-0" />
-          <p className="text-sm text-red-400">{error}</p>
+          <div>
+            <p className="font-medium text-red-400">Error</p>
+            <p className="text-sm text-red-400/80">{error}</p>
+          </div>
         </div>
       )}
 
@@ -336,8 +455,19 @@ const ApiPlayground = () => {
       {response && (
         <div className="glass-card p-6 rounded-xl space-y-4">
           <div className="flex items-center justify-between">
-            <h4 className="font-semibold text-green-500">Response (200 OK)</h4>
-            <span className="text-xs text-muted-foreground">Demo response</span>
+            <div className="flex items-center gap-3">
+              <h4 className={`font-semibold ${getStatusColor(responseStatus)}`}>
+                Response ({responseStatus} {responseStatus === 200 ? "OK" : ""})
+              </h4>
+              {latency && (
+                <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
+                  {latency}ms
+                </span>
+              )}
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {useLiveApi ? "Live response" : "Simulated response"}
+            </span>
           </div>
           <CodeBlock code={response} language="json" />
         </div>
@@ -345,7 +475,9 @@ const ApiPlayground = () => {
 
       {/* Note */}
       <p className="text-xs text-center text-muted-foreground">
-        This is a simulated playground. Connect your API key to test with real requests.
+        {useLiveApi
+          ? "Connected to live ReGraph API. Your requests will use real compute resources."
+          : "Toggle 'Live API Mode' to test with actual API endpoints."}
       </p>
     </div>
   );
