@@ -1,0 +1,150 @@
+# ReGraph Provider Agent - Docker Compose Configuration
+# https://regraph.tech
+#
+# Usage:
+#   1. Replace YOUR_CONNECTION_KEY with your key from the dashboard
+#   2. Run: docker-compose up -d
+#   3. Check logs: docker-compose logs -f
+#
+# For multiple GPUs, see the multi-gpu profile below
+
+version: "3.8"
+
+services:
+  regraph-agent:
+    image: regraph/agent:latest
+    container_name: regraph-agent
+    restart: unless-stopped
+    
+    # GPU Support - uncomment the appropriate section
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    
+    environment:
+      # Required: Your connection key from the dashboard
+      - REGRAPH_KEY=${REGRAPH_KEY:-YOUR_CONNECTION_KEY}
+      
+      # Optional: Custom device name (default: hostname)
+      - REGRAPH_DEVICE_NAME=${REGRAPH_DEVICE_NAME:-}
+      
+      # Optional: API endpoint (default: production)
+      - REGRAPH_API_URL=${REGRAPH_API_URL:-https://api.regraph.tech}
+      
+      # Optional: Log level (debug, info, warn, error)
+      - REGRAPH_LOG_LEVEL=${REGRAPH_LOG_LEVEL:-info}
+      
+      # Optional: Max concurrent tasks
+      - REGRAPH_MAX_TASKS=${REGRAPH_MAX_TASKS:-4}
+      
+      # Optional: GPU memory limit per task (in GB)
+      - REGRAPH_GPU_MEMORY_LIMIT=${REGRAPH_GPU_MEMORY_LIMIT:-}
+      
+      # Optional: Enable CPU-only mode
+      - REGRAPH_CPU_ONLY=${REGRAPH_CPU_ONLY:-false}
+      
+      # Optional: Custom model cache directory
+      - REGRAPH_MODEL_CACHE=/app/cache
+      
+      # Optional: Heartbeat interval in seconds
+      - REGRAPH_HEARTBEAT_INTERVAL=${REGRAPH_HEARTBEAT_INTERVAL:-30}
+
+    volumes:
+      # Model cache - persists downloaded models between restarts
+      - regraph-cache:/app/cache
+      
+      # Logs directory
+      - regraph-logs:/app/logs
+      
+      # Optional: Mount custom config
+      # - ./regraph-config.yaml:/app/config.yaml:ro
+
+    networks:
+      - regraph-network
+
+    healthcheck:
+      test: ["CMD", "regraph-agent", "health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "100m"
+        max-file: "5"
+
+  # Optional: Prometheus metrics exporter
+  regraph-metrics:
+    image: regraph/metrics-exporter:latest
+    container_name: regraph-metrics
+    restart: unless-stopped
+    profiles:
+      - monitoring
+    ports:
+      - "9090:9090"
+    environment:
+      - REGRAPH_AGENT_URL=http://regraph-agent:8080
+    networks:
+      - regraph-network
+    depends_on:
+      - regraph-agent
+
+volumes:
+  regraph-cache:
+    driver: local
+  regraph-logs:
+    driver: local
+
+networks:
+  regraph-network:
+    driver: bridge
+
+# =============================================================================
+# Multi-GPU Configuration Example
+# =============================================================================
+# To run separate agents for each GPU, use the following override:
+#
+# docker-compose.multi-gpu.yml:
+# ---
+# version: "3.8"
+# services:
+#   regraph-agent-gpu0:
+#     extends:
+#       service: regraph-agent
+#     container_name: regraph-agent-gpu0
+#     environment:
+#       - NVIDIA_VISIBLE_DEVICES=0
+#       - REGRAPH_DEVICE_NAME=GPU-0
+#       - REGRAPH_KEY=${REGRAPH_KEY_GPU0}
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               device_ids: ['0']
+#               capabilities: [gpu]
+#
+#   regraph-agent-gpu1:
+#     extends:
+#       service: regraph-agent
+#     container_name: regraph-agent-gpu1
+#     environment:
+#       - NVIDIA_VISIBLE_DEVICES=1
+#       - REGRAPH_DEVICE_NAME=GPU-1
+#       - REGRAPH_KEY=${REGRAPH_KEY_GPU1}
+#     deploy:
+#       resources:
+#         reservations:
+#           devices:
+#             - driver: nvidia
+#               device_ids: ['1']
+#               capabilities: [gpu]
+#
+# Run with: docker-compose -f docker-compose.yml -f docker-compose.multi-gpu.yml up -d
+# =============================================================================

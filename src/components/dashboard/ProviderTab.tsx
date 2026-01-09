@@ -513,11 +513,25 @@ const ProviderTab = () => {
             <CodeBlock code="curl -sSL https://regraph.tech/scripts/install.sh | bash" language="bash" />
           </div>
           <div>
-            <p className="text-sm font-medium mb-2">Docker:</p>
+            <p className="text-sm font-medium mb-2">Docker (quick start):</p>
             <CodeBlock 
               code={`docker run -d --gpus all \\
   -e REGRAPH_KEY=YOUR_CONNECTION_KEY \\
   regraph/agent:latest`} 
+              language="bash" 
+            />
+          </div>
+          <div>
+            <p className="text-sm font-medium mb-2">Docker Compose (recommended for production):</p>
+            <CodeBlock 
+              code={`# Download docker-compose.yml
+curl -O https://regraph.tech/scripts/docker-compose.yml
+
+# Set your connection key
+export REGRAPH_KEY=YOUR_CONNECTION_KEY
+
+# Start the agent
+docker-compose up -d`} 
               language="bash" 
             />
           </div>
