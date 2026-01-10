@@ -124,7 +124,7 @@ volumes:
   const [activeSection, setActiveSection] = useState("getting-started");
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <Navbar />
       
       <div className="pt-16 flex-1">
@@ -135,8 +135,8 @@ volumes:
               onSectionChange={setActiveSection} 
             />
             
-            <main className="flex-1">
-              <div className="container px-4 py-8 max-w-4xl mx-auto">
+            <main className="flex-1 min-w-0">
+              <div className="container px-4 py-8 max-w-4xl mx-auto overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}

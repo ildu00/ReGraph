@@ -332,7 +332,7 @@ const ApiPlayground = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 overflow-hidden">
       {/* Live API Toggle */}
       <div className="glass-card p-4 rounded-xl flex items-center justify-between">
         <div className="flex items-center gap-3">
