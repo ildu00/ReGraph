@@ -36,6 +36,16 @@
 
     --radius: 0.5rem;
 
+    /* Sidebar tokens */
+    --sidebar-background: 0 0% 5%;
+    --sidebar-foreground: 0 0% 98%;
+    --sidebar-primary: 270 80% 60%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 270 80% 60%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 14%;
+    --sidebar-ring: 270 80% 60%;
+
     /* Custom tokens */
     --glow-primary: 0 0 40px hsl(270 80% 60% / 0.3);
     --glow-subtle: 0 0 60px hsl(270 80% 60% / 0.1);
