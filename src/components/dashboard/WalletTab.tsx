@@ -347,64 +347,72 @@ const WalletTab = () => {
                     <span className="hidden lg:inline">Deposit Crypto</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto w-[calc(100vw-2rem)] sm:w-full">
                   <DialogHeader>
                     <DialogTitle>Deposit Cryptocurrency</DialogTitle>
                     <DialogDescription>
                       Send crypto to your unique deposit address. Your balance will be credited after confirmations.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="grid gap-4 mt-4">
+                  <div className="grid gap-3 mt-4">
                     {(Object.keys(networkConfig) as BlockchainNetwork[]).map((network) => {
                       const config = networkConfig[network];
                       const existingAddress = getAddressForNetwork(network);
                       
                       return (
                         <Card key={network} className="border-border">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                <div className={`w-10 h-10 rounded-full ${config.color} flex items-center justify-center text-white text-lg font-bold`}>
-                                  {config.icon}
-                                </div>
-                                <div>
-                                  <p className="font-medium">{config.name}</p>
-                                  <div className="flex gap-1 mt-0.5">
-                                    {config.tokens.map(token => (
-                                      <Badge key={token} variant="secondary" className="text-xs">
-                                        {token}
-                                      </Badge>
-                                    ))}
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex flex-col gap-3">
+                              {/* Network header row */}
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2 sm:gap-3">
+                                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${config.color} flex items-center justify-center text-white text-sm sm:text-lg font-bold shrink-0`}>
+                                    {config.icon}
+                                  </div>
+                                  <div className="min-w-0">
+                                    <p className="font-medium text-sm sm:text-base">{config.name}</p>
+                                    <div className="flex flex-wrap gap-1 mt-0.5">
+                                      {config.tokens.map(token => (
+                                        <Badge key={token} variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
+                                          {token}
+                                        </Badge>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
+                                
+                                {!existingAddress && (
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm"
+                                    className="shrink-0 text-xs sm:text-sm"
+                                    onClick={() => generateDepositAddress(network)}
+                                    disabled={generatingAddress === network}
+                                  >
+                                    {generatingAddress === network ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      'Generate'
+                                    )}
+                                  </Button>
+                                )}
                               </div>
                               
-                              {existingAddress ? (
-                                <div className="flex items-center gap-2">
-                                  <code className="text-xs bg-muted px-2 py-1 rounded max-w-[200px] truncate">
+                              {/* Address row - only shown when address exists */}
+                              {existingAddress && (
+                                <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
+                                  <code className="text-[10px] sm:text-xs break-all flex-1 font-mono">
                                     {existingAddress.address}
                                   </code>
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
+                                    className="shrink-0 h-8 w-8 p-0"
                                     onClick={() => copyToClipboard(existingAddress.address)}
                                   >
                                     <Copy className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              ) : (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => generateDepositAddress(network)}
-                                  disabled={generatingAddress === network}
-                                >
-                                  {generatingAddress === network ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                  ) : (
-                                    'Generate Address'
-                                  )}
-                                </Button>
                               )}
                             </div>
                           </CardContent>
