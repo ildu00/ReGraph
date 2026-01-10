@@ -10,7 +10,9 @@ const corsHeaders = {
 // (e.g., Fireblocks, BitGo, Coinbase Custody) to generate real addresses
 // This is a placeholder that generates deterministic demo addresses
 function generateDemoAddress(userId: string, network: string): string {
-  const hash = btoa(`${userId}-${network}`).replace(/[^a-zA-Z0-9]/g, '').slice(0, 40);
+  // Include network in hash to ensure unique addresses per network
+  const input = `${userId}-${network}-${Date.now()}`;
+  const hash = btoa(input).replace(/[^a-fA-F0-9]/g, '').toLowerCase().slice(0, 40).padEnd(40, '0');
   
   switch (network) {
     case 'ethereum':
