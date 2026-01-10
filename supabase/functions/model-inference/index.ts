@@ -206,31 +206,53 @@ serve(async (req) => {
 
       const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-      // VseGPT quirks: different image models support different params.
-      // Для SD/Flux моделей "Only response_format = b64_json is not supported" означает,
-      // что нужно не передавать response_format вообще — API вернёт URL по умолчанию.
-      // Важно: VseGPT rate limit 1 req/sec, поэтому между retry нужна пауза 1100ms.
-      let result = await attempt({ ...basePayload, response_format: "url" });
+      // VseGPT rate limit: requests should be spaced out (docs mention 1 request per ~2 seconds on default plans).
+      // This model sometimes fails when VseGPT/provider defaults response_format to b64_json.
+      // Strategy:
+      // 1) Try default OpenAI-compatible payload (no response_format)
+      // 2) If model requires aspect_ratio instead of size -> retry with aspect_ratio
+      // 3) If upstream complains that b64_json is not supported -> retry with response_format="url"
+      let result = await attempt({ ...basePayload });
 
       if (!result.ok && result.resp.status === 400) {
-        const t = (result.text || "").toLowerCase();
-        const mentionsRf = t.includes("response_format");
+        let t = (result.text || "").toLowerCase();
+
         const mentionsAspectRatio = t.includes("aspect_ratio");
-
-        // Wait before retry to avoid 429
-        await sleep(1100);
-
         if (mentionsAspectRatio) {
-          // Some models require aspect_ratio instead of size
+          await sleep(2100);
           result = await attempt({
             model: vsegptModel,
             prompt,
             n: 1,
             aspect_ratio: "1:1",
           });
-        } else if (mentionsRf) {
-          // "Only response_format = b64_json is not supported" → don't send response_format at all
-          result = await attempt({ ...basePayload });
+          t = (result.ok ? "" : result.text || "").toLowerCase();
+        }
+
+        const mentionsRf = t.includes("response_format");
+        const mentionsB64 = t.includes("b64_json");
+        const shouldTryUrl = mentionsRf && mentionsB64;
+
+        if (!result.ok && result.resp.status === 400 && shouldTryUrl) {
+          await sleep(2100);
+
+          const lastHadAspectRatio =
+            !!lastPayload && Object.prototype.hasOwnProperty.call(lastPayload, "aspect_ratio");
+
+          result = await attempt(
+            lastHadAspectRatio
+              ? {
+                  model: vsegptModel,
+                  prompt,
+                  n: 1,
+                  aspect_ratio: "1:1",
+                  response_format: "url",
+                }
+              : {
+                  ...basePayload,
+                  response_format: "url",
+                }
+          );
         }
       }
 
