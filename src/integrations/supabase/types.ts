@@ -199,6 +199,8 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          provider_device_id: string | null
+          provider_id: string | null
           tokens_used: number
           user_id: string
         }
@@ -209,6 +211,8 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
+          provider_device_id?: string | null
+          provider_id?: string | null
           tokens_used?: number
           user_id: string
         }
@@ -219,6 +223,8 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
+          provider_device_id?: string | null
+          provider_id?: string | null
           tokens_used?: number
           user_id?: string
         }
@@ -228,6 +234,20 @@ export type Database = {
             columns: ["api_key_id"]
             isOneToOne: false
             referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_logs_provider_device_id_fkey"
+            columns: ["provider_device_id"]
+            isOneToOne: false
+            referencedRelation: "provider_devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "usage_logs_provider_id_fkey"
+            columns: ["provider_id"]
+            isOneToOne: false
+            referencedRelation: "provider_profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -389,6 +409,7 @@ export type Database = {
         | "usage_charge"
         | "refund"
         | "wert_purchase"
+        | "provider_earning"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -550,6 +571,7 @@ export const Constants = {
         "usage_charge",
         "refund",
         "wert_purchase",
+        "provider_earning",
       ],
     },
   },

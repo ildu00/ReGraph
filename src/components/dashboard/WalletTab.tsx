@@ -29,7 +29,7 @@ import {
 
 type BlockchainNetwork = 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'solana' | 'bitcoin' | 'tron';
 type CryptoCurrency = 'ETH' | 'BTC' | 'SOL' | 'USDT' | 'USDC' | 'MATIC' | 'BNB' | 'TRX';
-type TransactionType = 'deposit' | 'withdrawal' | 'usage_charge' | 'refund' | 'wert_purchase';
+type TransactionType = 'deposit' | 'withdrawal' | 'usage_charge' | 'refund' | 'wert_purchase' | 'provider_earning';
 type TransactionStatus = 'pending' | 'confirmed' | 'failed' | 'cancelled';
 
 interface Wallet {
@@ -682,7 +682,7 @@ const WalletTab = () => {
               {transactions.map((tx) => {
                 const statusInfo = statusConfig[tx.status];
                 const StatusIcon = statusInfo.icon;
-                const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund';
+                const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund' || tx.transaction_type === 'provider_earning';
                 
                 return (
                   <div 
