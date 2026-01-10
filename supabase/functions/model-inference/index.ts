@@ -204,15 +204,21 @@ serve(async (req) => {
         return { ok: false as const, resp, text };
       };
 
+      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
       // VseGPT quirks: different image models support different params.
-      // Практика показала, что для части SD/Flux моделей default может быть b64_json, который не поддерживается.
-      // Поэтому начинаем с response_format=url, а если upstream ругается на response_format — убираем его.
+      // Для SD/Flux моделей "Only response_format = b64_json is not supported" означает,
+      // что нужно не передавать response_format вообще — API вернёт URL по умолчанию.
+      // Важно: VseGPT rate limit 1 req/sec, поэтому между retry нужна пауза 1100ms.
       let result = await attempt({ ...basePayload, response_format: "url" });
 
       if (!result.ok && result.resp.status === 400) {
         const t = (result.text || "").toLowerCase();
         const mentionsRf = t.includes("response_format");
         const mentionsAspectRatio = t.includes("aspect_ratio");
+
+        // Wait before retry to avoid 429
+        await sleep(1100);
 
         if (mentionsAspectRatio) {
           // Some models require aspect_ratio instead of size
@@ -221,10 +227,9 @@ serve(async (req) => {
             prompt,
             n: 1,
             aspect_ratio: "1:1",
-            response_format: "url",
           });
         } else if (mentionsRf) {
-          // If response_format causes validation errors (including "Only response_format = b64_json is not supported"), retry without it.
+          // "Only response_format = b64_json is not supported" → don't send response_format at all
           result = await attempt({ ...basePayload });
         }
       }
