@@ -130,7 +130,7 @@ volumes:
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">
-        <SidebarProvider defaultOpen={true}>
+        <SidebarProvider defaultOpen={true} className="flex-col">
           <div className="flex w-full flex-1">
             <DocsSidebar 
               activeSection={activeSection} 
@@ -700,8 +700,9 @@ volumes:
             </main>
           </div>
         </SidebarProvider>
-        <Footer />
       </div>
+
+      <Footer insetLeft />
     </div>
   );
 };
