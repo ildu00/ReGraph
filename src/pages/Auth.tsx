@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ import { toast } from "sonner";
 
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
+  const [searchParams] = useSearchParams();
+  const redirectTab = searchParams.get("redirect");
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +27,8 @@ const Auth = () => {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    const redirectTo = redirectTab ? `/dashboard?tab=${redirectTab}` : "/dashboard";
+    return <Navigate to={redirectTo} replace />;
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -63,12 +66,11 @@ const Auth = () => {
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md relative z-10"
       >
-        {/* Logo */}
         <a href="/" className="flex items-center justify-center gap-2 mb-8">
           <Zap className="h-8 w-8 text-primary" />
           <span className="text-2xl font-bold">
-            <span className="text-gradient">Neural</span>
-            <span className="text-primary">Grid</span>
+            <span className="text-gradient">Re</span>
+            <span className="text-primary">Graph</span>
           </span>
         </a>
 
