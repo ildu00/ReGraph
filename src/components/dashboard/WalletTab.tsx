@@ -342,9 +342,9 @@ const WalletTab = () => {
             <div className="flex gap-2">
               <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button className="gap-2">
+                  <Button className="aspect-square p-0 lg:aspect-auto lg:px-4 lg:py-2 lg:gap-2">
                     <Plus className="h-4 w-4" />
-                    Deposit Crypto
+                    <span className="hidden lg:inline">Deposit Crypto</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -417,9 +417,9 @@ const WalletTab = () => {
 
               <Dialog open={wertDialogOpen} onOpenChange={setWertDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="aspect-square p-0 lg:aspect-auto lg:px-4 lg:py-2 lg:gap-2">
                     <CreditCard className="h-4 w-4" />
-                    Buy with Card
+                    <span className="hidden lg:inline">Buy with Card</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
@@ -469,9 +469,9 @@ const WalletTab = () => {
 
               <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button variant="outline" className="gap-2">
+                  <Button variant="outline" className="aspect-square p-0 lg:aspect-auto lg:px-4 lg:py-2 lg:gap-2">
                     <Send className="h-4 w-4" />
-                    Withdraw
+                    <span className="hidden lg:inline">Withdraw</span>
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="max-w-md">
