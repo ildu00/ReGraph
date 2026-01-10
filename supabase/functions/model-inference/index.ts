@@ -35,42 +35,91 @@ serve(async (req) => {
 
     // Map our model IDs to VseGPT model IDs
     const modelMapping: Record<string, string> = {
-      // LLM
+      // LLM (Large Language Models)
       "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
       "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
-      "mistral-large": "mistralai/mistral-large-latest",
+      "mistral-large": "mistralai/mistral-large",
       "mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
       "qwen-72b": "qwen/qwen-2.5-72b-instruct",
       "gemma-2-27b": "google/gemma-2-27b-it",
       
-      // Chat
-      "claude-3-opus": "anthropic/claude-3-opus",
+      // Chat & Assistants
+      "claude-3-opus": "anthropic/claude-opus-4",
       "gpt-4-turbo": "openai/gpt-4-turbo",
-      "gemini-pro": "google/gemini-pro",
-      "command-r-plus": "cohere/command-r-plus",
+      "gemini-pro": "google/gemini-2.5-pro",
+      "command-r-plus": "cohere/command-r-plus-08-2024",
       
-      // Reasoning
-      "o1-preview": "openai/o1-preview",
-      "claude-3-sonnet": "anthropic/claude-3-sonnet",
+      // Reasoning & Analysis
+      "o1-preview": "openai/o3-mini",
+      "claude-3-sonnet": "anthropic/claude-sonnet-4",
       "deepseek-r1": "deepseek/deepseek-r1",
       
-      // Code
-      "deepseek-coder-33b": "deepseek/deepseek-coder-33b-instruct",
-      "codellama-70b": "meta-llama/codellama-70b-instruct",
-      "starcoder2-15b": "bigcode/starcoder2-15b",
+      // Code Generation
+      "deepseek-coder-33b": "deepseek/deepseek-coder",
+      "codellama-70b": "meta-llama/llama-3.1-70b-instruct",
+      "starcoder2-15b": "qwen/qwen-2.5-coder-32b-instruct",
       
-      // Vision & Multimodal
-      "llava-1.6-34b": "liuhaotian/llava-v1.6-34b",
-      "llama-3.2-90b-vision": "meta-llama/llama-3.2-90b-vision-instruct",
+      // Vision & Multimodal (use vision-capable models)
+      "llava-1.6-34b": "google/gemini-2.5-flash",
+      "llama-3.2-90b-vision": "meta-llama/llama-3.2-90b-instruct",
       "qwen-vl-max": "qwen/qwen-vl-max",
-      "phi-3-vision": "microsoft/phi-3-vision-128k-instruct",
+      "phi-3-vision": "microsoft/phi-3-medium-128k-instruct",
+      "cogvlm2": "google/gemini-2.5-flash",
+      "internvl-2": "google/gemini-2.5-flash",
+      
+      // Image Generation
+      "sdxl-turbo": "flux/schnell",
+      "sdxl-1.0": "flux/dev",
+      "kandinsky-3": "kandinsky/kandinsky-3.1",
+      "playground-v2.5": "playground/v2.5",
+      
+      // Image Editing
+      "instruct-pix2pix": "img2img-google/flash-edit",
+      "controlnet-sdxl": "img2img-flux/kontext-pro",
+      
+      // Speech Recognition (STT)
+      "whisper-large-v3": "stt-openai/whisper-1",
+      "seamless-m4t": "stt-openai/whisper-1",
+      "canary-1b": "stt-openai/whisper-1",
+      
+      // Text-to-Speech (TTS)
+      "xtts-v2": "tts-openai/tts-1",
+      "bark": "tts-openai/tts-1",
+      "eleven-multilingual": "tts-openai/tts-1-hd",
+      
+      // Video Generation
+      "stable-video": "txt2vid-kling/standart",
+      "animatediff": "txt2vid-kling/standart",
+      
+      // Embeddings
+      "bge-large-en": "text-embedding-3-small",
+      "e5-mistral-7b": "text-embedding-3-large",
+      "nomic-embed-v1.5": "text-embedding-3-small",
+      
+      // Document AI / OCR
+      "layoutlm-v3": "utils/pdf-ocr-1.0",
+      "donut": "utils/extract-text-1.0",
+      "trocr-large": "utils/pdf-ocr-1.0",
+      "surya-ocr": "utils/pdf-ocr-1.0",
+      
+      // AI Agents (use advanced reasoning models)
+      "autogpt": "openai/gpt-5-mini",
+      "open-interpreter": "openai/gpt-5-mini",
+      
+      // Fine-tunable (use base models)
+      "llama-3.1-8b-ft": "meta-llama/llama-3.1-8b-instruct",
+      "mistral-7b-ft": "mistralai/mistral-7b-instruct",
+      "phi-2-ft": "microsoft/phi-3-mini-128k-instruct",
+      "gemma-7b-ft": "google/gemma-2-27b-it",
     };
 
     // Get the VseGPT model ID or use a default
     const vsegptModel = modelMapping[model] || "openai/gpt-4o-mini";
 
-    // For text-based models, use chat completions
-    if (["llm", "chat", "reasoning", "code", "multimodal"].includes(category)) {
+    // Handle different categories
+    
+    // 1. Text-based models (LLM, Chat, Reasoning, Code, Multimodal, Vision, Agents, Fine-tune)
+    if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
       const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
         method: "POST",
         headers: {
@@ -124,12 +173,203 @@ serve(async (req) => {
       );
     }
 
-    // For non-text models (image-gen, audio, etc.), return a placeholder message
+    // 2. Image Generation
+    if (category === "image-gen") {
+      const response = await fetch("https://api.vsegpt.ru/v1/images/generations", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${VSEGPT_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: vsegptModel,
+          prompt: prompt,
+          n: 1,
+          size: "1024x1024",
+          response_format: "url",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("VseGPT Image API error:", response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ error: "Failed to generate image" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data?.[0]?.url || data.data?.[0]?.b64_json;
+      
+      return new Response(
+        JSON.stringify({ 
+          response: imageUrl ? `🖼️ Image generated successfully!\n\nImage URL: ${imageUrl}` : "Image generation completed",
+          imageUrl: imageUrl,
+          model: vsegptModel,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 3. Image Editing
+    if (category === "image-edit") {
+      return new Response(
+        JSON.stringify({ 
+          response: `🎨 Image editing with ${model}.\n\nTo use image editing, please provide a base64-encoded image along with your edit instructions.\n\nVseGPT supports models like:\n- Google Flash Edit (img2img-google/flash-edit)\n- FLUX Kontext Pro (img2img-flux/kontext-pro)\n- Seedream 4.0 Edit\n\nThis feature requires image upload capability.`,
+          model: vsegptModel,
+          note: "Image editing requires image upload. API endpoint: v1/images/generations with image_url parameter."
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 4. Text-to-Speech (TTS)
+    if (category === "tts") {
+      const response = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${VSEGPT_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: vsegptModel,
+          input: prompt,
+          voice: "nova",
+          response_format: "mp3",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("VseGPT TTS API error:", response.status, errorText);
+        
+        if (response.status === 429) {
+          return new Response(
+            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
+            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        if (response.status === 402) {
+          return new Response(
+            JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }),
+            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ error: "Failed to generate speech" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // TTS returns binary audio data
+      return new Response(
+        JSON.stringify({ 
+          response: `🔊 Speech generated successfully!\n\nText: "${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}"\n\nModel: ${vsegptModel}\nVoice: nova\nFormat: MP3\n\nNote: Audio file is generated. In production, the binary audio data would be returned for playback.`,
+          model: vsegptModel,
+          audioGenerated: true,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 5. Speech Recognition (STT/Audio)
+    if (category === "audio") {
+      return new Response(
+        JSON.stringify({ 
+          response: `🎤 Speech Recognition with ${model}.\n\nTo transcribe audio, please upload an audio file (MP3, WAV, etc.).\n\nVseGPT supports:\n- OpenAI Whisper (stt-openai/whisper-1)\n- GPT-4o Transcribe (gpt-4o-transcribe)\n\nSupported formats: MP3, WAV, WEBM, M4A, OGG\nMax file size: 25MB\n\nThis feature requires audio file upload capability.`,
+          model: vsegptModel,
+          note: "Speech recognition requires audio file upload. API endpoint: v1/audio/transcriptions"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 6. Video Generation
+    if (category === "video") {
+      return new Response(
+        JSON.stringify({ 
+          response: `🎬 Video Generation with ${model}.\n\nPrompt: "${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}"\n\nVseGPT supports video generation models:\n- Kling Standard (txt2vid-kling/standart)\n- Kling Pro (txt2vid-kling/pro)\n- Sora 2 (txt2vid-sora/sora-2)\n- Veo 3.1 (txt2vid-veo/veo-3.1)\n\nVideo generation is an async process:\n1. Submit request to /v1/video/generate\n2. Poll /v1/video/status for completion\n3. Download video from returned URL\n\nNote: Video generation can take 1-5 minutes.`,
+          model: vsegptModel,
+          note: "Video generation is asynchronous and requires polling. Full implementation needs additional UI for async workflow."
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 7. Embeddings
+    if (category === "embedding") {
+      const response = await fetch("https://api.vsegpt.ru/v1/embeddings", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${VSEGPT_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: vsegptModel,
+          input: prompt,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("VseGPT Embeddings API error:", response.status, errorText);
+        
+        return new Response(
+          JSON.stringify({ error: "Failed to generate embeddings" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const data = await response.json();
+      const embedding = data.data?.[0]?.embedding;
+      const dimensions = embedding?.length || 0;
+      
+      return new Response(
+        JSON.stringify({ 
+          response: `📊 Embeddings generated successfully!\n\nInput: "${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}"\n\nModel: ${vsegptModel}\nDimensions: ${dimensions}\n\nFirst 5 values: [${embedding?.slice(0, 5).map((v: number) => v.toFixed(6)).join(', ')}...]`,
+          model: vsegptModel,
+          embedding: embedding,
+          dimensions: dimensions,
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 8. Document AI / OCR
+    if (category === "document" || category === "ocr") {
+      return new Response(
+        JSON.stringify({ 
+          response: `📄 Document Processing with ${model}.\n\nVseGPT supports document extraction:\n- Extract Text (utils/extract-text-1.0) - for PDF, DOCX\n- PDF OCR (utils/pdf-ocr-1.0) - for scanned documents\n\nTo process documents:\n1. Encode file as base64\n2. Send to /v1/extract_text endpoint\n3. Receive extracted text\n\nSupported formats: PDF, DOCX, images (for OCR)\n\nThis feature requires file upload capability.`,
+          model: vsegptModel,
+          note: "Document processing requires file upload. API endpoint: v1/extract_text"
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Default fallback for any other category
     return new Response(
       JSON.stringify({ 
-        response: `This is a demonstration for ${category} models. In production, this would connect to specialized APIs for ${category} tasks.`,
-        model: model,
-        note: "Text generation models are fully functional. Image, audio, and video models require specialized endpoints."
+        response: `This is a demonstration for ${category} models.\n\nModel: ${model}\nVseGPT mapping: ${vsegptModel}\n\nFor full functionality, additional UI components may be needed for file uploads, async workflows, or specialized inputs.`,
+        model: vsegptModel,
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
