@@ -31,6 +31,7 @@ interface ApiKey {
   id: string;
   name: string;
   key_prefix: string;
+  full_key: string | null;
   created_at: string;
   last_used_at: string | null;
   is_active: boolean;
@@ -96,6 +97,7 @@ const ApiKeysTab = () => {
       name: newKeyName.trim(),
       key_prefix: keyPrefix,
       key_hash: keyHash,
+      full_key: newKey,
     });
 
     if (error) {
@@ -308,14 +310,16 @@ const ApiKeysTab = () => {
                     <div className="font-mono text-sm text-muted-foreground bg-secondary/50 px-2 py-1 rounded flex-1 truncate">
                       {key.key_prefix}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0"
-                      onClick={() => copyToClipboard(key.key_prefix)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
+                    {key.full_key && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 shrink-0"
+                        onClick={() => copyToClipboard(key.full_key!)}
+                      >
+                        <Copy className="h-4 w-4" />
+                      </Button>
+                    )}
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Created: {new Date(key.created_at).toLocaleDateString()}</span>
@@ -334,14 +338,16 @@ const ApiKeysTab = () => {
                     <span className="font-mono text-xs text-muted-foreground truncate">
                       {key.key_prefix}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 shrink-0"
-                      onClick={() => copyToClipboard(key.key_prefix)}
-                    >
-                      <Copy className="h-3 w-3" />
-                    </Button>
+                    {key.full_key && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6 shrink-0"
+                        onClick={() => copyToClipboard(key.full_key!)}
+                      >
+                        <Copy className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                   <div className="col-span-2 text-xs text-muted-foreground">
                     {new Date(key.created_at).toLocaleDateString()}
@@ -385,14 +391,16 @@ const ApiKeysTab = () => {
                     <span className="font-mono text-sm text-muted-foreground truncate">
                       {key.key_prefix}
                     </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 shrink-0"
-                      onClick={() => copyToClipboard(key.key_prefix)}
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
+                    {key.full_key && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0"
+                        onClick={() => copyToClipboard(key.full_key!)}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                   <div className="col-span-2 text-sm text-muted-foreground">
                     {new Date(key.created_at).toLocaleDateString()}
