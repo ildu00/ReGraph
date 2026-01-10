@@ -9,6 +9,8 @@ import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle } from "lucide-re
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ModelPlaygroundProps {
   model: Model | null;
@@ -222,8 +224,59 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
                 )}
               </Button>
             </div>
-            <div className="bg-secondary/50 rounded-lg p-4 text-sm whitespace-pre-wrap max-h-[400px] overflow-y-auto">
-              {response}
+            <div className="bg-secondary/50 rounded-lg p-4 text-sm max-h-[400px] overflow-y-auto prose prose-sm prose-invert max-w-none prose-headings:text-foreground prose-p:text-foreground/90 prose-strong:text-foreground prose-code:text-primary prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-transparent prose-pre:p-0 prose-a:text-primary prose-ul:text-foreground/90 prose-ol:text-foreground/90 prose-li:text-foreground/90">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                components={{
+                  code({ inline, className, children, ...props }: any) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    const codeString = String(children).replace(/\n$/, "");
+                    
+                    if (!inline && match) {
+                      return (
+                        <CodeBlock 
+                          code={codeString} 
+                          language={match[1]} 
+                        />
+                      );
+                    }
+                    
+                    return (
+                      <code className={className} {...props}>
+                        {children}
+                      </code>
+                    );
+                  },
+                  pre({ children }: any) {
+                    return <>{children}</>;
+                  },
+                  table({ children }: any) {
+                    return (
+                      <div className="overflow-x-auto my-4">
+                        <table className="min-w-full border-collapse border border-border">
+                          {children}
+                        </table>
+                      </div>
+                    );
+                  },
+                  th({ children }: any) {
+                    return (
+                      <th className="border border-border bg-secondary/50 px-3 py-2 text-left font-semibold">
+                        {children}
+                      </th>
+                    );
+                  },
+                  td({ children }: any) {
+                    return (
+                      <td className="border border-border px-3 py-2">
+                        {children}
+                      </td>
+                    );
+                  },
+                }}
+              >
+                {response}
+              </ReactMarkdown>
             </div>
           </div>
         )}
