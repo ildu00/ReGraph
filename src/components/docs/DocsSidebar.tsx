@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { 
   Book, 
   Server, 
@@ -52,6 +53,42 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  // Keep the sidebar fixed while scrolling, but when the footer enters the viewport,
+  // lift the sidebar up so it never overlaps the footer.
+  const [footerOverlapPx, setFooterOverlapPx] = useState(0);
+
+  useEffect(() => {
+    const footerEl =
+      document.getElementById("site-footer") ??
+      document.querySelector("footer");
+
+    if (!footerEl) return;
+
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const rect = footerEl.getBoundingClientRect();
+      const overlap = Math.max(0, window.innerHeight - rect.top);
+      setFooterOverlapPx(Math.round(overlap));
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const handleClick = (sectionId: string) => {
     onSectionChange(sectionId);
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
@@ -77,7 +114,8 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
   return (
     <Sidebar 
       collapsible="icon" 
-      desktopMode="inline"
+      desktopMode="fixed"
+      style={footerOverlapPx ? { bottom: footerOverlapPx } : undefined}
       className="border-r border-border/50"
     >
       <SidebarContent className="pt-20">

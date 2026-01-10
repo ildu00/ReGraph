@@ -702,7 +702,9 @@ volumes:
         </SidebarProvider>
       </div>
 
-      <Footer />
+      <div id="site-footer">
+        <Footer />
+      </div>
     </div>
   );
 };
