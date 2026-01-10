@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { Github, Twitter, MessageCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -77,12 +78,21 @@ const Footer = ({ insetLeft }: FooterProps) => {
               <ul className="space-y-2">
                 {items.map((item) => (
                   <li key={item.label}>
-                    <a
-                      href={item.href}
-                      className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {item.label}
-                    </a>
+                    {item.href.startsWith("/") && !item.href.includes("#") ? (
+                      <Link
+                        to={item.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {item.label}
+                      </Link>
+                    ) : (
+                      <a
+                        href={item.href}
+                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {item.label}
+                      </a>
+                    )}
                   </li>
                 ))}
               </ul>
