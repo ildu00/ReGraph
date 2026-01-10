@@ -2,12 +2,41 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, Filter, ArrowUpDown, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ModelsSidebar from "@/components/models/ModelsSidebar";
 import ModelCard, { type Model } from "@/components/models/ModelCard";
 import ModelPlayground from "@/components/models/ModelPlayground";
+
+// Helper to parse price string to number for sorting
+const parsePrice = (pricing: string): number => {
+  const match = pricing.match(/\$?([\d.]+)/);
+  return match ? parseFloat(match[1]) : 0;
+};
+
+// Helper to parse latency string to milliseconds for sorting
+const parseLatency = (latency: string): number => {
+  if (latency === "Variable") return Infinity;
+  const match = latency.match(/([\d.]+)/);
+  if (!match) return Infinity;
+  const value = parseFloat(match[1]);
+  if (latency.includes("s/s")) return value * 1000;
+  if (latency.includes("ms")) return value;
+  if (latency.includes("s")) return value * 1000;
+  return value;
+};
+
+type SortOption = "default" | "price-asc" | "price-desc" | "latency-asc" | "latency-desc";
 
 const modelsData: Model[] = [
   // Large Language Models
@@ -134,23 +163,64 @@ const Models = () => {
   const [activeCategory, setActiveCategory] = useState("llm");
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedProvider, setSelectedProvider] = useState<string>("all");
+  const [sortOption, setSortOption] = useState<SortOption>("default");
+
+  // Get unique providers for current category
+  const availableProviders = useMemo(() => {
+    const categoryModels = modelsData.filter(m => m.category === activeCategory);
+    const providers = [...new Set(categoryModels.map(m => m.provider))];
+    return providers.sort();
+  }, [activeCategory]);
 
   const filteredModels = useMemo(() => {
-    return modelsData
+    let models = modelsData
       .filter(model => model.category === activeCategory)
       .filter(model => 
         searchQuery === "" ||
         model.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         model.provider.toLowerCase().includes(searchQuery.toLowerCase()) ||
         model.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
-  }, [activeCategory, searchQuery]);
+      )
+      .filter(model => selectedProvider === "all" || model.provider === selectedProvider);
+
+    // Apply sorting
+    switch (sortOption) {
+      case "price-asc":
+        models = [...models].sort((a, b) => parsePrice(a.pricing) - parsePrice(b.pricing));
+        break;
+      case "price-desc":
+        models = [...models].sort((a, b) => parsePrice(b.pricing) - parsePrice(a.pricing));
+        break;
+      case "latency-asc":
+        models = [...models].sort((a, b) => parseLatency(a.latency) - parseLatency(b.latency));
+        break;
+      case "latency-desc":
+        models = [...models].sort((a, b) => parseLatency(b.latency) - parseLatency(a.latency));
+        break;
+      default:
+        // Keep popular models first by default
+        models = [...models].sort((a, b) => (b.isPopular ? 1 : 0) - (a.isPopular ? 1 : 0));
+    }
+
+    return models;
+  }, [activeCategory, searchQuery, selectedProvider, sortOption]);
 
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
     setSelectedModel(null);
     setSearchQuery("");
+    setSelectedProvider("all");
+    setSortOption("default");
   };
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setSelectedProvider("all");
+    setSortOption("default");
+  };
+
+  const hasActiveFilters = searchQuery !== "" || selectedProvider !== "all" || sortOption !== "default";
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
@@ -188,15 +258,96 @@ const Models = () => {
                     <p className="text-muted-foreground">{categoryDescriptions[activeCategory]}</p>
                   </div>
 
-                  {/* Search */}
-                  <div className="relative mb-6">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search models by name, provider, or tags..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+                  {/* Search & Filters */}
+                  <div className="space-y-4 mb-6">
+                    {/* Search */}
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search models by name, provider, or tags..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+
+                    {/* Filters Row */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* Provider Filter */}
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 text-muted-foreground" />
+                        <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="All Providers" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Providers</SelectItem>
+                            {availableProviders.map((provider) => (
+                              <SelectItem key={provider} value={provider}>
+                                {provider}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Sort Options */}
+                      <div className="flex items-center gap-2">
+                        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                        <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+                          <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Sort by" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="default">Popular First</SelectItem>
+                            <SelectItem value="price-asc">Price: Low to High</SelectItem>
+                            <SelectItem value="price-desc">Price: High to Low</SelectItem>
+                            <SelectItem value="latency-asc">Latency: Fastest</SelectItem>
+                            <SelectItem value="latency-desc">Latency: Slowest</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Clear Filters */}
+                      {hasActiveFilters && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearFilters}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          Clear filters
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Active Filters Display */}
+                    {hasActiveFilters && (
+                      <div className="flex flex-wrap items-center gap-2">
+                        {selectedProvider !== "all" && (
+                          <Badge variant="secondary" className="gap-1">
+                            Provider: {selectedProvider}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => setSelectedProvider("all")}
+                            />
+                          </Badge>
+                        )}
+                        {sortOption !== "default" && (
+                          <Badge variant="secondary" className="gap-1">
+                            {sortOption === "price-asc" && "Price: Low to High"}
+                            {sortOption === "price-desc" && "Price: High to Low"}
+                            {sortOption === "latency-asc" && "Latency: Fastest"}
+                            {sortOption === "latency-desc" && "Latency: Slowest"}
+                            <X 
+                              className="h-3 w-3 cursor-pointer" 
+                              onClick={() => setSortOption("default")}
+                            />
+                          </Badge>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Models Grid */}
