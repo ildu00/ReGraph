@@ -2,8 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Sparkles, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, Sparkles } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ModelsSidebar from "@/components/models/ModelsSidebar";
@@ -177,17 +176,9 @@ const Models = () => {
                           animate={{ opacity: 1, scale: 1, y: 0 }}
                           exit={{ opacity: 0, scale: 0.95, y: 20 }}
                           transition={{ duration: 0.2 }}
-                          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                          className="w-full max-w-3xl max-h-[90vh] overflow-y-auto"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-2 right-2 z-10"
-                            onClick={() => setSelectedModel(null)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
                           <ModelPlayground 
                             model={selectedModel} 
                             onClose={() => setSelectedModel(null)}
