@@ -201,34 +201,36 @@ serve(async (req) => {
       };
 
       // VseGPT quirks: different image models support different params.
-      // 1) Start with explicit response_format=url (most compatible for direct display).
-      // 2) If API complains about response_format, retry without it.
-      // 3) Only if API explicitly says that ONLY b64_json is supported, retry with b64_json.
-      // 4) If API asks for aspect_ratio instead of size, retry with aspect_ratio.
-      let result = await attempt({ ...basePayload, response_format: "url" });
+      // IMPORTANT: docs' canonical example does NOT pass response_format at all, so we try without it first.
+      // Fallbacks:
+      // - some models want aspect_ratio instead of size
+      // - some models may require a specific response_format
+      let result = await attempt({ ...basePayload });
 
       if (!result.ok && result.resp.status === 400) {
         const t = (result.text || "").toLowerCase();
         const mentionsRf = t.includes("response_format");
-        const saysOnlyB64Supported =
-          t.includes("b64_json") && t.includes("only") && t.includes("supported") && !t.includes("not supported");
         const mentionsAspectRatio = t.includes("aspect_ratio");
+        const b64NotSupported = t.includes("b64_json") && t.includes("not supported");
 
-        if (mentionsRf) {
-          if (saysOnlyB64Supported) {
-            result = await attempt({ ...basePayload, response_format: "b64_json" });
-          } else {
-            // e.g. "Only response_format = b64_json is not supported" → don't send response_format at all.
-            result = await attempt({ ...basePayload });
-          }
-        } else if (mentionsAspectRatio) {
+        if (mentionsAspectRatio) {
           result = await attempt({
             model: vsegptModel,
             prompt,
             n: 1,
             aspect_ratio: "1:1",
-            response_format: "url",
           });
+        } else if (mentionsRf) {
+          // If response_format is required/validated by upstream, try url first (most convenient for UI)
+          result = await attempt({ ...basePayload, response_format: "url" });
+
+          // If upstream indicates b64_json is supported (and not explicitly rejected), try it as a fallback
+          if (!result.ok && result.resp.status === 400) {
+            const t2 = (result.text || "").toLowerCase();
+            if (t2.includes("response_format") && !b64NotSupported) {
+              result = await attempt({ ...basePayload, response_format: "b64_json" });
+            }
+          }
         }
       }
 
