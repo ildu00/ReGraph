@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.generate-deposit-address]
 verify_jwt = false
+
+[functions.request-withdrawal]
+verify_jwt = false
