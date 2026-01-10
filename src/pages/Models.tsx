@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Sparkles, Filter, ArrowUpDown, X } from "lucide-react";
+import { Search, Filter, ArrowUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -243,8 +243,7 @@ const Models = () => {
                 >
                   {/* Category Header */}
                   <div className="mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
-                      <Sparkles className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2">
                       {categoryTitles[activeCategory]}
                     </h1>
                     <p className="text-muted-foreground">{categoryDescriptions[activeCategory]}</p>
