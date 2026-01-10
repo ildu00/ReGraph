@@ -259,65 +259,61 @@ const Models = () => {
                   </div>
 
                   {/* Search & Filters */}
-                  <div className="space-y-4 mb-6">
-                    {/* Search */}
-                    <div className="relative">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search models by name, provider, or tags..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-10"
-                      />
-                    </div>
-
-                    {/* Filters Row */}
-                    <div className="flex flex-wrap items-center gap-3">
-                      {/* Provider Filter */}
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4 text-muted-foreground" />
-                        <Select value={selectedProvider} onValueChange={setSelectedProvider}>
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="All Providers" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Providers</SelectItem>
-                            {availableProviders.map((provider) => (
-                              <SelectItem key={provider} value={provider}>
-                                {provider}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                  <div className="mb-6 space-y-3">
+                    {/* Desktop: single row | Tablet: two rows | Mobile: three rows */}
+                    <div className="flex flex-col md:flex-row md:flex-wrap lg:flex-nowrap gap-3">
+                      {/* Search - full width on mobile, grows on desktop */}
+                      <div className="relative w-full md:w-auto md:flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search models..."
+                          value={searchQuery}
+                          onChange={(e) => setSearchQuery(e.target.value)}
+                          className="pl-10 w-full"
+                        />
                       </div>
 
-                      {/* Sort Options */}
-                      <div className="flex items-center gap-2">
-                        <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-                        <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
-                          <SelectTrigger className="w-[180px]">
-                            <SelectValue placeholder="Sort by" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="default">Popular First</SelectItem>
-                            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-                            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-                            <SelectItem value="latency-asc">Latency: Fastest</SelectItem>
-                            <SelectItem value="latency-desc">Latency: Slowest</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                      {/* Provider Filter - full width on mobile */}
+                      <Select value={selectedProvider} onValueChange={setSelectedProvider}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <SelectValue placeholder="All Providers" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Providers</SelectItem>
+                          {availableProviders.map((provider) => (
+                            <SelectItem key={provider} value={provider}>
+                              {provider}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {/* Sort Options - full width on mobile */}
+                      <Select value={sortOption} onValueChange={(v) => setSortOption(v as SortOption)}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <ArrowUpDown className="h-4 w-4 mr-2 text-muted-foreground" />
+                          <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="default">Popular First</SelectItem>
+                          <SelectItem value="price-asc">Price: Low → High</SelectItem>
+                          <SelectItem value="price-desc">Price: High → Low</SelectItem>
+                          <SelectItem value="latency-asc">Fastest</SelectItem>
+                          <SelectItem value="latency-desc">Slowest</SelectItem>
+                        </SelectContent>
+                      </Select>
 
                       {/* Clear Filters */}
                       {hasActiveFilters && (
                         <Button
-                          variant="ghost"
-                          size="sm"
+                          variant="outline"
+                          size="default"
                           onClick={clearFilters}
-                          className="text-muted-foreground hover:text-foreground"
+                          className="w-full md:w-auto"
                         >
-                          <X className="h-4 w-4 mr-1" />
-                          Clear filters
+                          <X className="h-4 w-4 mr-2" />
+                          Clear
                         </Button>
                       )}
                     </div>
@@ -327,7 +323,7 @@ const Models = () => {
                       <div className="flex flex-wrap items-center gap-2">
                         {selectedProvider !== "all" && (
                           <Badge variant="secondary" className="gap-1">
-                            Provider: {selectedProvider}
+                            {selectedProvider}
                             <X 
                               className="h-3 w-3 cursor-pointer" 
                               onClick={() => setSelectedProvider("all")}
@@ -336,10 +332,10 @@ const Models = () => {
                         )}
                         {sortOption !== "default" && (
                           <Badge variant="secondary" className="gap-1">
-                            {sortOption === "price-asc" && "Price: Low to High"}
-                            {sortOption === "price-desc" && "Price: High to Low"}
-                            {sortOption === "latency-asc" && "Latency: Fastest"}
-                            {sortOption === "latency-desc" && "Latency: Slowest"}
+                            {sortOption === "price-asc" && "Price ↑"}
+                            {sortOption === "price-desc" && "Price ↓"}
+                            {sortOption === "latency-asc" && "Fast"}
+                            {sortOption === "latency-desc" && "Slow"}
                             <X 
                               className="h-3 w-3 cursor-pointer" 
                               onClick={() => setSortOption("default")}
