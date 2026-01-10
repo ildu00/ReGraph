@@ -106,7 +106,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
             © 2026 ReGraph. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm text-muted-foreground">
-            <a href="#" className="hover:text-foreground transition-colors">Privacy Policy</a>
+            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
             <a href="#" className="hover:text-foreground transition-colors">Terms of Service</a>
             <a href="#" className="hover:text-foreground transition-colors">Cookie Policy</a>
           </div>
