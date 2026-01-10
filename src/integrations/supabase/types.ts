@@ -257,7 +257,10 @@ export type Database = {
           address: string
           created_at: string
           derivation_index: number | null
+          encrypted_private_key: string | null
           id: string
+          key_exported: boolean | null
+          key_exported_at: string | null
           network: Database["public"]["Enums"]["blockchain_network"]
           user_id: string
           wallet_id: string
@@ -266,7 +269,10 @@ export type Database = {
           address: string
           created_at?: string
           derivation_index?: number | null
+          encrypted_private_key?: string | null
           id?: string
+          key_exported?: boolean | null
+          key_exported_at?: string | null
           network: Database["public"]["Enums"]["blockchain_network"]
           user_id: string
           wallet_id: string
@@ -275,7 +281,10 @@ export type Database = {
           address?: string
           created_at?: string
           derivation_index?: number | null
+          encrypted_private_key?: string | null
           id?: string
+          key_exported?: boolean | null
+          key_exported_at?: string | null
           network?: Database["public"]["Enums"]["blockchain_network"]
           user_id?: string
           wallet_id?: string
