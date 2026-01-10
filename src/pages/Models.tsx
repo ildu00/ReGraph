@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
-import { Search, Sparkles } from "lucide-react";
+import { Search, Sparkles, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ModelsSidebar from "@/components/models/ModelsSidebar";
@@ -139,41 +140,62 @@ const Models = () => {
                     />
                   </div>
 
-                  {/* Models Grid + Playground */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                    {/* Models List */}
-                    <div className="space-y-4">
-                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-                        Available Models ({filteredModels.length})
-                      </h3>
-                      <div className="space-y-4 max-h-[calc(100vh-400px)] overflow-y-auto pr-2">
-                        {filteredModels.map((model) => (
-                          <ModelCard
-                            key={model.id}
-                            model={model}
-                            onSelect={setSelectedModel}
-                            isSelected={selectedModel?.id === model.id}
-                          />
-                        ))}
-                        {filteredModels.length === 0 && (
-                          <div className="text-center py-8 text-muted-foreground">
-                            No models found matching your search.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Playground */}
-                    <div className="lg:sticky lg:top-24 lg:self-start">
-                      <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
-                        Playground
-                      </h3>
-                      <ModelPlayground 
-                        model={selectedModel} 
-                        onClose={() => setSelectedModel(null)}
-                      />
+                  {/* Models Grid */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+                      Available Models ({filteredModels.length})
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                      {filteredModels.map((model) => (
+                        <ModelCard
+                          key={model.id}
+                          model={model}
+                          onSelect={setSelectedModel}
+                          isSelected={selectedModel?.id === model.id}
+                        />
+                      ))}
+                      {filteredModels.length === 0 && (
+                        <div className="col-span-full text-center py-8 text-muted-foreground">
+                          No models found matching your search.
+                        </div>
+                      )}
                     </div>
                   </div>
+
+                  {/* Playground Modal */}
+                  <AnimatePresence>
+                    {selectedModel && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm"
+                        onClick={() => setSelectedModel(null)}
+                      >
+                        <motion.div
+                          initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                          animate={{ opacity: 1, scale: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                          transition={{ duration: 0.2 }}
+                          className="relative w-full max-w-3xl max-h-[90vh] overflow-y-auto"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-2 right-2 z-10"
+                            onClick={() => setSelectedModel(null)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                          <ModelPlayground 
+                            model={selectedModel} 
+                            onClose={() => setSelectedModel(null)}
+                          />
+                        </motion.div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               </div>
             </main>

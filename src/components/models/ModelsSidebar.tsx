@@ -6,7 +6,17 @@ import {
   Mic,
   Database,
   Code,
-  Sparkles
+  Sparkles,
+  Video,
+  FileText,
+  Brain,
+  Wand2,
+  Music,
+  ScanSearch,
+  FileCode2,
+  Layers,
+  Bot,
+  Cpu
 } from "lucide-react";
 import {
   Sidebar,
@@ -26,14 +36,48 @@ interface ModelsSidebarProps {
   onCategoryChange: (categoryId: string) => void;
 }
 
-const modelCategories = [
-  { id: "llm", label: "Large Language Models", icon: MessageSquare, count: 12 },
-  { id: "image-gen", label: "Image Generation", icon: Image, count: 8 },
-  { id: "vision", label: "Vision & Understanding", icon: Eye, count: 5 },
-  { id: "audio", label: "Audio & Speech", icon: Mic, count: 6 },
-  { id: "embedding", label: "Embeddings", icon: Database, count: 4 },
-  { id: "code", label: "Code Generation", icon: Code, count: 7 },
-  { id: "multimodal", label: "Multimodal", icon: Sparkles, count: 3 },
+const categoryGroups = [
+  {
+    label: "Text & Language",
+    categories: [
+      { id: "llm", label: "Large Language Models", icon: MessageSquare, count: 6 },
+      { id: "chat", label: "Chat & Assistants", icon: Bot, count: 4 },
+      { id: "reasoning", label: "Reasoning & Analysis", icon: Brain, count: 3 },
+    ]
+  },
+  {
+    label: "Vision & Image",
+    categories: [
+      { id: "image-gen", label: "Image Generation", icon: Image, count: 4 },
+      { id: "vision", label: "Vision & Understanding", icon: Eye, count: 3 },
+      { id: "image-edit", label: "Image Editing", icon: Wand2, count: 2 },
+    ]
+  },
+  {
+    label: "Audio & Video",
+    categories: [
+      { id: "audio", label: "Speech Recognition", icon: Mic, count: 3 },
+      { id: "tts", label: "Text-to-Speech", icon: Music, count: 3 },
+      { id: "video", label: "Video Generation", icon: Video, count: 2 },
+    ]
+  },
+  {
+    label: "Specialized",
+    categories: [
+      { id: "code", label: "Code Generation", icon: Code, count: 3 },
+      { id: "embedding", label: "Embeddings", icon: Database, count: 3 },
+      { id: "document", label: "Document AI", icon: FileText, count: 2 },
+      { id: "ocr", label: "OCR & Extraction", icon: ScanSearch, count: 2 },
+    ]
+  },
+  {
+    label: "Advanced",
+    categories: [
+      { id: "multimodal", label: "Multimodal", icon: Sparkles, count: 3 },
+      { id: "agents", label: "AI Agents", icon: Cpu, count: 2 },
+      { id: "fine-tune", label: "Fine-tunable", icon: Layers, count: 4 },
+    ]
+  },
 ];
 
 const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps) => {
@@ -90,36 +134,38 @@ const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps)
           <SidebarTrigger />
         </div>
 
-        <SidebarGroup>
-          {!isCollapsed && (
-            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-              Model Types
-            </SidebarGroupLabel>
-          )}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {modelCategories.map((category) => (
-                <SidebarMenuItem key={category.id}>
-                  <SidebarMenuButton
-                    onClick={() => handleClick(category.id)}
-                    isActive={activeCategory === category.id}
-                    tooltip={category.label}
-                  >
-                    <category.icon className="h-4 w-4" />
-                    {!isCollapsed && (
-                      <div className="flex items-center justify-between w-full">
-                        <span>{category.label}</span>
-                        <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                          {category.count}
-                        </span>
-                      </div>
-                    )}
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {categoryGroups.map((group) => (
+          <SidebarGroup key={group.label}>
+            {!isCollapsed && (
+              <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+                {group.label}
+              </SidebarGroupLabel>
+            )}
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {group.categories.map((category) => (
+                  <SidebarMenuItem key={category.id}>
+                    <SidebarMenuButton
+                      onClick={() => handleClick(category.id)}
+                      isActive={activeCategory === category.id}
+                      tooltip={category.label}
+                    >
+                      <category.icon className="h-4 w-4" />
+                      {!isCollapsed && (
+                        <div className="flex items-center justify-between w-full">
+                          <span className="text-sm">{category.label}</span>
+                          <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                            {category.count}
+                          </span>
+                        </div>
+                      )}
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        ))}
       </SidebarContent>
     </Sidebar>
   );
