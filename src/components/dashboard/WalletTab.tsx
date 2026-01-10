@@ -414,7 +414,7 @@ Generated: ${new Date().toISOString()}
               <Wallet className="h-5 w-5 text-primary" />
               <CardTitle>Wallet Balance</CardTitle>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {Object.keys(cryptoPrices).length > 0 && (
                 <div className="hidden sm:flex items-center gap-3">
                   {[
@@ -429,19 +429,17 @@ Generated: ${new Date().toISOString()}
                       </span>
                     </div>
                   ))}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 w-5 p-0"
-                    onClick={fetchCryptoPrices}
-                    disabled={pricesLoading}
-                  >
-                    <RefreshCw className={`h-3 w-3 ${pricesLoading ? 'animate-spin' : ''}`} />
-                  </Button>
                 </div>
               )}
-              <Button variant="ghost" size="sm" onClick={fetchWalletData}>
-                <RefreshCw className="h-4 w-4" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  fetchWalletData();
+                  fetchCryptoPrices();
+                }}
+              >
+                <RefreshCw className={`h-4 w-4 ${pricesLoading ? 'animate-spin' : ''}`} />
               </Button>
             </div>
           </div>
