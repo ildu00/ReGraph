@@ -445,6 +445,23 @@ Generated: ${new Date().toISOString()}
           </div>
         </CardHeader>
         <CardContent>
+          {/* Mobile/Tablet crypto prices */}
+          {Object.keys(cryptoPrices).length > 0 && (
+            <div className="flex sm:hidden items-center justify-center gap-4 mb-4 pb-3 border-b border-border/50">
+              {[
+                { token: 'BTC', icon: '₿', color: 'text-orange-500' },
+                { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
+                { token: 'SOL', icon: '◎', color: 'text-purple-400' }
+              ].map(({ token, icon, color }) => (
+                <div key={token} className="flex items-center gap-1">
+                  <span className={`${color} text-xs font-bold`}>{icon}</span>
+                  <span className="text-xs text-muted-foreground">
+                    ${cryptoPrices[token]?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '—'}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
             <div>
               <p className="text-4xl font-bold text-foreground">
