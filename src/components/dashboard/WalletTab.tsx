@@ -427,16 +427,24 @@ Generated: ${new Date().toISOString()}
               </p>
               <p className="text-sm text-muted-foreground mt-1">Available for compute usage</p>
               {Object.keys(cryptoPrices).length > 0 && (
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {['BTC', 'ETH', 'SOL'].map((token) => (
-                    <Badge key={token} variant="outline" className="text-xs font-mono">
-                      {token}: ${cryptoPrices[token]?.toLocaleString() || '—'}
-                    </Badge>
+                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
+                  {[
+                    { token: 'BTC', icon: '₿', color: 'text-orange-500' },
+                    { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
+                    { token: 'SOL', icon: '◎', color: 'text-purple-400' }
+                  ].map(({ token, icon, color }) => (
+                    <div key={token} className="flex items-center gap-1.5">
+                      <span className={`${color} text-sm font-bold`}>{icon}</span>
+                      <span className="text-xs text-muted-foreground">{token}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        ${cryptoPrices[token]?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '—'}
+                      </span>
+                    </div>
                   ))}
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-5 px-1"
+                    className="h-6 w-6 p-0 ml-auto"
                     onClick={fetchCryptoPrices}
                     disabled={pricesLoading}
                   >
