@@ -11,10 +11,34 @@ type FooterProps = {
 
 const Footer = ({ insetLeft }: FooterProps) => {
   const links = {
-    Product: ["Features", "Pricing", "API Docs", "Models", "Changelog"],
-    Resources: ["Documentation", "Blog", "Community", "Status", "Support"],
-    Company: ["About", "Careers", "Contact", "Press", "Legal"],
-    Developers: ["GitHub", "Discord", "SDK Libraries", "API Reference", "Examples"],
+    Product: [
+      { label: "Features", href: "/#features" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "API Docs", href: "/docs" },
+      { label: "Models", href: "/models" },
+      { label: "Changelog", href: "#" },
+    ],
+    Resources: [
+      { label: "Documentation", href: "/docs" },
+      { label: "Blog", href: "#" },
+      { label: "Community", href: "#" },
+      { label: "Status", href: "#" },
+      { label: "Support", href: "#" },
+    ],
+    Company: [
+      { label: "About", href: "#" },
+      { label: "Careers", href: "#" },
+      { label: "Contact", href: "#" },
+      { label: "Press", href: "#" },
+      { label: "Legal", href: "#" },
+    ],
+    Developers: [
+      { label: "GitHub", href: "#" },
+      { label: "Discord", href: "#" },
+      { label: "SDK Libraries", href: "#" },
+      { label: "API Reference", href: "/docs#api-reference" },
+      { label: "Examples", href: "#" },
+    ],
   };
 
   return (
@@ -52,12 +76,12 @@ const Footer = ({ insetLeft }: FooterProps) => {
               <h4 className="font-semibold mb-4">{category}</h4>
               <ul className="space-y-2">
                 {items.map((item) => (
-                  <li key={item}>
+                  <li key={item.label}>
                     <a
-                      href="#"
+                      href={item.href}
                       className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      {item}
+                      {item.label}
                     </a>
                   </li>
                 ))}
