@@ -177,20 +177,20 @@ const TermsOfService = () => {
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">9. Disclaimer of Warranties</h2>
             <p className="text-muted-foreground leading-relaxed">
-              THE SERVICE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER 
-              EXPRESS OR IMPLIED. WE DO NOT WARRANT THAT THE SERVICE WILL BE UNINTERRUPTED, ERROR-FREE, 
-              OR SECURE. WE MAKE NO WARRANTIES REGARDING THE ACCURACY OR RELIABILITY OF ANY RESULTS 
-              OBTAINED FROM THE SERVICE.
+              The Service is provided "as is" and "as available" without warranties of any kind, either 
+              express or implied. We do not warrant that the Service will be uninterrupted, error-free, 
+              or secure. We make no warranties regarding the accuracy or reliability of any results 
+              obtained from the Service.
             </p>
           </section>
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">10. Limitation of Liability</h2>
             <p className="text-muted-foreground leading-relaxed">
-              TO THE MAXIMUM EXTENT PERMITTED BY LAW, REGRAPH SHALL NOT BE LIABLE FOR ANY INDIRECT, 
-              INCIDENTAL, SPECIAL, CONSEQUENTIAL, OR PUNITIVE DAMAGES, OR ANY LOSS OF PROFITS OR REVENUES, 
-              WHETHER INCURRED DIRECTLY OR INDIRECTLY. OUR TOTAL LIABILITY SHALL NOT EXCEED THE AMOUNT 
-              YOU PAID US IN THE TWELVE MONTHS PRECEDING THE CLAIM.
+              To the maximum extent permitted by law, ReGraph shall not be liable for any indirect, 
+              incidental, special, consequential, or punitive damages, or any loss of profits or revenues, 
+              whether incurred directly or indirectly. Our total liability shall not exceed the amount 
+              you paid us in the twelve months preceding the claim.
             </p>
           </section>
 
