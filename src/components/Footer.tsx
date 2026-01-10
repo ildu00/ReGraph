@@ -18,7 +18,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
   };
 
   return (
-    <footer className={cn("relative z-20 border-t border-border", insetLeft ? "bg-card" : "bg-card/30")}>
+    <footer className={cn("relative z-30 border-t border-border bg-card")}>
       <div className={cn("container px-4 py-16", insetLeft && "md:pl-64")}>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand */}
