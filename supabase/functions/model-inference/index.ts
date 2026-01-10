@@ -54,24 +54,24 @@ serve(async (req) => {
       "claude-3-sonnet": "anthropic/claude-sonnet-4",
       "deepseek-r1": "deepseek/deepseek-r1",
       
-      // Code Generation
-      "deepseek-coder-33b": "deepseek/deepseek-coder",
+      // Code Generation - using verified models
+      "deepseek-coder-33b": "qwen/qwen-2.5-coder-32b-instruct",
       "codellama-70b": "meta-llama/llama-3.1-70b-instruct",
       "starcoder2-15b": "qwen/qwen-2.5-coder-32b-instruct",
       
       // Vision & Multimodal (use vision-capable models)
-      "llava-1.6-34b": "google/gemini-2.5-flash",
+      "llava-1.6-34b": "vis-google/gemini-flash-1.5",
       "llama-3.2-90b-vision": "meta-llama/llama-3.2-90b-instruct",
       "qwen-vl-max": "qwen/qwen-vl-max",
       "phi-3-vision": "microsoft/phi-3-medium-128k-instruct",
-      "cogvlm2": "google/gemini-2.5-flash",
-      "internvl-2": "google/gemini-2.5-flash",
+      "cogvlm2": "vis-google/gemini-flash-1.5",
+      "internvl-2": "vis-google/gemini-flash-1.5",
       
-      // Image Generation
-      "sdxl-turbo": "flux/schnell",
-      "sdxl-1.0": "flux/dev",
-      "kandinsky-3": "kandinsky/kandinsky-3.1",
-      "playground-v2.5": "playground/v2.5",
+      // Image Generation - use dall-e-3 which is verified
+      "sdxl-turbo": "dall-e-3",
+      "sdxl-1.0": "dall-e-3",
+      "kandinsky-3": "dall-e-3",
+      "playground-v2.5": "dall-e-3",
       
       // Image Editing
       "instruct-pix2pix": "img2img-google/flash-edit",
