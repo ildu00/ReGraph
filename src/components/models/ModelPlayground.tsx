@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle } from "lucide-react";
+import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
@@ -22,6 +22,7 @@ const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-i
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([512]);
@@ -45,6 +46,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     
     setIsLoading(true);
     setResponse("");
+    setImageUrl(null);
     setError(null);
 
     try {
@@ -81,7 +83,11 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       setResponse(data.response);
       
-      if (data.usage) {
+      // Handle image URL from image generation models
+      if (data.imageUrl) {
+        setImageUrl(data.imageUrl);
+        toast.success("Image generated successfully!");
+      } else if (data.usage) {
         toast.success(`Generated! Tokens: ${data.usage.total_tokens || 'N/A'}`);
       }
     } catch (err) {
@@ -211,8 +217,47 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
+        {/* Generated Image */}
+        {imageUrl && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Generated Image</Label>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => window.open(imageUrl, '_blank')}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                </Button>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  asChild
+                >
+                  <a href={imageUrl} download="generated-image.png">
+                    <Download className="h-4 w-4" />
+                  </a>
+                </Button>
+              </div>
+            </div>
+            <div className="relative bg-secondary/50 rounded-lg p-4 flex items-center justify-center">
+              <img 
+                src={imageUrl} 
+                alt="Generated image" 
+                className="max-w-full max-h-[500px] rounded-lg shadow-lg object-contain"
+                onError={(e) => {
+                  console.error("Failed to load image:", imageUrl);
+                  e.currentTarget.style.display = 'none';
+                  setError("Failed to load the generated image. The URL may have expired.");
+                }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Response */}
-        {response && (
+        {response && !imageUrl && (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Response</Label>
