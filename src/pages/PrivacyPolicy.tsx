@@ -1,7 +1,72 @@
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Loader2, Send, CheckCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
+const contactSchema = z.object({
+  name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
+  email: z.string().trim().email("Please enter a valid email").max(255),
+  message: z.string().trim().min(10, "Message must be at least 10 characters").max(2000),
+});
+
+type ContactFormData = z.infer<typeof contactSchema>;
+
 const PrivacyPolicy = () => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+  const { user } = useAuth();
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ContactFormData>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: user?.email || "",
+      message: "",
+    },
+  });
+
+  const onSubmit = async (data: ContactFormData) => {
+    setIsSubmitting(true);
+
+    try {
+      const { error } = await supabase.from("support_requests").insert({
+        user_id: user?.id || null,
+        name: data.name,
+        email: data.email,
+        subject: "Privacy Policy Inquiry",
+        message: data.message,
+      });
+
+      if (error) throw error;
+
+      setIsSuccess(true);
+      toast.success("Message sent successfully!");
+      reset();
+
+      setTimeout(() => setIsSuccess(false), 5000);
+    } catch (error) {
+      console.error("Error submitting:", error);
+      toast.error("Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -112,7 +177,7 @@ const PrivacyPolicy = () => {
               <li>Withdraw consent at any time</li>
             </ul>
             <p className="text-muted-foreground leading-relaxed mt-4">
-              To exercise these rights, please contact us at privacy@regraph.tech.
+              To exercise these rights, please use the contact form below.
             </p>
           </section>
 
@@ -145,13 +210,83 @@ const PrivacyPolicy = () => {
 
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">12. Contact Us</h2>
-            <p className="text-muted-foreground leading-relaxed">
-              If you have any questions about this Privacy Policy or our data practices, please contact us at:
+            <p className="text-muted-foreground leading-relaxed mb-4">
+              If you have any questions about this Privacy Policy or our data practices, please use the form below:
             </p>
-            <div className="mt-4 p-4 bg-secondary/50 rounded-lg">
-              <p className="text-foreground font-medium">ReGraph</p>
-              <p className="text-muted-foreground">Email: privacy@regraph.tech</p>
-              <p className="text-muted-foreground">Support: support@regraph.tech</p>
+            
+            <div className="mt-6 p-6 bg-secondary/30 rounded-lg border border-border not-prose">
+              {isSuccess ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <CheckCircle className="h-12 w-12 text-green-500 mb-4" />
+                  <h3 className="text-lg font-semibold mb-2">Message Sent!</h3>
+                  <p className="text-muted-foreground">
+                    Thank you for reaching out. We'll respond to your inquiry soon.
+                  </p>
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="name">Your Name *</Label>
+                      <Input
+                        id="name"
+                        placeholder="John Doe"
+                        {...register("name")}
+                        className={errors.name ? "border-destructive" : ""}
+                      />
+                      {errors.name && (
+                        <p className="text-xs text-destructive">{errors.name.message}</p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Your Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        placeholder="john@example.com"
+                        {...register("email")}
+                        className={errors.email ? "border-destructive" : ""}
+                      />
+                      {errors.email && (
+                        <p className="text-xs text-destructive">{errors.email.message}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="message">Your Message *</Label>
+                    <Textarea
+                      id="message"
+                      placeholder="Please describe your question or request..."
+                      rows={4}
+                      {...register("message")}
+                      className={errors.message ? "border-destructive" : ""}
+                    />
+                    {errors.message && (
+                      <p className="text-xs text-destructive">{errors.message.message}</p>
+                    )}
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full glow-primary"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        <Send className="mr-2 h-4 w-4" />
+                        Send Message
+                      </>
+                    )}
+                  </Button>
+                </form>
+              )}
             </div>
           </section>
         </div>
