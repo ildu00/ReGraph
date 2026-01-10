@@ -10,7 +10,7 @@ import ModelCard, { type Model } from "@/components/models/ModelCard";
 import ModelPlayground from "@/components/models/ModelPlayground";
 
 const modelsData: Model[] = [
-  // LLM
+  // Large Language Models
   { id: "llama-3.1-70b", name: "LLaMA 3.1 70B", provider: "Meta", category: "llm", description: "State-of-the-art open-source LLM with excellent reasoning and instruction following capabilities.", contextLength: 128000, pricing: "$0.0008/1K", latency: "~800ms", tags: ["Chat", "Reasoning", "Multilingual"], isPopular: true },
   { id: "llama-3.1-8b", name: "LLaMA 3.1 8B", provider: "Meta", category: "llm", description: "Efficient smaller model ideal for quick responses and cost-effective deployments.", contextLength: 128000, pricing: "$0.0002/1K", latency: "~200ms", tags: ["Fast", "Efficient", "Chat"] },
   { id: "mistral-large", name: "Mistral Large", provider: "Mistral AI", category: "llm", description: "Powerful model with strong multilingual and code generation capabilities.", contextLength: 32000, pricing: "$0.0006/1K", latency: "~600ms", tags: ["Code", "Multilingual", "Reasoning"], isPopular: true },
@@ -18,56 +18,116 @@ const modelsData: Model[] = [
   { id: "qwen-72b", name: "Qwen 72B", provider: "Alibaba", category: "llm", description: "High-performance model with strong Chinese and English language support.", contextLength: 32000, pricing: "$0.0005/1K", latency: "~650ms", tags: ["Bilingual", "Reasoning", "Chat"] },
   { id: "gemma-2-27b", name: "Gemma 2 27B", provider: "Google", category: "llm", description: "Lightweight yet capable model from Google's Gemma family.", contextLength: 8192, pricing: "$0.0003/1K", latency: "~300ms", tags: ["Efficient", "Instruction", "Safe"] },
   
+  // Chat & Assistants
+  { id: "claude-3-opus", name: "Claude 3 Opus", provider: "Anthropic", category: "chat", description: "Most capable Claude model for complex tasks and nuanced conversations.", contextLength: 200000, pricing: "$0.015/1K", latency: "~1.2s", tags: ["Advanced", "Safe", "Long Context"], isPopular: true },
+  { id: "gpt-4-turbo", name: "GPT-4 Turbo", provider: "OpenAI", category: "chat", description: "Latest GPT-4 with improved instruction following and knowledge cutoff.", contextLength: 128000, pricing: "$0.01/1K", latency: "~900ms", tags: ["Versatile", "Vision", "JSON Mode"], isPopular: true },
+  { id: "gemini-pro", name: "Gemini Pro", provider: "Google", category: "chat", description: "Google's conversational AI with multimodal capabilities.", contextLength: 32000, pricing: "$0.0005/1K", latency: "~500ms", tags: ["Multimodal", "Fast", "Reasoning"] },
+  { id: "command-r-plus", name: "Command R+", provider: "Cohere", category: "chat", description: "Enterprise-grade conversational AI with RAG optimization.", contextLength: 128000, pricing: "$0.003/1K", latency: "~600ms", tags: ["RAG", "Enterprise", "Grounded"] },
+
+  // Reasoning & Analysis
+  { id: "o1-preview", name: "O1 Preview", provider: "OpenAI", category: "reasoning", description: "Advanced reasoning model that thinks step-by-step for complex problems.", contextLength: 128000, pricing: "$0.015/1K", latency: "~3s", tags: ["Chain-of-Thought", "Math", "Logic"], isPopular: true },
+  { id: "claude-3-sonnet", name: "Claude 3 Sonnet", provider: "Anthropic", category: "reasoning", description: "Balanced model excelling at analysis and structured reasoning.", contextLength: 200000, pricing: "$0.003/1K", latency: "~700ms", tags: ["Analysis", "Code", "Research"] },
+  { id: "deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek", category: "reasoning", description: "Specialized reasoning model with mathematical and logical capabilities.", contextLength: 64000, pricing: "$0.0014/1K", latency: "~2s", tags: ["Math", "Science", "Reasoning"] },
+  
   // Image Generation
   { id: "sdxl-turbo", name: "SDXL Turbo", provider: "Stability AI", category: "image-gen", description: "Ultra-fast image generation with distilled diffusion for real-time applications.", pricing: "$0.002/img", latency: "~1.5s", tags: ["Fast", "Photorealistic", "1024px"], isPopular: true },
   { id: "sdxl-1.0", name: "Stable Diffusion XL", provider: "Stability AI", category: "image-gen", description: "High-quality image generation with fine-grained control over outputs.", pricing: "$0.004/img", latency: "~3s", tags: ["High Quality", "ControlNet", "LoRA"] },
   { id: "kandinsky-3", name: "Kandinsky 3", provider: "Sber", category: "image-gen", description: "Advanced diffusion model with excellent text rendering and composition.", pricing: "$0.003/img", latency: "~2.5s", tags: ["Text-in-Image", "Artistic", "1024px"] },
   { id: "playground-v2.5", name: "Playground v2.5", provider: "Playground", category: "image-gen", description: "Optimized for aesthetic quality and human preference alignment.", pricing: "$0.003/img", latency: "~2s", tags: ["Aesthetic", "Creative", "1024px"] },
   
-  // Vision
+  // Vision & Understanding
   { id: "llava-1.6-34b", name: "LLaVA 1.6 34B", provider: "LLaVA Team", category: "vision", description: "Multimodal vision-language model for image understanding and analysis.", contextLength: 4096, pricing: "$0.001/img", latency: "~1s", tags: ["Image Analysis", "VQA", "OCR"], isPopular: true },
   { id: "cogvlm2", name: "CogVLM 2", provider: "Tsinghua", category: "vision", description: "State-of-the-art vision-language model with deep visual understanding.", contextLength: 8192, pricing: "$0.0008/img", latency: "~800ms", tags: ["Vision", "Reasoning", "Grounding"] },
   { id: "internvl-2", name: "InternVL 2", provider: "OpenGVLab", category: "vision", description: "Open-source vision-language foundation model with strong OCR.", contextLength: 32000, pricing: "$0.0006/img", latency: "~600ms", tags: ["OCR", "Document", "Charts"] },
+
+  // Image Editing
+  { id: "instruct-pix2pix", name: "InstructPix2Pix", provider: "Stability AI", category: "image-edit", description: "Edit images using natural language instructions.", pricing: "$0.003/img", latency: "~2s", tags: ["Editing", "Instructions", "Creative"], isPopular: true },
+  { id: "controlnet-sdxl", name: "ControlNet SDXL", provider: "Stability AI", category: "image-edit", description: "Precise image manipulation with structural control.", pricing: "$0.004/img", latency: "~3s", tags: ["Pose", "Depth", "Canny"] },
   
-  // Audio
+  // Speech Recognition
   { id: "whisper-large-v3", name: "Whisper Large V3", provider: "OpenAI", category: "audio", description: "Industry-leading speech recognition with 99+ language support.", pricing: "$0.006/min", latency: "~0.5s/s", tags: ["STT", "Multilingual", "Robust"], isPopular: true },
-  { id: "xtts-v2", name: "XTTS v2", provider: "Coqui", category: "audio", description: "Zero-shot voice cloning and multilingual text-to-speech.", pricing: "$0.008/min", latency: "~0.3s/s", tags: ["TTS", "Voice Clone", "17 Languages"] },
-  { id: "bark", name: "Bark", provider: "Suno", category: "audio", description: "Text-to-audio generation including speech, music, and sound effects.", pricing: "$0.01/min", latency: "~2s", tags: ["TTS", "Music", "SFX"] },
+  { id: "seamless-m4t", name: "SeamlessM4T", provider: "Meta", category: "audio", description: "Multilingual speech recognition and translation in one model.", pricing: "$0.005/min", latency: "~0.6s/s", tags: ["Translation", "100 Languages", "Streaming"] },
+  { id: "canary-1b", name: "Canary 1B", provider: "NVIDIA", category: "audio", description: "Fast and accurate ASR optimized for production workloads.", pricing: "$0.003/min", latency: "~0.2s/s", tags: ["Fast", "Accurate", "Production"] },
+
+  // Text-to-Speech
+  { id: "xtts-v2", name: "XTTS v2", provider: "Coqui", category: "tts", description: "Zero-shot voice cloning and multilingual text-to-speech.", pricing: "$0.008/min", latency: "~0.3s/s", tags: ["Voice Clone", "17 Languages", "Natural"], isPopular: true },
+  { id: "bark", name: "Bark", provider: "Suno", category: "tts", description: "Text-to-audio generation including speech, music, and sound effects.", pricing: "$0.01/min", latency: "~2s", tags: ["Expressive", "Music", "SFX"] },
+  { id: "eleven-multilingual", name: "ElevenLabs Turbo", provider: "ElevenLabs", category: "tts", description: "Ultra-realistic voice synthesis with emotional control.", pricing: "$0.015/min", latency: "~0.1s/s", tags: ["Realistic", "Emotions", "Fast"] },
+
+  // Video Generation
+  { id: "stable-video", name: "Stable Video Diffusion", provider: "Stability AI", category: "video", description: "Generate short video clips from images or text prompts.", pricing: "$0.05/video", latency: "~30s", tags: ["Image-to-Video", "4 seconds", "576p"], isPopular: true },
+  { id: "animatediff", name: "AnimateDiff", provider: "Community", category: "video", description: "Animate static images with motion modules.", pricing: "$0.03/video", latency: "~20s", tags: ["Animation", "LoRA", "Creative"] },
+  
+  // Code Generation
+  { id: "deepseek-coder-33b", name: "DeepSeek Coder 33B", provider: "DeepSeek", category: "code", description: "Specialized code generation model trained on 2T tokens of code.", contextLength: 16000, pricing: "$0.0004/1K", latency: "~400ms", tags: ["87 Languages", "Code Gen", "Fill-in-Middle"], isPopular: true },
+  { id: "codellama-70b", name: "Code Llama 70B", provider: "Meta", category: "code", description: "Large-scale code model with infilling and instruction capabilities.", contextLength: 100000, pricing: "$0.0007/1K", latency: "~700ms", tags: ["Instruct", "Python", "Long Context"] },
+  { id: "starcoder2-15b", name: "StarCoder2 15B", provider: "BigCode", category: "code", description: "Efficient code model trained on The Stack v2 dataset.", contextLength: 16384, pricing: "$0.0003/1K", latency: "~300ms", tags: ["619 Languages", "Efficient", "Open"] },
   
   // Embeddings
   { id: "bge-large-en", name: "BGE Large EN", provider: "BAAI", category: "embedding", description: "High-performance English text embeddings for semantic search.", pricing: "$0.0001/1K", latency: "~50ms", tags: ["Search", "1024-dim", "English"], isPopular: true },
   { id: "e5-mistral-7b", name: "E5 Mistral 7B", provider: "Microsoft", category: "embedding", description: "LLM-based embeddings with superior semantic understanding.", pricing: "$0.0003/1K", latency: "~100ms", tags: ["Semantic", "4096-dim", "Multilingual"] },
   { id: "nomic-embed-v1.5", name: "Nomic Embed v1.5", provider: "Nomic AI", category: "embedding", description: "Open-source embeddings with Matryoshka representation learning.", pricing: "$0.0001/1K", latency: "~40ms", tags: ["Open Source", "768-dim", "Flexible"] },
-  
-  // Code
-  { id: "deepseek-coder-33b", name: "DeepSeek Coder 33B", provider: "DeepSeek", category: "code", description: "Specialized code generation model trained on 2T tokens of code.", contextLength: 16000, pricing: "$0.0004/1K", latency: "~400ms", tags: ["87 Languages", "Code Gen", "Fill-in-Middle"], isPopular: true },
-  { id: "codellama-70b", name: "Code Llama 70B", provider: "Meta", category: "code", description: "Large-scale code model with infilling and instruction capabilities.", contextLength: 100000, pricing: "$0.0007/1K", latency: "~700ms", tags: ["Instruct", "Python", "Long Context"] },
-  { id: "starcoder2-15b", name: "StarCoder2 15B", provider: "BigCode", category: "code", description: "Efficient code model trained on The Stack v2 dataset.", contextLength: 16384, pricing: "$0.0003/1K", latency: "~300ms", tags: ["619 Languages", "Efficient", "Open"] },
+
+  // Document AI
+  { id: "layoutlm-v3", name: "LayoutLM v3", provider: "Microsoft", category: "document", description: "Document understanding with layout-aware language modeling.", contextLength: 512, pricing: "$0.002/page", latency: "~500ms", tags: ["Forms", "Tables", "Layout"], isPopular: true },
+  { id: "donut", name: "Donut", provider: "Naver", category: "document", description: "OCR-free document understanding transformer.", contextLength: 2560, pricing: "$0.001/page", latency: "~300ms", tags: ["OCR-Free", "Receipts", "Fast"] },
+
+  // OCR & Extraction
+  { id: "trocr-large", name: "TrOCR Large", provider: "Microsoft", category: "ocr", description: "Transformer-based OCR for printed and handwritten text.", pricing: "$0.001/page", latency: "~200ms", tags: ["Handwritten", "Printed", "Accurate"], isPopular: true },
+  { id: "surya-ocr", name: "Surya OCR", provider: "VikParuchuri", category: "ocr", description: "Multilingual OCR with line detection and reading order.", pricing: "$0.0005/page", latency: "~150ms", tags: ["90 Languages", "Layout", "Open Source"] },
   
   // Multimodal
   { id: "llama-3.2-90b-vision", name: "LLaMA 3.2 90B Vision", provider: "Meta", category: "multimodal", description: "Latest multimodal model with vision, reasoning, and instruction following.", contextLength: 128000, pricing: "$0.001/1K", latency: "~1s", tags: ["Vision", "Reasoning", "Multilingual"], isPopular: true },
   { id: "qwen-vl-max", name: "Qwen VL Max", provider: "Alibaba", category: "multimodal", description: "Advanced vision-language model with strong document understanding.", contextLength: 32000, pricing: "$0.0008/1K", latency: "~800ms", tags: ["Document AI", "Charts", "Bilingual"] },
   { id: "phi-3-vision", name: "Phi-3 Vision", provider: "Microsoft", category: "multimodal", description: "Compact multimodal model optimized for edge deployment.", contextLength: 4096, pricing: "$0.0002/1K", latency: "~150ms", tags: ["Compact", "Edge", "Fast"] },
+
+  // AI Agents
+  { id: "autogpt", name: "AutoGPT Agent", provider: "Community", category: "agents", description: "Autonomous AI agent for complex multi-step task execution.", contextLength: 128000, pricing: "$0.02/task", latency: "Variable", tags: ["Autonomous", "Planning", "Tools"], isPopular: true },
+  { id: "open-interpreter", name: "Open Interpreter", provider: "Community", category: "agents", description: "Code-executing AI agent with system access capabilities.", contextLength: 128000, pricing: "$0.01/task", latency: "Variable", tags: ["Code Exec", "Local", "Flexible"] },
+
+  // Fine-tunable
+  { id: "llama-3.1-8b-ft", name: "LLaMA 3.1 8B (Fine-tune)", provider: "Meta", category: "fine-tune", description: "Efficient base model optimized for custom fine-tuning.", contextLength: 128000, pricing: "$0.0001/1K", latency: "~200ms", tags: ["LoRA", "QLoRA", "Fast"], isPopular: true },
+  { id: "mistral-7b-ft", name: "Mistral 7B (Fine-tune)", provider: "Mistral AI", category: "fine-tune", description: "High-performance base model for domain-specific training.", contextLength: 32000, pricing: "$0.0001/1K", latency: "~150ms", tags: ["Instruct", "Base", "Efficient"] },
+  { id: "phi-2-ft", name: "Phi-2 (Fine-tune)", provider: "Microsoft", category: "fine-tune", description: "Compact model ideal for edge deployment after fine-tuning.", contextLength: 2048, pricing: "$0.00005/1K", latency: "~50ms", tags: ["Compact", "Edge", "2.7B"] },
+  { id: "gemma-7b-ft", name: "Gemma 7B (Fine-tune)", provider: "Google", category: "fine-tune", description: "Google's open model optimized for custom training workflows.", contextLength: 8192, pricing: "$0.00008/1K", latency: "~100ms", tags: ["Open", "Safe", "Research"] },
 ];
 
 const categoryTitles: Record<string, string> = {
   llm: "Large Language Models",
+  chat: "Chat & Assistants",
+  reasoning: "Reasoning & Analysis",
   "image-gen": "Image Generation",
   vision: "Vision & Understanding",
-  audio: "Audio & Speech",
-  embedding: "Embeddings",
+  "image-edit": "Image Editing",
+  audio: "Speech Recognition",
+  tts: "Text-to-Speech",
+  video: "Video Generation",
   code: "Code Generation",
+  embedding: "Embeddings",
+  document: "Document AI",
+  ocr: "OCR & Extraction",
   multimodal: "Multimodal Models",
+  agents: "AI Agents",
+  "fine-tune": "Fine-tunable Models",
 };
 
 const categoryDescriptions: Record<string, string> = {
-  llm: "Text generation, chat, reasoning, and instruction-following models for natural language tasks.",
-  "image-gen": "Generate images from text prompts using diffusion and GAN-based models.",
-  vision: "Analyze and understand images, documents, charts, and visual content.",
-  audio: "Speech recognition, text-to-speech, and audio generation models.",
-  embedding: "Convert text to vector representations for semantic search and similarity.",
-  code: "Specialized models for code generation, completion, and understanding.",
-  multimodal: "Models that can process and generate across multiple modalities (text, image, audio).",
+  llm: "Foundation language models for text generation and understanding.",
+  chat: "Conversational AI optimized for dialogue and assistant applications.",
+  reasoning: "Models specialized in complex problem-solving and analytical tasks.",
+  "image-gen": "Generate images from text prompts using diffusion models.",
+  vision: "Analyze and understand images, documents, and visual content.",
+  "image-edit": "Edit and manipulate existing images with AI assistance.",
+  audio: "Convert speech to text with high accuracy across languages.",
+  tts: "Generate natural-sounding speech from text input.",
+  video: "Create video content from text or image prompts.",
+  code: "Specialized models for code generation and completion.",
+  embedding: "Convert text to vectors for semantic search and similarity.",
+  document: "Extract and understand information from documents.",
+  ocr: "Optical character recognition for text extraction from images.",
+  multimodal: "Models that process multiple modalities (text, image, audio).",
+  agents: "Autonomous AI agents for complex multi-step tasks.",
+  "fine-tune": "Base models optimized for custom fine-tuning.",
 };
 
 const Models = () => {
