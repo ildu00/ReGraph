@@ -77,6 +77,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
   return (
     <Sidebar 
       collapsible="icon" 
+      desktopMode="inline"
       className="border-r border-border/50"
     >
       <SidebarContent className="pt-20">
