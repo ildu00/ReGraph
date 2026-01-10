@@ -6,9 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Play, Loader2, Copy, Check, AlertCircle, Wifi, WifiOff } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Play, Loader2, Copy, Check, AlertCircle, Wifi, WifiOff, Wallet, DollarSign } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import CodeBlock from "@/components/CodeBlock";
+import { toast } from "sonner";
 
 type Endpoint = "inference" | "training" | "batch" | "models";
 
@@ -63,6 +65,11 @@ const ApiPlayground = () => {
   const [copied, setCopied] = useState(false);
   const [useLiveApi, setUseLiveApi] = useState(false);
   const [latency, setLatency] = useState<number | null>(null);
+  const [billingInfo, setBillingInfo] = useState<{
+    charged: number;
+    providerCredited: number;
+    newBalance: number;
+  } | null>(null);
 
   const generateCurlCommand = () => {
     const baseUrl = "https://api.regraph.tech";
@@ -214,6 +221,7 @@ const ApiPlayground = () => {
     setResponse(null);
     setResponseStatus(null);
     setLatency(null);
+    setBillingInfo(null);
 
     const startTime = performance.now();
 
@@ -231,7 +239,8 @@ const ApiPlayground = () => {
         });
 
         const endTime = performance.now();
-        setLatency(Math.round(endTime - startTime));
+        const requestLatency = Math.round(endTime - startTime);
+        setLatency(requestLatency);
 
         if (fnError) {
           throw new Error(fnError.message);
@@ -243,6 +252,44 @@ const ApiPlayground = () => {
         } else {
           setResponseStatus(data.status);
           setResponse(JSON.stringify(data.data, null, 2));
+
+          // Process billing after successful API call
+          if (data.status >= 200 && data.status < 300) {
+            try {
+              // Calculate tokens used from response or estimate
+              const tokensUsed = data.data?.usage?.total_tokens || 
+                Math.floor((prompt.split(" ").length * 1.3) + maxTokens[0]);
+              
+              const { data: billingData, error: billingError } = await supabase.functions.invoke("process-api-usage", {
+                body: {
+                  api_key: apiKey,
+                  endpoint: config.path,
+                  tokens_used: tokensUsed,
+                  compute_time_ms: requestLatency
+                }
+              });
+
+              if (billingError) {
+                console.error("Billing error:", billingError);
+                toast.error("Failed to process billing");
+              } else if (billingData?.error) {
+                if (billingData.error === "Insufficient balance") {
+                  toast.error(`Insufficient balance. Required: $${billingData.required?.toFixed(4)}, Available: $${billingData.available?.toFixed(2)}`);
+                } else {
+                  toast.error(billingData.error);
+                }
+              } else if (billingData?.success) {
+                setBillingInfo({
+                  charged: billingData.charged,
+                  providerCredited: billingData.provider_credited,
+                  newBalance: billingData.new_balance
+                });
+                toast.success(`Charged $${billingData.charged.toFixed(4)} • Balance: $${billingData.new_balance.toFixed(2)}`);
+              }
+            } catch (billingErr) {
+              console.error("Billing processing error:", billingErr);
+            }
+          }
         }
       } else {
         // Simulate API call
@@ -251,6 +298,15 @@ const ApiPlayground = () => {
         setLatency(Math.round(endTime - startTime));
         setResponseStatus(200);
         setResponse(JSON.stringify(getMockResponse(), null, 2));
+        
+        // Show mock billing info in simulation mode
+        const mockTokens = Math.floor((prompt.split(" ").length * 1.3) + maxTokens[0]);
+        const mockCost = (mockTokens / 1000) * 0.001 + (800 / 1000) * 0.0001;
+        setBillingInfo({
+          charged: mockCost,
+          providerCredited: mockCost * 0.8,
+          newBalance: 10.00 - mockCost // Mock balance
+        });
       }
     } catch (err) {
       const endTime = performance.now();
@@ -448,6 +504,33 @@ const ApiPlayground = () => {
             <p className="font-medium text-red-400">Error</p>
             <p className="text-sm text-red-400/80">{error}</p>
           </div>
+        </div>
+      )}
+
+      {/* Billing Info */}
+      {billingInfo && (
+        <div className="glass-card p-4 rounded-xl border-l-4 border-l-primary">
+          <div className="flex items-center gap-2 mb-3">
+            <Wallet className="h-5 w-5 text-primary" />
+            <h4 className="font-semibold">Billing Summary</h4>
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Charged</p>
+              <p className="font-bold text-red-400">-${billingInfo.charged.toFixed(4)}</p>
+            </div>
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">Provider Earned</p>
+              <p className="font-bold text-green-400">${billingInfo.providerCredited.toFixed(4)}</p>
+            </div>
+            <div className="text-center p-3 bg-muted/50 rounded-lg">
+              <p className="text-xs text-muted-foreground mb-1">New Balance</p>
+              <p className="font-bold">${billingInfo.newBalance.toFixed(2)}</p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            80% goes to compute provider • 20% platform fee
+          </p>
         </div>
       )}
 
