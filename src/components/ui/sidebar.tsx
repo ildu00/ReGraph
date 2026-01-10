@@ -188,32 +188,31 @@ const Sidebar = React.forwardRef<
       );
     }
 
-    // Desktop: inline mode (non-fixed) so the sidebar scrolls away before the footer.
+    // Desktop: inline mode – sidebar is sticky (scrolls with page) but stops at footer
     if (desktopMode === "inline") {
       return (
         <div
           ref={ref}
-          className="group peer hidden text-sidebar-foreground md:block"
+          className={cn(
+            "group peer hidden text-sidebar-foreground md:block self-start sticky top-16 z-10",
+            "w-[--sidebar-width] transition-[width] duration-200 ease-linear",
+            "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+          )}
           data-state={state}
           data-collapsible={state === "collapsed" ? collapsible : ""}
           data-variant={variant}
           data-side={side}
+          {...props}
         >
           <div
+            data-sidebar="sidebar"
             className={cn(
-              "sticky top-16 z-10 hidden h-[calc(100vh-4rem)] w-[--sidebar-width] md:flex",
-              "transition-[width] duration-200 ease-linear",
-              "group-data-[collapsible=icon]:w-[--sidebar-width-icon]",
+              "flex flex-col bg-sidebar max-h-[calc(100vh-4rem)] overflow-y-auto",
+              "group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow",
               className,
             )}
-            {...props}
           >
-            <div
-              data-sidebar="sidebar"
-              className="flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow"
-            >
-              {children}
-            </div>
+            {children}
           </div>
         </div>
       );
