@@ -702,7 +702,7 @@ volumes:
         </SidebarProvider>
       </div>
 
-      <div id="site-footer">
+      <div id="site-footer" className="relative z-30 bg-card">
         <Footer />
       </div>
     </div>
