@@ -68,7 +68,7 @@ serve(async (req) => {
       "internvl-2": "vis-google/gemini-flash-1.5",
       
       // Image Generation - use verified VseGPT models
-      "sdxl-turbo": "img-stable/stable-diffusion-xl-lightning",
+      "sdxl-turbo": "img-google/flash-25",
       "sdxl-1.0": "img-flux/juggernaut-lightning",
       "kandinsky-3": "img-bytedance/seedream-v4",
       "playground-v2.5": "img-google/flash-25",
