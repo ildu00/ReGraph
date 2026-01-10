@@ -24,7 +24,12 @@ import {
   Clock,
   XCircle,
   Send,
-  AlertTriangle
+  AlertTriangle,
+  Download,
+  Key,
+  Eye,
+  EyeOff,
+  ShieldAlert
 } from "lucide-react";
 
 type BlockchainNetwork = 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'solana' | 'bitcoin' | 'tron';
@@ -45,6 +50,7 @@ interface DepositAddress {
   network: BlockchainNetwork;
   address: string;
   created_at: string;
+  key_exported?: boolean;
 }
 
 interface WalletTransaction {
@@ -116,11 +122,36 @@ const WalletTab = () => {
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [withdrawErrors, setWithdrawErrors] = useState<{ address?: string; amount?: string }>({});
 
+  // Export keys state
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
+  const [exportingAddressId, setExportingAddressId] = useState<string | null>(null);
+  const [exportedKey, setExportedKey] = useState<{ network: string; address: string; private_key: string } | null>(null);
+  const [showPrivateKey, setShowPrivateKey] = useState(false);
+  const [exportConfirmed, setExportConfirmed] = useState(false);
+
+  // Crypto prices state
+  const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
+  const [pricesLoading, setPricesLoading] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchWalletData();
+      fetchCryptoPrices();
     }
   }, [user]);
+
+  const fetchCryptoPrices = async () => {
+    setPricesLoading(true);
+    try {
+      const response = await supabase.functions.invoke('crypto-prices');
+      if (response.error) throw response.error;
+      setCryptoPrices(response.data?.prices || {});
+    } catch (error) {
+      console.error('Error fetching crypto prices:', error);
+    } finally {
+      setPricesLoading(false);
+    }
+  };
 
   const fetchWalletData = async () => {
     if (!user) return;
@@ -308,6 +339,63 @@ const WalletTab = () => {
     }
   };
 
+  const handleExportKeys = async (addressId: string) => {
+    setExportingAddressId(addressId);
+    try {
+      const response = await supabase.functions.invoke('export-wallet-keys', {
+        body: { address_id: addressId }
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+
+      setExportedKey(response.data);
+      setShowPrivateKey(false);
+      fetchWalletData(); // Refresh to update key_exported status
+    } catch (error: any) {
+      console.error('Export keys error:', error);
+      toast.error(error.message || 'Failed to export wallet keys');
+    } finally {
+      setExportingAddressId(null);
+    }
+  };
+
+  const downloadKeysAsFile = () => {
+    if (!exportedKey) return;
+    
+    const content = `ReGraph Wallet Export
+====================
+Network: ${exportedKey.network}
+Address: ${exportedKey.address}
+Private Key: ${exportedKey.private_key}
+
+⚠️ WARNING: Keep this file secure! 
+Anyone with access to the private key can control your funds.
+Do not share this file with anyone.
+
+Generated: ${new Date().toISOString()}
+`;
+    
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `regraph-wallet-${exportedKey.network}-${Date.now()}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast.success('Wallet keys downloaded');
+  };
+
+  const resetExportDialog = () => {
+    setExportDialogOpen(false);
+    setExportedKey(null);
+    setShowPrivateKey(false);
+    setExportConfirmed(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -338,6 +426,24 @@ const WalletTab = () => {
                 ${wallet?.balance_usd?.toFixed(2) || '0.00'}
               </p>
               <p className="text-sm text-muted-foreground mt-1">Available for compute usage</p>
+              {Object.keys(cryptoPrices).length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {['BTC', 'ETH', 'SOL'].map((token) => (
+                    <Badge key={token} variant="outline" className="text-xs font-mono">
+                      {token}: ${cryptoPrices[token]?.toLocaleString() || '—'}
+                    </Badge>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 px-1"
+                    onClick={fetchCryptoPrices}
+                    disabled={pricesLoading}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${pricesLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="flex gap-2">
               <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
@@ -630,12 +736,164 @@ const WalletTab = () => {
         </CardContent>
       </Card>
 
+      {/* Export Keys Dialog */}
+      <Dialog open={exportDialogOpen} onOpenChange={(open) => !open && resetExportDialog()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Key className="h-5 w-5 text-primary" />
+              Export Wallet Keys
+            </DialogTitle>
+            <DialogDescription>
+              Export your private keys to use with external wallet software
+            </DialogDescription>
+          </DialogHeader>
+          
+          {!exportedKey ? (
+            <div className="space-y-4 mt-4">
+              <div className="bg-destructive/10 border border-destructive/20 p-4 rounded-lg">
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="h-5 w-5 text-destructive mt-0.5 shrink-0" />
+                  <div className="space-y-2">
+                    <p className="font-medium text-destructive">Security Warning</p>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• Anyone with your private key can control your funds</li>
+                      <li>• Never share your private keys with anyone</li>
+                      <li>• Store exported keys in a secure location</li>
+                      <li>• ReGraph will not be able to recover lost keys</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="export-confirm"
+                  checked={exportConfirmed}
+                  onChange={(e) => setExportConfirmed(e.target.checked)}
+                  className="rounded border-input"
+                />
+                <Label htmlFor="export-confirm" className="text-sm cursor-pointer">
+                  I understand the risks and want to export my keys
+                </Label>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Select wallet to export</Label>
+                {depositAddresses.map((addr) => {
+                  const config = networkConfig[addr.network];
+                  return (
+                    <Button
+                      key={addr.id}
+                      variant="outline"
+                      className="w-full justify-between"
+                      disabled={!exportConfirmed || exportingAddressId === addr.id}
+                      onClick={() => handleExportKeys(addr.id)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`w-6 h-6 rounded-full ${config.color} flex items-center justify-center text-white text-xs font-bold`}>
+                          {config.icon}
+                        </div>
+                        <span>{config.name}</span>
+                        {addr.key_exported && (
+                          <Badge variant="secondary" className="text-xs">Exported</Badge>
+                        )}
+                      </div>
+                      {exportingAddressId === addr.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Download className="h-4 w-4" />
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 mt-4">
+              <div className="bg-muted/50 p-3 rounded-lg space-y-3">
+                <div>
+                  <Label className="text-xs text-muted-foreground">Network</Label>
+                  <p className="font-medium capitalize">{exportedKey.network}</p>
+                </div>
+                <div>
+                  <Label className="text-xs text-muted-foreground">Address</Label>
+                  <code className="text-xs block break-all">{exportedKey.address}</code>
+                </div>
+                <div>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs text-muted-foreground">Private Key</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2"
+                      onClick={() => setShowPrivateKey(!showPrivateKey)}
+                    >
+                      {showPrivateKey ? (
+                        <EyeOff className="h-3 w-3" />
+                      ) : (
+                        <Eye className="h-3 w-3" />
+                      )}
+                    </Button>
+                  </div>
+                  <code className="text-xs block break-all font-mono bg-background p-2 rounded mt-1">
+                    {showPrivateKey ? exportedKey.private_key : '•'.repeat(64)}
+                  </code>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 gap-2"
+                  onClick={() => {
+                    navigator.clipboard.writeText(exportedKey.private_key);
+                    toast.success('Private key copied');
+                  }}
+                >
+                  <Copy className="h-4 w-4" />
+                  Copy Key
+                </Button>
+                <Button
+                  className="flex-1 gap-2"
+                  onClick={downloadKeysAsFile}
+                >
+                  <Download className="h-4 w-4" />
+                  Download
+                </Button>
+              </div>
+
+              <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg">
+                <p className="text-xs text-muted-foreground">
+                  <AlertTriangle className="h-3 w-3 inline mr-1" />
+                  Store this securely. We cannot recover your keys if lost.
+                </p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Deposit Addresses Quick View */}
       {depositAddresses.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">Your Deposit Addresses</CardTitle>
-            <CardDescription>Send crypto to these addresses to top up your balance</CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg">Your Deposit Addresses</CardTitle>
+                <CardDescription>Send crypto to these addresses to top up your balance</CardDescription>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="gap-2"
+                onClick={() => setExportDialogOpen(true)}
+              >
+                <Key className="h-4 w-4" />
+                Export Keys
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="grid gap-3 md:grid-cols-2">
@@ -651,7 +909,12 @@ const WalletTab = () => {
                         {config.icon}
                       </div>
                       <div>
-                        <p className="font-medium text-sm">{config.name}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-sm">{config.name}</p>
+                          {addr.key_exported && (
+                            <Badge variant="secondary" className="text-[10px]">Key exported</Badge>
+                          )}
+                        </div>
                         <code className="text-xs text-muted-foreground max-w-[180px] truncate block">
                           {addr.address}
                         </code>
