@@ -69,13 +69,18 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       if (!resp.ok) {
         if (resp.status === 429) {
-          setError("Rate limit exceeded. Please wait a moment and try again.");
+          const msg = data?.error || "Rate limit exceeded. Please wait a moment and try again.";
+          setError(msg);
           toast.error("Rate limit exceeded");
         } else if (resp.status === 402) {
-          setError("Insufficient credits. Please top up your account.");
+          const msg = data?.error || "Insufficient credits. Please top up your account.";
+          setError(msg);
           toast.error("Insufficient credits");
         } else {
-          setError(data.error || "Failed to get response from the model");
+          // Surface upstream details from the backend (helps debug VseGPT param/model issues)
+          const upstream = data?.upstream_body ? `\n\nUpstream: ${data.upstream_body}` : "";
+          const msg = (data?.error || "Failed to get response from the model") + upstream;
+          setError(msg);
           toast.error("Inference failed");
         }
         return;
