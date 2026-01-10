@@ -130,7 +130,7 @@ const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps)
       className="border-r border-border/50"
     >
       <SidebarContent className="pt-20">
-        <div className="px-3 mb-2">
+        <div className="px-3 mb-2 hidden md:block">
           <SidebarTrigger />
         </div>
 
