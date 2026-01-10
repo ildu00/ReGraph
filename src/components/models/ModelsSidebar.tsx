@@ -81,7 +81,7 @@ const categoryGroups = [
 ];
 
 const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps) => {
-  const { state } = useSidebar();
+  const { state, isMobile, setOpenMobile } = useSidebar();
   const isCollapsed = state === "collapsed";
 
   const [footerOverlapPx, setFooterOverlapPx] = useState(0);
@@ -120,6 +120,10 @@ const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps)
 
   const handleClick = (categoryId: string) => {
     onCategoryChange(categoryId);
+    // Close sidebar on mobile after selection
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -129,7 +133,7 @@ const ModelsSidebar = ({ activeCategory, onCategoryChange }: ModelsSidebarProps)
       style={footerOverlapPx ? { bottom: footerOverlapPx } : undefined}
       className="border-r border-border/50"
     >
-      <SidebarContent className="pt-20">
+      <SidebarContent className="pt-4 md:pt-20">
         <div className="px-3 mb-2 hidden md:block">
           <SidebarTrigger />
         </div>
