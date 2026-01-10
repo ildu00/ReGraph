@@ -3,8 +3,8 @@ import { cn } from "@/lib/utils";
 
 type FooterProps = {
   /**
-   * Adds left padding on desktop to account for a fixed left sidebar.
-   * Useful on /docs where the sidebar is fixed.
+   * On pages with a fixed left sidebar, add left padding to the inner container
+   * so footer content doesn't sit under the sidebar.
    */
   insetLeft?: boolean;
 };
@@ -18,12 +18,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
   };
 
   return (
-    <footer
-      className={cn(
-        "relative border-t border-border",
-        insetLeft ? "bg-card z-0" : "bg-card/30 z-40",
-      )}
-    >
+    <footer className={cn("relative z-0 border-t border-border", insetLeft ? "bg-card" : "bg-card/30")}>
       <div className={cn("container px-4 py-16", insetLeft && "md:pl-64")}>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand */}
