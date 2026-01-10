@@ -75,16 +75,21 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
   return (
     <Card className="glass-card">
-      <CardHeader className="flex flex-row items-center justify-between pb-4">
-        <div>
-          <CardTitle className="text-xl flex items-center gap-2">
+      <CardHeader className="flex flex-row items-start justify-between gap-4 pb-4">
+        <div className="min-w-0 flex-1">
+          <CardTitle className="text-xl flex items-center gap-2 flex-wrap">
             {model.name}
             <Badge variant="secondary">{model.provider}</Badge>
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">{model.description}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={onClose}
+          className="shrink-0 h-10 w-10 md:h-8 md:w-8"
+        >
+          <X className="h-5 w-5 md:h-4 md:w-4" />
         </Button>
       </CardHeader>
 
