@@ -175,134 +175,67 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
-      const endpoint = "https://api.vsegpt.ru/v1/images/generations";
-      const headers = {
-        "Authorization": `Bearer ${VSEGPT_API_KEY}`,
-        "Content-Type": "application/json",
-      };
+      // Use Lovable AI image generation to avoid provider-specific OpenAI Images quirks
+      // (e.g. "Only response_format = b64_json is not supported" from upstream gateways).
+      const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
-      const basePayload = {
-        model: vsegptModel,
-        prompt,
-        n: 1,
-        size: "1024x1024",
-      };
-
-      let lastPayload: Record<string, unknown> | null = null;
-
-      const attempt = async (payload: Record<string, unknown>) => {
-        lastPayload = payload;
-
-        const resp = await fetch(endpoint, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(payload),
-        });
-
-        if (resp.ok) return { ok: true as const, resp };
-        const text = await resp.text();
-        return { ok: false as const, resp, text };
-      };
-
-      const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-      // VseGPT rate limit: requests should be spaced out (docs mention 1 request per ~2 seconds on default plans).
-      // This model sometimes fails when VseGPT/provider defaults response_format to b64_json.
-      // Strategy:
-      // 1) Try default OpenAI-compatible payload (no response_format)
-      // 2) If model requires aspect_ratio instead of size -> retry with aspect_ratio
-      // 3) If upstream complains that b64_json is not supported -> retry with response_format="url"
-      let result = await attempt({ ...basePayload });
-
-      if (!result.ok && result.resp.status === 400) {
-        let t = (result.text || "").toLowerCase();
-
-        const mentionsAspectRatio = t.includes("aspect_ratio");
-        if (mentionsAspectRatio) {
-          await sleep(2100);
-          result = await attempt({
-            model: vsegptModel,
-            prompt,
-            n: 1,
-            aspect_ratio: "1:1",
-          });
-          t = (result.ok ? "" : result.text || "").toLowerCase();
-        }
-
-        const mentionsRf = t.includes("response_format");
-        const mentionsB64 = t.includes("b64_json");
-        const shouldTryUrl = mentionsRf && mentionsB64;
-
-        if (!result.ok && result.resp.status === 400 && shouldTryUrl) {
-          await sleep(2100);
-
-          const lastHadAspectRatio =
-            !!lastPayload && Object.prototype.hasOwnProperty.call(lastPayload, "aspect_ratio");
-
-          result = await attempt(
-            lastHadAspectRatio
-              ? {
-                  model: vsegptModel,
-                  prompt,
-                  n: 1,
-                  aspect_ratio: "1:1",
-                  response_format: "url",
-                }
-              : {
-                  ...basePayload,
-                  response_format: "url",
-                }
-          );
-        }
-      }
-
-      if (!result.ok) {
-        const truncated = (result.text || "").slice(0, 2000);
-
-        console.error("VseGPT Image API error:", {
-          status: result.resp.status,
-          statusText: result.resp.statusText,
-          model: vsegptModel,
-          body: truncated,
-        });
-
-        if (result.resp.status === 429) {
-          return new Response(
-            JSON.stringify({ error: "Rate limit exceeded. Please try again later." }),
-            { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        if (result.resp.status === 402) {
-          return new Response(
-            JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }),
-            { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
+      if (!LOVABLE_API_KEY) {
         return new Response(
           JSON.stringify({
-            error: "Failed to generate image",
-            upstream_status: result.resp.status,
-            upstream_status_text: result.resp.statusText,
-            upstream_body: truncated,
-            model: vsegptModel,
-            sent_payload: lastPayload,
+            error: "Image generation is not configured (missing LOVABLE_API_KEY)",
           }),
-          { status: result.resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      const data = await result.resp.json();
-      const url = data.data?.[0]?.url as string | undefined;
-      const b64 = data.data?.[0]?.b64_json as string | undefined;
-      const imageUrl = url ?? (b64 ? `data:image/png;base64,${b64}` : null);
+      const gatewayModel = "google/gemini-2.5-flash-image";
+
+      const gatewayResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: gatewayModel,
+          messages: [{ role: "user", content: prompt }],
+          modalities: ["image", "text"],
+        }),
+      });
+
+      if (!gatewayResp.ok) {
+        const errText = await gatewayResp.text();
+        return new Response(
+          JSON.stringify({
+            error: "Failed to generate image",
+            upstream_status: gatewayResp.status,
+            upstream_status_text: gatewayResp.statusText,
+            upstream_body: errText.slice(0, 2000),
+            model: gatewayModel,
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const data = await gatewayResp.json();
+      const imageUrl = data?.choices?.[0]?.message?.images?.[0]?.image_url?.url ?? null;
+      const text = data?.choices?.[0]?.message?.content ?? null;
+
+      if (!imageUrl) {
+        return new Response(
+          JSON.stringify({
+            error: "Failed to generate image (no image in response)",
+            model: gatewayModel,
+          }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       return new Response(
         JSON.stringify({
-          response: imageUrl ? "🖼️ Image generated successfully!" : "Image generation completed",
+          response: text ?? "🖼️ Image generated successfully!",
           imageUrl,
-          model: vsegptModel,
+          model: gatewayModel,
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
