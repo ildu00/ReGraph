@@ -256,6 +256,7 @@ export type Database = {
         Row: {
           address: string
           created_at: string
+          derivation_index: number | null
           id: string
           network: Database["public"]["Enums"]["blockchain_network"]
           user_id: string
@@ -264,6 +265,7 @@ export type Database = {
         Insert: {
           address: string
           created_at?: string
+          derivation_index?: number | null
           id?: string
           network: Database["public"]["Enums"]["blockchain_network"]
           user_id: string
@@ -272,6 +274,7 @@ export type Database = {
         Update: {
           address?: string
           created_at?: string
+          derivation_index?: number | null
           id?: string
           network?: Database["public"]["Enums"]["blockchain_network"]
           user_id?: string
@@ -375,7 +378,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_next_derivation_index: {
+        Args: { p_network: Database["public"]["Enums"]["blockchain_network"] }
+        Returns: number
+      }
     }
     Enums: {
       blockchain_network:
