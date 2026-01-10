@@ -137,9 +137,10 @@ volumes:
               onSectionChange={setActiveSection} 
             />
             
-            <main className="flex-1 min-w-0">
-              <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
-              <motion.div
+            <div className="flex-1 min-w-0 flex flex-col">
+              <main className="flex-1 min-w-0">
+                <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
+                  <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
@@ -695,15 +696,15 @@ volumes:
                     </Button>
                   </div>
                 </section>
-              </motion.div>
-              </div>
+                  </motion.div>
+                </div>
             </main>
+            <Footer />
           </div>
-        </SidebarProvider>
-      </div>
-
-      <Footer />
+        </div>
+      </SidebarProvider>
     </div>
+  </div>
   );
 };
 
