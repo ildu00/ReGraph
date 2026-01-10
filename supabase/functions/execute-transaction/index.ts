@@ -1,5 +1,6 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { ethers } from 'https://esm.sh/ethers@6.13.4'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,25 +17,8 @@ const getRpcUrl = (network: string, alchemyKey: string): string => {
     optimism: `https://opt-mainnet.g.alchemy.com/v2/${alchemyKey}`,
     // Public RPCs (free but less reliable)
     bsc: 'https://bsc-dataseed1.binance.org',
-    solana: 'https://api.mainnet-beta.solana.com',
-    tron: 'https://api.trongrid.io',
   }
   return rpcUrls[network] || ''
-}
-
-// Convert hex string to Uint8Array
-function hexToBytes(hex: string): Uint8Array {
-  const cleanHex = hex.startsWith('0x') ? hex.slice(2) : hex
-  const bytes = new Uint8Array(cleanHex.length / 2)
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(cleanHex.substr(i * 2, 2), 16)
-  }
-  return bytes
-}
-
-// Convert Uint8Array to hex string
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('')
 }
 
 // Helper to convert Uint8Array to ArrayBuffer
@@ -69,181 +53,115 @@ async function decryptPrivateKey(encryptedData: string, encryptionKey: string): 
   return new TextDecoder().decode(decrypted)
 }
 
-// Simple keccak256 hash (for Ethereum signing)
-async function sha256(data: Uint8Array): Promise<Uint8Array> {
-  const hashBuffer = await crypto.subtle.digest('SHA-256', toArrayBuffer(data))
-  return new Uint8Array(hashBuffer)
-}
-
-// RLP encode for Ethereum transactions
-function rlpEncode(input: any): Uint8Array {
-  if (typeof input === 'string') {
-    const bytes = hexToBytes(input)
-    return rlpEncodeBytes(bytes)
-  }
-  if (input instanceof Uint8Array) {
-    return rlpEncodeBytes(input)
-  }
-  if (Array.isArray(input)) {
-    const encoded = input.map(item => rlpEncode(item))
-    const totalLength = encoded.reduce((sum, arr) => sum + arr.length, 0)
-    if (totalLength <= 55) {
-      const result = new Uint8Array(1 + totalLength)
-      result[0] = 0xc0 + totalLength
-      let offset = 1
-      for (const arr of encoded) {
-        result.set(arr, offset)
-        offset += arr.length
-      }
-      return result
-    } else {
-      const lengthBytes = encodeLength(totalLength)
-      const result = new Uint8Array(1 + lengthBytes.length + totalLength)
-      result[0] = 0xf7 + lengthBytes.length
-      result.set(lengthBytes, 1)
-      let offset = 1 + lengthBytes.length
-      for (const arr of encoded) {
-        result.set(arr, offset)
-        offset += arr.length
-      }
-      return result
-    }
-  }
-  return new Uint8Array([0x80])
-}
-
-function rlpEncodeBytes(bytes: Uint8Array): Uint8Array {
-  if (bytes.length === 1 && bytes[0] < 0x80) {
-    return bytes
-  }
-  if (bytes.length <= 55) {
-    const result = new Uint8Array(1 + bytes.length)
-    result[0] = 0x80 + bytes.length
-    result.set(bytes, 1)
-    return result
-  }
-  const lengthBytes = encodeLength(bytes.length)
-  const result = new Uint8Array(1 + lengthBytes.length + bytes.length)
-  result[0] = 0xb7 + lengthBytes.length
-  result.set(lengthBytes, 1)
-  result.set(bytes, 1 + lengthBytes.length)
-  return result
-}
-
-function encodeLength(length: number): Uint8Array {
-  const hex = length.toString(16)
-  const paddedHex = hex.length % 2 ? '0' + hex : hex
-  return hexToBytes(paddedHex)
-}
-
-// Convert number to minimal hex bytes
-function numberToBytes(num: bigint | number): Uint8Array {
-  if (num === 0 || num === 0n) return new Uint8Array([])
-  const hex = (typeof num === 'bigint' ? num : BigInt(num)).toString(16)
-  const paddedHex = hex.length % 2 ? '0' + hex : hex
-  return hexToBytes(paddedHex)
-}
-
-// Send EVM transaction
+// Send EVM transaction using ethers.js
 async function sendEvmTransaction(
   rpcUrl: string,
   privateKey: string,
   toAddress: string,
-  amountWei: bigint,
-  fromAddress: string
-): Promise<{ txHash: string }> {
-  // Get nonce
-  const nonceResponse = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'eth_getTransactionCount',
-      params: [fromAddress, 'pending'],
-      id: 1
-    })
-  })
-  const nonceData = await nonceResponse.json()
-  const nonce = parseInt(nonceData.result, 16)
-
-  // Get gas price
-  const gasPriceResponse = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'eth_gasPrice',
-      params: [],
-      id: 2
-    })
-  })
-  const gasPriceData = await gasPriceResponse.json()
-  const gasPrice = BigInt(gasPriceData.result)
-
-  // Get chain ID
-  const chainIdResponse = await fetch(rpcUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      jsonrpc: '2.0',
-      method: 'eth_chainId',
-      params: [],
-      id: 3
-    })
-  })
-  const chainIdData = await chainIdResponse.json()
-  const chainId = parseInt(chainIdData.result, 16)
-
-  const gasLimit = 21000n // Standard ETH transfer
-
-  // Create unsigned transaction for EIP-155
-  const txData = [
-    numberToBytes(nonce),
-    numberToBytes(gasPrice),
-    numberToBytes(gasLimit),
-    hexToBytes(toAddress),
-    numberToBytes(amountWei),
-    new Uint8Array([]), // data
-    numberToBytes(chainId),
-    new Uint8Array([]),
-    new Uint8Array([])
-  ]
-
-  const rlpEncoded = rlpEncode(txData)
-  const txHash = await sha256(rlpEncoded)
-
-  // Note: Full ECDSA signing requires secp256k1 library
-  // For production, use a proper signing library
-  // This is a simplified placeholder that would need proper implementation
+  amount: string,
+  isToken: boolean = false,
+  tokenAddress?: string,
+  tokenDecimals: number = 18
+): Promise<{ txHash: string; gasUsed: string; effectiveGasPrice: string }> {
+  // Create provider and wallet
+  const provider = new ethers.JsonRpcProvider(rpcUrl)
   
-  console.log('Transaction prepared:', {
-    nonce,
-    gasPrice: gasPrice.toString(),
-    gasLimit: gasLimit.toString(),
-    to: toAddress,
-    value: amountWei.toString(),
-    chainId
-  })
+  // Ensure private key has 0x prefix
+  const formattedKey = privateKey.startsWith('0x') ? privateKey : `0x${privateKey}`
+  const wallet = new ethers.Wallet(formattedKey, provider)
 
-  // For now, return error indicating signing library needed
-  throw new Error('Full ECDSA signing requires secp256k1 library. Consider using ethers.js or web3.js in production.')
+  console.log('Sending transaction from:', wallet.address)
+
+  if (isToken && tokenAddress) {
+    // ERC-20 token transfer
+    const erc20Abi = [
+      'function transfer(address to, uint256 amount) returns (bool)',
+      'function balanceOf(address owner) view returns (uint256)',
+      'function decimals() view returns (uint8)'
+    ]
+    
+    const tokenContract = new ethers.Contract(tokenAddress, erc20Abi, wallet)
+    const amountInWei = ethers.parseUnits(amount, tokenDecimals)
+    
+    // Check balance
+    const balance = await tokenContract.balanceOf(wallet.address)
+    if (balance < amountInWei) {
+      throw new Error(`Insufficient token balance. Have: ${ethers.formatUnits(balance, tokenDecimals)}, Need: ${amount}`)
+    }
+
+    // Estimate gas
+    const gasEstimate = await tokenContract.transfer.estimateGas(toAddress, amountInWei)
+    
+    // Send transaction
+    const tx = await tokenContract.transfer(toAddress, amountInWei, {
+      gasLimit: gasEstimate * 120n / 100n // Add 20% buffer
+    })
+    
+    console.log('Token transfer tx hash:', tx.hash)
+    
+    // Wait for confirmation
+    const receipt = await tx.wait(1)
+    
+    return {
+      txHash: receipt.hash,
+      gasUsed: receipt.gasUsed.toString(),
+      effectiveGasPrice: receipt.gasPrice?.toString() || '0'
+    }
+  } else {
+    // Native token transfer (ETH, MATIC, BNB, etc.)
+    const amountInWei = ethers.parseEther(amount)
+    
+    // Check balance
+    const balance = await provider.getBalance(wallet.address)
+    const feeData = await provider.getFeeData()
+    const estimatedGas = 21000n
+    const estimatedFee = estimatedGas * (feeData.gasPrice || 0n)
+    
+    if (balance < amountInWei + estimatedFee) {
+      throw new Error(`Insufficient balance. Have: ${ethers.formatEther(balance)} ETH, Need: ${amount} ETH + gas`)
+    }
+
+    // Send transaction
+    const tx = await wallet.sendTransaction({
+      to: toAddress,
+      value: amountInWei,
+      gasLimit: estimatedGas
+    })
+    
+    console.log('Native transfer tx hash:', tx.hash)
+    
+    // Wait for confirmation
+    const receipt = await tx.wait(1)
+    
+    return {
+      txHash: receipt!.hash,
+      gasUsed: receipt!.gasUsed.toString(),
+      effectiveGasPrice: receipt!.gasPrice?.toString() || '0'
+    }
+  }
 }
 
-// Send Solana transaction
-async function sendSolanaTransaction(
-  rpcUrl: string,
-  privateKey: string,
-  toAddress: string,
-  amountLamports: bigint
-): Promise<{ txHash: string }> {
-  // Solana requires ed25519 signing which is complex to implement manually
-  // In production, use @solana/web3.js
-  console.log('Solana transaction requested:', {
-    to: toAddress,
-    amount: amountLamports.toString()
-  })
+// Get current gas price for estimation
+async function getGasEstimate(rpcUrl: string): Promise<{ gasPrice: string; maxFeePerGas?: string; maxPriorityFeePerGas?: string }> {
+  const provider = new ethers.JsonRpcProvider(rpcUrl)
+  const feeData = await provider.getFeeData()
   
-  throw new Error('Solana transactions require @solana/web3.js library for proper signing')
+  return {
+    gasPrice: feeData.gasPrice?.toString() || '0',
+    maxFeePerGas: feeData.maxFeePerGas?.toString(),
+    maxPriorityFeePerGas: feeData.maxPriorityFeePerGas?.toString()
+  }
+}
+
+// Get wallet balance
+async function getWalletBalance(rpcUrl: string, address: string): Promise<{ balance: string; balanceFormatted: string }> {
+  const provider = new ethers.JsonRpcProvider(rpcUrl)
+  const balance = await provider.getBalance(address)
+  
+  return {
+    balance: balance.toString(),
+    balanceFormatted: ethers.formatEther(balance)
+  }
 }
 
 serve(async (req) => {
@@ -280,12 +198,58 @@ serve(async (req) => {
       )
     }
 
-    const { network, to_address, amount, currency, deposit_address_id } = await req.json()
+    const body = await req.json()
+    const { action } = body
+
+    // Handle different actions
+    if (action === 'get_balance') {
+      const { network, address } = body
+      const rpcUrl = getRpcUrl(network, alchemyKey)
+      if (!rpcUrl) {
+        return new Response(
+          JSON.stringify({ error: `Unsupported network: ${network}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      const balance = await getWalletBalance(rpcUrl, address)
+      return new Response(
+        JSON.stringify({ success: true, ...balance }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (action === 'get_gas_estimate') {
+      const { network } = body
+      const rpcUrl = getRpcUrl(network, alchemyKey)
+      if (!rpcUrl) {
+        return new Response(
+          JSON.stringify({ error: `Unsupported network: ${network}` }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      const gasData = await getGasEstimate(rpcUrl)
+      return new Response(
+        JSON.stringify({ success: true, ...gasData }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Default action: send transaction
+    const { network, to_address, amount, currency, deposit_address_id, token_address, token_decimals } = body
 
     // Validate required fields
     if (!network || !to_address || !amount || !deposit_address_id) {
       return new Response(
         JSON.stringify({ error: 'Missing required fields: network, to_address, amount, deposit_address_id' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Validate network is EVM
+    const evmNetworks = ['ethereum', 'polygon', 'bsc', 'arbitrum', 'optimism']
+    if (!evmNetworks.includes(network)) {
+      return new Response(
+        JSON.stringify({ error: `Network ${network} is not supported for EVM transactions. Supported: ${evmNetworks.join(', ')}` }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -324,34 +288,21 @@ serve(async (req) => {
       )
     }
 
-    let result: { txHash: string }
+    // Determine if token transfer
+    const isToken = !!token_address
+    const decimals = token_decimals || 18
 
-    // Execute transaction based on network type
-    const evmNetworks = ['ethereum', 'polygon', 'bsc', 'arbitrum', 'optimism']
-    
-    if (evmNetworks.includes(network)) {
-      // Convert amount to wei (assuming ETH-like decimals)
-      const amountWei = BigInt(Math.floor(parseFloat(amount) * 1e18))
-      result = await sendEvmTransaction(rpcUrl, privateKey, to_address, amountWei, depositAddress.address)
-    } else if (network === 'solana') {
-      const amountLamports = BigInt(Math.floor(parseFloat(amount) * 1e9))
-      result = await sendSolanaTransaction(rpcUrl, privateKey, to_address, amountLamports)
-    } else if (network === 'tron') {
-      return new Response(
-        JSON.stringify({ error: 'Tron transactions not yet implemented' }),
-        { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    } else if (network === 'bitcoin') {
-      return new Response(
-        JSON.stringify({ error: 'Bitcoin transactions require specialized libraries' }),
-        { status: 501, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    } else {
-      return new Response(
-        JSON.stringify({ error: `Unsupported network: ${network}` }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
+    // Execute transaction
+    console.log(`Executing ${isToken ? 'token' : 'native'} transfer on ${network}`)
+    const result = await sendEvmTransaction(
+      rpcUrl,
+      privateKey,
+      to_address,
+      amount,
+      isToken,
+      token_address,
+      decimals
+    )
 
     // Get user wallet
     const { data: wallet } = await supabaseAdmin
@@ -360,7 +311,7 @@ serve(async (req) => {
       .eq('user_id', user.id)
       .single()
 
-    // Record transaction
+    // Record transaction in database
     if (wallet) {
       await supabaseAdmin
         .from('wallet_transactions')
@@ -372,9 +323,15 @@ serve(async (req) => {
           amount_usd: 0, // Would need price lookup
           currency: currency || 'ETH',
           network,
-          status: 'pending',
+          status: 'confirmed',
           tx_hash: result.txHash,
-          metadata: { to_address }
+          metadata: { 
+            to_address,
+            gas_used: result.gasUsed,
+            effective_gas_price: result.effectiveGasPrice,
+            is_token: isToken,
+            token_address
+          }
         })
     }
 
@@ -384,7 +341,9 @@ serve(async (req) => {
         txHash: result.txHash,
         network,
         amount,
-        to_address
+        to_address,
+        gasUsed: result.gasUsed,
+        effectiveGasPrice: result.effectiveGasPrice
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
@@ -394,8 +353,7 @@ serve(async (req) => {
     const errorMessage = error instanceof Error ? error.message : 'Transaction failed'
     return new Response(
       JSON.stringify({ 
-        error: errorMessage,
-        details: 'For production use, integrate ethers.js or similar library for proper transaction signing'
+        error: errorMessage
       }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
