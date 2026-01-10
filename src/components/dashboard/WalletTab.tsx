@@ -414,9 +414,36 @@ Generated: ${new Date().toISOString()}
               <Wallet className="h-5 w-5 text-primary" />
               <CardTitle>Wallet Balance</CardTitle>
             </div>
-            <Button variant="ghost" size="sm" onClick={fetchWalletData}>
-              <RefreshCw className="h-4 w-4" />
-            </Button>
+            <div className="flex items-center gap-4">
+              {Object.keys(cryptoPrices).length > 0 && (
+                <div className="hidden sm:flex items-center gap-3">
+                  {[
+                    { token: 'BTC', icon: '₿', color: 'text-orange-500' },
+                    { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
+                    { token: 'SOL', icon: '◎', color: 'text-purple-400' }
+                  ].map(({ token, icon, color }) => (
+                    <div key={token} className="flex items-center gap-1">
+                      <span className={`${color} text-xs font-bold`}>{icon}</span>
+                      <span className="text-xs text-muted-foreground">
+                        ${cryptoPrices[token]?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '—'}
+                      </span>
+                    </div>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-5 w-5 p-0"
+                    onClick={fetchCryptoPrices}
+                    disabled={pricesLoading}
+                  >
+                    <RefreshCw className={`h-3 w-3 ${pricesLoading ? 'animate-spin' : ''}`} />
+                  </Button>
+                </div>
+              )}
+              <Button variant="ghost" size="sm" onClick={fetchWalletData}>
+                <RefreshCw className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -426,32 +453,6 @@ Generated: ${new Date().toISOString()}
                 ${wallet?.balance_usd?.toFixed(2) || '0.00'}
               </p>
               <p className="text-sm text-muted-foreground mt-1">Available for compute usage</p>
-              {Object.keys(cryptoPrices).length > 0 && (
-                <div className="flex items-center gap-4 mt-3 pt-3 border-t border-border/50">
-                  {[
-                    { token: 'BTC', icon: '₿', color: 'text-orange-500' },
-                    { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
-                    { token: 'SOL', icon: '◎', color: 'text-purple-400' }
-                  ].map(({ token, icon, color }) => (
-                    <div key={token} className="flex items-center gap-1.5">
-                      <span className={`${color} text-sm font-bold`}>{icon}</span>
-                      <span className="text-xs text-muted-foreground">{token}</span>
-                      <span className="text-sm font-medium text-foreground">
-                        ${cryptoPrices[token]?.toLocaleString(undefined, { maximumFractionDigits: 0 }) || '—'}
-                      </span>
-                    </div>
-                  ))}
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 ml-auto"
-                    onClick={fetchCryptoPrices}
-                    disabled={pricesLoading}
-                  >
-                    <RefreshCw className={`h-3 w-3 ${pricesLoading ? 'animate-spin' : ''}`} />
-                  </Button>
-                </div>
-              )}
             </div>
             <div className="flex gap-2">
               <Dialog open={depositDialogOpen} onOpenChange={setDepositDialogOpen}>
