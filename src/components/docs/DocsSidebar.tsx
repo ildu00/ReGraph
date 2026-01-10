@@ -75,8 +75,11 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
   );
 
   return (
-    <Sidebar collapsible="icon" className="border-r border-border/50 sticky top-16 h-[calc(100vh-4rem)] self-start z-30">
-      <SidebarContent className="pt-4">
+    <Sidebar 
+      collapsible="icon" 
+      className="border-r border-border/50"
+    >
+      <SidebarContent className="pt-20">
         <div className="px-3 mb-2">
           <SidebarTrigger />
         </div>

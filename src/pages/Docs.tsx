@@ -129,14 +129,14 @@ volumes:
       
       <div className="pt-16 flex-1">
         <SidebarProvider defaultOpen={true}>
-          <div className="flex w-full">
+          <div className="flex w-full min-h-[calc(100vh-4rem)]">
             <DocsSidebar 
               activeSection={activeSection} 
               onSectionChange={setActiveSection} 
             />
             
             <main className="flex-1 min-w-0">
-              <div className="container px-4 py-8 max-w-4xl mx-auto overflow-hidden">
+              <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
