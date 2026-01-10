@@ -67,11 +67,11 @@ serve(async (req) => {
       "cogvlm2": "vis-google/gemini-flash-1.5",
       "internvl-2": "vis-google/gemini-flash-1.5",
       
-      // Image Generation - use dall-e-3 which is verified
-      "sdxl-turbo": "dall-e-3",
-      "sdxl-1.0": "dall-e-3",
-      "kandinsky-3": "dall-e-3",
-      "playground-v2.5": "dall-e-3",
+      // Image Generation - use Midjourney and Kandinsky (DALL-E blocked by OpenAI)
+      "sdxl-turbo": "midjourney/mj-6.1",
+      "sdxl-1.0": "midjourney/mj-6.1",
+      "kandinsky-3": "kandinsky/kandinsky-3.1",
+      "playground-v2.5": "midjourney/mj-6.1",
       
       // Image Editing
       "instruct-pix2pix": "img2img-google/flash-edit",
