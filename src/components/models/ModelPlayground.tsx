@@ -224,7 +224,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
                 )}
               </Button>
             </div>
-            <div className="bg-secondary/50 rounded-lg p-4 text-sm max-h-[400px] overflow-y-auto prose prose-sm prose-invert max-w-none prose-headings:text-foreground prose-headings:mt-4 prose-headings:mb-2 prose-p:text-foreground/90 prose-p:my-3 prose-strong:text-foreground prose-code:text-primary prose-code:bg-secondary prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-transparent prose-pre:p-0 prose-pre:my-3 prose-a:text-primary prose-ul:text-foreground/90 prose-ul:my-3 prose-ol:text-foreground/90 prose-ol:my-3 prose-li:text-foreground/90 prose-li:my-1 prose-blockquote:my-3 prose-blockquote:border-primary/50 prose-hr:my-4 [&>*:first-child]:mt-0 [&>*:last-child]:mb-0">
+            <div className="markdown-response bg-secondary/50 rounded-lg p-4 text-sm max-h-[400px] overflow-y-auto">
               <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 components={{
