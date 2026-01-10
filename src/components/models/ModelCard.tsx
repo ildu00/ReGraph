@@ -29,30 +29,32 @@ const ModelCard = ({ model, onSelect, isSelected }: ModelCardProps) => {
       }`}
       onClick={() => onSelect(model)}
     >
-      <div className="flex items-start justify-between mb-3">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <h3 className="font-semibold">{model.name}</h3>
-            {model.isPopular && (
-              <Badge variant="secondary" className="text-xs">
-                <Zap className="h-3 w-3 mr-1" />
-                Popular
-              </Badge>
-            )}
+      {/* Header - stacks on small cards */}
+      <div className="flex flex-col gap-2 mb-3">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <h3 className="font-semibold truncate">{model.name}</h3>
+            <p className="text-sm text-muted-foreground">{model.provider}</p>
           </div>
-          <p className="text-sm text-muted-foreground">{model.provider}</p>
+          <Button 
+            size="sm" 
+            variant={isSelected ? "default" : "outline"}
+            className="shrink-0"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(model);
+            }}
+          >
+            <PlayCircle className="h-4 w-4 md:mr-1" />
+            <span className="hidden md:inline">{isSelected ? "Selected" : "Try"}</span>
+          </Button>
         </div>
-        <Button 
-          size="sm" 
-          variant={isSelected ? "default" : "outline"}
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(model);
-          }}
-        >
-          <PlayCircle className="h-4 w-4 mr-1" />
-          {isSelected ? "Selected" : "Try"}
-        </Button>
+        {model.isPopular && (
+          <Badge variant="secondary" className="text-xs w-fit">
+            <Zap className="h-3 w-3 mr-1" />
+            Popular
+          </Badge>
+        )}
       </div>
 
       <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
