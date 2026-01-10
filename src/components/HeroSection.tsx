@@ -1,8 +1,29 @@
 import { motion } from "framer-motion";
-import { Cpu, Zap, DollarSign, Shield, Globe, Code, Server, Smartphone, ArrowRight } from "lucide-react";
+import { Cpu, Globe, Server, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleStartBuilding = () => {
+    if (user) {
+      navigate("/dashboard?tab=api-keys");
+    } else {
+      navigate("/auth?redirect=api-keys");
+    }
+  };
+
+  const handleProvideCompute = () => {
+    if (user) {
+      navigate("/dashboard?tab=provider");
+    } else {
+      navigate("/auth?redirect=provider");
+    }
+  };
+
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
@@ -67,11 +88,11 @@ const HeroSection = () => {
             transition={{ delay: 0.7 }}
             className="flex flex-col sm:flex-row gap-4 justify-center"
           >
-            <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold">
+            <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold" onClick={handleStartBuilding}>
               Start Building Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-border hover:border-primary/50 hover:bg-primary/5">
+            <Button variant="outline" size="lg" className="text-lg px-8 py-6 border-border hover:border-primary/50 hover:bg-primary/5" onClick={handleProvideCompute}>
               Provide Compute
               <Server className="ml-2 h-5 w-5" />
             </Button>
