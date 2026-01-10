@@ -67,11 +67,11 @@ serve(async (req) => {
       "cogvlm2": "vis-google/gemini-flash-1.5",
       "internvl-2": "vis-google/gemini-flash-1.5",
       
-      // Image Generation - use Midjourney and Kandinsky (DALL-E blocked by OpenAI)
-      "sdxl-turbo": "midjourney/mj-6.1",
-      "sdxl-1.0": "midjourney/mj-6.1",
-      "kandinsky-3": "kandinsky/kandinsky-3.1",
-      "playground-v2.5": "midjourney/mj-6.1",
+      // Image Generation - use verified VseGPT models
+      "sdxl-turbo": "img-stable/stable-diffusion-xl-lightning",
+      "sdxl-1.0": "img-flux/juggernaut-lightning",
+      "kandinsky-3": "img-bytedance/seedream-v4",
+      "playground-v2.5": "img-google/flash-25",
       
       // Image Editing
       "instruct-pix2pix": "img2img-google/flash-edit",
