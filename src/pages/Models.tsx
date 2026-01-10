@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, ArrowUpDown, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -243,9 +243,13 @@ const Models = () => {
                 >
                   {/* Category Header */}
                   <div className="mb-6">
-                    <h1 className="text-3xl md:text-4xl font-bold mb-2">
-                      {categoryTitles[activeCategory]}
-                    </h1>
+                    <div className="flex items-center gap-3 mb-2">
+                      {/* Mobile sidebar trigger */}
+                      <SidebarTrigger className="md:hidden h-10 w-10 shrink-0" />
+                      <h1 className="text-3xl md:text-4xl font-bold">
+                        {categoryTitles[activeCategory]}
+                      </h1>
+                    </div>
                     <p className="text-muted-foreground">{categoryDescriptions[activeCategory]}</p>
                   </div>
 
