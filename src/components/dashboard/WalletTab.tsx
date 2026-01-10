@@ -447,7 +447,7 @@ Generated: ${new Date().toISOString()}
         <CardContent>
           {/* Mobile/Tablet crypto prices */}
           {Object.keys(cryptoPrices).length > 0 && (
-            <div className="flex sm:hidden items-center justify-center gap-4 mb-4 pb-3 border-b border-border/50">
+            <div className="flex sm:hidden items-center gap-4 mb-4 pb-3 border-b border-border/50">
               {[
                 { token: 'BTC', icon: '₿', color: 'text-orange-500' },
                 { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
