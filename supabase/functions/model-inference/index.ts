@@ -200,10 +200,36 @@ serve(async (req) => {
         return { ok: false as const, resp, text };
       };
 
-      // VseGPT: for some image models, only one of response_format values may be supported.
+      // VseGPT quirks: different image models support different params.
+      // 1) Start with explicit response_format=url (most compatible for direct display).
+      // 2) If API complains about response_format, retry without it.
+      // 3) Only if API explicitly says that ONLY b64_json is supported, retry with b64_json.
+      // 4) If API asks for aspect_ratio instead of size, retry with aspect_ratio.
       let result = await attempt({ ...basePayload, response_format: "url" });
-      if (!result.ok && result.resp.status === 400 && result.text?.includes("response_format")) {
-        result = await attempt({ ...basePayload, response_format: "b64_json" });
+
+      if (!result.ok && result.resp.status === 400) {
+        const t = (result.text || "").toLowerCase();
+        const mentionsRf = t.includes("response_format");
+        const saysOnlyB64Supported =
+          t.includes("b64_json") && t.includes("only") && t.includes("supported") && !t.includes("not supported");
+        const mentionsAspectRatio = t.includes("aspect_ratio");
+
+        if (mentionsRf) {
+          if (saysOnlyB64Supported) {
+            result = await attempt({ ...basePayload, response_format: "b64_json" });
+          } else {
+            // e.g. "Only response_format = b64_json is not supported" → don't send response_format at all.
+            result = await attempt({ ...basePayload });
+          }
+        } else if (mentionsAspectRatio) {
+          result = await attempt({
+            model: vsegptModel,
+            prompt,
+            n: 1,
+            aspect_ratio: "1:1",
+            response_format: "url",
+          });
+        }
       }
 
       if (!result.ok) {
