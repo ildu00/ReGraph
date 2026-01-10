@@ -1,6 +1,15 @@
 import { Github, Twitter, MessageCircle, Mail } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-const Footer = () => {
+type FooterProps = {
+  /**
+   * Adds left padding on desktop to account for a fixed left sidebar.
+   * Useful on /docs where the sidebar is fixed.
+   */
+  insetLeft?: boolean;
+};
+
+const Footer = ({ insetLeft }: FooterProps) => {
   const links = {
     Product: ["Features", "Pricing", "API Docs", "Models", "Changelog"],
     Resources: ["Documentation", "Blog", "Community", "Status", "Support"],
@@ -9,7 +18,7 @@ const Footer = () => {
   };
 
   return (
-    <footer className="relative z-40 border-t border-border bg-card/30">
+    <footer className={cn("relative z-40 border-t border-border bg-card/30", insetLeft && "md:pl-64")}>
       <div className="container px-4 py-16">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-12">
           {/* Brand */}
