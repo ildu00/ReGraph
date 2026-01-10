@@ -188,7 +188,11 @@ serve(async (req) => {
         size: "1024x1024",
       };
 
+      let lastPayload: Record<string, unknown> | null = null;
+
       const attempt = async (payload: Record<string, unknown>) => {
+        lastPayload = payload;
+
         const resp = await fetch(endpoint, {
           method: "POST",
           headers,
@@ -256,6 +260,7 @@ serve(async (req) => {
             upstream_status_text: result.resp.statusText,
             upstream_body: truncated,
             model: vsegptModel,
+            sent_payload: lastPayload,
           }),
           { status: result.resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
