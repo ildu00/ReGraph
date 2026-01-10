@@ -416,7 +416,7 @@ Generated: ${new Date().toISOString()}
             </div>
             <div className="flex items-center gap-3">
               {Object.keys(cryptoPrices).length > 0 && (
-                <div className="hidden sm:flex items-center gap-3">
+                <div className="hidden lg:flex items-center gap-3">
                   {[
                     { token: 'BTC', icon: '₿', color: 'text-orange-500' },
                     { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
@@ -447,7 +447,7 @@ Generated: ${new Date().toISOString()}
         <CardContent>
           {/* Mobile/Tablet crypto prices */}
           {Object.keys(cryptoPrices).length > 0 && (
-            <div className="flex sm:hidden items-center gap-4 mb-4 pb-3 border-b border-border/50">
+            <div className="flex lg:hidden items-center gap-4 mb-4 pb-3 border-b border-border/50">
               {[
                 { token: 'BTC', icon: '₿', color: 'text-orange-500' },
                 { token: 'ETH', icon: '⟠', color: 'text-blue-400' },
