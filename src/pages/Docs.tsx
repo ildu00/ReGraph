@@ -129,17 +129,16 @@ volumes:
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
       <Navbar />
       
-      <div className="pt-16 flex-1">
+      <div className="pt-16 flex-1 flex flex-col">
         <SidebarProvider defaultOpen={true}>
-          <div className="flex w-full min-h-[calc(100vh-4rem)]">
+          <div className="flex w-full flex-1">
             <DocsSidebar 
               activeSection={activeSection} 
               onSectionChange={setActiveSection} 
             />
             
-            <div className="flex-1 min-w-0 flex flex-col">
-              <main className="flex-1 min-w-0">
-                <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
+            <main className="flex-1 min-w-0">
+              <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
                   <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -696,15 +695,14 @@ volumes:
                     </Button>
                   </div>
                 </section>
-                  </motion.div>
-                </div>
+                </motion.div>
+              </div>
             </main>
-            <Footer />
           </div>
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+        <Footer />
+      </div>
     </div>
-  </div>
   );
 };
 
