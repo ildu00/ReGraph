@@ -93,7 +93,9 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
       } else if (data.usage) {
-        toast.success(`Generated! Tokens: ${data.usage.total_tokens || 'N/A'}`);
+        const tokens = data.usage.total_tokens || 0;
+        const costUsd = (tokens / 1000) * 0.001;
+        toast.success(`Generated! Cost: $${costUsd.toFixed(6)}`);
       }
     } catch (err) {
       console.error("Inference error:", err);
