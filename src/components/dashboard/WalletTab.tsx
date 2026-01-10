@@ -4,9 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
+import { z } from "zod";
 import { 
   Wallet, 
   Plus, 
@@ -16,12 +19,12 @@ import {
   ArrowUpRight,
   RefreshCw,
   ExternalLink,
-  Bitcoin,
-  CircleDollarSign,
   Loader2,
   CheckCircle2,
   Clock,
-  XCircle
+  XCircle,
+  Send,
+  AlertTriangle
 } from "lucide-react";
 
 type BlockchainNetwork = 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'solana' | 'bitcoin' | 'tron';
@@ -74,6 +77,25 @@ const statusConfig: Record<TransactionStatus, { label: string; icon: React.Compo
   cancelled: { label: 'Cancelled', icon: XCircle, color: 'text-muted-foreground' },
 };
 
+// Address validation patterns per network
+const addressPatterns: Record<BlockchainNetwork, RegExp> = {
+  ethereum: /^0x[a-fA-F0-9]{40}$/,
+  polygon: /^0x[a-fA-F0-9]{40}$/,
+  bsc: /^0x[a-fA-F0-9]{40}$/,
+  arbitrum: /^0x[a-fA-F0-9]{40}$/,
+  optimism: /^0x[a-fA-F0-9]{40}$/,
+  solana: /^[1-9A-HJ-NP-Za-km-z]{32,44}$/,
+  bitcoin: /^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$/,
+  tron: /^T[a-zA-Z0-9]{33}$/,
+};
+
+const withdrawalSchema = z.object({
+  network: z.enum(['ethereum', 'polygon', 'bsc', 'arbitrum', 'optimism', 'solana', 'bitcoin', 'tron']),
+  currency: z.enum(['ETH', 'BTC', 'SOL', 'USDT', 'USDC', 'MATIC', 'BNB', 'TRX']),
+  address: z.string().min(26).max(64),
+  amount: z.number().positive().min(1),
+});
+
 const WalletTab = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -84,6 +106,15 @@ const WalletTab = () => {
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
   const [wertDialogOpen, setWertDialogOpen] = useState(false);
   const [wertLoading, setWertLoading] = useState(false);
+  
+  // Withdrawal state
+  const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawNetwork, setWithdrawNetwork] = useState<BlockchainNetwork>('ethereum');
+  const [withdrawCurrency, setWithdrawCurrency] = useState<CryptoCurrency>('USDT');
+  const [withdrawAddress, setWithdrawAddress] = useState('');
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [withdrawErrors, setWithdrawErrors] = useState<{ address?: string; amount?: string }>({});
 
   useEffect(() => {
     if (user) {
@@ -202,6 +233,79 @@ const WalletTab = () => {
 
   const getAddressForNetwork = (network: BlockchainNetwork) => {
     return depositAddresses.find(addr => addr.network === network);
+  };
+
+  const validateWithdrawAddress = (addr: string, network: BlockchainNetwork): boolean => {
+    const pattern = addressPatterns[network];
+    return pattern.test(addr);
+  };
+
+  const handleWithdrawNetworkChange = (network: BlockchainNetwork) => {
+    setWithdrawNetwork(network);
+    // Set default currency for the network
+    const tokens = networkConfig[network].tokens;
+    if (!tokens.includes(withdrawCurrency)) {
+      setWithdrawCurrency(tokens[0]);
+    }
+    // Clear address error if network changes
+    setWithdrawErrors(prev => ({ ...prev, address: undefined }));
+  };
+
+  const handleWithdrawSubmit = async () => {
+    if (!user || !wallet) return;
+
+    // Reset errors
+    setWithdrawErrors({});
+
+    // Validate address
+    if (!withdrawAddress.trim()) {
+      setWithdrawErrors(prev => ({ ...prev, address: 'Address is required' }));
+      return;
+    }
+
+    if (!validateWithdrawAddress(withdrawAddress, withdrawNetwork)) {
+      setWithdrawErrors(prev => ({ ...prev, address: `Invalid ${networkConfig[withdrawNetwork].name} address format` }));
+      return;
+    }
+
+    // Validate amount
+    const amount = parseFloat(withdrawAmount);
+    if (isNaN(amount) || amount < 1) {
+      setWithdrawErrors(prev => ({ ...prev, amount: 'Minimum withdrawal is $1' }));
+      return;
+    }
+
+    if (amount > (wallet.balance_usd || 0)) {
+      setWithdrawErrors(prev => ({ ...prev, amount: 'Insufficient balance' }));
+      return;
+    }
+
+    setWithdrawLoading(true);
+    try {
+      const response = await supabase.functions.invoke('request-withdrawal', {
+        body: {
+          wallet_id: wallet.id,
+          network: withdrawNetwork,
+          currency: withdrawCurrency,
+          address: withdrawAddress.trim(),
+          amount_usd: amount
+        }
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+
+      toast.success('Withdrawal request submitted successfully');
+      setWithdrawDialogOpen(false);
+      setWithdrawAddress('');
+      setWithdrawAmount('');
+      fetchWalletData();
+    } catch (error: any) {
+      console.error('Withdrawal error:', error);
+      toast.error(error.message || 'Failed to submit withdrawal request');
+    } finally {
+      setWithdrawLoading(false);
+    }
   };
 
   if (loading) {
@@ -359,6 +463,157 @@ const WalletTab = () => {
                     <p className="text-xs text-muted-foreground text-center">
                       Powered by Wert.io • Secure payment processing
                     </p>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={withdrawDialogOpen} onOpenChange={setWithdrawDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <Send className="h-4 w-4" />
+                    Withdraw
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle>Withdraw Funds</DialogTitle>
+                    <DialogDescription>
+                      Withdraw your balance to an external crypto wallet
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 mt-4">
+                    {/* Balance display */}
+                    <div className="bg-muted/50 p-3 rounded-lg flex items-center justify-between">
+                      <span className="text-sm text-muted-foreground">Available balance</span>
+                      <span className="font-bold text-lg">${wallet?.balance_usd?.toFixed(2) || '0.00'}</span>
+                    </div>
+
+                    {/* Network selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-network">Network</Label>
+                      <Select 
+                        value={withdrawNetwork} 
+                        onValueChange={(val) => handleWithdrawNetworkChange(val as BlockchainNetwork)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(Object.keys(networkConfig) as BlockchainNetwork[]).map((network) => (
+                            <SelectItem key={network} value={network}>
+                              <div className="flex items-center gap-2">
+                                <span>{networkConfig[network].icon}</span>
+                                <span>{networkConfig[network].name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Currency selection */}
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-currency">Currency</Label>
+                      <Select 
+                        value={withdrawCurrency} 
+                        onValueChange={(val) => setWithdrawCurrency(val as CryptoCurrency)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {networkConfig[withdrawNetwork].tokens.map((token) => (
+                            <SelectItem key={token} value={token}>
+                              {token}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Destination address */}
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-address">Destination Address</Label>
+                      <Input
+                        id="withdraw-address"
+                        placeholder={`Enter ${networkConfig[withdrawNetwork].name} address`}
+                        value={withdrawAddress}
+                        onChange={(e) => {
+                          setWithdrawAddress(e.target.value);
+                          setWithdrawErrors(prev => ({ ...prev, address: undefined }));
+                        }}
+                        className={withdrawErrors.address ? 'border-destructive' : ''}
+                      />
+                      {withdrawErrors.address && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {withdrawErrors.address}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Amount */}
+                    <div className="space-y-2">
+                      <Label htmlFor="withdraw-amount">Amount (USD)</Label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                        <Input
+                          id="withdraw-amount"
+                          type="number"
+                          min="1"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={withdrawAmount}
+                          onChange={(e) => {
+                            setWithdrawAmount(e.target.value);
+                            setWithdrawErrors(prev => ({ ...prev, amount: undefined }));
+                          }}
+                          className={`pl-7 ${withdrawErrors.amount ? 'border-destructive' : ''}`}
+                        />
+                      </div>
+                      {withdrawErrors.amount && (
+                        <p className="text-sm text-destructive flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {withdrawErrors.amount}
+                        </p>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-xs"
+                        onClick={() => setWithdrawAmount(String(wallet?.balance_usd || 0))}
+                      >
+                        Max
+                      </Button>
+                    </div>
+
+                    {/* Warning */}
+                    <div className="bg-yellow-500/10 border border-yellow-500/20 p-3 rounded-lg">
+                      <div className="flex items-start gap-2">
+                        <AlertTriangle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
+                        <p className="text-xs text-muted-foreground">
+                          Withdrawals are processed within 24 hours. Double-check the address - 
+                          transactions cannot be reversed.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Submit button */}
+                    <Button 
+                      className="w-full gap-2" 
+                      onClick={handleWithdrawSubmit}
+                      disabled={withdrawLoading || !withdrawAddress || !withdrawAmount}
+                    >
+                      {withdrawLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Send className="h-4 w-4" />
+                          Request Withdrawal
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </DialogContent>
               </Dialog>
