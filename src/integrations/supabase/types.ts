@@ -232,6 +232,124 @@ export type Database = {
           },
         ]
       }
+      wallet_deposit_addresses: {
+        Row: {
+          address: string
+          created_at: string
+          id: string
+          network: Database["public"]["Enums"]["blockchain_network"]
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          id?: string
+          network: Database["public"]["Enums"]["blockchain_network"]
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          id?: string
+          network?: Database["public"]["Enums"]["blockchain_network"]
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_deposit_addresses_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_transactions: {
+        Row: {
+          amount_crypto: number
+          amount_usd: number
+          created_at: string
+          currency: Database["public"]["Enums"]["crypto_currency"] | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          network: Database["public"]["Enums"]["blockchain_network"] | null
+          status: Database["public"]["Enums"]["wallet_transaction_status"]
+          transaction_type: Database["public"]["Enums"]["wallet_transaction_type"]
+          tx_hash: string | null
+          updated_at: string
+          user_id: string
+          wallet_id: string
+        }
+        Insert: {
+          amount_crypto?: number
+          amount_usd?: number
+          created_at?: string
+          currency?: Database["public"]["Enums"]["crypto_currency"] | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          network?: Database["public"]["Enums"]["blockchain_network"] | null
+          status?: Database["public"]["Enums"]["wallet_transaction_status"]
+          transaction_type: Database["public"]["Enums"]["wallet_transaction_type"]
+          tx_hash?: string | null
+          updated_at?: string
+          user_id: string
+          wallet_id: string
+        }
+        Update: {
+          amount_crypto?: number
+          amount_usd?: number
+          created_at?: string
+          currency?: Database["public"]["Enums"]["crypto_currency"] | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          network?: Database["public"]["Enums"]["blockchain_network"] | null
+          status?: Database["public"]["Enums"]["wallet_transaction_status"]
+          transaction_type?: Database["public"]["Enums"]["wallet_transaction_type"]
+          tx_hash?: string | null
+          updated_at?: string
+          user_id?: string
+          wallet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_transactions_wallet_id_fkey"
+            columns: ["wallet_id"]
+            isOneToOne: false
+            referencedRelation: "wallets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallets: {
+        Row: {
+          balance_usd: number
+          created_at: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          balance_usd?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          balance_usd?: number
+          created_at?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -240,8 +358,37 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      blockchain_network:
+        | "ethereum"
+        | "polygon"
+        | "bsc"
+        | "arbitrum"
+        | "optimism"
+        | "solana"
+        | "bitcoin"
+        | "tron"
+      crypto_currency:
+        | "ETH"
+        | "BTC"
+        | "SOL"
+        | "USDT"
+        | "USDC"
+        | "MATIC"
+        | "BNB"
+        | "TRX"
       device_status: "pending" | "online" | "offline" | "maintenance"
       device_type: "gpu" | "tpu" | "npu" | "cpu" | "smartphone"
+      wallet_transaction_status:
+        | "pending"
+        | "confirmed"
+        | "failed"
+        | "cancelled"
+      wallet_transaction_type:
+        | "deposit"
+        | "withdrawal"
+        | "usage_charge"
+        | "refund"
+        | "wert_purchase"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -369,8 +516,41 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      blockchain_network: [
+        "ethereum",
+        "polygon",
+        "bsc",
+        "arbitrum",
+        "optimism",
+        "solana",
+        "bitcoin",
+        "tron",
+      ],
+      crypto_currency: [
+        "ETH",
+        "BTC",
+        "SOL",
+        "USDT",
+        "USDC",
+        "MATIC",
+        "BNB",
+        "TRX",
+      ],
       device_status: ["pending", "online", "offline", "maintenance"],
       device_type: ["gpu", "tpu", "npu", "cpu", "smartphone"],
+      wallet_transaction_status: [
+        "pending",
+        "confirmed",
+        "failed",
+        "cancelled",
+      ],
+      wallet_transaction_type: [
+        "deposit",
+        "withdrawal",
+        "usage_charge",
+        "refund",
+        "wert_purchase",
+      ],
     },
   },
 } as const
