@@ -920,26 +920,26 @@ Generated: ${new Date().toISOString()}
             </div>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-3 md:grid-cols-2">
+            <div className="grid gap-3 lg:grid-cols-2">
               {depositAddresses.map((addr) => {
                 const config = networkConfig[addr.network];
                 return (
                   <div 
                     key={addr.id} 
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2"
                   >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full ${config.color} flex items-center justify-center text-white text-sm font-bold`}>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className={`w-8 h-8 flex-shrink-0 rounded-full ${config.color} flex items-center justify-center text-white text-sm font-bold`}>
                         {config.icon}
                       </div>
-                      <div>
+                      <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <p className="font-medium text-sm">{config.name}</p>
                           {addr.key_exported && (
                             <Badge variant="secondary" className="text-[10px]">Key exported</Badge>
                           )}
                         </div>
-                        <code className="text-xs text-muted-foreground max-w-[180px] truncate block">
+                        <code className="text-xs text-muted-foreground truncate block">
                           {addr.address}
                         </code>
                       </div>
@@ -947,6 +947,7 @@ Generated: ${new Date().toISOString()}
                     <Button 
                       variant="ghost" 
                       size="sm"
+                      className="flex-shrink-0"
                       onClick={() => copyToClipboard(addr.address)}
                     >
                       <Copy className="h-4 w-4" />
