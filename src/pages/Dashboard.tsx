@@ -34,6 +34,11 @@ const Dashboard = () => {
     }
   }, [searchParams]);
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const navItems = useMemo(
     () => [
       { value: "overview", label: "Overview", icon: BarChart3 },
@@ -106,7 +111,7 @@ const Dashboard = () => {
               <button
                 key={item.value}
                 type="button"
-                onClick={() => setActiveTab(item.value)}
+                onClick={() => handleTabChange(item.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                   isActive
                     ? "bg-secondary text-foreground"
@@ -151,7 +156,7 @@ const Dashboard = () => {
                       key={item.value}
                       type="button"
                       onClick={() => {
-                        setActiveTab(item.value);
+                        handleTabChange(item.value);
                         setIsSidebarOpen(false);
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
@@ -173,7 +178,7 @@ const Dashboard = () => {
 
       {/* Main Content */}
       <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
