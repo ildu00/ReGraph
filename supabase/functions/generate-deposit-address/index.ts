@@ -7,6 +7,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Alchemy network mapping
+const ALCHEMY_NETWORKS: Record<string, string> = {
+  'ethereum': 'ETH_MAINNET',
+  'polygon': 'MATIC_MAINNET',
+  'arbitrum': 'ARB_MAINNET',
+  'optimism': 'OPT_MAINNET',
+};
+
 // Generate cryptographically secure random bytes
 function generateRandomBytes(length: number): Uint8Array {
   return crypto.getRandomValues(new Uint8Array(length));
@@ -136,6 +144,124 @@ async function encryptPrivateKey(privateKey: string, encryptionKey: string): Pro
   return base64Encode(toArrayBuffer(combined));
 }
 
+// Create Alchemy webhook for a network
+async function createAlchemyWebhook(
+  alchemyApiKey: string,
+  network: string,
+  webhookUrl: string
+): Promise<{ webhookId: string; signingKey: string } | null> {
+  const alchemyNetwork = ALCHEMY_NETWORKS[network];
+  if (!alchemyNetwork) {
+    console.log(`Network ${network} not supported by Alchemy webhooks`);
+    return null;
+  }
+
+  try {
+    const response = await fetch('https://dashboard.alchemy.com/api/create-webhook', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Alchemy-Token': alchemyApiKey,
+      },
+      body: JSON.stringify({
+        network: alchemyNetwork,
+        webhook_type: 'ADDRESS_ACTIVITY',
+        webhook_url: webhookUrl,
+        addresses: [], // Will be populated with first address
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Alchemy webhook creation failed: ${errorText}`);
+      return null;
+    }
+
+    const data = await response.json();
+    console.log(`Created Alchemy webhook for ${network}:`, data);
+    
+    return {
+      webhookId: data.data?.id || data.id,
+      signingKey: data.data?.signing_key || data.signing_key || '',
+    };
+  } catch (error) {
+    console.error(`Error creating Alchemy webhook for ${network}:`, error);
+    return null;
+  }
+}
+
+// Add address to existing Alchemy webhook
+async function addAddressToWebhook(
+  alchemyApiKey: string,
+  webhookId: string,
+  address: string
+): Promise<boolean> {
+  try {
+    const response = await fetch('https://dashboard.alchemy.com/api/update-webhook-addresses', {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Alchemy-Token': alchemyApiKey,
+      },
+      body: JSON.stringify({
+        webhook_id: webhookId,
+        addresses_to_add: [address],
+        addresses_to_remove: [],
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`Failed to add address to webhook: ${errorText}`);
+      return false;
+    }
+
+    console.log(`Added address ${address} to webhook ${webhookId}`);
+    return true;
+  } catch (error) {
+    console.error(`Error adding address to webhook:`, error);
+    return false;
+  }
+}
+
+// Get or create webhook for network
+async function getOrCreateWebhook(
+  supabase: any,
+  alchemyApiKey: string,
+  network: string,
+  webhookUrl: string
+): Promise<{ webhookId: string; signingKey: string } | null> {
+  // Check if webhook already exists
+  const { data: existingWebhook } = await supabase
+    .from('alchemy_webhooks')
+    .select('webhook_id, signing_key')
+    .eq('network', network)
+    .maybeSingle();
+
+  if (existingWebhook) {
+    return {
+      webhookId: existingWebhook.webhook_id,
+      signingKey: existingWebhook.signing_key || '',
+    };
+  }
+
+  // Create new webhook
+  const webhookData = await createAlchemyWebhook(alchemyApiKey, network, webhookUrl);
+  
+  if (webhookData) {
+    // Store webhook info
+    await supabase
+      .from('alchemy_webhooks')
+      .insert({
+        network,
+        webhook_id: webhookData.webhookId,
+        signing_key: webhookData.signingKey,
+      });
+  }
+
+  return webhookData;
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -145,6 +271,7 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const encryptionKey = Deno.env.get('WALLET_ENCRYPTION_KEY');
+    const alchemyApiKey = Deno.env.get('ALCHEMY_API_KEY');
 
     if (!encryptionKey) {
       throw new Error('WALLET_ENCRYPTION_KEY not configured');
@@ -202,7 +329,7 @@ serve(async (req) => {
       .select('address')
       .eq('user_id', user.id)
       .eq('network', network)
-      .single();
+      .maybeSingle();
 
     if (existingAddress) {
       return new Response(
@@ -244,6 +371,22 @@ serve(async (req) => {
     }
 
     console.log(`Generated ${network} address for user ${user.id}: ${address}`);
+
+    // Register address with Alchemy webhook (for supported networks)
+    if (alchemyApiKey && ALCHEMY_NETWORKS[network]) {
+      const webhookUrl = `${supabaseUrl}/functions/v1/alchemy-webhook`;
+      
+      const webhookInfo = await getOrCreateWebhook(
+        supabase,
+        alchemyApiKey,
+        network,
+        webhookUrl
+      );
+
+      if (webhookInfo) {
+        await addAddressToWebhook(alchemyApiKey, webhookInfo.webhookId, address);
+      }
+    }
 
     return new Response(
       JSON.stringify({ 

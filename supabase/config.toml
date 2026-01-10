@@ -17,3 +17,15 @@ verify_jwt = false
 
 [functions.process-api-usage]
 verify_jwt = false
+
+[functions.alchemy-webhook]
+verify_jwt = false
+
+[functions.export-wallet-keys]
+verify_jwt = false
+
+[functions.execute-transaction]
+verify_jwt = false
+
+[functions.crypto-prices]
+verify_jwt = false

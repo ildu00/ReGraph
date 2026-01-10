@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      alchemy_webhooks: {
+        Row: {
+          created_at: string
+          id: string
+          network: string
+          signing_key: string | null
+          webhook_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          network: string
+          signing_key?: string | null
+          webhook_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          network?: string
+          signing_key?: string | null
+          webhook_id?: string
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
