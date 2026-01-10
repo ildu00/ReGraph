@@ -17,7 +17,9 @@ import {
   Shield,
   Webhook,
   Database,
-  PlayCircle
+  PlayCircle,
+  Box,
+  Monitor
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -185,9 +187,18 @@ volumes:
 
                   <Tabs defaultValue="docker" className="mb-8">
                     <TabsList className="mb-4">
-                      <TabsTrigger value="docker">Docker (Recommended)</TabsTrigger>
-                      <TabsTrigger value="linux">Linux/macOS</TabsTrigger>
-                      <TabsTrigger value="windows">Windows</TabsTrigger>
+                      <TabsTrigger value="docker" className="gap-2">
+                        <Box className="h-4 w-4" />
+                        <span className="hidden sm:inline">Docker (Recommended)</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="linux" className="gap-2">
+                        <Terminal className="h-4 w-4" />
+                        <span className="hidden sm:inline">Linux/macOS</span>
+                      </TabsTrigger>
+                      <TabsTrigger value="windows" className="gap-2">
+                        <Monitor className="h-4 w-4" />
+                        <span className="hidden sm:inline">Windows</span>
+                      </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="docker">
