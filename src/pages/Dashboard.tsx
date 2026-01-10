@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { useMemo, useState, useEffect } from "react";
+import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -23,8 +23,16 @@ import ProviderTab from "@/components/dashboard/ProviderTab";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
+  const [searchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (tabParam && ["overview", "api-keys", "provider", "usage", "settings"].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   const navItems = useMemo(
     () => [
