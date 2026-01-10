@@ -241,20 +241,12 @@ const Models = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                 >
-                  {/* Header */}
-                  <div className="mb-8">
-                    <h1 className="text-4xl font-bold mb-4 flex items-center gap-3">
-                      <Sparkles className="h-8 w-8 text-primary" />
-                      <span className="text-gradient">Model</span> Catalog
-                    </h1>
-                    <p className="text-xl text-muted-foreground">
-                      Explore and test AI models available on the ReGraph network.
-                    </p>
-                  </div>
-
                   {/* Category Header */}
                   <div className="mb-6">
-                    <h2 className="text-2xl font-bold mb-2">{categoryTitles[activeCategory]}</h2>
+                    <h1 className="text-3xl md:text-4xl font-bold mb-2 flex items-center gap-3">
+                      <Sparkles className="h-7 w-7 md:h-8 md:w-8 text-primary" />
+                      {categoryTitles[activeCategory]}
+                    </h1>
                     <p className="text-muted-foreground">{categoryDescriptions[activeCategory]}</p>
                   </div>
 
