@@ -247,12 +247,19 @@ const ApiKeysTab = () => {
         </div>
       ) : (
         <div className="bg-card border border-border rounded-xl overflow-hidden">
-          {/* Desktop table header */}
-          <div className="hidden md:grid grid-cols-12 gap-4 p-4 border-b border-border text-sm font-medium text-muted-foreground">
+          {/* Desktop table header (lg+) */}
+          <div className="hidden lg:grid grid-cols-12 gap-4 p-4 border-b border-border text-sm font-medium text-muted-foreground">
             <div className="col-span-4">Name</div>
             <div className="col-span-3">Key</div>
             <div className="col-span-2">Created</div>
             <div className="col-span-2">Last Used</div>
+            <div className="col-span-1"></div>
+          </div>
+          {/* Tablet table header (md-lg) */}
+          <div className="hidden md:grid lg:hidden grid-cols-10 gap-3 p-4 border-b border-border text-sm font-medium text-muted-foreground">
+            <div className="col-span-4">Name</div>
+            <div className="col-span-3">Key</div>
+            <div className="col-span-2">Created</div>
             <div className="col-span-1"></div>
           </div>
           <AnimatePresence>
@@ -310,8 +317,49 @@ const ApiKeysTab = () => {
                   </div>
                 </div>
 
-                {/* Desktop row view */}
-                <div className="hidden md:grid grid-cols-12 gap-4 p-4 items-center">
+                {/* Tablet row view (md-lg) */}
+                <div className="hidden md:grid lg:hidden grid-cols-10 gap-3 p-4 items-center">
+                  <div className="col-span-4 font-medium truncate">{key.name}</div>
+                  <div className="col-span-3 font-mono text-xs text-muted-foreground truncate">
+                    {key.key_prefix}
+                  </div>
+                  <div className="col-span-2 text-xs text-muted-foreground">
+                    {new Date(key.created_at).toLocaleDateString()}
+                  </div>
+                  <div className="col-span-1 flex justify-end">
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive hover:bg-destructive/10 h-8 w-8"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Delete API Key</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            Are you sure you want to delete "{key.name}"? This action cannot be undone and any applications using this key will stop working.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => deleteApiKey(key.id)}
+                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </div>
+                </div>
+
+                {/* Desktop row view (lg+) */}
+                <div className="hidden lg:grid grid-cols-12 gap-4 p-4 items-center">
                   <div className="col-span-4 font-medium truncate">{key.name}</div>
                   <div className="col-span-3 font-mono text-sm text-muted-foreground">
                     {key.key_prefix}
