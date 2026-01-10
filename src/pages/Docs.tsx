@@ -702,7 +702,7 @@ volumes:
         </SidebarProvider>
       </div>
 
-      <Footer insetLeft />
+      <Footer />
     </div>
   );
 };
