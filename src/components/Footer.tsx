@@ -93,7 +93,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "Legal", href: "/legal" },
     ],
     Developers: [
-      { label: "GitHub", href: "#" },
+      { label: "GitHub", href: "https://github.com/ildu00/ReGraph" },
       { label: "Discord", href: "#" },
       { label: "SDK Libraries", href: "#" },
       { label: "Examples", href: "#" },
@@ -115,7 +115,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
                 Decentralized AI compute for everyone.
               </p>
               <div className="flex gap-4">
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <a href="https://github.com/ildu00/ReGraph" target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors">
                   <Github className="h-5 w-5" />
                 </a>
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
