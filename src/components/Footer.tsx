@@ -24,7 +24,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "Blog", href: "#" },
       { label: "Community", href: "#" },
       { label: "Status", href: "/status" },
-      { label: "Support", href: "#" },
+      { label: "Support", href: "/support" },
     ],
     Company: [
       { label: "About", href: "#" },
