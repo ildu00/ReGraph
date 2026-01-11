@@ -39,7 +39,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "Careers", href: "#" },
       { label: "Contact", href: "#" },
       { label: "Press", href: "#" },
-      { label: "Legal", href: "#" },
+      { label: "Legal", href: "/legal" },
     ],
     Developers: [
       { label: "GitHub", href: "#" },
