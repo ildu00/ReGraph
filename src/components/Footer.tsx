@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { Github, Twitter, MessageCircle, Mail } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,14 @@ type FooterProps = {
 };
 
 const Footer = ({ insetLeft }: FooterProps) => {
+  const location = useLocation();
+  
+  const isActiveLink = (href: string) => {
+    if (href === "#" || href.startsWith("/#")) return false;
+    const path = href.split("#")[0];
+    return location.pathname === path;
+  };
+
   const links = {
     Product: [
       { label: "Features", href: "/#features" },
@@ -76,25 +84,33 @@ const Footer = ({ insetLeft }: FooterProps) => {
             <div key={category}>
               <h4 className="font-semibold mb-4">{category}</h4>
               <ul className="space-y-2">
-                {items.map((item) => (
-                  <li key={item.label}>
-                    {item.href.startsWith("/") && !item.href.includes("#") ? (
-                      <Link
-                        to={item.href}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {item.label}
-                      </Link>
-                    ) : (
-                      <a
-                        href={item.href}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        {item.label}
-                      </a>
-                    )}
-                  </li>
-                ))}
+                {items.map((item) => {
+                  const isActive = isActiveLink(item.href);
+                  return (
+                    <li key={item.label}>
+                      {item.href.startsWith("/") && !item.href.includes("#") ? (
+                        <Link
+                          to={item.href}
+                          className={cn(
+                            "text-sm transition-colors",
+                            isActive 
+                              ? "text-primary font-medium" 
+                              : "text-muted-foreground hover:text-foreground"
+                          )}
+                        >
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <a
+                          href={item.href}
+                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {item.label}
+                        </a>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}
@@ -105,10 +121,40 @@ const Footer = ({ insetLeft }: FooterProps) => {
           <p className="text-sm text-muted-foreground">
             © 2026 ReGraph. All rights reserved.
           </p>
-          <div className="flex gap-6 text-sm text-muted-foreground">
-            <Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link>
-            <Link to="/cookies" className="hover:text-foreground transition-colors">Cookie Policy</Link>
+          <div className="flex gap-6 text-sm">
+            <Link 
+              to="/privacy" 
+              className={cn(
+                "transition-colors",
+                location.pathname === "/privacy" 
+                  ? "text-primary font-medium" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Privacy Policy
+            </Link>
+            <Link 
+              to="/terms" 
+              className={cn(
+                "transition-colors",
+                location.pathname === "/terms" 
+                  ? "text-primary font-medium" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Terms of Service
+            </Link>
+            <Link 
+              to="/cookies" 
+              className={cn(
+                "transition-colors",
+                location.pathname === "/cookies" 
+                  ? "text-primary font-medium" 
+                  : "text-muted-foreground hover:text-foreground"
+              )}
+            >
+              Cookie Policy
+            </Link>
           </div>
         </div>
       </div>
