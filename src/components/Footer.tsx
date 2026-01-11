@@ -23,7 +23,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "#" },
       { label: "Community", href: "#" },
-      { label: "Status", href: "#" },
+      { label: "Status", href: "/status" },
       { label: "Support", href: "#" },
     ],
     Company: [
