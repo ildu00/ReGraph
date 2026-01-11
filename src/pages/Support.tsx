@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -366,7 +368,30 @@ const Support = () => {
                                 : "bg-muted"
                             }`}
                           >
-                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            {msg.role === "assistant" ? (
+                              <div className="text-sm prose prose-sm dark:prose-invert max-w-none
+                                prose-p:my-2 prose-p:leading-relaxed
+                                prose-headings:mt-4 prose-headings:mb-2 prose-headings:font-semibold
+                                prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
+                                prose-ul:my-2 prose-ul:pl-4 prose-ol:my-2 prose-ol:pl-4
+                                prose-li:my-0.5
+                                prose-code:bg-background/50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:before:content-none prose-code:after:content-none
+                                prose-pre:bg-background/50 prose-pre:p-3 prose-pre:rounded-lg prose-pre:my-2 prose-pre:overflow-x-auto
+                                prose-blockquote:border-l-2 prose-blockquote:border-primary/50 prose-blockquote:pl-3 prose-blockquote:my-2 prose-blockquote:italic
+                                prose-a:text-primary prose-a:no-underline hover:prose-a:underline
+                                prose-strong:font-semibold
+                                prose-table:my-2 prose-table:text-xs
+                                prose-th:bg-background/30 prose-th:p-2 prose-th:border prose-th:border-border
+                                prose-td:p-2 prose-td:border prose-td:border-border
+                                prose-hr:my-3 prose-hr:border-border
+                              ">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                  {msg.content}
+                                </ReactMarkdown>
+                              </div>
+                            ) : (
+                              <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                            )}
                           </div>
                           {msg.role === "user" && (
                             <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
