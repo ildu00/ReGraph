@@ -29,7 +29,6 @@ const Footer = ({ insetLeft }: FooterProps) => {
     Resources: [
       { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "#" },
-      { label: "Community", href: "#" },
       { label: "Status", href: "/status" },
       { label: "Support", href: "/support" },
     ],
@@ -37,7 +36,6 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "About", href: "/about" },
       { label: "Careers", href: "/careers" },
       { label: "Contact", href: "#" },
-      { label: "Press", href: "#" },
       { label: "Legal", href: "/legal" },
     ],
     Developers: [
