@@ -82,6 +82,15 @@
     font-family: var(--font-sans);
   }
 
+  /* Prevent iOS Safari zoom on input focus */
+  @supports (-webkit-touch-callout: none) {
+    input,
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+  }
+
   code, pre, .font-mono {
     font-family: var(--font-mono);
   }
