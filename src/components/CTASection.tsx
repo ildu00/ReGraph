@@ -39,9 +39,12 @@ const CTASection = () => {
               variant="outline" 
               size="lg" 
               className="text-lg px-8 py-6 border-border hover:border-primary/50 hover:bg-primary/5"
+              asChild
             >
-              <Github className="mr-2 h-5 w-5" />
-              View on GitHub
+              <a href="https://github.com/ildu00/ReGraph" target="_blank" rel="noopener noreferrer">
+                <Github className="mr-2 h-5 w-5" />
+                View on GitHub
+              </a>
             </Button>
           </div>
 
