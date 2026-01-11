@@ -87,6 +87,8 @@ const Support = () => {
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Form state
   const [formData, setFormData] = useState({
@@ -106,8 +108,11 @@ const Support = () => {
     }
   }, [user]);
 
+  // Scroll within chat container only, not the whole page
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (chatContainerRef.current && messagesEndRef.current) {
+      chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
+    }
   }, [messages]);
 
   const streamChat = async (userMessage: string) => {
@@ -179,6 +184,10 @@ const Support = () => {
       setMessages(newMessages);
     } finally {
       setIsStreaming(false);
+      // Restore focus to input after streaming completes
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 0);
     }
   };
 
@@ -336,7 +345,7 @@ const Support = () => {
                 </div>
 
                 {/* Chat Messages */}
-                <div className="h-96 overflow-y-auto border border-border rounded-lg p-4 mb-4 bg-muted/10">
+                <div ref={chatContainerRef} className="h-96 overflow-y-auto border border-border rounded-lg p-4 mb-4 bg-muted/10">
                   {messages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-center">
                       <Bot className="w-12 h-12 text-muted-foreground/50 mb-4" />
@@ -403,6 +412,7 @@ const Support = () => {
                 {/* Chat Input */}
                 <form onSubmit={handleChatSubmit} className="flex gap-2">
                   <Input
+                    ref={inputRef}
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
                     placeholder="Type your question..."
