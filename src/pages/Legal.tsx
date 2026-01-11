@@ -1,7 +1,15 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
 import { 
   Scale, 
   FileText, 
@@ -9,12 +17,50 @@ import {
   Globe, 
   Copyright, 
   AlertTriangle,
-  Building,
   Mail,
-  ExternalLink
+  ExternalLink,
+  Send,
+  Loader2
 } from "lucide-react";
 
 const Legal = () => {
+  const { user } = useAuth();
+  const [formData, setFormData] = useState({
+    name: "",
+    email: user?.email || "",
+    subject: "Legal Inquiry",
+    message: ""
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const { error } = await supabase.from("support_requests").insert({
+        name: formData.name,
+        email: formData.email,
+        subject: formData.subject,
+        message: formData.message,
+        user_id: user?.id || null,
+      });
+
+      if (error) throw error;
+
+      toast.success("Your inquiry has been submitted. We'll respond within 5-10 business days.");
+      setFormData({ name: "", email: user?.email || "", subject: "Legal Inquiry", message: "" });
+    } catch (error) {
+      console.error("Form submission error:", error);
+      toast.error("Failed to submit. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const legalDocuments = [
     {
       title: "Privacy Policy",
@@ -85,7 +131,7 @@ const Legal = () => {
             ))}
           </motion.div>
 
-          {/* Company Information */}
+          {/* Contact Form */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -93,41 +139,74 @@ const Legal = () => {
             className="p-6 rounded-xl border border-border bg-card mb-8"
           >
             <div className="flex items-center gap-3 mb-6">
-              <Building className="w-6 h-6 text-primary" />
-              <h2 className="text-2xl font-semibold">Company Information</h2>
+              <Send className="w-6 h-6 text-primary" />
+              <div>
+                <h2 className="text-2xl font-semibold">Contact Legal Team</h2>
+                <p className="text-sm text-muted-foreground">Submit your legal inquiry and we'll respond within 5-10 business days</p>
+              </div>
             </div>
             
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="font-medium mb-2">Legal Entity</h3>
-                <p className="text-muted-foreground text-sm">
-                  ReGraph Technologies Inc.<br />
-                  A Delaware Corporation
-                </p>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="legal-name">Full Name *</Label>
+                  <Input
+                    id="legal-name"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Your full name"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="legal-email">Email Address *</Label>
+                  <Input
+                    id="legal-email"
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="your@email.com"
+                    required
+                  />
+                </div>
               </div>
-              <div>
-                <h3 className="font-medium mb-2">Registered Address</h3>
-                <p className="text-muted-foreground text-sm">
-                  251 Little Falls Drive<br />
-                  Wilmington, DE 19808<br />
-                  United States
-                </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="legal-subject">Subject</Label>
+                <Input
+                  id="legal-subject"
+                  value={formData.subject}
+                  onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                  placeholder="e.g., DMCA Request, Data Access, Partnership"
+                />
               </div>
-              <div>
-                <h3 className="font-medium mb-2">Business Registration</h3>
-                <p className="text-muted-foreground text-sm">
-                  EIN: XX-XXXXXXX<br />
-                  Delaware File Number: XXXXXXX
-                </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="legal-message">Message *</Label>
+                <Textarea
+                  id="legal-message"
+                  value={formData.message}
+                  onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                  placeholder="Please describe your legal inquiry in detail..."
+                  rows={5}
+                  required
+                />
               </div>
-              <div>
-                <h3 className="font-medium mb-2">Contact</h3>
-                <p className="text-muted-foreground text-sm">
-                  Email: legal@regraph.tech<br />
-                  Support: support@regraph.tech
-                </p>
-              </div>
-            </div>
+
+              <Button type="submit" disabled={isSubmitting} className="w-full md:w-auto">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Inquiry
+                  </>
+                )}
+              </Button>
+            </form>
           </motion.section>
 
           {/* Intellectual Property */}
