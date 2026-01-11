@@ -1,8 +1,20 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Github, Twitter, Zap } from "lucide-react";
+import { ArrowRight, Github, Zap } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 
 const CTASection = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleGetStarted = () => {
+    if (user) {
+      navigate("/dashboard?tab=api-keys");
+    } else {
+      navigate("/auth?redirect=api-keys");
+    }
+  };
   return (
     <section className="relative py-20 overflow-hidden">
       {/* Glow effect */}
@@ -31,7 +43,11 @@ const CTASection = () => {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-            <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold animate-pulse-glow">
+            <Button 
+              size="lg" 
+              className="glow-primary text-lg px-8 py-6 font-semibold animate-pulse-glow"
+              onClick={handleGetStarted}
+            >
               Get Started Free
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
