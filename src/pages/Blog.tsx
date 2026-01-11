@@ -7,6 +7,19 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar, Clock, ArrowRight, X } from "lucide-react";
 
+// Blog images
+import decentralizedAiImg from "@/assets/blog/decentralized-ai.jpg";
+import gpt5ReasoningImg from "@/assets/blog/gpt5-reasoning.jpg";
+import geminiMultimodalImg from "@/assets/blog/gemini-multimodal.jpg";
+import aiBestPracticesImg from "@/assets/blog/ai-best-practices.jpg";
+import providerMilestoneImg from "@/assets/blog/provider-milestone.jpg";
+import aiBenchmarksImg from "@/assets/blog/ai-benchmarks.jpg";
+import smallModelsImg from "@/assets/blog/small-models.jpg";
+import batchProcessingImg from "@/assets/blog/batch-processing.jpg";
+import aiEthicsImg from "@/assets/blog/ai-ethics.jpg";
+import gettingStartedImg from "@/assets/blog/getting-started.jpg";
+import platformLaunchImg from "@/assets/blog/platform-launch.jpg";
+
 interface BlogPost {
   id: string;
   title: string;
@@ -15,6 +28,7 @@ interface BlogPost {
   date: string;
   readTime: string;
   category: string;
+  image: string;
   featured?: boolean;
 }
 
@@ -48,6 +62,7 @@ As we enter 2026, the demand for AI compute will only grow. Decentralized networ
     date: "2026-01-11",
     readTime: "5 min",
     category: "Industry Insights",
+    image: decentralizedAiImg,
     featured: true
   },
   {
@@ -84,7 +99,8 @@ When using GPT-5 through ReGraph:
 3. Leverage our batch processing API for large workloads`,
     date: "2026-01-08",
     readTime: "4 min",
-    category: "Models"
+    category: "Models",
+    image: gpt5ReasoningImg
   },
   {
     id: "3",
@@ -121,7 +137,8 @@ Popular applications include:
 - Multimodal chatbots`,
     date: "2026-01-05",
     readTime: "4 min",
-    category: "Models"
+    category: "Models",
+    image: geminiMultimodalImg
   },
   {
     id: "4",
@@ -169,7 +186,8 @@ Protect your AI applications:
 - Monitor for prompt injection attacks`,
     date: "2025-12-28",
     readTime: "6 min",
-    category: "Development"
+    category: "Development",
+    image: aiBestPracticesImg
   },
   {
     id: "5",
@@ -206,7 +224,8 @@ We've seen incredible stories from our providers:
 Our goal for 2026 is to reach 50,000 providers and add support for new hardware types including the latest NVIDIA and AMD GPUs.`,
     date: "2025-12-20",
     readTime: "3 min",
-    category: "Company News"
+    category: "Company News",
+    image: providerMilestoneImg
   },
   {
     id: "6",
@@ -249,7 +268,8 @@ While benchmarks are useful, they don't tell the whole story:
 5. Monitor performance over time`,
     date: "2025-12-15",
     readTime: "5 min",
-    category: "Education"
+    category: "Education",
+    image: aiBenchmarksImg
   },
   {
     id: "7",
@@ -295,7 +315,8 @@ We offer several efficient models:
 Expect to see more specialized small models that match or exceed large model performance on specific tasks while being dramatically more efficient.`,
     date: "2025-12-08",
     readTime: "4 min",
-    category: "Industry Insights"
+    category: "Industry Insights",
+    image: smallModelsImg
   },
   {
     id: "8",
@@ -343,7 +364,8 @@ POST /v1/batch
 Check our documentation for complete API reference and examples.`,
     date: "2025-11-25",
     readTime: "3 min",
-    category: "Product Updates"
+    category: "Product Updates",
+    image: batchProcessingImg
   },
   {
     id: "9",
@@ -391,7 +413,8 @@ We encourage all developers using our platform to:
 We're committed to evolving our practices as the AI landscape changes and new challenges emerge.`,
     date: "2025-11-15",
     readTime: "5 min",
-    category: "Company News"
+    category: "Company News",
+    image: aiEthicsImg
   },
   {
     id: "10",
@@ -437,7 +460,8 @@ Use the dashboard to track your usage, costs, and performance metrics.
 Welcome aboard!`,
     date: "2025-10-20",
     readTime: "4 min",
-    category: "Education"
+    category: "Education",
+    image: gettingStartedImg
   },
   {
     id: "11",
@@ -483,6 +507,7 @@ Thank you to everyone who believed in our vision. This is just the beginning.`,
     date: "2025-09-15",
     readTime: "3 min",
     category: "Company News",
+    image: platformLaunchImg,
     featured: true
   }
 ];
@@ -518,8 +543,12 @@ const Blog = () => {
             onClick={() => setSelectedPost(featuredPost)}
           >
             <div className="grid md:grid-cols-2 gap-6">
-              <div className="bg-gradient-to-br from-primary/20 to-primary/5 p-8 flex items-center justify-center">
-                <div className="text-6xl">🚀</div>
+              <div className="aspect-[16/10] overflow-hidden">
+                <img 
+                  src={featuredPost.image} 
+                  alt={featuredPost.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="p-6 flex flex-col justify-center">
                 <Badge className="w-fit mb-3">{featuredPost.category}</Badge>
@@ -559,10 +588,17 @@ const Blog = () => {
           {filteredPosts.filter(post => !(post.featured && post.id === "1" && selectedCategory === "All")).map(post => (
             <Card 
               key={post.id} 
-              className="cursor-pointer hover:border-primary/50 transition-colors group"
+              className="cursor-pointer hover:border-primary/50 transition-colors group overflow-hidden"
               onClick={() => setSelectedPost(post)}
             >
-              <CardHeader>
+              <div className="aspect-[16/10] overflow-hidden">
+                <img 
+                  src={post.image} 
+                  alt={post.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <CardHeader className="pt-4">
                 <div className="flex items-center justify-between mb-2">
                   <Badge variant="secondary">{post.category}</Badge>
                   <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -570,10 +606,10 @@ const Blog = () => {
                     {post.readTime}
                   </span>
                 </div>
-                <CardTitle className="group-hover:text-primary transition-colors">
+                <CardTitle className="group-hover:text-primary transition-colors text-lg">
                   {post.title}
                 </CardTitle>
-                <CardDescription>{post.excerpt}</CardDescription>
+                <CardDescription className="line-clamp-2">{post.excerpt}</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
@@ -593,6 +629,15 @@ const Blog = () => {
         {/* Post Dialog */}
         <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+            {selectedPost && (
+              <div className="aspect-[16/9] overflow-hidden rounded-lg mb-4 -mx-6 -mt-6">
+                <img 
+                  src={selectedPost.image} 
+                  alt={selectedPost.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
             <DialogHeader>
               <div className="flex items-center gap-2 mb-2">
                 <Badge>{selectedPost?.category}</Badge>
