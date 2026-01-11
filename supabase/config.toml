@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.model-inference]
 verify_jwt = false
+
+[functions.platform-stats]
+verify_jwt = false

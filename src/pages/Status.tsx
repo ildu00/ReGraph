@@ -98,39 +98,34 @@ const Status = () => {
 
   const fetchStats = async () => {
     try {
-      // Fetch aggregated device stats (this would ideally come from an edge function)
-      // For now, we'll simulate with reasonable defaults
-      const deviceTypeColors: Record<string, string> = {
-        gpu: "hsl(var(--primary))",
-        cpu: "hsl(var(--secondary))",
-        npu: "hsl(142, 76%, 36%)",
-        tpu: "hsl(38, 92%, 50%)",
-        mobile: "hsl(280, 87%, 65%)",
-      };
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`);
+      
+      if (!response.ok) {
+        throw new Error("Failed to fetch platform stats");
+      }
 
-      // Simulated stats - in production, this would come from an edge function
+      const data = await response.json();
+
       setDeviceStats({
-        total: 1247,
-        online: 892,
-        offline: 298,
-        pending: 57,
-        byType: [
-          { name: "GPU", value: 645, color: deviceTypeColors.gpu },
-          { name: "CPU", value: 312, color: deviceTypeColors.cpu },
-          { name: "NPU", value: 156, color: deviceTypeColors.npu },
-          { name: "TPU", value: 89, color: deviceTypeColors.tpu },
-          { name: "Mobile", value: 45, color: deviceTypeColors.mobile },
+        total: data.devices.total,
+        online: data.devices.online,
+        offline: data.devices.offline,
+        pending: data.devices.pending,
+        byType: data.devices.byType.length > 0 ? data.devices.byType : [
+          { name: "GPU", value: 0, color: "hsl(262, 83%, 58%)" },
+          { name: "CPU", value: 0, color: "hsl(199, 89%, 48%)" },
         ],
       });
 
       setPlatformStats({
-        totalProviders: 423,
-        totalComputeHours: 1847562,
-        totalInferences: 892456123,
-        avgResponseTime: 47,
+        totalProviders: data.platform.totalProviders,
+        totalComputeHours: data.platform.totalComputeHours,
+        totalInferences: data.platform.totalInferences,
+        avgResponseTime: data.platform.avgResponseTime,
       });
 
-      setLastUpdated(new Date());
+      setLastUpdated(new Date(data.updatedAt));
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
