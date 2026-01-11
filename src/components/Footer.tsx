@@ -23,7 +23,6 @@ const Footer = ({ insetLeft }: FooterProps) => {
     Product: [
       { label: "Features", href: "/#features" },
       { label: "Pricing", href: "/#pricing" },
-      { label: "API Docs", href: "/docs" },
       { label: "Models", href: "/models" },
       { label: "Changelog", href: "/changelog" },
     ],
@@ -45,7 +44,6 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "GitHub", href: "#" },
       { label: "Discord", href: "#" },
       { label: "SDK Libraries", href: "#" },
-      { label: "API Reference", href: "/docs#api-reference" },
       { label: "Examples", href: "#" },
     ],
   };
