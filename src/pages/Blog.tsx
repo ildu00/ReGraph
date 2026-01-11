@@ -630,7 +630,7 @@ const Blog = () => {
         <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
           <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
             {selectedPost && (
-              <div className="aspect-[16/9] overflow-hidden rounded-lg mb-4 -mx-6 -mt-6">
+              <div className="aspect-[16/9] overflow-hidden rounded-lg mb-6">
                 <img 
                   src={selectedPost.image} 
                   alt={selectedPost.title}
