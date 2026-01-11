@@ -628,27 +628,26 @@ const Blog = () => {
 
         {/* Post Dialog */}
         <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto p-0">
             {selectedPost && (
-              <div className="aspect-[16/9] overflow-hidden rounded-lg mb-6">
-                <img 
-                  src={selectedPost.image} 
-                  alt={selectedPost.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <img 
+                src={selectedPost.image} 
+                alt={selectedPost.title}
+                className="w-full h-48 md:h-64 object-cover rounded-t-lg"
+              />
             )}
-            <DialogHeader>
-              <div className="flex items-center gap-2 mb-2">
-                <Badge>{selectedPost?.category}</Badge>
-                <span className="text-sm text-muted-foreground">
-                  {selectedPost && new Date(selectedPost.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                </span>
-                <span className="text-sm text-muted-foreground">• {selectedPost?.readTime} read</span>
-              </div>
-              <DialogTitle className="text-2xl md:text-3xl">{selectedPost?.title}</DialogTitle>
-            </DialogHeader>
-            <div className="prose prose-invert max-w-none mt-4">
+            <div className="p-6">
+              <DialogHeader>
+                <div className="flex items-center gap-2 mb-2">
+                  <Badge>{selectedPost?.category}</Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {selectedPost && new Date(selectedPost.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                  </span>
+                  <span className="text-sm text-muted-foreground">• {selectedPost?.readTime} read</span>
+                </div>
+                <DialogTitle className="text-2xl md:text-3xl">{selectedPost?.title}</DialogTitle>
+              </DialogHeader>
+              <div className="prose prose-invert max-w-none mt-4">
               {selectedPost?.content.split('\n\n').map((paragraph, index) => {
                 if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
                   return <h3 key={index} className="text-xl font-bold mt-6 mb-3">{paragraph.replace(/\*\*/g, '')}</h3>;
@@ -690,6 +689,7 @@ const Blog = () => {
                 });
                 return <p key={index} className="text-muted-foreground mb-4">{formattedText}</p>;
               })}
+              </div>
             </div>
           </DialogContent>
         </Dialog>
