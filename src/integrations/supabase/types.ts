@@ -74,6 +74,77 @@ export type Database = {
         }
         Relationships: []
       }
+      incident_updates: {
+        Row: {
+          created_at: string
+          id: string
+          incident_id: string
+          message: string
+          status: Database["public"]["Enums"]["incident_status"]
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          incident_id: string
+          message: string
+          status: Database["public"]["Enums"]["incident_status"]
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          incident_id?: string
+          message?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_updates_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      incidents: {
+        Row: {
+          affected_services: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["incident_severity"]
+          started_at: string
+          status: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          affected_services?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          affected_services?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
@@ -440,6 +511,12 @@ export type Database = {
         | "TRX"
       device_status: "pending" | "online" | "offline" | "maintenance"
       device_type: "gpu" | "tpu" | "npu" | "cpu" | "smartphone"
+      incident_severity: "minor" | "major" | "critical"
+      incident_status:
+        | "investigating"
+        | "identified"
+        | "monitoring"
+        | "resolved"
       wallet_transaction_status:
         | "pending"
         | "confirmed"
@@ -601,6 +678,13 @@ export const Constants = {
       ],
       device_status: ["pending", "online", "offline", "maintenance"],
       device_type: ["gpu", "tpu", "npu", "cpu", "smartphone"],
+      incident_severity: ["minor", "major", "critical"],
+      incident_status: [
+        "investigating",
+        "identified",
+        "monitoring",
+        "resolved",
+      ],
       wallet_transaction_status: [
         "pending",
         "confirmed",

@@ -73,6 +73,37 @@ Deno.serve(async (req) => {
       throw responseError;
     }
 
+    // Get recent incidents (last 90 days)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    
+    const { data: incidents, error: incidentsError } = await supabase
+      .from("incidents")
+      .select(`
+        id,
+        title,
+        description,
+        status,
+        severity,
+        affected_services,
+        started_at,
+        resolved_at,
+        incident_updates (
+          id,
+          message,
+          status,
+          created_at
+        )
+      `)
+      .gte("started_at", ninetyDaysAgo.toISOString())
+      .order("started_at", { ascending: false })
+      .limit(20);
+
+    if (incidentsError) {
+      throw incidentsError;
+    }
+
+
     // Calculate aggregated stats
     const statusCounts = {
       online: 0,
@@ -138,6 +169,7 @@ Deno.serve(async (req) => {
         totalInferences: totalInferences || 0,
         avgResponseTime,
       },
+      incidents: incidents || [],
       updatedAt: new Date().toISOString(),
     };
 
