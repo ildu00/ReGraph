@@ -24,7 +24,8 @@ import {
   User,
   ChevronDown,
   Mail,
-  Clock
+  Clock,
+  Trash2
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -77,13 +78,21 @@ const faqData = [
     answer: "For urgent issues, use the contact form below or reach out via email. Our support team typically responds within 24 hours. For critical production issues, include 'URGENT' in your subject line."
   }
 ];
+const CHAT_STORAGE_KEY = "regraph_support_chat";
 
 const Support = () => {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<"chat" | "form" | "faq">("faq");
   
-  // Chat state
-  const [messages, setMessages] = useState<Message[]>([]);
+  // Chat state - initialize from localStorage
+  const [messages, setMessages] = useState<Message[]>(() => {
+    try {
+      const saved = localStorage.getItem(CHAT_STORAGE_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [chatInput, setChatInput] = useState("");
   const [isStreaming, setIsStreaming] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -98,6 +107,15 @@ const Support = () => {
     message: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Save messages to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(CHAT_STORAGE_KEY, JSON.stringify(messages));
+    } catch (e) {
+      console.error("Failed to save chat history:", e);
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (user) {
@@ -114,6 +132,11 @@ const Support = () => {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const clearChat = () => {
+    setMessages([]);
+    localStorage.removeItem(CHAT_STORAGE_KEY);
+  };
 
   const streamChat = async (userMessage: string) => {
     const newMessages: Message[] = [...messages, { role: "user", content: userMessage }];
@@ -334,14 +357,27 @@ const Support = () => {
             {/* Chat Section */}
             {activeTab === "chat" && (
               <div className="p-6 rounded-xl border border-border bg-card">
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="p-2 rounded-lg bg-primary/10">
-                    <Bot className="w-5 h-5 text-primary" />
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <Bot className="w-5 h-5 text-primary" />
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-semibold">AI Support Assistant</h2>
+                      <p className="text-sm text-muted-foreground">Get instant answers to your questions</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-xl font-semibold">AI Support Assistant</h2>
-                    <p className="text-sm text-muted-foreground">Get instant answers to your questions</p>
-                  </div>
+                  {messages.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearChat}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Clear
+                    </Button>
+                  )}
                 </div>
 
                 {/* Chat Messages */}
