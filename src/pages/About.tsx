@@ -15,7 +15,7 @@ import {
   Rocket,
   Target,
   CheckCircle,
-  ExternalLink
+  
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -401,19 +401,10 @@ const About = () => {
             className="text-center p-8 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent"
           >
             <h2 className="text-2xl font-bold mb-4">The Future is Decentralized</h2>
-            <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
+            <p className="text-muted-foreground max-w-2xl mx-auto">
               By focusing on optimization, integration, and diversification, ReGraph aims to become 
               a cornerstone in the future of global technological infrastructure.
             </p>
-            <a 
-              href="https://regraph.tech" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 text-primary hover:underline"
-            >
-              Learn more at regraph.tech
-              <ExternalLink className="w-4 h-4" />
-            </a>
           </motion.section>
         </div>
       </main>
