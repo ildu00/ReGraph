@@ -211,12 +211,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Blog**: [regraph.tech/blog](https://regraph.tech/blog)
 - **Support**: [regraph.tech/support](https://regraph.tech/support)
 
-## 📞 Contact
-
-- **Email**: support@regraph.tech
-- **Discord**: [Join our community](#)
-- **Twitter**: [@ReGraphAI](#)
-
 ---
 
 <div align="center">
