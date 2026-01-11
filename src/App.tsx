@@ -18,6 +18,7 @@ import Support from "./pages/Support";
 import Changelog from "./pages/Changelog";
 import Legal from "./pages/Legal";
 import About from "./pages/About";
+import Careers from "./pages/Careers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/changelog" element={<Changelog />} />
             <Route path="/legal" element={<Legal />} />
             <Route path="/about" element={<About />} />
+            <Route path="/careers" element={<Careers />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
