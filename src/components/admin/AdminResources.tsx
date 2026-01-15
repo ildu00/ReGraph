@@ -11,13 +11,15 @@ interface Device {
   id: string;
   device_name: string;
   device_type: string;
+  device_model: string | null;
   status: string;
   vram_gb: number | null;
-  ram_gb: number | null;
-  storage_gb: number | null;
+  price_per_hour: number;
+  total_earnings: number;
+  total_compute_hours: number;
   created_at: string;
   last_seen_at: string | null;
-  provider_id: string;
+  user_id: string;
 }
 
 export const AdminResources = () => {
@@ -183,9 +185,9 @@ export const AdminResources = () => {
                   <TableHead>Device</TableHead>
                   <TableHead>Type</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Compute</TableHead>
-                  <TableHead>Memory</TableHead>
-                  <TableHead>Storage</TableHead>
+                  <TableHead>VRAM</TableHead>
+                  <TableHead>Price/hr</TableHead>
+                  <TableHead>Earnings</TableHead>
                   <TableHead>Last Seen</TableHead>
                 </TableRow>
               </TableHeader>
@@ -203,14 +205,10 @@ export const AdminResources = () => {
                     </TableCell>
                     <TableCell>{getStatusBadge(device.status)}</TableCell>
                     <TableCell>
-                      {device.vram_gb ? `${device.vram_gb} GB VRAM` : "-"}
+                      {device.vram_gb ? `${device.vram_gb} GB` : "-"}
                     </TableCell>
-                    <TableCell>
-                      {device.ram_gb ? `${device.ram_gb} GB` : "-"}
-                    </TableCell>
-                    <TableCell>
-                      {device.storage_gb ? `${device.storage_gb} GB` : "-"}
-                    </TableCell>
+                    <TableCell>${Number(device.price_per_hour).toFixed(2)}</TableCell>
+                    <TableCell>${Number(device.total_earnings).toFixed(2)}</TableCell>
                     <TableCell>
                       {device.last_seen_at
                         ? new Date(device.last_seen_at).toLocaleString()
