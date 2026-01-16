@@ -55,9 +55,6 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-border px-6">
             <span className="text-xl font-bold text-primary">ReGraph</span>
-            <span className="ml-2 rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive">
-              Admin
-            </span>
           </div>
 
           {/* Navigation */}
