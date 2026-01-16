@@ -5,6 +5,16 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Zap,
   Key,
   BarChart3,
@@ -28,6 +38,7 @@ const Dashboard = () => {
   const [searchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -92,7 +103,7 @@ const Dashboard = () => {
           <Button
             variant="ghost"
             size="sm"
-            onClick={signOut}
+            onClick={() => setShowSignOutDialog(true)}
             className="text-muted-foreground hover:text-foreground"
           >
             <LogOut className="h-4 w-4 mr-2" />
@@ -100,6 +111,22 @@ const Dashboard = () => {
           </Button>
         </div>
       </header>
+
+      {/* Sign Out Confirmation Dialog */}
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={signOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Sidebar - Desktop */}
       <aside className="hidden md:block fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4">
