@@ -39,16 +39,25 @@ export const AdminForms = () => {
     fetchData();
   }, []);
 
-  // Count by status
-  const pendingRequests = supportRequests.filter((r) => r.status === "pending");
-  const inProgressRequests = supportRequests.filter((r) => r.status === "in_progress");
-  const resolvedRequests = supportRequests.filter((r) => r.status === "resolved");
+  // Categorize by subject
+  const contactRequests = supportRequests.filter(
+    (r) => !r.subject || r.subject.toLowerCase().includes("general") || r.subject.toLowerCase().includes("contact")
+  );
+  const supportTickets = supportRequests.filter(
+    (r) => r.subject?.toLowerCase().includes("technical") || r.subject?.toLowerCase().includes("billing")
+  );
+  const careerApplications = supportRequests.filter(
+    (r) => r.subject?.toLowerCase().includes("career") || r.subject?.toLowerCase().includes("job")
+  );
+  const legalInquiries = supportRequests.filter(
+    (r) => r.subject?.toLowerCase().includes("legal") || r.subject?.toLowerCase().includes("privacy")
+  );
 
   const stats = [
-    { label: "Total Submissions", value: supportRequests.length, icon: MessageSquare, color: "text-blue-500" },
-    { label: "Pending", value: pendingRequests.length, icon: FileText, color: "text-amber-500" },
-    { label: "In Progress", value: inProgressRequests.length, icon: Briefcase, color: "text-purple-500" },
-    { label: "Resolved", value: resolvedRequests.length, icon: Users, color: "text-green-500" },
+    { label: "Contact Forms", value: contactRequests.length, icon: MessageSquare, color: "text-blue-500" },
+    { label: "Support Tickets", value: supportTickets.length, icon: FileText, color: "text-green-500" },
+    { label: "Career Applications", value: careerApplications.length, icon: Briefcase, color: "text-purple-500" },
+    { label: "Legal Inquiries", value: legalInquiries.length, icon: Users, color: "text-amber-500" },
   ];
 
   const renderTable = (data: SupportRequest[]) => (
@@ -58,7 +67,6 @@ export const AdminForms = () => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Subject</TableHead>
             <TableHead>Message</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
@@ -67,7 +75,7 @@ export const AdminForms = () => {
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                 No submissions found
               </TableCell>
             </TableRow>
@@ -76,8 +84,7 @@ export const AdminForms = () => {
               <TableRow key={item.id}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.email}</TableCell>
-                <TableCell className="max-w-[150px] truncate">{item.subject}</TableCell>
-                <TableCell className="max-w-[250px] truncate">{item.message}</TableCell>
+                <TableCell className="max-w-[300px] truncate">{item.message}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -138,17 +145,17 @@ export const AdminForms = () => {
           <CardTitle>All Submissions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all">
+          <Tabs defaultValue="contact">
             <TabsList className="mb-4">
-              <TabsTrigger value="all">All ({supportRequests.length})</TabsTrigger>
-              <TabsTrigger value="pending">Pending ({pendingRequests.length})</TabsTrigger>
-              <TabsTrigger value="in_progress">In Progress ({inProgressRequests.length})</TabsTrigger>
-              <TabsTrigger value="resolved">Resolved ({resolvedRequests.length})</TabsTrigger>
+              <TabsTrigger value="contact">Contact ({contactRequests.length})</TabsTrigger>
+              <TabsTrigger value="support">Support ({supportTickets.length})</TabsTrigger>
+              <TabsTrigger value="careers">Careers ({careerApplications.length})</TabsTrigger>
+              <TabsTrigger value="legal">Legal ({legalInquiries.length})</TabsTrigger>
             </TabsList>
-            <TabsContent value="all">{renderTable(supportRequests)}</TabsContent>
-            <TabsContent value="pending">{renderTable(pendingRequests)}</TabsContent>
-            <TabsContent value="in_progress">{renderTable(inProgressRequests)}</TabsContent>
-            <TabsContent value="resolved">{renderTable(resolvedRequests)}</TabsContent>
+            <TabsContent value="contact">{renderTable(contactRequests)}</TabsContent>
+            <TabsContent value="support">{renderTable(supportTickets)}</TabsContent>
+            <TabsContent value="careers">{renderTable(careerApplications)}</TabsContent>
+            <TabsContent value="legal">{renderTable(legalInquiries)}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>
