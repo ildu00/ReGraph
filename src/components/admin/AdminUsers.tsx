@@ -22,6 +22,7 @@ interface TestUser {
 interface RealUser {
   user_id: string;
   display_name: string | null;
+  email: string | null;
   created_at: string;
   role?: string;
   wallet_balance?: number;
@@ -58,7 +59,7 @@ export const AdminUsers = () => {
       // Fetch real users (profiles + roles)
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, created_at")
+        .select("user_id, display_name, email, created_at")
         .order("created_at", { ascending: false });
 
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
@@ -150,6 +151,7 @@ export const AdminUsers = () => {
   const filteredRealUsers = realUsers.filter((user) => {
     const matchesSearch =
       user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.user_id.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesSearch;
   });
@@ -303,7 +305,7 @@ export const AdminUsers = () => {
                         <TableCell>
                           <div>
                             <div className="font-medium">{user.display_name || "No name"}</div>
-                            <div className="text-xs text-muted-foreground font-mono">{user.user_id.slice(0, 8)}...</div>
+                            <div className="text-xs text-muted-foreground">{user.email || user.user_id.slice(0, 8) + "..."}</div>
                           </div>
                         </TableCell>
                         <TableCell>
