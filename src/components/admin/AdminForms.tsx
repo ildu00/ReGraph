@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { FileText, Users, Briefcase, MessageSquare } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { FileText, Users, Briefcase, MessageSquare, Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface SupportRequest {
   id: string;
@@ -19,6 +21,7 @@ interface SupportRequest {
 export const AdminForms = () => {
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -67,24 +70,25 @@ export const AdminForms = () => {
           <TableRow>
             <TableHead>Name</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>Message</TableHead>
+            <TableHead>Subject</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Date</TableHead>
+            <TableHead className="w-[80px]">Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {data.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+              <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                 No submissions found
               </TableCell>
             </TableRow>
           ) : (
             data.map((item) => (
-              <TableRow key={item.id}>
+              <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedRequest(item)}>
                 <TableCell className="font-medium">{item.name}</TableCell>
                 <TableCell>{item.email}</TableCell>
-                <TableCell className="max-w-[300px] truncate">{item.message}</TableCell>
+                <TableCell className="max-w-[200px] truncate">{item.subject}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -99,6 +103,18 @@ export const AdminForms = () => {
                   </Badge>
                 </TableCell>
                 <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedRequest(item);
+                    }}
+                  >
+                    <Eye className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))
           )}
@@ -159,6 +175,58 @@ export const AdminForms = () => {
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* View Dialog */}
+      <Dialog open={!!selectedRequest} onOpenChange={() => setSelectedRequest(null)}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Submission Details</DialogTitle>
+            <DialogDescription>
+              Submitted on {selectedRequest && new Date(selectedRequest.created_at).toLocaleString()}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedRequest && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Name</p>
+                  <p className="font-medium">{selectedRequest.name}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Email</p>
+                  <p className="font-medium">{selectedRequest.email}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Subject</p>
+                  <p className="font-medium">{selectedRequest.subject}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <Badge
+                    variant={
+                      selectedRequest.status === "resolved"
+                        ? "default"
+                        : selectedRequest.status === "in_progress"
+                        ? "secondary"
+                        : "outline"
+                    }
+                  >
+                    {selectedRequest.status}
+                  </Badge>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground mb-1">Message</p>
+                <div className="bg-muted p-3 rounded-md whitespace-pre-wrap text-sm">
+                  {selectedRequest.message}
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
