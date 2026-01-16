@@ -325,6 +325,33 @@ export type Database = {
         }
         Relationships: []
       }
+      test_users: {
+        Row: {
+          balance_usd: number
+          created_at: string
+          display_name: string
+          email: string
+          id: string
+          status: string
+        }
+        Insert: {
+          balance_usd?: number
+          created_at?: string
+          display_name: string
+          email: string
+          id?: string
+          status?: string
+        }
+        Update: {
+          balance_usd?: number
+          created_at?: string
+          display_name?: string
+          email?: string
+          id?: string
+          status?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           api_key_id: string | null
