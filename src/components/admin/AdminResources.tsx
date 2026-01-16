@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Server, Cpu, HardDrive, Wifi, WifiOff, Plus, Trash2 } from "lucide-react";
+import { Server, Cpu, HardDrive, Wifi, WifiOff, Plus, Trash2, Search, ArrowUpDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 
@@ -29,12 +29,21 @@ interface Device {
 
 const DEVICE_TYPES = ["gpu", "cpu", "tpu", "npu", "smartphone"] as const;
 const DEVICE_STATUSES = ["pending", "online", "offline", "maintenance"] as const;
+const ITEMS_PER_PAGE_OPTIONS = [10, 25, 50, 100];
+
+type SortField = "device_name" | "device_type" | "status" | "vram_gb" | "price_per_hour" | "total_earnings" | "created_at";
+type SortOrder = "asc" | "desc";
 
 export const AdminResources = () => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [typeFilter, setTypeFilter] = useState<string>("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(25);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteDeviceId, setDeleteDeviceId] = useState<string | null>(null);
   const [newDevice, setNewDevice] = useState({
@@ -66,6 +75,11 @@ export const AdminResources = () => {
   useEffect(() => {
     fetchDevices();
   }, []);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter, typeFilter, searchQuery, sortField, sortOrder, itemsPerPage]);
 
   const addDevice = async () => {
     if (!newDevice.device_name.trim()) {
@@ -128,11 +142,55 @@ export const AdminResources = () => {
     }
   };
 
-  const filteredDevices = devices.filter((device) => {
-    const matchesStatus = statusFilter === "all" || device.status === statusFilter;
-    const matchesType = typeFilter === "all" || device.device_type === typeFilter;
-    return matchesStatus && matchesType;
-  });
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
+
+  const filteredAndSortedDevices = useMemo(() => {
+    let result = devices.filter((device) => {
+      const matchesStatus = statusFilter === "all" || device.status === statusFilter;
+      const matchesType = typeFilter === "all" || device.device_type === typeFilter;
+      const matchesSearch = searchQuery === "" || 
+        device.device_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        device.device_model?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        device.id.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesStatus && matchesType && matchesSearch;
+    });
+
+    // Sort
+    result.sort((a, b) => {
+      let aVal: any = a[sortField];
+      let bVal: any = b[sortField];
+
+      if (sortField === "vram_gb" || sortField === "price_per_hour" || sortField === "total_earnings") {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      } else if (sortField === "created_at") {
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
+      } else {
+        aVal = String(aVal || "").toLowerCase();
+        bVal = String(bVal || "").toLowerCase();
+      }
+
+      if (aVal < bVal) return sortOrder === "asc" ? -1 : 1;
+      if (aVal > bVal) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [devices, statusFilter, typeFilter, searchQuery, sortField, sortOrder]);
+
+  const totalPages = Math.ceil(filteredAndSortedDevices.length / itemsPerPage);
+  const paginatedDevices = filteredAndSortedDevices.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const deviceTypes = [...new Set(devices.map((d) => d.device_type))];
 
@@ -157,6 +215,18 @@ export const AdminResources = () => {
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
+  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+    <TableHead 
+      className="cursor-pointer hover:bg-muted/50 select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {children}
+        <ArrowUpDown className={`h-3 w-3 ${sortField === field ? "text-primary" : "text-muted-foreground"}`} />
+      </div>
+    </TableHead>
+  );
 
   if (loading) {
     return (
@@ -316,35 +386,65 @@ export const AdminResources = () => {
         </Card>
       </div>
 
-      {/* Filters */}
+      {/* Search and Filters */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Statuses</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-                <SelectItem value="online">Online</SelectItem>
-                <SelectItem value="offline">Offline</SelectItem>
-                <SelectItem value="maintenance">Maintenance</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full sm:w-[180px]">
-                <SelectValue placeholder="Filter by type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Types</SelectItem>
-                {deviceTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type.toUpperCase()}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex flex-col gap-4">
+            {/* Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, model, or ID..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            {/* Filters */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-4 sm:flex-row">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="maintenance">Maintenance</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-[180px]">
+                    <SelectValue placeholder="Filter by type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    {deviceTypes.map((type) => (
+                      <SelectItem key={type} value={type}>
+                        {type.toUpperCase()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground whitespace-nowrap">Show:</span>
+                <Select value={itemsPerPage.toString()} onValueChange={(v) => setItemsPerPage(Number(v))}>
+                  <SelectTrigger className="w-[80px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ITEMS_PER_PAGE_OPTIONS.map((option) => (
+                      <SelectItem key={option} value={option.toString()}>
+                        {option}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -352,61 +452,135 @@ export const AdminResources = () => {
       {/* Devices Table */}
       <Card>
         <CardHeader>
-          <CardTitle>Devices ({filteredDevices.length})</CardTitle>
+          <CardTitle>Devices ({filteredAndSortedDevices.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Device</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>VRAM</TableHead>
-                  <TableHead>Price/hr</TableHead>
-                  <TableHead>Earnings</TableHead>
-                  <TableHead>Last Seen</TableHead>
+                  <SortableHeader field="device_name">Device</SortableHeader>
+                  <SortableHeader field="device_type">Type</SortableHeader>
+                  <SortableHeader field="status">Status</SortableHeader>
+                  <SortableHeader field="vram_gb">VRAM</SortableHeader>
+                  <SortableHeader field="price_per_hour">Price/hr</SortableHeader>
+                  <SortableHeader field="total_earnings">Earnings</SortableHeader>
+                  <SortableHeader field="created_at">Created</SortableHeader>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDevices.map((device) => (
-                  <TableRow key={device.id}>
-                    <TableCell>
-                      <div className="font-medium">{device.device_name}</div>
-                      <div className="text-xs text-muted-foreground font-mono">
-                        {device.id.slice(0, 8)}...
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{device.device_type?.toUpperCase()}</Badge>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(device.status)}</TableCell>
-                    <TableCell>
-                      {device.vram_gb ? `${device.vram_gb} GB` : "-"}
-                    </TableCell>
-                    <TableCell>${Number(device.price_per_hour).toFixed(2)}</TableCell>
-                    <TableCell>${Number(device.total_earnings).toFixed(2)}</TableCell>
-                    <TableCell>
-                      {device.last_seen_at
-                        ? new Date(device.last_seen_at).toLocaleString()
-                        : "Never"}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setDeleteDeviceId(device.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                {paginatedDevices.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                      No devices found
                     </TableCell>
                   </TableRow>
-                ))}
+                ) : (
+                  paginatedDevices.map((device) => (
+                    <TableRow key={device.id}>
+                      <TableCell>
+                        <div className="font-medium">{device.device_name}</div>
+                        <div className="text-xs text-muted-foreground font-mono">
+                          {device.id.slice(0, 8)}...
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{device.device_type?.toUpperCase()}</Badge>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(device.status)}</TableCell>
+                      <TableCell>
+                        {device.vram_gb ? `${device.vram_gb} GB` : "-"}
+                      </TableCell>
+                      <TableCell>${Number(device.price_per_hour).toFixed(2)}</TableCell>
+                      <TableCell>${Number(device.total_earnings).toFixed(2)}</TableCell>
+                      <TableCell>
+                        {new Date(device.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setDeleteDeviceId(device.id)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedDevices.length)} of {filteredAndSortedDevices.length} devices
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(1)}
+                  disabled={currentPage === 1}
+                >
+                  First
+                </Button>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(currentPage - 1)}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum: number;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(pageNum)}
+                        className="w-8 h-8 p-0"
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setCurrentPage(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(totalPages)}
+                  disabled={currentPage === totalPages}
+                >
+                  Last
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
