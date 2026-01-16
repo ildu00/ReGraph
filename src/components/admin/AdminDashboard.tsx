@@ -50,12 +50,15 @@ export const AdminDashboard = () => {
           .from("support_requests")
           .select("status");
 
-        // Fetch usage logs for chart
+        // Fetch usage logs for chart - last 14 days
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+        
         const { data: usageLogs } = await supabase
           .from("usage_logs")
           .select("created_at, tokens_used")
-          .order("created_at", { ascending: true })
-          .limit(100);
+          .gte("created_at", fourteenDaysAgo.toISOString())
+          .order("created_at", { ascending: true });
 
         const totalRevenue = transactions?.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0) || 0;
         const activeDevices = devices?.filter(d => d.status === "online").length || 0;
