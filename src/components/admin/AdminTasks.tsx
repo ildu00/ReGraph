@@ -118,9 +118,9 @@ export const AdminTasks = () => {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
-              New Task
+            <Button size="icon" className="sm:w-auto sm:px-4">
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">New Task</span>
             </Button>
           </DialogTrigger>
           <DialogContent>
