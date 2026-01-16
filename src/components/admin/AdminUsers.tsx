@@ -21,9 +21,8 @@ interface UnifiedUser {
   role?: string;
 }
 
-type SortField = "display_name" | "balance_usd" | "created_at" | "status" | "type";
+type SortField = "display_name" | "balance_usd" | "created_at" | "status";
 type SortDirection = "asc" | "desc";
-type TypeFilter = "all" | "test" | "real";
 
 const ITEMS_PER_PAGE = 20;
 
@@ -33,7 +32,6 @@ export const AdminUsers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [balanceFilter, setBalanceFilter] = useState<string>("all");
-  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -95,7 +93,7 @@ export const AdminUsers = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, balanceFilter, typeFilter]);
+  }, [searchQuery, statusFilter, balanceFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -138,8 +136,7 @@ export const AdminUsers = () => {
         balanceFilter === "all" ||
         (balanceFilter === "zero" && user.balance_usd === 0) ||
         (balanceFilter === "positive" && user.balance_usd > 0);
-      const matchesType = typeFilter === "all" || user.type === typeFilter;
-      return matchesSearch && matchesStatus && matchesBalance && matchesType;
+      return matchesSearch && matchesStatus && matchesBalance;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -151,8 +148,6 @@ export const AdminUsers = () => {
         comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       } else if (sortField === "status") {
         comparison = a.status.localeCompare(b.status);
-      } else if (sortField === "type") {
-        comparison = a.type.localeCompare(b.type);
       }
       return sortDirection === "asc" ? comparison : -comparison;
     });
@@ -163,9 +158,6 @@ export const AdminUsers = () => {
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
-
-  const testCount = users.filter((u) => u.type === "test").length;
-  const realCount = users.filter((u) => u.type === "real").length;
 
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <Button
@@ -191,7 +183,7 @@ export const AdminUsers = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">View and manage platform users ({realCount} real, {testCount} test)</p>
+        <p className="text-muted-foreground">View and manage platform users</p>
       </div>
 
       {/* Filters */}
@@ -207,16 +199,6 @@ export const AdminUsers = () => {
                 className="pl-9"
               />
             </div>
-            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
-              <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue placeholder="Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All ({users.length})</SelectItem>
-                <SelectItem value="real">Real ({realCount})</SelectItem>
-                <SelectItem value="test">Test ({testCount})</SelectItem>
-              </SelectContent>
-            </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full sm:w-[150px]">
                 <SelectValue placeholder="Status" />
@@ -251,7 +233,6 @@ export const AdminUsers = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead><SortButton field="type">Type</SortButton></TableHead>
                   <TableHead><SortButton field="display_name">Name</SortButton></TableHead>
                   <TableHead className="hidden md:table-cell">Email</TableHead>
                   <TableHead><SortButton field="balance_usd">Balance</SortButton></TableHead>
@@ -263,7 +244,7 @@ export const AdminUsers = () => {
               <TableBody>
                 {paginatedUsers.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                       No users found
                     </TableCell>
                   </TableRow>
@@ -271,15 +252,10 @@ export const AdminUsers = () => {
                   paginatedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell>
-                        <Badge variant={user.type === "real" ? "default" : "outline"}>
-                          {user.type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
                         <div>
                           <div className="font-medium">{user.display_name || "No name"}</div>
                           <div className="text-xs text-muted-foreground md:hidden">{user.email || "—"}</div>
-                          {user.type === "real" && user.role && user.role !== "user" && (
+                          {user.role && user.role !== "user" && (
                             <Badge variant="destructive" className="mt-1 text-xs">
                               {user.role}
                             </Badge>
@@ -301,31 +277,27 @@ export const AdminUsers = () => {
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        {user.type === "real" ? (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
-                                <Shield className="mr-2 h-4 w-4" />
-                                Make Admin
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "moderator")}>
-                                <Shield className="mr-2 h-4 w-4" />
-                                Make Moderator
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
-                                <ShieldOff className="mr-2 h-4 w-4" />
-                                Remove Role
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        ) : (
-                          <span className="text-muted-foreground text-xs">—</span>
-                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Make Admin
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, "moderator")}>
+                              <Shield className="mr-2 h-4 w-4" />
+                              Make Moderator
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
+                              <ShieldOff className="mr-2 h-4 w-4" />
+                              Remove Role
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </TableCell>
                     </TableRow>
                   ))
