@@ -10,40 +10,33 @@ import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, A
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-interface TestUser {
+interface UnifiedUser {
   id: string;
   display_name: string;
   email: string;
   balance_usd: number;
   status: string;
   created_at: string;
-}
-
-interface RealUser {
-  user_id: string;
-  display_name: string | null;
-  email: string | null;
-  created_at: string;
+  type: "test" | "real";
   role?: string;
-  wallet_balance?: number;
 }
 
-type SortField = "display_name" | "balance_usd" | "created_at" | "status";
+type SortField = "display_name" | "balance_usd" | "created_at" | "status" | "type";
 type SortDirection = "asc" | "desc";
+type TypeFilter = "all" | "test" | "real";
 
 const ITEMS_PER_PAGE = 20;
 
 export const AdminUsers = () => {
-  const [testUsers, setTestUsers] = useState<TestUser[]>([]);
-  const [realUsers, setRealUsers] = useState<RealUser[]>([]);
+  const [users, setUsers] = useState<UnifiedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [balanceFilter, setBalanceFilter] = useState<string>("all");
+  const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [viewMode, setViewMode] = useState<"test" | "real">("test");
 
   const fetchData = async () => {
     try {
@@ -54,23 +47,40 @@ export const AdminUsers = () => {
         .order("created_at", { ascending: false });
 
       if (testError) throw testError;
-      setTestUsers(testData || []);
 
-      // Fetch real users (profiles + roles)
+      // Fetch real users (profiles + roles + wallets)
       const { data: profiles } = await supabase
         .from("profiles")
         .select("user_id, display_name, email, created_at")
         .order("created_at", { ascending: false });
 
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
+      const { data: wallets } = await supabase.from("wallets").select("user_id, balance_usd");
 
-      const usersWithDetails = profiles?.map((profile) => ({
-        ...profile,
-        role: roles?.find((r) => r.user_id === profile.user_id)?.role || "user",
-        wallet_balance: 0,
-      })) || [];
+      // Convert test users to unified format
+      const testUsersUnified: UnifiedUser[] = (testData || []).map((u) => ({
+        id: u.id,
+        display_name: u.display_name,
+        email: u.email,
+        balance_usd: Number(u.balance_usd),
+        status: u.status,
+        created_at: u.created_at,
+        type: "test" as const,
+      }));
 
-      setRealUsers(usersWithDetails);
+      // Convert real users to unified format
+      const realUsersUnified: UnifiedUser[] = (profiles || []).map((p) => ({
+        id: p.user_id,
+        display_name: p.display_name || "",
+        email: p.email || "",
+        balance_usd: Number(wallets?.find((w) => w.user_id === p.user_id)?.balance_usd || 0),
+        status: "active",
+        created_at: p.created_at,
+        type: "real" as const,
+        role: roles?.find((r) => r.user_id === p.user_id)?.role || "user",
+      }));
+
+      setUsers([...realUsersUnified, ...testUsersUnified]);
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error("Failed to fetch users");
@@ -85,7 +95,7 @@ export const AdminUsers = () => {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, statusFilter, balanceFilter, viewMode]);
+  }, [searchQuery, statusFilter, balanceFilter, typeFilter]);
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -116,8 +126,8 @@ export const AdminUsers = () => {
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
-  // Filter and sort test users
-  const filteredTestUsers = testUsers
+  // Filter and sort users
+  const filteredUsers = users
     .filter((user) => {
       const matchesSearch =
         normalizedQuery.length === 0 ||
@@ -128,7 +138,8 @@ export const AdminUsers = () => {
         balanceFilter === "all" ||
         (balanceFilter === "zero" && user.balance_usd === 0) ||
         (balanceFilter === "positive" && user.balance_usd > 0);
-      return matchesSearch && matchesStatus && matchesBalance;
+      const matchesType = typeFilter === "all" || user.type === typeFilter;
+      return matchesSearch && matchesStatus && matchesBalance && matchesType;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -140,27 +151,21 @@ export const AdminUsers = () => {
         comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       } else if (sortField === "status") {
         comparison = a.status.localeCompare(b.status);
+      } else if (sortField === "type") {
+        comparison = a.type.localeCompare(b.type);
       }
       return sortDirection === "asc" ? comparison : -comparison;
     });
 
   // Pagination
-  const totalPages = Math.ceil(filteredTestUsers.length / ITEMS_PER_PAGE);
-  const paginatedTestUsers = filteredTestUsers.slice(
+  const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+  const paginatedUsers = filteredUsers.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
 
-  const filteredRealUsers = realUsers.filter((user) => {
-    if (normalizedQuery.length === 0) return true;
-
-    const matchesSearch =
-      user.display_name?.toLowerCase().includes(normalizedQuery) ||
-      user.email?.toLowerCase().includes(normalizedQuery) ||
-      user.user_id.toLowerCase().includes(normalizedQuery);
-
-    return matchesSearch;
-  });
+  const testCount = users.filter((u) => u.type === "test").length;
+  const realCount = users.filter((u) => u.type === "real").length;
 
   const SortButton = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
     <Button
@@ -186,7 +191,7 @@ export const AdminUsers = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold">User Management</h1>
-        <p className="text-muted-foreground">View and manage platform users</p>
+        <p className="text-muted-foreground">View and manage platform users ({realCount} real, {testCount} test)</p>
       </div>
 
       {/* Filters */}
@@ -198,51 +203,40 @@ export const AdminUsers = () => {
               <Input
                 placeholder="Search by name or email..."
                 value={searchQuery}
-                onChange={(e) => {
-                  const next = e.target.value;
-                  setSearchQuery(next);
-
-                  // Email lookups usually refer to real users, not generated test users
-                  if (viewMode === "test" && next.includes("@")) {
-                    setViewMode("real");
-                  }
-                }}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-9"
               />
             </div>
-            <Select value={viewMode} onValueChange={(v) => setViewMode(v as "test" | "real")}>
+            <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as TypeFilter)}>
               <SelectTrigger className="w-full sm:w-[150px]">
-                <SelectValue placeholder="View" />
+                <SelectValue placeholder="Type" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="test">Test Users ({testUsers.length})</SelectItem>
-                <SelectItem value="real">Real Users ({realUsers.length})</SelectItem>
+                <SelectItem value="all">All ({users.length})</SelectItem>
+                <SelectItem value="real">Real ({realCount})</SelectItem>
+                <SelectItem value="test">Test ({testCount})</SelectItem>
               </SelectContent>
             </Select>
-            {viewMode === "test" && (
-              <>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={balanceFilter} onValueChange={setBalanceFilter}>
-                  <SelectTrigger className="w-full sm:w-[150px]">
-                    <SelectValue placeholder="Balance" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Balances</SelectItem>
-                    <SelectItem value="zero">Zero Balance</SelectItem>
-                    <SelectItem value="positive">Positive Balance</SelectItem>
-                  </SelectContent>
-                </Select>
-              </>
-            )}
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                <SelectItem value="active">Active</SelectItem>
+                <SelectItem value="inactive">Inactive</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={balanceFilter} onValueChange={setBalanceFilter}>
+              <SelectTrigger className="w-full sm:w-[150px]">
+                <SelectValue placeholder="Balance" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Balances</SelectItem>
+                <SelectItem value="zero">Zero Balance</SelectItem>
+                <SelectItem value="positive">Positive Balance</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
@@ -250,86 +244,64 @@ export const AdminUsers = () => {
       {/* Users Table */}
       <Card>
         <CardHeader>
-          <CardTitle>
-            {viewMode === "test" ? `Test Users (${filteredTestUsers.length})` : `Real Users (${filteredRealUsers.length})`}
-          </CardTitle>
+          <CardTitle>Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
-            {viewMode === "test" ? (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead><SortButton field="type">Type</SortButton></TableHead>
+                  <TableHead><SortButton field="display_name">Name</SortButton></TableHead>
+                  <TableHead className="hidden md:table-cell">Email</TableHead>
+                  <TableHead><SortButton field="balance_usd">Balance</SortButton></TableHead>
+                  <TableHead><SortButton field="status">Status</SortButton></TableHead>
+                  <TableHead className="hidden sm:table-cell"><SortButton field="created_at">Joined</SortButton></TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedUsers.length === 0 ? (
                   <TableRow>
-                    <TableHead><SortButton field="display_name">Name</SortButton></TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead><SortButton field="balance_usd">Balance</SortButton></TableHead>
-                    <TableHead><SortButton field="status">Status</SortButton></TableHead>
-                    <TableHead><SortButton field="created_at">Joined</SortButton></TableHead>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      No users found
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedTestUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No users found
+                ) : (
+                  paginatedUsers.map((user) => (
+                    <TableRow key={user.id}>
+                      <TableCell>
+                        <Badge variant={user.type === "real" ? "default" : "outline"}>
+                          {user.type}
+                        </Badge>
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    paginatedTestUsers.map((user) => (
-                      <TableRow key={user.id}>
-                        <TableCell>
-                          <div className="font-medium">{user.display_name}</div>
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">{user.email}</TableCell>
-                        <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>
-                          ${user.balance_usd.toFixed(2)}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.status === "active" ? "default" : "secondary"}>
-                            {user.status}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>User</TableHead>
-                    <TableHead>Role</TableHead>
-                    <TableHead>Balance</TableHead>
-                    <TableHead>Joined</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRealUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No users found
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{user.display_name || "No name"}</div>
+                          <div className="text-xs text-muted-foreground md:hidden">{user.email || "—"}</div>
+                          {user.type === "real" && user.role && user.role !== "user" && (
+                            <Badge variant="destructive" className="mt-1 text-xs">
+                              {user.role}
+                            </Badge>
+                          )}
+                        </div>
                       </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredRealUsers.map((user) => (
-                      <TableRow key={user.user_id}>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{user.display_name || "No name"}</div>
-                            <div className="text-xs text-muted-foreground">{user.email || user.user_id.slice(0, 8) + "..."}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant={user.role === "admin" ? "destructive" : user.role === "moderator" ? "default" : "secondary"}>
-                            {user.role}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>${Number(user.wallet_balance).toFixed(2)}</TableCell>
-                        <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right">
+                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                        {user.email || "—"}
+                      </TableCell>
+                      <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>
+                        ${user.balance_usd.toFixed(2)}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                          {user.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {user.type === "real" ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon">
@@ -337,31 +309,33 @@ export const AdminUsers = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.user_id, "admin")}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
                                 <Shield className="mr-2 h-4 w-4" />
                                 Make Admin
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.user_id, "moderator")}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "moderator")}>
                                 <Shield className="mr-2 h-4 w-4" />
                                 Make Moderator
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRoleChange(user.user_id, "user")}>
+                              <DropdownMenuItem onClick={() => handleRoleChange(user.id, "user")}>
                                 <ShieldOff className="mr-2 h-4 w-4" />
                                 Remove Role
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            )}
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
           </div>
 
-          {/* Pagination for test users */}
-          {viewMode === "test" && totalPages > 1 && (
+          {/* Pagination */}
+          {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
                 Page {currentPage} of {totalPages}
