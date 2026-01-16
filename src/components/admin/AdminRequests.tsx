@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Eye, CheckCircle, Clock, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from "lucide-react";
+import { Eye, CheckCircle, Clock, Search, ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, User } from "lucide-react";
 import { toast } from "sonner";
 
 interface SupportRequest {
@@ -18,6 +18,10 @@ interface SupportRequest {
   subject: string;
   status: string;
   created_at: string;
+  user_id: string | null;
+  profile?: {
+    display_name: string | null;
+  } | null;
 }
 
 type SortField = "name" | "email" | "subject" | "status" | "created_at";
@@ -36,13 +40,40 @@ export const AdminRequests = () => {
 
   const fetchRequests = async () => {
     try {
-      const { data, error } = await supabase
+      // Fetch requests
+      const { data: requestsData, error: requestsError } = await supabase
         .from("support_requests")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
-      setRequests(data || []);
+      if (requestsError) throw requestsError;
+
+      // Fetch profiles for user_ids
+      const userIds = (requestsData || [])
+        .map((r) => r.user_id)
+        .filter((id): id is string => id !== null);
+
+      let profilesMap: Record<string, string | null> = {};
+      
+      if (userIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from("profiles")
+          .select("user_id, display_name")
+          .in("user_id", userIds);
+
+        profilesMap = (profilesData || []).reduce((acc, p) => {
+          acc[p.user_id] = p.display_name;
+          return acc;
+        }, {} as Record<string, string | null>);
+      }
+
+      // Merge profile data into requests
+      const enrichedRequests = (requestsData || []).map((r) => ({
+        ...r,
+        profile: r.user_id ? { display_name: profilesMap[r.user_id] || null } : null,
+      }));
+
+      setRequests(enrichedRequests as SupportRequest[]);
     } catch (error) {
       console.error("Error fetching requests:", error);
       toast.error("Failed to fetch requests");
@@ -233,6 +264,7 @@ export const AdminRequests = () => {
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="name">From</SortableHeader>
+                  <TableHead>Account</TableHead>
                   <SortableHeader field="subject">Category</SortableHeader>
                   <TableHead>Message</TableHead>
                   <SortableHeader field="status">Status</SortableHeader>
@@ -243,7 +275,7 @@ export const AdminRequests = () => {
               <TableBody>
                 {paginatedRequests.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                       No requests found
                     </TableCell>
                   </TableRow>
@@ -255,6 +287,18 @@ export const AdminRequests = () => {
                           <div className="font-medium">{request.name}</div>
                           <div className="text-xs text-muted-foreground">{request.email}</div>
                         </div>
+                      </TableCell>
+                      <TableCell>
+                        {request.user_id ? (
+                          <div className="flex items-center gap-1.5">
+                            <User className="h-3 w-3 text-primary" />
+                            <span className="text-sm">
+                              {request.profile?.display_name || "User"}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">Guest</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{request.subject || "General"}</Badge>
@@ -364,6 +408,19 @@ export const AdminRequests = () => {
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Email</label>
                   <p className="font-medium">{selectedRequest.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Account</label>
+                  <p className="font-medium flex items-center gap-1.5">
+                    {selectedRequest.user_id ? (
+                      <>
+                        <User className="h-4 w-4 text-primary" />
+                        {selectedRequest.profile?.display_name || "Registered User"}
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">Guest (not logged in)</span>
+                    )}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">Subject</label>
