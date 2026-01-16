@@ -114,12 +114,15 @@ export const AdminUsers = () => {
     }
   };
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
   // Filter and sort test users
   const filteredTestUsers = testUsers
     .filter((user) => {
       const matchesSearch =
-        user.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        user.email.toLowerCase().includes(searchQuery.toLowerCase());
+        normalizedQuery.length === 0 ||
+        user.display_name.toLowerCase().includes(normalizedQuery) ||
+        user.email.toLowerCase().includes(normalizedQuery);
       const matchesStatus = statusFilter === "all" || user.status === statusFilter;
       const matchesBalance =
         balanceFilter === "all" ||
@@ -149,10 +152,13 @@ export const AdminUsers = () => {
   );
 
   const filteredRealUsers = realUsers.filter((user) => {
+    if (normalizedQuery.length === 0) return true;
+
     const matchesSearch =
-      user.display_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.user_id.toLowerCase().includes(searchQuery.toLowerCase());
+      user.display_name?.toLowerCase().includes(normalizedQuery) ||
+      user.email?.toLowerCase().includes(normalizedQuery) ||
+      user.user_id.toLowerCase().includes(normalizedQuery);
+
     return matchesSearch;
   });
 
@@ -192,7 +198,15 @@ export const AdminUsers = () => {
               <Input
                 placeholder="Search by name or email..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSearchQuery(next);
+
+                  // Email lookups usually refer to real users, not generated test users
+                  if (viewMode === "test" && next.includes("@")) {
+                    setViewMode("real");
+                  }
+                }}
                 className="pl-9"
               />
             </div>
