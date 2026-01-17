@@ -245,12 +245,37 @@ export const AdminRevenue = () => {
             <CardTitle>Revenue vs Payouts (Last 14 Days)</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-[300px]">
+            <div className="h-[300px] -ml-4 -mb-2">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <AreaChart
+                  data={revenueData}
+                  margin={{ top: 5, right: 5, left: -32, bottom: 0 }}
+                >
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="date" className="text-xs" tick={{ fontSize: 11 }} />
-                  <YAxis className="text-xs" tick={{ fontSize: 11 }} tickFormatter={(v) => `$${v}`} />
+                  <XAxis
+                    dataKey="date"
+                    className="text-xs"
+                    tick={{ fontSize: 10 }}
+                    tickMargin={6}
+                    height={22}
+                    minTickGap={16}
+                    axisLine={false}
+                    tickLine={false}
+                  />
+                  <YAxis
+                    className="text-xs"
+                    tick={{ fontSize: 10 }}
+                    tickMargin={6}
+                    width={52}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v) => {
+                      const n = Number(v) || 0;
+                      const abs = Math.abs(n);
+                      const decimals = abs >= 1 ? 2 : 4;
+                      return `$${n.toFixed(decimals)}`;
+                    }}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
