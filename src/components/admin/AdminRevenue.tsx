@@ -243,6 +243,7 @@ export const AdminRevenue = () => {
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
+                      color: "hsl(var(--card-foreground))",
                     }}
                     formatter={(value: number) => [`$${value.toFixed(4)}`, ""]}
                   />
@@ -291,6 +292,7 @@ export const AdminRevenue = () => {
                     contentStyle={{
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
+                      color: "hsl(var(--card-foreground))",
                     }}
                     formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
                   />
