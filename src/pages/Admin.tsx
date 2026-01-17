@@ -10,8 +10,9 @@ import { AdminResources } from "@/components/admin/AdminResources";
 import { AdminTasks } from "@/components/admin/AdminTasks";
 import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminForms } from "@/components/admin/AdminForms";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -93,9 +94,13 @@ const Admin = () => {
 
       {/* Mobile Header */}
       <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-        <div className="flex items-center gap-2">
-          <span className="text-xl font-bold text-primary">ReGraph</span>
-        </div>
+        <Link to="/" className="flex items-center gap-2">
+          <Zap className="h-6 w-6 text-primary" />
+          <span className="text-xl font-bold">
+            <span className="text-gradient">Re</span>
+            <span className="text-primary">Graph</span>
+          </span>
+        </Link>
         <Button
           variant="ghost"
           size="icon"
