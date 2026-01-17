@@ -18,38 +18,94 @@ interface Transaction {
 export const AdminRevenue = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
-  const [revenueData, setRevenueData] = useState<any[]>([]);
+  const [revenueData, setRevenueData] = useState<Array<{ date: string; revenue: number; payouts: number }>>([]);
+  const [isEstimatedFromUsageLogs, setIsEstimatedFromUsageLogs] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data, error } = await supabase
-          .from("wallet_transactions")
-          .select("id, user_id, amount_usd, transaction_type, status, created_at")
-          .order("created_at", { ascending: false })
-          .limit(100);
+        const fourteenDaysAgo = new Date();
+        fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
-        if (error) throw error;
-        setTransactions(data || []);
+        const [txRes, usageRes] = await Promise.all([
+          supabase
+            .from("wallet_transactions")
+            .select("id, user_id, amount_usd, transaction_type, status, created_at")
+            .order("created_at", { ascending: false })
+            .limit(1000),
+          supabase
+            .from("usage_logs")
+            .select("created_at, cost_usd")
+            .gte("created_at", fourteenDaysAgo.toISOString())
+            .order("created_at", { ascending: true })
+            .limit(5000),
+        ]);
 
-        // Process for chart
-        const grouped = (data || []).reduce((acc: any, tx) => {
-          const date = new Date(tx.created_at).toLocaleDateString();
-          if (!acc[date]) {
-            acc[date] = { date, revenue: 0, payouts: 0 };
+        if (txRes.error) throw txRes.error;
+        if (usageRes.error) throw usageRes.error;
+
+        const txData = txRes.data || [];
+        const usageLogs = usageRes.data || [];
+
+        setTransactions(txData as Transaction[]);
+
+        const groupByDay = (
+          rows: Array<{ created_at: string; revenue: number; payouts: number }>,
+        ) => {
+          const map = new Map<string, { revenue: number; payouts: number }>();
+
+          for (const row of rows) {
+            const key = new Date(row.created_at).toISOString().slice(0, 10); // YYYY-MM-DD
+            const prev = map.get(key) || { revenue: 0, payouts: 0 };
+            map.set(key, {
+              revenue: prev.revenue + row.revenue,
+              payouts: prev.payouts + row.payouts,
+            });
           }
-          const amount = Math.abs(Number(tx.amount_usd));
-          if (tx.transaction_type === "usage_charge") {
-            acc[date].revenue += amount;
-          } else if (tx.transaction_type === "provider_earning") {
-            acc[date].payouts += amount;
-          }
-          return acc;
-        }, {});
 
-        setRevenueData(Object.values(grouped).slice(-14));
+          return Array.from(map.entries())
+            .sort(([a], [b]) => a.localeCompare(b))
+            .map(([key, value]) => ({
+              date: new Date(`${key}T00:00:00Z`).toLocaleDateString(),
+              revenue: value.revenue,
+              payouts: value.payouts,
+            }));
+        };
+
+        // Prefer actual wallet transactions for revenue/payouts if present.
+        const txRowsForChart = txData
+          .filter((t: any) => t.transaction_type === "usage_charge" || t.transaction_type === "provider_earning")
+          .map((t: any) => {
+            const amount = Math.abs(Number(t.amount_usd)) || 0;
+            return {
+              created_at: t.created_at,
+              revenue: t.transaction_type === "usage_charge" ? amount : 0,
+              payouts: t.transaction_type === "provider_earning" ? amount : 0,
+            };
+          });
+
+        const txChart = groupByDay(txRowsForChart).slice(-14);
+        const txHasMoney = txChart.some((d) => d.revenue > 0 || d.payouts > 0);
+
+        if (txHasMoney) {
+          setIsEstimatedFromUsageLogs(false);
+          setRevenueData(txChart);
+        } else {
+          // Fallback: estimate from usage_logs (matches what you see on the main dashboard).
+          const usageRowsForChart = usageLogs.map((l: any) => {
+            const cost = Math.abs(Number(l.cost_usd)) || 0;
+            return {
+              created_at: l.created_at,
+              revenue: cost,
+              payouts: cost * 0.8,
+            };
+          });
+
+          setIsEstimatedFromUsageLogs(true);
+          setRevenueData(groupByDay(usageRowsForChart).slice(-14));
+        }
       } catch (error) {
-        console.error("Error fetching transactions:", error);
+        console.error("Error fetching transactions/usage logs:", error);
       } finally {
         setLoading(false);
       }
@@ -58,7 +114,7 @@ export const AdminRevenue = () => {
     fetchData();
   }, []);
 
-  // Calculate stats
+  // Calculate stats (prefer wallet transactions when they exist; otherwise estimate from chart)
   const totalRevenue = transactions
     .filter((t) => t.transaction_type === "usage_charge")
     .reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
@@ -68,28 +124,32 @@ export const AdminRevenue = () => {
     .reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
 
   const totalDeposits = transactions
-    .filter((t) => t.transaction_type === "deposit" || t.transaction_type === "crypto_deposit")
+    .filter((t) => t.transaction_type === "deposit")
     .reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
 
-  const netRevenue = totalRevenue - totalPayouts;
+  const estimatedRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
+  const estimatedPayouts = revenueData.reduce((sum, d) => sum + d.payouts, 0);
+
+  const displayRevenue = totalRevenue > 0 ? totalRevenue : estimatedRevenue;
+  const displayPayouts = totalPayouts > 0 ? totalPayouts : estimatedPayouts;
+  const netRevenue = displayRevenue - displayPayouts;
 
   const typeDistribution = [
-    { name: "Usage Charges", value: totalRevenue, color: "#22c55e" },
-    { name: "Provider Payouts", value: totalPayouts, color: "#f59e0b" },
-    { name: "Deposits", value: totalDeposits, color: "#3b82f6" },
+    { name: "Usage Charges", value: displayRevenue, color: "hsl(var(--primary))" },
+    { name: "Provider Payouts", value: displayPayouts, color: "hsl(var(--accent))" },
+    { name: "Deposits", value: totalDeposits, color: "hsl(var(--secondary))" },
   ].filter((d) => d.value > 0);
 
   const getTypeBadge = (type: string) => {
     switch (type) {
       case "usage_charge":
-        return <Badge className="bg-green-500/10 text-green-500">Usage</Badge>;
+        return <Badge>Usage</Badge>;
       case "provider_earning":
-        return <Badge className="bg-amber-500/10 text-amber-500">Payout</Badge>;
+        return <Badge variant="secondary">Payout</Badge>;
       case "deposit":
-      case "crypto_deposit":
-        return <Badge className="bg-blue-500/10 text-blue-500">Deposit</Badge>;
+        return <Badge variant="outline">Deposit</Badge>;
       case "withdrawal":
-        return <Badge className="bg-red-500/10 text-red-500">Withdrawal</Badge>;
+        return <Badge variant="destructive">Withdrawal</Badge>;
       default:
         return <Badge variant="secondary">{type}</Badge>;
     }
