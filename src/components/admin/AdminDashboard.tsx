@@ -8,6 +8,7 @@ interface Stats {
   totalUsers: number;
   totalDevices: number;
   totalRevenue: number;
+  totalDeposits: number;
   totalRequests: number;
   activeDevices: number;
   pendingRequests: number;
@@ -18,6 +19,7 @@ export const AdminDashboard = () => {
     totalUsers: 0,
     totalDevices: 0,
     totalRevenue: 0,
+    totalDeposits: 0,
     totalRequests: 0,
     activeDevices: 0,
     pendingRequests: 0,
@@ -33,12 +35,13 @@ export const AdminDashboard = () => {
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
         // Parallel fetches
-        const [usersRes, devicesRes, txRes, requestsRes, usageRes] = await Promise.all([
+        const [usersRes, devicesRes, txRes, requestsRes, usageRes, walletsRes] = await Promise.all([
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("provider_devices").select("status"),
           supabase.from("wallet_transactions").select("amount_usd, transaction_type").eq("transaction_type", "usage_charge"),
           supabase.from("support_requests").select("status"),
           supabase.from("usage_logs").select("created_at, tokens_used, cost_usd").gte("created_at", fourteenDaysAgo.toISOString()).order("created_at", { ascending: true }),
+          supabase.from("wallets").select("balance_usd"),
         ]);
 
         const usersCount = usersRes.count || 0;
@@ -46,12 +49,16 @@ export const AdminDashboard = () => {
         const transactions = txRes.data || [];
         const requests = requestsRes.data || [];
         const usageLogs = usageRes.data || [];
+        const wallets = walletsRes.data || [];
 
         // Revenue from wallet_transactions OR fallback to usage_logs.cost_usd
         let totalRevenue = transactions.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
         if (totalRevenue === 0 && usageLogs.length > 0) {
           totalRevenue = usageLogs.reduce((sum, l) => sum + Math.abs(Number(l.cost_usd) || 0), 0);
         }
+
+        // Total deposits = sum of all wallet balances
+        const totalDeposits = wallets.reduce((sum, w) => sum + Number(w.balance_usd || 0), 0);
 
         const activeDevices = devices.filter((d) => d.status === "online").length;
         const pendingRequests = requests.filter((r) => r.status === "pending").length;
@@ -60,6 +67,7 @@ export const AdminDashboard = () => {
           totalUsers: usersCount,
           totalDevices: devices.length,
           totalRevenue,
+          totalDeposits,
           totalRequests: requests.length,
           activeDevices,
           pendingRequests,
@@ -94,8 +102,9 @@ export const AdminDashboard = () => {
     { label: "Total Devices", value: stats.totalDevices, icon: Server, color: "text-green-500" },
     { label: "Active Devices", value: stats.activeDevices, icon: Activity, color: "text-emerald-500" },
     { label: "Total Revenue", value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "text-amber-500" },
+    { label: "Total Deposits", value: `$${stats.totalDeposits.toFixed(2)}`, icon: TrendingUp, color: "text-cyan-500" },
     { label: "Support Requests", value: stats.totalRequests, icon: FileText, color: "text-purple-500" },
-    { label: "Pending Requests", value: stats.pendingRequests, icon: TrendingUp, color: "text-red-500" },
+    { label: "Pending Requests", value: stats.pendingRequests, icon: Activity, color: "text-red-500" },
   ];
 
   if (loading) {
