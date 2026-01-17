@@ -244,7 +244,7 @@ export const AdminRevenue = () => {
           <CardHeader>
             <CardTitle>Revenue vs Payouts</CardTitle>
           </CardHeader>
-          <CardContent className="px-6 pb-0 flex-1">
+          <CardContent className="px-6 pb-[15px] flex-1">
             <div className="h-full min-h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
