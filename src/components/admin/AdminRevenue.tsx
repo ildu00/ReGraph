@@ -167,6 +167,21 @@ export const AdminRevenue = () => {
     }
   };
 
+  const renderXAxisTick = ({ x, y, payload }: any) => {
+    return (
+      <text
+        x={x}
+        y={y}
+        dy={10}
+        textAnchor="middle"
+        fill="hsl(var(--muted-foreground))"
+        fontSize={10}
+      >
+        {payload?.value ?? ""}
+      </text>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -252,9 +267,8 @@ export const AdminRevenue = () => {
                   <XAxis
                     dataKey="date"
                     className="text-xs"
-                    tick={{ fontSize: 10 }}
-                    height={18}
-                    tickMargin={0}
+                    tick={renderXAxisTick}
+                    height={14}
                     minTickGap={16}
                     axisLine={false}
                     tickLine={false}
