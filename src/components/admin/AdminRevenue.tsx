@@ -177,10 +177,10 @@ export const AdminRevenue = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Total Revenue</p>
-                <p className="text-2xl font-bold">${totalRevenue.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${displayRevenue.toFixed(2)}</p>
               </div>
-              <div className="rounded-full bg-green-500/10 p-3">
-                <DollarSign className="h-6 w-6 text-green-500" />
+              <div className="rounded-full bg-primary/10 p-3">
+                <DollarSign className="h-6 w-6 text-primary" />
               </div>
             </div>
           </CardContent>
@@ -190,10 +190,10 @@ export const AdminRevenue = () => {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Provider Payouts</p>
-                <p className="text-2xl font-bold">${totalPayouts.toFixed(2)}</p>
+                <p className="text-2xl font-bold">${displayPayouts.toFixed(2)}</p>
               </div>
-              <div className="rounded-full bg-amber-500/10 p-3">
-                <ArrowUpRight className="h-6 w-6 text-amber-500" />
+              <div className="rounded-full bg-secondary/20 p-3">
+                <ArrowUpRight className="h-6 w-6 text-secondary-foreground" />
               </div>
             </div>
           </CardContent>
@@ -205,8 +205,8 @@ export const AdminRevenue = () => {
                 <p className="text-sm text-muted-foreground">Net Revenue</p>
                 <p className="text-2xl font-bold">${netRevenue.toFixed(2)}</p>
               </div>
-              <div className="rounded-full bg-primary/10 p-3">
-                <TrendingUp className="h-6 w-6 text-primary" />
+              <div className="rounded-full bg-accent/20 p-3">
+                <TrendingUp className="h-6 w-6 text-accent-foreground" />
               </div>
             </div>
           </CardContent>
@@ -218,8 +218,8 @@ export const AdminRevenue = () => {
                 <p className="text-sm text-muted-foreground">Total Deposits</p>
                 <p className="text-2xl font-bold">${totalDeposits.toFixed(2)}</p>
               </div>
-              <div className="rounded-full bg-blue-500/10 p-3">
-                <ArrowDownRight className="h-6 w-6 text-blue-500" />
+              <div className="rounded-full bg-muted p-3">
+                <ArrowDownRight className="h-6 w-6 text-muted-foreground" />
               </div>
             </div>
           </CardContent>
