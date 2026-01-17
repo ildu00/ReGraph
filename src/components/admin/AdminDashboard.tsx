@@ -29,66 +29,56 @@ export const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        // Fetch total users
-        const { count: usersCount } = await supabase
-          .from("profiles")
-          .select("*", { count: "exact", head: true });
-
-        // Fetch devices
-        const { data: devices } = await supabase
-          .from("provider_devices")
-          .select("status");
-
-        // Fetch total revenue from transactions
-        const { data: transactions } = await supabase
-          .from("wallet_transactions")
-          .select("amount_usd, transaction_type")
-          .eq("transaction_type", "usage_charge");
-
-        // Fetch support requests
-        const { data: requests } = await supabase
-          .from("support_requests")
-          .select("status");
-
-        // Fetch usage logs for chart - last 14 days
         const fourteenDaysAgo = new Date();
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-        
-        const { data: usageLogs } = await supabase
-          .from("usage_logs")
-          .select("created_at, tokens_used")
-          .gte("created_at", fourteenDaysAgo.toISOString())
-          .order("created_at", { ascending: true });
 
-        const totalRevenue = transactions?.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0) || 0;
-        const activeDevices = devices?.filter(d => d.status === "online").length || 0;
-        const pendingRequests = requests?.filter(r => r.status === "pending").length || 0;
+        // Parallel fetches
+        const [usersRes, devicesRes, txRes, requestsRes, usageRes] = await Promise.all([
+          supabase.from("profiles").select("*", { count: "exact", head: true }),
+          supabase.from("provider_devices").select("status"),
+          supabase.from("wallet_transactions").select("amount_usd, transaction_type").eq("transaction_type", "usage_charge"),
+          supabase.from("support_requests").select("status"),
+          supabase.from("usage_logs").select("created_at, tokens_used, cost_usd").gte("created_at", fourteenDaysAgo.toISOString()).order("created_at", { ascending: true }),
+        ]);
+
+        const usersCount = usersRes.count || 0;
+        const devices = devicesRes.data || [];
+        const transactions = txRes.data || [];
+        const requests = requestsRes.data || [];
+        const usageLogs = usageRes.data || [];
+
+        // Revenue from wallet_transactions OR fallback to usage_logs.cost_usd
+        let totalRevenue = transactions.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
+        if (totalRevenue === 0 && usageLogs.length > 0) {
+          totalRevenue = usageLogs.reduce((sum, l) => sum + Math.abs(Number(l.cost_usd) || 0), 0);
+        }
+
+        const activeDevices = devices.filter((d) => d.status === "online").length;
+        const pendingRequests = requests.filter((r) => r.status === "pending").length;
 
         setStats({
-          totalUsers: usersCount || 0,
-          totalDevices: devices?.length || 0,
+          totalUsers: usersCount,
+          totalDevices: devices.length,
           totalRevenue,
-          totalRequests: requests?.length || 0,
+          totalRequests: requests.length,
           activeDevices,
           pendingRequests,
         });
 
         // Process usage data for charts
-        if (usageLogs) {
-          const grouped = usageLogs.reduce((acc: any, log) => {
-            const date = new Date(log.created_at).toLocaleDateString();
-            if (!acc[date]) {
-              acc[date] = { date, calls: 0, revenue: 0 };
-            }
-            acc[date].calls++;
-            acc[date].revenue += (Number(log.tokens_used) || 0) * 0.000001;
-            return acc;
-          }, {});
-          
-          const chartData = Object.values(grouped).slice(-14);
-          setUsageData(chartData);
-          setRevenueData(chartData);
-        }
+        const grouped = usageLogs.reduce((acc: Record<string, { date: string; calls: number; revenue: number }>, log) => {
+          const date = new Date(log.created_at).toLocaleDateString();
+          if (!acc[date]) {
+            acc[date] = { date, calls: 0, revenue: 0 };
+          }
+          acc[date].calls++;
+          acc[date].revenue += Math.abs(Number(log.cost_usd) || 0);
+          return acc;
+        }, {});
+
+        const chartData = Object.values(grouped).slice(-14);
+        setUsageData(chartData);
+        setRevenueData(chartData);
       } catch (error) {
         console.error("Error fetching admin stats:", error);
       } finally {
