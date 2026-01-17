@@ -167,21 +167,6 @@ export const AdminRevenue = () => {
     }
   };
 
-  const renderXAxisTick = ({ x, y, payload }: any) => {
-    return (
-      <text
-        x={x}
-        y={y}
-        dy={10}
-        textAnchor="middle"
-        fill="hsl(var(--muted-foreground))"
-        fontSize={10}
-      >
-        {payload?.value ?? ""}
-      </text>
-    );
-  };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -255,20 +240,21 @@ export const AdminRevenue = () => {
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
+        <Card className="flex h-full flex-col">
           <CardHeader>
             <CardTitle>Revenue vs Payouts (Last 14 Days)</CardTitle>
           </CardHeader>
-          <CardContent className="p-6 pt-0">
-            <div className="h-[280px]">
+          <CardContent className="px-6 pb-0 flex-1">
+            <div className="h-full min-h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="date"
                     className="text-xs"
                     tick={{ fontSize: 10 }}
-                    tickMargin={4}
+                    height={18}
+                    tickMargin={0}
                     minTickGap={16}
                     axisLine={false}
                     tickLine={false}
