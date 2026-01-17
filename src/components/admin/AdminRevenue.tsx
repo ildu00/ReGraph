@@ -262,13 +262,13 @@ export const AdminRevenue = () => {
           <CardContent className="pb-0">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
+                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: -10 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="date"
                     className="text-xs"
                     tick={renderXAxisTick}
-                    height={14}
+                    height={24}
                     minTickGap={16}
                     axisLine={false}
                     tickLine={false}
