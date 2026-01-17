@@ -5,6 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { DollarSign, TrendingUp, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface Transaction {
   id: string;
@@ -15,11 +17,14 @@ interface Transaction {
   created_at: string;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export const AdminRevenue = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [revenueData, setRevenueData] = useState<Array<{ date: string; revenue: number; payouts: number }>>([]);
   const [isEstimatedFromUsageLogs, setIsEstimatedFromUsageLogs] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -133,6 +138,13 @@ export const AdminRevenue = () => {
   const displayRevenue = totalRevenue > 0 ? totalRevenue : estimatedRevenue;
   const displayPayouts = totalPayouts > 0 ? totalPayouts : estimatedPayouts;
   const netRevenue = displayRevenue - displayPayouts;
+
+  // Pagination
+  const totalPages = Math.ceil(transactions.length / ITEMS_PER_PAGE);
+  const paginatedTransactions = transactions.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const typeDistribution = [
     { name: "Usage Charges", value: displayRevenue, color: "hsl(var(--primary))" },
@@ -320,8 +332,11 @@ export const AdminRevenue = () => {
 
       {/* Recent Transactions */}
       <Card>
-        <CardHeader>
-          <CardTitle>Recent Transactions</CardTitle>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Transactions</CardTitle>
+          <span className="text-sm text-muted-foreground">
+            {transactions.length} total
+          </span>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -336,7 +351,7 @@ export const AdminRevenue = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {transactions.slice(0, 20).map((tx) => (
+                {paginatedTransactions.map((tx) => (
                   <TableRow key={tx.id}>
                     <TableCell>{getTypeBadge(tx.transaction_type)}</TableCell>
                     <TableCell
@@ -362,6 +377,35 @@ export const AdminRevenue = () => {
               </TableBody>
             </Table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between mt-4">
+              <span className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
