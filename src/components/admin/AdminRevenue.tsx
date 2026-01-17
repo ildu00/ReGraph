@@ -245,6 +245,8 @@ export const AdminRevenue = () => {
                       border: "1px solid hsl(var(--border))",
                       color: "hsl(var(--card-foreground))",
                     }}
+                    labelStyle={{ color: "hsl(var(--card-foreground))" }}
+                    itemStyle={{ color: "hsl(var(--card-foreground))" }}
                     formatter={(value: number) => [`$${value.toFixed(4)}`, ""]}
                   />
                   <Area
@@ -294,6 +296,8 @@ export const AdminRevenue = () => {
                       border: "1px solid hsl(var(--border))",
                       color: "hsl(var(--card-foreground))",
                     }}
+                    labelStyle={{ color: "hsl(var(--card-foreground))" }}
+                    itemStyle={{ color: "hsl(var(--card-foreground))" }}
                     formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
                   />
                 </PieChart>
