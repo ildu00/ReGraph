@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { AdminSidebar } from "@/components/admin/AdminSidebar";
@@ -10,9 +11,30 @@ import { AdminResources } from "@/components/admin/AdminResources";
 import { AdminTasks } from "@/components/admin/AdminTasks";
 import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminForms } from "@/components/admin/AdminForms";
-import { Menu, X, Zap } from "lucide-react";
+import { 
+  Menu, 
+  X, 
+  Zap, 
+  LayoutDashboard, 
+  Users, 
+  FileText, 
+  Server, 
+  ListTodo, 
+  DollarSign, 
+  Inbox 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
+
+const navItems = [
+  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "users", label: "Users", icon: Users },
+  { id: "requests", label: "Requests", icon: FileText },
+  { id: "resources", label: "Resources", icon: Server },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "revenue", label: "Revenue", icon: DollarSign },
+  { id: "forms", label: "Form Data", icon: Inbox },
+];
 
 const Admin = () => {
   const navigate = useNavigate();
@@ -93,35 +115,71 @@ const Admin = () => {
       </div>
 
       {/* Mobile Header */}
-      <div className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card px-4 lg:hidden">
-        <Link to="/" className="flex items-center gap-2">
-          <Zap className="h-6 w-6 text-primary" />
-          <span className="text-xl font-bold">
-            <span className="text-gradient">Re</span>
-            <span className="text-primary">Graph</span>
-          </span>
-        </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
-        >
-          {isMobileSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </Button>
-      </div>
-
-      {/* Mobile Sidebar Overlay */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 z-40 lg:hidden">
-          <div
-            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-          <div className="absolute left-0 top-16 bottom-0 w-64">
-            <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
-          </div>
+      <header className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-4 lg:hidden">
+        <div className="flex items-center gap-4">
+          <button
+            onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
+            aria-label="Toggle menu"
+          >
+            {isMobileSidebarOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+          <Link to="/" className="flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">
+              <span className="text-gradient">Re</span>
+              <span className="text-primary">Graph</span>
+            </span>
+          </Link>
         </div>
-      )}
+      </header>
+
+      {/* Mobile Sidebar with slide animation */}
+      <AnimatePresence>
+        {isMobileSidebarOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-background/80 z-40 lg:hidden"
+              onClick={() => setIsMobileSidebarOpen(false)}
+            />
+            <motion.aside
+              initial={{ x: -280 }}
+              animate={{ x: 0 }}
+              exit={{ x: -280 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 lg:hidden"
+            >
+              <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Admin Panel
+              </div>
+              <nav className="mt-2 space-y-1">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => handleTabChange(item.id)}
+                      className={cn(
+                        "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                        isActive
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      )}
+                    >
+                      <Icon className="h-5 w-5" />
+                      <span>{item.label}</span>
+                    </button>
+                  );
+                })}
+              </nav>
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0">
