@@ -244,7 +244,7 @@ export const AdminRevenue = () => {
           <CardHeader>
             <CardTitle>Revenue vs Payouts (Last 14 Days)</CardTitle>
           </CardHeader>
-          <CardContent className="pb-4">
+          <CardContent className="pb-2">
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
@@ -253,8 +253,8 @@ export const AdminRevenue = () => {
                     dataKey="date"
                     className="text-xs"
                     tick={{ fontSize: 10 }}
-                    height={14}
-                    tickMargin={2}
+                    height={22}
+                    tickMargin={6}
                     minTickGap={16}
                     axisLine={false}
                     tickLine={false}
