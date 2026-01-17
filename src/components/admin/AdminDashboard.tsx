@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Server, DollarSign, Activity, TrendingUp, FileText } from "lucide-react";
@@ -114,14 +115,16 @@ export const AdminDashboard = () => {
     fetchStats();
   }, []);
 
+  const navigate = useNavigate();
+
   const statCards = [
-    { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-500" },
-    { label: "Total Devices", value: stats.totalDevices, icon: Server, color: "text-green-500" },
-    { label: "Active Devices", value: stats.activeDevices, icon: Activity, color: "text-emerald-500" },
-    { label: "Total Revenue", value: formatCompactNumber(stats.totalRevenue), icon: DollarSign, color: "text-amber-500" },
-    { label: "Total Deposits", value: formatCompactNumber(stats.totalDeposits), icon: TrendingUp, color: "text-cyan-500" },
-    { label: "Support Requests", value: stats.totalRequests, icon: FileText, color: "text-purple-500" },
-    { label: "Pending Requests", value: stats.pendingRequests, icon: Activity, color: "text-red-500" },
+    { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-500", link: "/admin?tab=users" },
+    { label: "Total Devices", value: stats.totalDevices, icon: Server, color: "text-green-500", link: "/admin?tab=resources" },
+    { label: "Active Devices", value: stats.activeDevices, icon: Activity, color: "text-emerald-500", link: "/admin?tab=resources&status=online" },
+    { label: "Total Revenue", value: formatCompactNumber(stats.totalRevenue), icon: DollarSign, color: "text-amber-500", link: "/admin?tab=revenue" },
+    { label: "Total Deposits", value: formatCompactNumber(stats.totalDeposits), icon: TrendingUp, color: "text-cyan-500", link: "/admin?tab=revenue" },
+    { label: "Support Requests", value: stats.totalRequests, icon: FileText, color: "text-purple-500", link: "/admin?tab=requests" },
+    { label: "Pending Requests", value: stats.pendingRequests, icon: Activity, color: "text-red-500", link: "/admin?tab=requests&status=pending" },
   ];
 
   if (loading) {
@@ -142,7 +145,11 @@ export const AdminDashboard = () => {
       {/* Stats Grid */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {statCards.map((stat) => (
-          <Card key={stat.label}>
+          <Card 
+            key={stat.label} 
+            className="cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() => navigate(stat.link)}
+          >
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.label}
