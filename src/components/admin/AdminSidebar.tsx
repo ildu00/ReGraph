@@ -7,8 +7,10 @@ import {
   ListTodo, 
   DollarSign, 
   Inbox,
-  LogOut
+  LogOut,
+  Zap
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -54,7 +56,13 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
         <div className="flex h-full flex-col">
           {/* Logo */}
           <div className="flex h-16 items-center border-b border-border px-6">
-            <span className="text-xl font-bold text-primary">ReGraph</span>
+            <Link to="/" className="flex items-center gap-2">
+              <Zap className="h-6 w-6 text-primary" />
+              <span className="text-xl font-bold">
+                <span className="text-gradient">Re</span>
+                <span className="text-primary">Graph</span>
+              </span>
+            </Link>
           </div>
 
           {/* Navigation */}
