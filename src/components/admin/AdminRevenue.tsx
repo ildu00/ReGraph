@@ -239,13 +239,13 @@ export const AdminRevenue = () => {
       </div>
 
       {/* Charts */}
-      <div className="grid items-start gap-6 lg:grid-cols-2">
-        <Card>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card className="flex flex-col">
           <CardHeader>
             <CardTitle>Revenue vs Payouts</CardTitle>
           </CardHeader>
-          <CardContent className="px-6 pb-[15px]">
-            <div className="h-[300px]">
+          <CardContent className="flex-1 px-6 pb-6">
+            <div className="h-full min-h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
