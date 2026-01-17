@@ -259,7 +259,7 @@ export const AdminRevenue = () => {
                     }}
                     labelStyle={{ color: "hsl(var(--card-foreground))" }}
                     itemStyle={{ color: "hsl(var(--card-foreground))" }}
-                    formatter={(value: number) => [`$${value.toFixed(4)}`, ""]}
+                    formatter={(value: number, name: string) => [`$${value.toFixed(4)}`, name]}
                   />
                   <Area
                     type="monotone"
