@@ -292,7 +292,7 @@ export const AdminRevenue = () => {
                       backgroundColor: "hsl(var(--card))",
                       border: "1px solid hsl(var(--border))",
                     }}
-                    formatter={(value: number) => [`$${value.toFixed(2)}`, ""]}
+                    formatter={(value: number, name: string) => [`$${value.toFixed(2)}`, name]}
                   />
                 </PieChart>
               </ResponsiveContainer>
