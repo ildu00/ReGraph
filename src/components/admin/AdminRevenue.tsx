@@ -242,7 +242,7 @@ export const AdminRevenue = () => {
       <div className="grid gap-6 lg:grid-cols-2">
         <Card className="flex h-full flex-col">
           <CardHeader>
-            <CardTitle>Revenue vs Payouts (Last 14 Days)</CardTitle>
+            <CardTitle>Revenue vs Payouts</CardTitle>
           </CardHeader>
           <CardContent className="px-6 pb-0 flex-1">
             <div className="h-full min-h-[300px]">
