@@ -259,16 +259,16 @@ export const AdminRevenue = () => {
           <CardHeader>
             <CardTitle>Revenue vs Payouts (Last 14 Days)</CardTitle>
           </CardHeader>
-          <CardContent className="pb-0">
-            <div className="h-[300px]">
+          <CardContent className="p-6 pt-0">
+            <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: -10 }}>
+                <AreaChart data={revenueData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis
                     dataKey="date"
                     className="text-xs"
-                    tick={renderXAxisTick}
-                    height={24}
+                    tick={{ fontSize: 10 }}
+                    tickMargin={4}
                     minTickGap={16}
                     axisLine={false}
                     tickLine={false}
