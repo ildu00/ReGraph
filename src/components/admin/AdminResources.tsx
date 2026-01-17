@@ -342,7 +342,10 @@ export const AdminResources = () => {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setStatusFilter("all")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <Server className="h-8 w-8 text-primary" />
@@ -353,7 +356,10 @@ export const AdminResources = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setStatusFilter("online")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <Wifi className="h-8 w-8 text-green-500" />
@@ -364,7 +370,10 @@ export const AdminResources = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setStatusFilter("offline")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <WifiOff className="h-8 w-8 text-red-500" />
@@ -375,7 +384,10 @@ export const AdminResources = () => {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setStatusFilter("maintenance")}
+        >
           <CardContent className="pt-6">
             <div className="flex items-center gap-3">
               <HardDrive className="h-8 w-8 text-amber-500" />

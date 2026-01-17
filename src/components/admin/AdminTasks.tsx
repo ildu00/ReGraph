@@ -330,25 +330,37 @@ export const AdminTasks = () => {
 
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setFilter("all")}
+        >
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Total Tasks</p>
             <p className="text-2xl font-bold">{stats.total}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setFilter("todo")}
+        >
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">To Do</p>
             <p className="text-2xl font-bold text-amber-500">{stats.todo}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setFilter("in_progress")}
+        >
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">In Progress</p>
             <p className="text-2xl font-bold text-blue-500">{stats.inProgress}</p>
           </CardContent>
         </Card>
-        <Card>
+        <Card 
+          className="cursor-pointer transition-colors hover:bg-muted/50"
+          onClick={() => setFilter("done")}
+        >
           <CardContent className="pt-6">
             <p className="text-sm text-muted-foreground">Completed</p>
             <p className="text-2xl font-bold text-green-500">{stats.done}</p>
