@@ -35,13 +35,14 @@ export const AdminDashboard = () => {
         fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
 
         // Parallel fetches
-        const [usersRes, devicesRes, txRes, requestsRes, usageRes, walletsRes] = await Promise.all([
+        const [usersRes, devicesRes, txRes, requestsRes, usageRes, walletsRes, testUsersRes] = await Promise.all([
           supabase.from("profiles").select("*", { count: "exact", head: true }),
           supabase.from("provider_devices").select("status"),
           supabase.from("wallet_transactions").select("amount_usd, transaction_type").eq("transaction_type", "usage_charge"),
           supabase.from("support_requests").select("status"),
           supabase.from("usage_logs").select("created_at, tokens_used, cost_usd").gte("created_at", fourteenDaysAgo.toISOString()).order("created_at", { ascending: true }),
           supabase.from("wallets").select("balance_usd"),
+          supabase.from("test_users").select("balance_usd"),
         ]);
 
         const usersCount = usersRes.count || 0;
@@ -50,6 +51,7 @@ export const AdminDashboard = () => {
         const requests = requestsRes.data || [];
         const usageLogs = usageRes.data || [];
         const wallets = walletsRes.data || [];
+        const testUsers = testUsersRes.data || [];
 
         // Revenue from wallet_transactions OR fallback to usage_logs.cost_usd
         let totalRevenue = transactions.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
@@ -57,8 +59,10 @@ export const AdminDashboard = () => {
           totalRevenue = usageLogs.reduce((sum, l) => sum + Math.abs(Number(l.cost_usd) || 0), 0);
         }
 
-        // Total deposits = sum of all wallet balances
-        const totalDeposits = wallets.reduce((sum, w) => sum + Number(w.balance_usd || 0), 0);
+        // Total deposits = wallets + test_users balances
+        const walletsTotal = wallets.reduce((sum, w) => sum + Number(w.balance_usd || 0), 0);
+        const testUsersTotal = testUsers.reduce((sum, u) => sum + Number(u.balance_usd || 0), 0);
+        const totalDeposits = walletsTotal + testUsersTotal;
 
         const activeDevices = devices.filter((d) => d.status === "online").length;
         const pendingRequests = requests.filter((r) => r.status === "pending").length;
