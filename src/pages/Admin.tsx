@@ -21,9 +21,20 @@ import {
   Server, 
   ListTodo, 
   DollarSign, 
-  Inbox 
+  Inbox,
+  LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -39,10 +50,11 @@ const navItems = [
 const Admin = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading, signOut } = useAuth();
   const { isAdmin, loading: adminLoading } = useAdmin();
   const [activeTab, setActiveTab] = useState(searchParams.get("tab") || "dashboard");
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+  const [showSignOutDialog, setShowSignOutDialog] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get("tab");
@@ -131,7 +143,37 @@ const Admin = () => {
             </span>
           </Link>
         </div>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-muted-foreground hidden sm:block">
+            {user?.email}
+          </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowSignOutDialog(true)}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            <span className="hidden sm:inline">Sign Out</span>
+          </Button>
+        </div>
       </header>
+
+      {/* Sign Out Confirmation Dialog */}
+      <AlertDialog open={showSignOutDialog} onOpenChange={setShowSignOutDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Sign Out</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to sign out of your account?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={signOut}>Sign Out</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Mobile Sidebar with slide animation */}
       <AnimatePresence>
