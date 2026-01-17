@@ -4,6 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Server, DollarSign, Activity, TrendingUp, FileText } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar } from "recharts";
 
+const formatCompactNumber = (num: number): string => {
+  if (num >= 1_000_000) {
+    return `$${(num / 1_000_000).toFixed(1)}M`;
+  }
+  if (num >= 1_000) {
+    return `$${(num / 1_000).toFixed(1)}K`;
+  }
+  return `$${num.toFixed(2)}`;
+};
+
 interface Stats {
   totalUsers: number;
   totalDevices: number;
@@ -105,8 +115,8 @@ export const AdminDashboard = () => {
     { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-500" },
     { label: "Total Devices", value: stats.totalDevices, icon: Server, color: "text-green-500" },
     { label: "Active Devices", value: stats.activeDevices, icon: Activity, color: "text-emerald-500" },
-    { label: "Total Revenue", value: `$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "text-amber-500" },
-    { label: "Total Deposits", value: `$${stats.totalDeposits.toFixed(2)}`, icon: TrendingUp, color: "text-cyan-500" },
+    { label: "Total Revenue", value: formatCompactNumber(stats.totalRevenue), icon: DollarSign, color: "text-amber-500" },
+    { label: "Total Deposits", value: formatCompactNumber(stats.totalDeposits), icon: TrendingUp, color: "text-cyan-500" },
     { label: "Support Requests", value: stats.totalRequests, icon: FileText, color: "text-purple-500" },
     { label: "Pending Requests", value: stats.pendingRequests, icon: Activity, color: "text-red-500" },
   ];
