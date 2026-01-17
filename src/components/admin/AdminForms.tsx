@@ -22,6 +22,7 @@ export const AdminForms = () => {
   const [supportRequests, setSupportRequests] = useState<SupportRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedRequest, setSelectedRequest] = useState<SupportRequest | null>(null);
+  const [activeTab, setActiveTab] = useState("contact");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,10 +58,10 @@ export const AdminForms = () => {
   );
 
   const stats = [
-    { label: "Contact Forms", value: contactRequests.length, icon: MessageSquare, color: "text-blue-500" },
-    { label: "Support Tickets", value: supportTickets.length, icon: FileText, color: "text-green-500" },
-    { label: "Career Applications", value: careerApplications.length, icon: Briefcase, color: "text-purple-500" },
-    { label: "Legal Inquiries", value: legalInquiries.length, icon: Users, color: "text-amber-500" },
+    { label: "Contact Forms", value: contactRequests.length, icon: MessageSquare, color: "text-blue-500", tab: "contact" },
+    { label: "Support Tickets", value: supportTickets.length, icon: FileText, color: "text-green-500", tab: "support" },
+    { label: "Career Applications", value: careerApplications.length, icon: Briefcase, color: "text-purple-500", tab: "careers" },
+    { label: "Legal Inquiries", value: legalInquiries.length, icon: Users, color: "text-amber-500", tab: "legal" },
   ];
 
   const renderTable = (data: SupportRequest[]) => (
@@ -141,7 +142,11 @@ export const AdminForms = () => {
       {/* Stats */}
       <div className="grid gap-4 md:grid-cols-4">
         {stats.map((stat) => (
-          <Card key={stat.label}>
+          <Card 
+            key={stat.label}
+            className="cursor-pointer transition-colors hover:bg-muted/50"
+            onClick={() => setActiveTab(stat.tab)}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center gap-3">
                 <stat.icon className={`h-8 w-8 ${stat.color}`} />
@@ -161,7 +166,7 @@ export const AdminForms = () => {
           <CardTitle>All Submissions</CardTitle>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="contact">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
               <TabsTrigger value="contact">Contact ({contactRequests.length})</TabsTrigger>
               <TabsTrigger value="support">Support ({supportTickets.length})</TabsTrigger>
