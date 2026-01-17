@@ -55,13 +55,16 @@ export const AdminDashboard = () => {
           supabase.from("test_users").select("balance_usd"),
         ]);
 
-        const usersCount = usersRes.count || 0;
+        const profilesCount = usersRes.count || 0;
         const devices = devicesRes.data || [];
         const transactions = txRes.data || [];
         const requests = requestsRes.data || [];
         const usageLogs = usageRes.data || [];
         const wallets = walletsRes.data || [];
         const testUsers = testUsersRes.data || [];
+
+        // Total users = profiles + test_users
+        const totalUsersCount = profilesCount + testUsers.length;
 
         // Revenue from wallet_transactions OR fallback to usage_logs.cost_usd
         let totalRevenue = transactions.reduce((sum, t) => sum + Math.abs(Number(t.amount_usd)), 0);
@@ -78,7 +81,7 @@ export const AdminDashboard = () => {
         const pendingRequests = requests.filter((r) => r.status === "pending").length;
 
         setStats({
-          totalUsers: usersCount,
+          totalUsers: totalUsersCount,
           totalDevices: devices.length,
           totalRevenue,
           totalDeposits,
