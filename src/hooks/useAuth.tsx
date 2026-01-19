@@ -28,14 +28,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    // Get initial session
+    // Get initial session with timeout to prevent blocking on slow/cold Supabase
+    const timeoutId = setTimeout(() => {
+      // If still loading after 5s, stop loading to show UI
+      setLoading(false);
+    }, 5000);
+
     supabase.auth.getSession().then(({ data: { session } }) => {
+      clearTimeout(timeoutId);
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+    }).catch(() => {
+      // On error, stop loading to allow UI to render
+      clearTimeout(timeoutId);
+      setLoading(false);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
