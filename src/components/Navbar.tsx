@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
@@ -40,7 +39,7 @@ const Navbar = () => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 50);
     };
-    window.addEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
@@ -103,7 +102,7 @@ const Navbar = () => {
     };
   }, [location.pathname]);
 
-  const isActive = (item: typeof navItems[0]) => {
+  const isActive = (item: (typeof navItems)[0]) => {
     if (item.isRoute) {
       return location.pathname === item.href || location.pathname.startsWith(item.href + "/");
     }
@@ -119,10 +118,8 @@ const Navbar = () => {
 
   return (
     <>
-      <motion.nav
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 animate-fade-in ${
           hasSidebar
             ? "bg-background border-b border-border"
             : isScrolled
@@ -162,9 +159,7 @@ const Navbar = () => {
                     key={item.label}
                     to={item.href}
                     className={`text-sm transition-colors ${
-                      isActive(item) 
-                        ? "text-primary font-medium" 
-                        : "text-muted-foreground hover:text-foreground"
+                      isActive(item) ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {item.label}
@@ -175,9 +170,7 @@ const Navbar = () => {
                     href={item.href}
                     onClick={(e) => handleAnchorClick(e, item.href)}
                     className={`text-sm transition-colors cursor-pointer ${
-                      isActive(item) 
-                        ? "text-primary font-medium" 
-                        : "text-muted-foreground hover:text-foreground"
+                      isActive(item) ? "text-primary font-medium" : "text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {item.label}
@@ -211,82 +204,85 @@ const Navbar = () => {
             </div>
 
             {/* Mobile Menu Button */}
-            <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2"
-            >
+            <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="md:hidden p-2">
               {isMobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Mobile Menu */}
-      <AnimatePresence>
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-20 px-4 md:hidden"
-          >
-            <div className="flex flex-col gap-4">
-              {navItems.map((item) =>
-                item.isRoute ? (
-                  <Link
-                    key={item.label}
-                    to={item.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`text-lg py-3 border-b border-border ${
-                      isActive(item) ? "text-primary font-medium" : "text-foreground"
-                    }`}
-                  >
-                    {item.label}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-background/95 backdrop-blur-xl pt-20 px-4 md:hidden animate-in fade-in slide-in-from-top-2"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="flex flex-col gap-4">
+            {navItems.map((item) =>
+              item.isRoute ? (
+                <Link
+                  key={item.label}
+                  to={item.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`text-lg py-3 border-b border-border ${
+                    isActive(item) ? "text-primary font-medium" : "text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              ) : (
+                <a
+                  key={item.label}
+                  href={item.href}
+                  onClick={(e) => {
+                    handleAnchorClick(e, item.href);
+                    setIsMobileMenuOpen(false);
+                  }}
+                  className={`text-lg py-3 border-b border-border cursor-pointer ${
+                    isActive(item) ? "text-primary font-medium" : "text-foreground"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              )
+            )}
+            <div className="flex flex-col gap-3 mt-4">
+              {!loading && user ? (
+                <Button size="lg" className="glow-primary" asChild>
+                  <Link to="/dashboard">
+                    <LayoutDashboard className="mr-2 h-5 w-5" />
+                    Dashboard
                   </Link>
-                ) : (
-                  <a
-                    key={item.label}
-                    href={item.href}
-                    onClick={(e) => {
-                      handleAnchorClick(e, item.href);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`text-lg py-3 border-b border-border cursor-pointer ${
-                      isActive(item) ? "text-primary font-medium" : "text-foreground"
-                    }`}
-                  >
-                    {item.label}
-                  </a>
-                )
-              )}
-              <div className="flex flex-col gap-3 mt-4">
-                {!loading && user ? (
+                </Button>
+              ) : (
+                <>
+                  <Button variant="outline" size="lg" asChild>
+                    <Link to="/auth">Sign In</Link>
+                  </Button>
                   <Button size="lg" className="glow-primary" asChild>
-                    <Link to="/dashboard">
-                      <LayoutDashboard className="mr-2 h-5 w-5" />
-                      Dashboard
+                    <Link to="/auth">
+                      <Zap className="mr-2 h-5 w-5" />
+                      Get Started Free
                     </Link>
                   </Button>
-                ) : (
-                  <>
-                    <Button variant="outline" size="lg" asChild>
-                      <Link to="/auth">Sign In</Link>
-                    </Button>
-                    <Button size="lg" className="glow-primary" asChild>
-                      <Link to="/auth">
-                        <Zap className="mr-2 h-5 w-5" />
-                        Get Started Free
-                      </Link>
-                    </Button>
-                  </>
-                )}
-              </div>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="justify-center"
+              >
+                Close
+              </Button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
     </>
   );
 };
 
 export default Navbar;
+
