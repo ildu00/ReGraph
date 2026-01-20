@@ -1,4 +1,4 @@
-import { Suspense, lazy, useLayoutEffect } from "react";
+import { Suspense, useLayoutEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,27 +7,28 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
+import lazyWithRetry from "@/lib/lazyWithRetry";
 
-// Route-level code-splitting:
-// prevents one broken/unsupported module (or auth storage issue) from blocking the landing page.
-const Index = lazy(() => import("./pages/Index"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Dashboard = lazy(() => import("./pages/Dashboard"));
-const Docs = lazy(() => import("./pages/Docs"));
-const Models = lazy(() => import("./pages/Models"));
-const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
-const TermsOfService = lazy(() => import("./pages/TermsOfService"));
-const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
-const Status = lazy(() => import("./pages/Status"));
-const Support = lazy(() => import("./pages/Support"));
-const Changelog = lazy(() => import("./pages/Changelog"));
-const Legal = lazy(() => import("./pages/Legal"));
-const About = lazy(() => import("./pages/About"));
-const Careers = lazy(() => import("./pages/Careers"));
-const Blog = lazy(() => import("./pages/Blog"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Admin = lazy(() => import("./pages/Admin"));
-const DebugBoot = lazy(() => import("./pages/DebugBoot"));
+// Route-level code-splitting with automatic retry on network failures.
+// This prevents one broken/unsupported module (or cache issue) from blocking the page.
+const Index = lazyWithRetry(() => import("./pages/Index"));
+const Auth = lazyWithRetry(() => import("./pages/Auth"));
+const Dashboard = lazyWithRetry(() => import("./pages/Dashboard"));
+const Docs = lazyWithRetry(() => import("./pages/Docs"));
+const Models = lazyWithRetry(() => import("./pages/Models"));
+const PrivacyPolicy = lazyWithRetry(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazyWithRetry(() => import("./pages/TermsOfService"));
+const CookiePolicy = lazyWithRetry(() => import("./pages/CookiePolicy"));
+const Status = lazyWithRetry(() => import("./pages/Status"));
+const Support = lazyWithRetry(() => import("./pages/Support"));
+const Changelog = lazyWithRetry(() => import("./pages/Changelog"));
+const Legal = lazyWithRetry(() => import("./pages/Legal"));
+const About = lazyWithRetry(() => import("./pages/About"));
+const Careers = lazyWithRetry(() => import("./pages/Careers"));
+const Blog = lazyWithRetry(() => import("./pages/Blog"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Admin = lazyWithRetry(() => import("./pages/Admin"));
+const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
 
 declare global {
   interface Window {
