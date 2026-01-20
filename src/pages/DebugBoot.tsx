@@ -98,7 +98,7 @@ const DebugBoot = () => {
         <div>
           <h1 className="text-xl font-bold">🛠 Boot Diagnostics</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Эта страница показывает информацию о последней попытке загрузки приложения.
+            This page shows information about the last app load attempt.
           </p>
         </div>
 
@@ -159,7 +159,7 @@ const DebugBoot = () => {
                 )}
               </div>
             ) : (
-              <div className="mt-2 text-sm text-muted-foreground">Нет записей</div>
+              <div className="mt-2 text-sm text-muted-foreground">No records</div>
             )}
           </div>
 
@@ -184,15 +184,15 @@ const DebugBoot = () => {
         <div className="flex flex-wrap gap-3">
           <Button onClick={handleHardReload} className="gap-2">
             <RefreshCw className="h-4 w-4" />
-            Перезапустить без кеша
+            Restart without cache
           </Button>
           <Button variant="outline" onClick={handleClearDiag} className="gap-2">
             <Trash2 className="h-4 w-4" />
-            Очистить диагностику
+            Clear diagnostics
           </Button>
           <Button variant="secondary" onClick={handleCopyReport} className="gap-2">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? "Скопировано!" : "Скопировать отчёт"}
+            {copied ? "Copied!" : "Copy report"}
           </Button>
         </div>
 
@@ -202,7 +202,7 @@ const DebugBoot = () => {
             href="/"
             className="text-sm text-primary hover:underline"
           >
-            ← Вернуться на главную
+            ← Back to home
           </a>
         </div>
       </div>
