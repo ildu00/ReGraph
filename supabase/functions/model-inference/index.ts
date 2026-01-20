@@ -86,6 +86,7 @@ serve(async (req) => {
       "xtts-v2": "tts-openai/tts-1",
       "bark": "tts-openai/tts-1",
       "eleven-multilingual": "tts-openai/tts-1-hd",
+      "eleven-multilangual": "tts-openai/tts-1-hd", // typo alias
       
       // Video Generation
       "stable-video": "txt2vid-kling/standart",
