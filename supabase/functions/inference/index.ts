@@ -10,8 +10,48 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Validate HTTP method
+  if (req.method !== "POST") {
+    return new Response(
+      JSON.stringify({
+        error: "Method not allowed",
+        message: "This endpoint only accepts POST requests with a JSON body.",
+        example: {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: { model: "llama-3.1-70b", prompt: "Hello, how are you?", max_tokens: 256 }
+        }
+      }),
+      { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" } }
+    );
+  }
+
   try {
-    const body = await req.json();
+    // Parse JSON body with error handling
+    let body;
+    try {
+      const text = await req.text();
+      if (!text || text.trim() === "") {
+        return new Response(
+          JSON.stringify({
+            error: "Empty request body",
+            message: "Request body cannot be empty. Please provide a valid JSON payload.",
+            example: { model: "llama-3.1-70b", prompt: "Hello, how are you?", max_tokens: 256 }
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      body = JSON.parse(text);
+    } catch (parseError) {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid JSON",
+          message: "Request body must be valid JSON. Please check your request format.",
+          example: { model: "llama-3.1-70b", prompt: "Hello, how are you?", max_tokens: 256 }
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
     
     // Map OpenAI-compatible format to our internal format
     const { model, messages, prompt, max_tokens, temperature, stream } = body;
