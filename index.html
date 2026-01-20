@@ -153,13 +153,21 @@
     <!-- Main app script - must be BEFORE the watchdog so it's in DOM when watchdog runs -->
     <script id="boot-main" type="module" src="/src/main.tsx"></script>
 
-    <!-- Lightweight recovery: only show fatal screen after VERY long wait, NO auto-reloads -->
+    <!-- Recovery + diagnostics (designed to avoid reload loops, but still heal stale-module failures) -->
     <script>
       (function () {
         var MOUNT_FLAG = "__regraphMounted";
         var START_TS = Date.now();
-        // Be VERY patient - some mobile devices take 60+ seconds on slow 3G
-        var FATAL_DEADLINE_MS = 90000; // 90 seconds before showing fatal screen
+
+        // Log early so Boot Events isn't empty when users report an infinite spinner.
+        var SLOW_LOG_MS = 15000;
+        // Show fatal UI after a minute (spinner shouldn't run forever).
+        var FATAL_DEADLINE_MS = 60000;
+
+        // Allow at most one automatic reload for recoverable stale-chunk/module errors.
+        var RELOAD_PARAM = "__regraph_reload";
+
+        // single event per page-load
         var sent = false;
 
         function now() {
@@ -170,9 +178,46 @@
           return !!window[MOUNT_FLAG];
         }
 
+        function safeUrl() {
+          try {
+            return new URL(window.location.href);
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function hasReloadMarker() {
+          try {
+            return new URL(window.location.href).searchParams.has(RELOAD_PARAM);
+          } catch (e) {
+            return false;
+          }
+        }
+
+        function isRecoverableModuleError(message) {
+          var m = String(message || "").toLowerCase();
+          return (
+            m.indexOf("loading chunk") !== -1 ||
+            m.indexOf("failed to fetch dynamically imported module") !== -1 ||
+            m.indexOf("importing a module script failed") !== -1 ||
+            m.indexOf("preload") !== -1
+          );
+        }
+
         function removeSpinner() {
           var el = document.getElementById("boot-spinner");
           if (el) el.remove();
+        }
+
+        function record(kind, detail) {
+          try {
+            localStorage.setItem(
+              "__regraph_boot_diag",
+              JSON.stringify({ t: now(), kind: String(kind || "unknown"), detail: String(detail || "") })
+            );
+          } catch (e) {
+            // ignore
+          }
         }
 
         function readDiag() {
@@ -190,16 +235,16 @@
           sent = true;
           try {
             var diag = readDiag();
-            var baseDiag = (diag && typeof diag === "object") ? diag : {};
-            var extra = (extraDiag && typeof extraDiag === "object") ? extraDiag : {};
+            var baseDiag = diag && typeof diag === "object" ? diag : {};
+            var extra = extraDiag && typeof extraDiag === "object" ? extraDiag : {};
 
             var payload = {
-              reason: reason,
+              reason: String(reason || "unknown"),
               url: window.location.href,
               userAgent: navigator.userAgent,
               diag: Object.assign({}, baseDiag, extra, { elapsedMs: now() - START_TS }),
               storageFallback: !!window.__regraph_storage_fallback,
-              attempts: 0,
+              attempts: hasReloadMarker() ? 1 : 0,
             };
 
             var url = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
@@ -218,33 +263,57 @@
           }
         }
 
-        // Record errors for diagnostics
+        function reloadOnce(triggerReason) {
+          if (hasReloadMarker()) return;
+          var u = safeUrl();
+          if (!u) return;
+
+          try {
+            sendBootEvent("reload_once", { stage: "reload", trigger: String(triggerReason || "unknown") });
+          } catch (e) {}
+
+          u.searchParams.set(RELOAD_PARAM, "1");
+          u.searchParams.set("__reload", String(now()));
+
+          try {
+            window.location.replace(u.toString());
+          } catch (e) {
+            window.location.href = u.toString();
+          }
+        }
+
+        // Record + heal recoverable module/chunk failures
         window.addEventListener("error", function (e) {
-          try {
-            localStorage.setItem(
-              "__regraph_boot_diag",
-              JSON.stringify({ t: now(), kind: "error", detail: String((e && e.message) || "unknown") })
-            );
-          } catch (ex) {}
+          var msg = (e && (e.message || (e.error && e.error.message))) || "unknown";
+          record("error", msg);
+
+          if (isRecoverableModuleError(msg)) {
+            reloadOnce("error:" + msg);
+          } else {
+            // non-recoverable: log immediately so admins see it
+            sendBootEvent("boot_error", { stage: "error", message: String(msg) });
+          }
         });
+
         window.addEventListener("unhandledrejection", function (e) {
-          try {
-            localStorage.setItem(
-              "__regraph_boot_diag",
-              JSON.stringify({ t: now(), kind: "rejection", detail: String((e && e.reason) || "unknown") })
-            );
-          } catch (ex) {}
+          var reason = (e && e.reason) || "unknown";
+          var msg = reason && reason.message ? reason.message : String(reason);
+          record("rejection", msg);
+
+          if (isRecoverableModuleError(msg)) {
+            reloadOnce("rejection:" + msg);
+          } else {
+            sendBootEvent("boot_rejection", { stage: "rejection", message: String(msg) });
+          }
         });
 
         function showFatalScreen(reason) {
           removeSpinner();
+          // Ensure we always have a Boot Event in persistent failures
           sendBootEvent(reason, { stage: "fatal" });
 
           try {
             if (document.getElementById("boot-fatal")) return;
-
-            var diag = "";
-            try { diag = localStorage.getItem("__regraph_boot_diag") || ""; } catch (e) {}
 
             var box = document.createElement("div");
             box.id = "boot-fatal";
@@ -261,14 +330,14 @@
             h.style.cssText = "font-weight:700;font-size:20px;margin-bottom:12px;";
 
             var p = document.createElement("div");
-            p.textContent = "The app is still loading. This may be due to a slow connection. Try refreshing or check your internet.";
+            p.textContent = "The app did not start. Try refreshing. If it keeps failing, stale cached files may be blocking module loading.";
             p.style.cssText = "line-height:1.5;font-size:14px;opacity:0.85;margin-bottom:16px;";
 
             var btn = document.createElement("button");
             btn.type = "button";
             btn.textContent = "Refresh Page";
             btn.style.cssText =
-              "appearance:none;border:0;border-radius:10px;padding:12px 20px;background:#a855f7;color:#fff;font-weight:600;font-size:15px;cursor:pointer;";
+              "appearance:none;border:0;border-radius:10px;padding:12px 20px;background:hsl(var(--primary));color:hsl(var(--primary-foreground));font-weight:600;font-size:15px;cursor:pointer;";
             btn.onclick = function () {
               window.location.reload();
             };
@@ -283,7 +352,14 @@
           }
         }
 
-        // Only show fatal screen after a VERY long wait - no auto-reloads
+        // After 15s without mount, emit a "slow" boot event so admins can see it.
+        setTimeout(function () {
+          if (!isMounted()) {
+            sendBootEvent("slow_mount", { stage: "progress" });
+          }
+        }, SLOW_LOG_MS);
+
+        // After 60s, show fatal UI (no infinite spinner).
         setTimeout(function () {
           if (!isMounted()) showFatalScreen("deadline");
         }, FATAL_DEADLINE_MS);
@@ -292,7 +368,7 @@
 
     <style>
       /* Fallback theme tokens for the ultra-early boot spinner (before app CSS loads) */
-      :root{--primary:270 80% 60%}
+      :root{--primary:270 80% 60%;--primary-foreground:0 0% 100%}
 
       #boot-spinner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999}
       #boot-spinner:before{content:"";width:24px;height:24px;border-radius:999px;border:2px solid hsl(var(--primary) / 0.2);border-top-color:hsl(var(--primary));animation:bootspin 900ms linear infinite}
