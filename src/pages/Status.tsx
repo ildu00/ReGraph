@@ -2,21 +2,21 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { 
-  CheckCircle2, 
-  AlertCircle, 
-  Clock, 
-  Cpu, 
-  Server, 
+import { Button } from "@/components/ui/button";
+import {
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+  Cpu,
+  Server,
   Activity,
   Zap,
   Users,
   BarChart3,
   Globe,
   Smartphone,
-  Monitor
+  Monitor,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import {
   AreaChart,
   Area,
@@ -80,6 +80,8 @@ const Status = () => {
   });
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasStats, setHasStats] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const [expandedIncident, setExpandedIncident] = useState<string | null>(null);
 
@@ -118,12 +120,24 @@ const Status = () => {
   }, []);
 
   const fetchStats = async () => {
+    setLoading(true);
+
     try {
+      setStatsError(null);
+
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-      const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`);
-      
+      const controller = new AbortController();
+      const timeoutId = window.setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(`${supabaseUrl}/functions/v1/platform-stats`, {
+        signal: controller.signal,
+        cache: "no-store",
+      });
+
+      window.clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error("Failed to fetch platform stats");
+        throw new Error(`Failed to fetch platform stats (${response.status})`);
       }
 
       const data = await response.json();
@@ -133,10 +147,13 @@ const Status = () => {
         online: data.devices.online,
         offline: data.devices.offline,
         pending: data.devices.pending,
-        byType: data.devices.byType.length > 0 ? data.devices.byType : [
-          { name: "GPU", value: 0, color: "hsl(262, 83%, 58%)" },
-          { name: "CPU", value: 0, color: "hsl(199, 89%, 48%)" },
-        ],
+        byType:
+          data.devices.byType.length > 0
+            ? data.devices.byType
+            : [
+                { name: "GPU", value: 0, color: "hsl(262, 83%, 58%)" },
+                { name: "CPU", value: 0, color: "hsl(199, 89%, 48%)" },
+              ],
       });
 
       setPlatformStats({
@@ -148,7 +165,17 @@ const Status = () => {
 
       setIncidents(data.incidents || []);
       setLastUpdated(new Date(data.updatedAt));
+      setHasStats(true);
     } catch (error) {
+      const message =
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Timeout while fetching stats"
+          : error instanceof Error
+            ? error.message
+            : "Unknown error";
+
+      setStatsError(message);
+      // eslint-disable-next-line no-console
       console.error("Error fetching stats:", error);
     } finally {
       setLoading(false);
@@ -281,6 +308,17 @@ const Status = () => {
             <p className="text-sm text-muted-foreground mt-4">
               Last updated: {lastUpdated.toLocaleTimeString()}
             </p>
+
+            {statsError ? (
+              <div className="mt-4 inline-flex flex-col items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3">
+                <p className="text-sm text-muted-foreground text-center">
+                  Нет связи с backend (VPN/слабая сеть). Данные могут быть устаревшими.
+                </p>
+                <Button variant="secondary" onClick={fetchStats} disabled={loading}>
+                  {loading ? "Повтор…" : "Повторить загрузку"}
+                </Button>
+              </div>
+            ) : null}
           </motion.div>
 
           {/* Platform Stats */}
@@ -297,7 +335,7 @@ const Status = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Total Devices</span>
               </div>
-              <p className="text-3xl font-bold">{formatNumber(deviceStats.total)}</p>
+              <p className="text-3xl font-bold">{hasStats ? formatNumber(deviceStats.total) : "—"}</p>
               <p className="text-sm text-green-500">+12% this week</p>
             </div>
 
@@ -308,8 +346,12 @@ const Status = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Online Now</span>
               </div>
-              <p className="text-3xl font-bold">{formatNumber(deviceStats.online)}</p>
-              <p className="text-sm text-muted-foreground">{((deviceStats.online / deviceStats.total) * 100).toFixed(1)}% availability</p>
+              <p className="text-3xl font-bold">{hasStats ? formatNumber(deviceStats.online) : "—"}</p>
+              <p className="text-sm text-muted-foreground">
+                {hasStats && deviceStats.total > 0
+                  ? `${((deviceStats.online / deviceStats.total) * 100).toFixed(1)}% availability`
+                  : "—"}
+              </p>
             </div>
 
             <div className="p-6 rounded-xl border border-border bg-card">
@@ -319,7 +361,7 @@ const Status = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Total Inferences</span>
               </div>
-              <p className="text-3xl font-bold">{formatNumber(platformStats.totalInferences)}</p>
+              <p className="text-3xl font-bold">{hasStats ? formatNumber(platformStats.totalInferences) : "—"}</p>
               <p className="text-sm text-muted-foreground">All time</p>
             </div>
 
@@ -330,7 +372,9 @@ const Status = () => {
                 </div>
                 <span className="text-sm text-muted-foreground">Avg Response</span>
               </div>
-              <p className="text-3xl font-bold">{platformStats.avgResponseTime}ms</p>
+              <p className="text-3xl font-bold">
+                {hasStats ? `${platformStats.avgResponseTime}ms` : "—"}
+              </p>
               <p className="text-sm text-green-500">-5ms from yesterday</p>
             </div>
           </motion.div>
