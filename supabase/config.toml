@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.support-chat]
 verify_jwt = false
+
+[functions.inference]
+verify_jwt = false
