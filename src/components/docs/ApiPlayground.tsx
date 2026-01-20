@@ -160,13 +160,16 @@ const ApiPlayground = () => {
     const mockResponses: Record<Endpoint, object> = {
       inference: {
         id: "inf_" + Math.random().toString(36).substr(2, 9),
-        object: "inference",
+        object: "chat.completion",
         created: Math.floor(Date.now() / 1000),
         model: model,
         choices: [
           {
             index: 0,
-            text: "Quantum computing is a revolutionary type of computation that uses quantum-mechanical phenomena like superposition and entanglement to process information. Unlike classical computers that use bits (0s and 1s), quantum computers use quantum bits or 'qubits' that can exist in multiple states simultaneously...",
+            message: {
+              role: "assistant",
+              content: "Quantum computing is a revolutionary type of computation that uses quantum-mechanical phenomena like superposition and entanglement to process information. Unlike classical computers that use bits (0s and 1s), quantum computers use quantum bits or 'qubits' that can exist in multiple states simultaneously..."
+            },
             finish_reason: "stop"
           }
         ],

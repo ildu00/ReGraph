@@ -81,13 +81,16 @@ volumes:
 
   const apiResponseExample = `{
   "id": "inf_abc123",
-  "object": "inference",
+  "object": "chat.completion",
   "created": 1699876543,
-  "model": "llama-3.1-70b",
+  "model": "meta-llama/llama-3.1-70b-instruct",
   "choices": [
     {
       "index": 0,
-      "text": "Quantum computing is a type of computation...",
+      "message": {
+        "role": "assistant",
+        "content": "Quantum computing is a type of computation..."
+      },
       "finish_reason": "stop"
     }
   ],
@@ -356,17 +359,22 @@ volumes:
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/inference</td>
-                          <td className="py-3 px-4 text-muted-foreground">Run model inference</td>
+                          <td className="py-3 px-4 text-muted-foreground">Run model inference (LLM, TTS, Image Gen, Embeddings)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/audio/speech</td>
+                          <td className="py-3 px-4 text-muted-foreground">Text-to-Speech (returns audio)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/chat/completions</td>
+                          <td className="py-3 px-4 text-muted-foreground">OpenAI-compatible chat endpoint</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
                           <td className="py-3 px-4 text-muted-foreground">Start a training job</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/training/jobs/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Get training job status</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
@@ -376,12 +384,7 @@ volumes:
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/models</td>
-                          <td className="py-3 px-4 text-muted-foreground">List available models</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/usage</td>
-                          <td className="py-3 px-4 text-muted-foreground">Get usage statistics</td>
+                          <td className="py-3 px-4 text-muted-foreground">List available models (51 models)</td>
                         </tr>
                       </tbody>
                     </table>

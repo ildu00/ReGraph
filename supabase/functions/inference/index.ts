@@ -86,10 +86,12 @@ serve(async (req) => {
 
     const data = await inferenceResponse.json();
     
+    console.log("Model inference response:", JSON.stringify(data).slice(0, 500));
+    
     // Transform response to OpenAI-compatible format
     if (data.error) {
       return new Response(
-        JSON.stringify({ error: data.error }),
+        JSON.stringify({ error: data.error, details: data.details || data.upstream_body }),
         { status: inferenceResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -107,6 +109,47 @@ serve(async (req) => {
       );
     }
 
+    // Special handling for Image Generation - return image data
+    if (category === "image-gen" && data.imageUrl) {
+      return new Response(
+        JSON.stringify({
+          id: "img_" + crypto.randomUUID().slice(0, 8),
+          object: "image",
+          created: Math.floor(Date.now() / 1000),
+          model: data.model || model,
+          data: [
+            {
+              url: data.imageUrl,
+              revised_prompt: data.response,
+            }
+          ],
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Special handling for Embeddings
+    if (category === "embedding" && data.embedding) {
+      return new Response(
+        JSON.stringify({
+          object: "list",
+          model: data.model || model,
+          data: [
+            {
+              object: "embedding",
+              index: 0,
+              embedding: data.embedding,
+            }
+          ],
+          usage: {
+            prompt_tokens: Math.ceil(finalPrompt.length / 4),
+            total_tokens: Math.ceil(finalPrompt.length / 4),
+          },
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const openAIResponse = {
       id: "inf_" + crypto.randomUUID().slice(0, 8),
       object: "chat.completion",
@@ -117,7 +160,7 @@ serve(async (req) => {
           index: 0,
           message: {
             role: "assistant",
-            content: data.response,
+            content: data.response || "",
           },
           finish_reason: "stop",
         },
@@ -127,9 +170,6 @@ serve(async (req) => {
         completion_tokens: Math.ceil((data.response?.length || 0) / 4),
         total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil((data.response?.length || 0) / 4),
       },
-      // Include extra fields for special responses
-      ...(data.imageUrl && { image_url: data.imageUrl }),
-      ...(data.embedding && { embedding: data.embedding, dimensions: data.dimensions }),
     };
 
     return new Response(
