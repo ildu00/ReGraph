@@ -150,68 +150,21 @@
 
     <div id="root"></div>
 
-    <!-- If React never mounts (mobile cache/BFCache or partial JS eval), recover silently. -->
+    <!-- Main app script - must be BEFORE the watchdog so it's in DOM when watchdog runs -->
+    <script id="boot-main" type="module" src="/src/main.tsx"></script>
+
+    <!-- Lightweight recovery: only show fatal screen after VERY long wait, NO auto-reloads -->
     <script>
       (function () {
-        var MAX_ATTEMPTS = 2;
         var MOUNT_FLAG = "__regraphMounted";
-        var PARAM = "__regraph_boot";
-        var LEGACY_PARAM = "__regrarph_boot";
-
-        // Be conservative on mobile: a slow parse/exec can exceed 10s and cause unnecessary reload loops.
-        // Strategy:
-        // 1) Wait longer before first recovery check (15s for slow 3G/Safari)
-        // 2) Probe main module. If it is reachable (200), prefer waiting (no reload) once.
-        // 3) If still not mounted after a second probe, reload once and log why.
         var START_TS = Date.now();
-        var RECOVER_INITIAL_DELAY_MS = 15000;  // 15s first check - slower devices need more time
-        var RECOVER_RECHECK_DELAY_MS = 10000;  // 10s between rechecks
-        var FATAL_DEADLINE_MS = 45000;         // 45s hard deadline - be very patient on slow mobile
-
-        var recoverChecks = 0;
+        // Be VERY patient - some mobile devices take 60+ seconds on slow 3G
+        var FATAL_DEADLINE_MS = 90000; // 90 seconds before showing fatal screen
         var sent = false;
 
         function now() {
           return Date.now();
         }
-
-        function safeUrl() {
-          try {
-            return new URL(window.location.href);
-          } catch (e) {
-            return null;
-          }
-        }
-
-        function getAttempts(u) {
-          var raw = u.searchParams.get(PARAM) || u.searchParams.get(LEGACY_PARAM) || "0";
-          var n = parseInt(raw, 10);
-          return isFinite(n) ? n : 0;
-        }
-
-        function setAttempt(u, n) {
-          u.searchParams.set(PARAM, String(n));
-          u.searchParams.delete(LEGACY_PARAM);
-          u.searchParams.set("__reload", String(now()));
-        }
-
-        function record(kind, detail) {
-          try {
-            localStorage.setItem(
-              "__regraph_boot_diag",
-              JSON.stringify({ t: now(), kind: kind, detail: String(detail || "") })
-            );
-          } catch (e) {
-            // ignore
-          }
-        }
-
-        window.addEventListener("error", function (e) {
-          record("error", (e && (e.message || (e.error && e.error.message))) || "unknown");
-        });
-        window.addEventListener("unhandledrejection", function (e) {
-          record("rejection", e && e.reason ? e.reason : "unknown");
-        });
 
         function isMounted() {
           return !!window[MOUNT_FLAG];
@@ -232,7 +185,7 @@
           }
         }
 
-        function sendBootEvent(reason, attempts, extraDiag) {
+        function sendBootEvent(reason, extraDiag) {
           if (sent) return;
           sent = true;
           try {
@@ -246,10 +199,9 @@
               userAgent: navigator.userAgent,
               diag: Object.assign({}, baseDiag, extra, { elapsedMs: now() - START_TS }),
               storageFallback: !!window.__regraph_storage_fallback,
-              attempts: attempts || 0,
+              attempts: 0,
             };
 
-            // Use sendBeacon for reliability (works even if page is closing)
             var url = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
             if (navigator.sendBeacon) {
               navigator.sendBeacon(url, JSON.stringify(payload));
@@ -262,172 +214,81 @@
               }).catch(function () {});
             }
           } catch (e) {
-            // ignore - best effort
+            // ignore
           }
         }
 
+        // Record errors for diagnostics
+        window.addEventListener("error", function (e) {
+          try {
+            localStorage.setItem(
+              "__regraph_boot_diag",
+              JSON.stringify({ t: now(), kind: "error", detail: String((e && e.message) || "unknown") })
+            );
+          } catch (ex) {}
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          try {
+            localStorage.setItem(
+              "__regraph_boot_diag",
+              JSON.stringify({ t: now(), kind: "rejection", detail: String((e && e.reason) || "unknown") })
+            );
+          } catch (ex) {}
+        });
+
         function showFatalScreen(reason) {
           removeSpinner();
-
-          // Send boot event to backend
-          try {
-            var u = safeUrl();
-            var attempts = u ? getAttempts(u) : 0;
-            sendBootEvent(reason, attempts, { stage: "fatal" });
-          } catch (e) {
-            // ignore
-          }
+          sendBootEvent(reason, { stage: "fatal" });
 
           try {
-            var existing = document.getElementById("boot-fatal");
-            if (existing) return;
+            if (document.getElementById("boot-fatal")) return;
 
             var diag = "";
-            try {
-              diag = localStorage.getItem("__regraph_boot_diag") || "";
-            } catch (e) {
-              diag = "";
-            }
+            try { diag = localStorage.getItem("__regraph_boot_diag") || ""; } catch (e) {}
 
             var box = document.createElement("div");
             box.id = "boot-fatal";
             box.setAttribute("role", "alert");
             box.style.cssText =
-              "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px;background:rgba(0,0,0,0.88);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;";
+              "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px;background:rgba(0,0,0,0.92);color:#fff;font-family:system-ui,-apple-system,sans-serif;";
 
             var card = document.createElement("div");
             card.style.cssText =
-              "max-width:560px;width:100%;border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:18px;background:rgba(20,20,20,0.92);";
+              "max-width:480px;width:100%;border:1px solid rgba(255,255,255,0.15);border-radius:16px;padding:24px;background:rgba(18,18,18,0.98);";
 
             var h = document.createElement("div");
-            h.textContent = "Failed to load application";
-            h.style.cssText = "font-weight:700;font-size:18px;";
+            h.textContent = "Loading taking too long";
+            h.style.cssText = "font-weight:700;font-size:20px;margin-bottom:12px;";
 
             var p = document.createElement("div");
-            p.textContent =
-              "It looks like the browser served stale files or session storage failed. Click 'Restart' to reload with a fresh cache.";
-            p.style.cssText = "margin-top:10px;line-height:1.35;font-size:13px;opacity:0.92;";
+            p.textContent = "The app is still loading. This may be due to a slow connection. Try refreshing or check your internet.";
+            p.style.cssText = "line-height:1.5;font-size:14px;opacity:0.85;margin-bottom:16px;";
 
             var btn = document.createElement("button");
             btn.type = "button";
-            btn.textContent = "Restart";
+            btn.textContent = "Refresh Page";
             btn.style.cssText =
-              "margin-top:14px;appearance:none;border:0;border-radius:10px;padding:10px 14px;background:#ffffff;color:#000;font-weight:700;cursor:pointer;";
+              "appearance:none;border:0;border-radius:10px;padding:12px 20px;background:#a855f7;color:#fff;font-weight:600;font-size:15px;cursor:pointer;";
             btn.onclick = function () {
-              var u = safeUrl();
-              if (!u) return window.location.reload();
-              u.searchParams.set("__reload", String(now()));
-              u.searchParams.set("__regraph_force", "1");
-              u.searchParams.delete(PARAM);
-              u.searchParams.delete(LEGACY_PARAM);
-              window.location.href = u.toString();
+              window.location.reload();
             };
-
-            var pre = document.createElement("pre");
-            pre.style.cssText =
-              "margin-top:14px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);max-height:180px;overflow:auto;font-size:11px;white-space:pre-wrap;word-break:break-word;opacity:0.95;";
-            pre.textContent =
-              "reason=" + String(reason || "unknown") + "\n" +
-              "url=" + String(window.location.href) + "\n" +
-              (diag ? "diag=" + diag + "\n" : "") +
-              "ua=" + String(navigator.userAgent);
 
             card.appendChild(h);
             card.appendChild(p);
             card.appendChild(btn);
-            card.appendChild(pre);
             box.appendChild(card);
             document.body.appendChild(box);
           } catch (e) {
-            // If even this fails, at least don't show an infinite spinner.
             removeSpinner();
           }
         }
 
-        function recover() {
-          if (isMounted()) return;
-          if (document.visibilityState === "hidden") {
-            // Avoid background tab reload loops.
-            setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
-            return;
-          }
-
-          var u = safeUrl();
-          if (!u) return;
-
-          var attempts = getAttempts(u);
-
-          // After a couple tries, never trap the user behind an infinite spinner.
-          if (attempts >= MAX_ATTEMPTS) {
-            showFatalScreen("max_attempts");
-            return;
-          }
-
-          var main = document.getElementById("boot-main");
-          var src = main && main.getAttribute("src");
-          var elapsed = now() - START_TS;
-
-          function doReload(reason, extra) {
-            try {
-              sendBootEvent(reason, attempts, Object.assign({ stage: "recover" }, extra || null));
-            } catch (e) {
-              // ignore
-            }
-            setAttempt(u, attempts + 1);
-            window.location.href = u.toString();
-          }
-
-          // Probe whether the main module is reachable (common failure: old HTML points to missing hashed asset).
-          if (src) {
-            var bust = src + (src.indexOf("?") === -1 ? "?" : "&") + "__probe=" + now();
-            fetch(bust, { cache: "no-store" })
-              .then(function (res) {
-                record("probe", res.status + " " + bust);
-
-                if (res && res.ok) {
-                  recoverChecks += 1;
-
-                  // First time: if the JS file is reachable, give the device more time.
-                  if (recoverChecks < 2 && elapsed < (FATAL_DEADLINE_MS - 5000)) {
-                    setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
-                    return;
-                  }
-
-                  // Still no mount after a second probe => likely JS/runtime stall; reload once.
-                  doReload("recover_no_mount", { probeStatus: res.status, probeUrl: bust, checks: recoverChecks });
-                  return;
-                }
-
-                // Non-200 probe: likely stale asset graph; reload and log.
-                doReload("probe_error", { probeStatus: res ? res.status : "no_res", probeUrl: bust });
-              })
-              .catch(function (err) {
-                record("probe_error", err);
-                doReload("probe_error", { error: String(err), probeUrl: bust });
-              });
-            return;
-          }
-
-          // No script src found: wait once, then reload.
-          recoverChecks += 1;
-          if (recoverChecks < 2 && elapsed < (FATAL_DEADLINE_MS - 5000)) {
-            setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
-            return;
-          }
-          doReload("recover_no_mount", { checks: recoverChecks, noSrc: true });
-        }
-
-        // Give the app time to mount. If it doesn't, start a probe-based recovery.
-        setTimeout(recover, RECOVER_INITIAL_DELAY_MS);
-
-        // Hard deadline: never keep users on an endless spinner.
+        // Only show fatal screen after a VERY long wait - no auto-reloads
         setTimeout(function () {
           if (!isMounted()) showFatalScreen("deadline");
         }, FATAL_DEADLINE_MS);
       })();
     </script>
-
-    <script id="boot-main" type="module" src="/src/main.tsx"></script>
 
     <style>
       /* Fallback theme tokens for the ultra-early boot spinner (before app CSS loads) */
