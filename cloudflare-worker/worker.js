@@ -9,6 +9,7 @@ const ROUTES = {
   "/v1/inference": "inference",
   "/v1/chat/completions": "inference",
   "/v1/completions": "inference",
+  "/v1/audio/speech": "audio-speech",
   "/v1/models": "models",
   "/v1/batch": "batch",
   "/v1/training/jobs": "training-jobs",

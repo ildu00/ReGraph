@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -289,17 +290,21 @@ serve(async (req) => {
         }
 
         return new Response(
-          JSON.stringify({ error: "Failed to generate speech" }),
+          JSON.stringify({ error: "Failed to generate speech", details: errorText }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
-      // TTS returns binary audio data
+      // TTS returns binary audio data - encode as base64
+      const audioBuffer = await response.arrayBuffer();
+      const base64Audio = base64Encode(audioBuffer);
+      
       return new Response(
         JSON.stringify({ 
-          response: `🔊 Speech generated successfully!\n\nText: "${prompt.slice(0, 100)}${prompt.length > 100 ? '...' : ''}"\n\nModel: ${vsegptModel}\nVoice: nova\nFormat: MP3\n\nNote: Audio file is generated. In production, the binary audio data would be returned for playback.`,
+          audio: base64Audio,
+          audio_format: "mp3",
           model: vsegptModel,
-          audioGenerated: true,
+          voice: "nova",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
