@@ -1,3 +1,4 @@
+import { useLayoutEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,12 @@ import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 
+declare global {
+  interface Window {
+    __regraphMounted?: boolean;
+  }
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -34,40 +41,48 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
-  <AppErrorBoundary>
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <ScrollToTop />
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/auth" element={<Auth />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/docs" element={<Docs />} />
-              <Route path="/models" element={<Models />} />
-              <Route path="/privacy" element={<PrivacyPolicy />} />
-              <Route path="/terms" element={<TermsOfService />} />
-              <Route path="/cookies" element={<CookiePolicy />} />
-              <Route path="/status" element={<Status />} />
-              <Route path="/support" element={<Support />} />
-              <Route path="/changelog" element={<Changelog />} />
-              <Route path="/legal" element={<Legal />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/careers" element={<Careers />} />
-              <Route path="/blog" element={<Blog />} />
-              <Route path="/admin" element={<Admin />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
-  </AppErrorBoundary>
-);
+const App = () => {
+  useLayoutEffect(() => {
+    // Mark mounted for boot watchdog + remove minimal boot spinner.
+    window.__regraphMounted = true;
+    document.getElementById("boot-spinner")?.remove();
+  }, []);
+
+  return (
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <ScrollToTop />
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/auth" element={<Auth />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/docs" element={<Docs />} />
+                <Route path="/models" element={<Models />} />
+                <Route path="/privacy" element={<PrivacyPolicy />} />
+                <Route path="/terms" element={<TermsOfService />} />
+                <Route path="/cookies" element={<CookiePolicy />} />
+                <Route path="/status" element={<Status />} />
+                <Route path="/support" element={<Support />} />
+                <Route path="/changelog" element={<Changelog />} />
+                <Route path="/legal" element={<Legal />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/careers" element={<Careers />} />
+                <Route path="/blog" element={<Blog />} />
+                <Route path="/admin" element={<Admin />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </AppErrorBoundary>
+  );
+};
 
 export default App;

@@ -24,15 +24,26 @@ const isRecoverableChunkError = (message: string) => {
   );
 };
 
-const reloadOnce = () => {
+const hasReloadMarker = () => {
   try {
-    const key = "__regraph_autoreload_once";
-    if (sessionStorage.getItem(key) === "1") return;
-    sessionStorage.setItem(key, "1");
+    return new URL(window.location.href).searchParams.has("__regraph_reload");
+  } catch {
+    return false;
+  }
+};
 
-    const url = new URL(window.location.href);
-    url.searchParams.set("__reload", Date.now().toString());
-    window.location.replace(url.toString());
+const markReloadedUrl = () => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("__regraph_reload", "1");
+  url.searchParams.set("__reload", Date.now().toString());
+  return url.toString();
+};
+
+const reloadOnce = () => {
+  // Storage can be blocked on some mobile browsers; use a URL marker instead.
+  if (hasReloadMarker()) return;
+  try {
+    window.location.replace(markReloadedUrl());
   } catch {
     window.location.reload();
   }
