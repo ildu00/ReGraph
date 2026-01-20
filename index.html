@@ -38,95 +38,9 @@
   </head>
 
   <body>
-    <div id="root">
-      <!-- Lightweight app shell to avoid a black screen before JS loads -->
-      <div id="app-shell" class="shell" role="status" aria-live="polite">
-        <div class="shell-card">
-          <div class="shell-spinner" aria-hidden="true"></div>
-          <div>
-            <div id="shell-title" class="shell-title">Loading…</div>
-            <div id="shell-detail" class="shell-detail">
-              Preparing the app. This should take a moment.
-            </div>
-            <div id="shell-actions" class="shell-actions"></div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <script>
-      (function () {
-        var mounted = false;
-        var shell = document.getElementById('app-shell');
-        if (!shell) return;
-
-        var titleEl = document.getElementById('shell-title');
-        var detailEl = document.getElementById('shell-detail');
-        var actionsEl = document.getElementById('shell-actions');
-
-        function setText(title, detail) {
-          if (titleEl) titleEl.textContent = title;
-          if (detailEl) detailEl.textContent = detail || '';
-        }
-
-        function showReloadButton() {
-          if (!actionsEl) return;
-          if (actionsEl.querySelector('[data-reload]')) return;
-
-          var btn = document.createElement('button');
-          btn.type = 'button';
-          btn.textContent = 'Reload';
-          btn.setAttribute('data-reload', '1');
-          btn.onclick = function () {
-            var url = new URL(window.location.href);
-            url.searchParams.set('__reload', Date.now().toString());
-            window.location.replace(url.toString());
-          };
-          btn.className = 'shell-button';
-          actionsEl.appendChild(btn);
-        }
-
-        window.__regraphBoot = {
-          markMounted: function () {
-            mounted = true;
-          },
-          showError: function (title, detail) {
-            setText(title || 'Loading error', detail || '');
-            var spinner = shell.querySelector('.shell-spinner');
-            if (spinner) spinner.style.display = 'none';
-            showReloadButton();
-          }
-        };
-
-        // If app still hasn't mounted after a few seconds, keep the shell and offer reload.
-        setTimeout(function () {
-          if (mounted) return;
-          // If React mounted, it would replace #root contents, so this check is enough.
-          if (document.getElementById('app-shell')) {
-            setText(
-              'Still loading…',
-              'Your network (VPN/slow mobile) may be blocking scripts or the backend. Try Reload.'
-            );
-            showReloadButton();
-          }
-        }, 4000);
-      })();
-    </script>
-
-    <style>
-      /* App shell: minimal CSS, no Tailwind dependency */
-      .shell{min-height:100vh;background:#070707;color:rgba(255,255,255,0.92);display:flex;align-items:center;justify-content:center;padding:24px}
-      .shell-card{width:min(560px,100%);border:1px solid rgba(255,255,255,0.12);border-radius:16px;background:rgba(255,255,255,0.04);backdrop-filter:blur(12px);padding:18px;display:flex;gap:14px;align-items:flex-start}
-      .shell-title{font:600 16px/1.2 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;margin-bottom:6px}
-      .shell-detail{font:400 13px/1.45 system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:rgba(255,255,255,0.70)}
-      .shell-actions{margin-top:12px}
-      .shell-button{padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.14);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.92);cursor:pointer;font-size:14px}
-      .shell-button:hover{background:rgba(255,255,255,0.10)}
-      .shell-spinner{width:20px;height:20px;border-radius:999px;border:2px solid rgba(255,255,255,0.18);border-top-color:rgba(255,255,255,0.72);animation:shellspin 900ms linear infinite;margin-top:2px;flex:0 0 auto}
-      @keyframes shellspin{to{transform:rotate(360deg)}}
-    </style>
-
+    <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
+
 
