@@ -44,8 +44,8 @@ window.addEventListener("error", (event) => {
   const msg = (event as ErrorEvent).message || "";
   if (isRecoverableChunkError(msg)) {
     window.__regraphBoot?.showError(
-      "Ошибка загрузки (скрипт)",
-      "Обновляем страницу, чтобы подтянуть свежие файлы…"
+      "Script loading error",
+      "Refreshing page to fetch latest files…"
     );
     reloadOnce();
   }
@@ -55,8 +55,8 @@ window.addEventListener("unhandledrejection", (event) => {
   const msg = reason instanceof Error ? reason.message : String(reason ?? "");
   if (isRecoverableChunkError(msg)) {
     window.__regraphBoot?.showError(
-      "Ошибка загрузки (модуль)",
-      "Обновляем страницу, чтобы подтянуть свежие файлы…"
+      "Module loading error",
+      "Refreshing page to fetch latest files…"
     );
     reloadOnce();
   }

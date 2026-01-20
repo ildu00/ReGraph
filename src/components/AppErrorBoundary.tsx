@@ -40,9 +40,9 @@ export default class AppErrorBoundary extends React.Component<
       return (
         <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
           <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6">
-            <h1 className="text-xl font-semibold">Приложение не загрузилось</h1>
+            <h1 className="text-xl font-semibold">App failed to load</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Похоже, произошла ошибка при загрузке. Нажмите «Перезагрузить».
+              Something went wrong. Click "Reload" to try again.
             </p>
             {this.state.errorMessage ? (
               <pre className="mt-4 max-h-40 overflow-auto rounded-lg bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -50,7 +50,7 @@ export default class AppErrorBoundary extends React.Component<
               </pre>
             ) : null}
             <div className="mt-5 flex gap-3">
-              <Button onClick={this.handleReload}>Перезагрузить</Button>
+              <Button onClick={this.handleReload}>Reload</Button>
             </div>
           </div>
         </div>
