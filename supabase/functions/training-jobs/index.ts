@@ -34,6 +34,17 @@ serve(async (req) => {
   try {
     const url = new URL(req.url);
     const pathParts = url.pathname.split("/").filter(Boolean);
+
+    // Validate method
+    if (!["GET", "POST", "DELETE"].includes(req.method)) {
+      return new Response(
+        JSON.stringify({
+          error: "Method not allowed",
+          message: `HTTP method '${req.method}' is not supported. Use GET, POST, or DELETE.`,
+        }),
+        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "GET, POST, DELETE, OPTIONS" } }
+      );
+    }
     
     // GET /v1/training/jobs/{id} - Get job status
     if (req.method === "GET") {
@@ -91,18 +102,49 @@ serve(async (req) => {
 
     // POST /v1/training/jobs - Create new training job
     if (req.method === "POST") {
-      const body: TrainingJobRequest = await req.json();
+      let body: TrainingJobRequest;
+      try {
+        const text = await req.text();
+        if (!text || text.trim() === "") {
+          return new Response(
+            JSON.stringify({
+              error: "Empty request body",
+              message: "Request body cannot be empty. Please provide a valid JSON payload.",
+              example: { model: "llama-3.1-8b", dataset: "https://example.com/data.jsonl" }
+            }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        body = JSON.parse(text);
+      } catch (parseError) {
+        return new Response(
+          JSON.stringify({
+            error: "Invalid JSON",
+            message: "Request body must be valid JSON.",
+            example: { model: "llama-3.1-8b", dataset: "https://example.com/data.jsonl" }
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
       if (!body.model) {
         return new Response(
-          JSON.stringify({ error: "model is required" }),
+          JSON.stringify({ 
+            error: "Missing required field",
+            message: "The 'model' field is required.",
+            example: { model: "llama-3.1-8b", dataset: "https://example.com/data.jsonl" }
+          }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
       if (!body.dataset) {
         return new Response(
-          JSON.stringify({ error: "dataset is required" }),
+          JSON.stringify({ 
+            error: "Missing required field",
+            message: "The 'dataset' field is required. Provide a URL to your training data.",
+            example: { model: "llama-3.1-8b", dataset: "https://example.com/data.jsonl" }
+          }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
