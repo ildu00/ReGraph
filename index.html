@@ -147,11 +147,28 @@
     <!-- Minimal boot spinner (no text) to avoid a pure black screen if JS is slow/blocked -->
     <div id="boot-spinner" aria-hidden="true"></div>
 
+    <!-- On the homepage we already show instant HTML, so the overlay spinner is not needed. -->
+    <script>
+      (function () {
+        try {
+          if (location.pathname === "/") {
+            var s = document.getElementById("boot-spinner");
+            if (s) s.remove();
+          }
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
+
     <!-- Instant HTML fallback so users see the landing immediately even if React is slow on mobile -->
     <div id="boot-static">
       <header class="boot-header">
         <div class="boot-brand">
-          <span class="boot-mark">Re</span><span class="boot-mark2">Graph</span>
+          <svg class="boot-zap" viewBox="0 0 24 24" aria-hidden="true">
+            <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+          </svg>
+          <span class="boot-word"><span class="boot-mark">Re</span><span class="boot-mark2">Graph</span></span>
         </div>
         <nav class="boot-nav">
           <a href="/docs">Docs</a>
@@ -168,6 +185,7 @@
         </div>
       </main>
     </div>
+
 
     <div id="root"></div>
 
@@ -263,7 +281,11 @@
               reason: String(reason || "unknown"),
               url: window.location.href,
               userAgent: navigator.userAgent,
-              diag: Object.assign({}, baseDiag, extra, { elapsedMs: now() - START_TS }),
+              diag: Object.assign({}, baseDiag, extra, {
+                elapsedMs: now() - START_TS,
+                mainLoaded: !!window.__regraphMainLoaded,
+                path: window.location.pathname,
+              }),
               storageFallback: !!window.__regraph_storage_fallback,
               attempts: hasReloadMarker() ? 1 : 0,
             };
@@ -283,6 +305,19 @@
             // ignore
           }
         }
+
+        // If main.tsx never executed, remove the overlay spinner and log it.
+        // The homepage should still be usable via the instant HTML fallback.
+        setTimeout(function () {
+          try {
+            if (!window.__regraphMainLoaded) {
+              removeSpinner();
+              sendBootEvent("main_not_started", { stage: "progress" });
+            }
+          } catch (e) {
+            // ignore
+          }
+        }, 2000);
 
         function reloadOnce(triggerReason) {
           if (hasReloadMarker()) return;
@@ -398,15 +433,16 @@
         --boot-border:240 5% 20%;
       }
 
-      body{margin:0;background:hsl(var(--boot-bg));color:hsl(var(--boot-fg));font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
+      body{margin:0;background:hsl(var(--boot-bg));color:hsl(var(--boot-fg));font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;}
 
       #boot-static{min-height:100vh;display:flex;flex-direction:column;}
       .boot-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;position:sticky;top:0;background:linear-gradient(to bottom,hsl(var(--boot-bg)) 0%,hsl(var(--boot-bg) / 0.65) 100%);backdrop-filter:blur(12px);}
-      .boot-brand{font-weight:800;font-size:18px;letter-spacing:-0.02em;}
+      .boot-brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:-0.02em;}
+      .boot-zap{width:20px;height:20px;stroke:hsl(var(--primary));fill:none;stroke-width:2;stroke-linejoin:round;stroke-linecap:round;}
+      .boot-word{display:inline-flex;align-items:baseline;}
       .boot-mark{background:linear-gradient(90deg,hsl(var(--primary)),hsl(var(--primary) / 0.65));-webkit-background-clip:text;background-clip:text;color:transparent;}
       .boot-mark2{color:hsl(var(--primary));}
       .boot-nav a{color:hsl(var(--boot-muted));text-decoration:none;margin-left:14px;font-size:14px;}
-      .boot-nav a:hover{color:hsl(var(--boot-fg));}
 
       .boot-main{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:44px 20px;text-align:center;}
       .boot-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid hsl(var(--primary) / 0.35);background:hsl(var(--primary) / 0.06);color:hsl(var(--primary));font-size:12px;font-weight:700;margin-bottom:18px;}
