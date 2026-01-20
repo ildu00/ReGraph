@@ -4,8 +4,7 @@ declare global {
   }
 }
 
-// Remove the boot spinner ASAP (even before React loads) so users see the instant HTML fallback.
-document.getElementById("boot-spinner")?.remove();
+// Mark that main.tsx has started (for boot watchdog diagnostics).
 window.__regraphMainLoaded = true;
 
 // BFCache restore on mobile Safari can resume a "half-dead" JS state.
@@ -17,6 +16,7 @@ window.addEventListener("pageshow", (e) => {
 });
 
 // Load React + the app lazily to reduce upfront parsing cost on mobile.
+// The boot spinner stays visible until React mounts and App.tsx removes it.
 Promise.all([import("react-dom/client"), import("./App")])
   .then(([reactDom, app]) => {
     const rootEl = document.getElementById("root");

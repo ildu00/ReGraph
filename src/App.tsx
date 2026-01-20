@@ -50,10 +50,9 @@ const queryClient = new QueryClient({
 
 const App = () => {
   useLayoutEffect(() => {
-    // Mark mounted for boot watchdog + remove minimal boot spinner + static fallback.
+    // Mark mounted for boot watchdog + remove boot spinner.
     window.__regraphMounted = true;
     document.getElementById("boot-spinner")?.remove();
-    document.getElementById("boot-static")?.remove();
   }, []);
 
   return (
