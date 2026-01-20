@@ -3,6 +3,10 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Reduce stale HTML caching that can cause blank screens on mobile after deploys -->
+    <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
     <title>ReGraph - Decentralized AI Compute Marketplace | 80% Cheaper Than Cloud</title>
     <meta name="description" content="Access 50+ AI models at up to 80% lower cost than AWS, Google Cloud & OpenAI. Decentralized GPU, TPU & NPU network for inference and training. OpenAI-compatible API." />
     <meta name="keywords" content="AI compute, decentralized AI, GPU marketplace, AI inference, machine learning, LLM API, GPT-5, Claude, Llama, cheap AI, distributed computing, GPU rental, AI training, neural network, crypto AI" />
@@ -42,6 +46,36 @@
     <div id="boot-spinner" aria-hidden="true"></div>
 
     <div id="root"></div>
+
+    <!-- If React never mounts (usually stale cached HTML/assets on mobile), try a couple silent hard reloads,
+         then remove the spinner to avoid an endless loader. -->
+    <script>
+      (function () {
+        var MAX_ATTEMPTS = 2;
+        var url;
+        try {
+          url = new URL(window.location.href);
+        } catch (e) {
+          return;
+        }
+        var attempts = parseInt(url.searchParams.get("__regraph_boot") || "0", 10);
+
+        setTimeout(function () {
+          if (window.__regraphMounted) return;
+
+          if (attempts < MAX_ATTEMPTS) {
+            url.searchParams.set("__regraph_boot", String(attempts + 1));
+            url.searchParams.set("__reload", String(Date.now()));
+            window.location.replace(url.toString());
+            return;
+          }
+
+          var el = document.getElementById("boot-spinner");
+          if (el) el.remove();
+        }, 8000);
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
 
     <style>
