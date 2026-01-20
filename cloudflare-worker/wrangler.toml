@@ -1,0 +1,7 @@
+# Cloudflare Worker configuration for api.regraph.tech
+name = "regraph-api"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+
+# Routes - configure in Cloudflare dashboard:
+# api.regraph.tech/* -> regraph-api worker
