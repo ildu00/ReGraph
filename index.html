@@ -38,7 +38,7 @@
   </head>
 
   <body>
-    <div id="boot-loader">
+    <div id="boot-loader" style="display:none">
       <div class="boot-card">
         <div class="boot-spinner" aria-hidden="true"></div>
         <div>
@@ -57,6 +57,14 @@
 
         var titleEl = document.getElementById('boot-title');
         var detailEl = document.getElementById('boot-detail');
+        var mounted = false;
+        var shown = false;
+
+        function ensureShown() {
+          if (shown) return;
+          shown = true;
+          loader.style.display = 'flex';
+        }
 
         function setText(title, detail) {
           if (titleEl) titleEl.textContent = title;
@@ -89,10 +97,12 @@
 
         window.__regraphBoot = {
           markMounted: function () {
+            mounted = true;
             var el = document.getElementById('boot-loader');
             if (el) el.remove();
           },
           showError: function (title, detail) {
+            ensureShown();
             setText(title || 'Loading error', detail || '');
             var spinner = loader.querySelector('.boot-spinner');
             if (spinner) spinner.style.display = 'none';
@@ -100,9 +110,11 @@
           }
         };
 
-        // If React never mounts (slow network / blocked), show actionable message.
+        // If React still doesn't mount, show actionable message.
         setTimeout(function () {
+          if (mounted) return;
           if (document.getElementById('boot-loader')) {
+            ensureShown();
             setText('Site is taking too long to load', 'Network may be blocking scripts or API. Click "Reload".');
             addReloadButton();
           }
