@@ -41,3 +41,12 @@ verify_jwt = false
 
 [functions.inference]
 verify_jwt = false
+
+[functions.training-jobs]
+verify_jwt = false
+
+[functions.batch]
+verify_jwt = false
+
+[functions.models]
+verify_jwt = false
