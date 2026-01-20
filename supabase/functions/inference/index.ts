@@ -94,6 +94,19 @@ serve(async (req) => {
       );
     }
 
+    // Special handling for TTS - return audio data directly
+    if (category === "tts" && data.audio) {
+      return new Response(
+        JSON.stringify({
+          audio: data.audio,
+          audio_format: data.audio_format || "mp3",
+          model: data.model,
+          voice: data.voice || "nova",
+        }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const openAIResponse = {
       id: "inf_" + crypto.randomUUID().slice(0, 8),
       object: "chat.completion",
@@ -116,7 +129,6 @@ serve(async (req) => {
       },
       // Include extra fields for special responses
       ...(data.imageUrl && { image_url: data.imageUrl }),
-      ...(data.audioGenerated && { audio_generated: true }),
       ...(data.embedding && { embedding: data.embedding, dimensions: data.dimensions }),
     };
 
