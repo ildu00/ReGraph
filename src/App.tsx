@@ -27,6 +27,7 @@ const Careers = lazy(() => import("./pages/Careers"));
 const Blog = lazy(() => import("./pages/Blog"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Admin = lazy(() => import("./pages/Admin"));
+const DebugBoot = lazy(() => import("./pages/DebugBoot"));
 
 declare global {
   interface Window {
@@ -84,6 +85,7 @@ const App = () => {
                   <Route path="/careers" element={<Careers />} />
                   <Route path="/blog" element={<Blog />} />
                   <Route path="/admin" element={<Admin />} />
+                  <Route path="/debug/boot" element={<DebugBoot />} />
                   {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                   <Route path="*" element={<NotFound />} />
                 </Routes>
