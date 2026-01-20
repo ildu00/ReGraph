@@ -38,6 +38,27 @@ const reloadOnce = () => {
   }
 };
 
+// If the user returns after a long idle period, the browser may serve stale cached assets
+// (common cause of "black screen" until manual refresh). Force a single cache-busting reload.
+try {
+  const LAST_TS_KEY = "__regraph_last_load_ts";
+  const now = Date.now();
+  const prev = Number(localStorage.getItem(LAST_TS_KEY) || "0");
+  localStorage.setItem(LAST_TS_KEY, String(now));
+
+  // 30 minutes
+  if (prev && now - prev > 30 * 60 * 1000) {
+    reloadOnce();
+  }
+} catch {
+  // ignore
+}
+
+// BFCache restore on mobile Safari can resume a "half-dead" JS state. Reload once.
+window.addEventListener("pageshow", (e) => {
+  if ((e as PageTransitionEvent).persisted) reloadOnce();
+});
+
 // Catch chunk/preload failures that often manifest as a black screen until manual refresh.
 window.addEventListener("vite:preloadError", () => reloadOnce());
 window.addEventListener("error", (event) => {
