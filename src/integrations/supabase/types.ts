@@ -110,6 +110,42 @@ export type Database = {
         }
         Relationships: []
       }
+      boot_events: {
+        Row: {
+          attempts: number | null
+          created_at: string
+          diag: Json | null
+          id: string
+          ip_address: string | null
+          reason: string
+          storage_fallback: boolean | null
+          url: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          created_at?: string
+          diag?: Json | null
+          id?: string
+          ip_address?: string | null
+          reason: string
+          storage_fallback?: boolean | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          created_at?: string
+          diag?: Json | null
+          id?: string
+          ip_address?: string | null
+          reason?: string
+          storage_fallback?: boolean | null
+          url?: string | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       incident_updates: {
         Row: {
           created_at: string

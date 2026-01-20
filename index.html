@@ -204,8 +204,53 @@
           if (el) el.remove();
         }
 
+        function sendBootEvent(reason, attempts) {
+          try {
+            var diag = null;
+            try {
+              var raw = localStorage.getItem("__regraph_boot_diag");
+              if (raw) diag = JSON.parse(raw);
+            } catch (e) {
+              // ignore
+            }
+
+            var payload = {
+              reason: reason,
+              url: window.location.href,
+              userAgent: navigator.userAgent,
+              diag: diag,
+              storageFallback: !!window.__regraph_storage_fallback,
+              attempts: attempts || 0,
+            };
+
+            // Use sendBeacon for reliability (works even if page is closing)
+            var url = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon(url, JSON.stringify(payload));
+            } else {
+              fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload),
+                keepalive: true,
+              }).catch(function () {});
+            }
+          } catch (e) {
+            // ignore - best effort
+          }
+        }
+
         function showFatalScreen(reason) {
           removeSpinner();
+
+          // Send boot event to backend
+          try {
+            var u = safeUrl();
+            var attempts = u ? getAttempts(u) : 0;
+            sendBootEvent(reason, attempts);
+          } catch (e) {
+            // ignore
+          }
 
           try {
             var existing = document.getElementById("boot-fatal");
@@ -229,17 +274,17 @@
               "max-width:560px;width:100%;border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:18px;background:rgba(20,20,20,0.92);";
 
             var h = document.createElement("div");
-            h.textContent = "Не удалось загрузить приложение";
+            h.textContent = "Failed to load application";
             h.style.cssText = "font-weight:700;font-size:18px;";
 
             var p = document.createElement("div");
             p.textContent =
-              "Похоже, браузер отдал устаревшие файлы или сломалось сохранение сессии. Нажмите ‘Перезапустить’ — страница перезагрузится с принудительным обновлением.";
+              "It looks like the browser served stale files or session storage failed. Click 'Restart' to reload with a fresh cache.";
             p.style.cssText = "margin-top:10px;line-height:1.35;font-size:13px;opacity:0.92;";
 
             var btn = document.createElement("button");
             btn.type = "button";
-            btn.textContent = "Перезапустить";
+            btn.textContent = "Restart";
             btn.style.cssText =
               "margin-top:14px;appearance:none;border:0;border-radius:10px;padding:10px 14px;background:#ffffff;color:#000;font-weight:700;cursor:pointer;";
             btn.onclick = function () {
@@ -334,5 +379,3 @@
     </style>
   </body>
 </html>
-
-
