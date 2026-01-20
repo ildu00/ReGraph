@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -24,6 +25,15 @@ import Blog from "./pages/Blog";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
 
+declare global {
+  interface Window {
+    __regraphBoot?: {
+      markMounted: () => void;
+      showError: (title: string, detail?: string) => void;
+    };
+  }
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -34,7 +44,13 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => (
+const App = () => {
+  useEffect(() => {
+    // Hide boot loader once React has mounted
+    window.__regraphBoot?.markMounted();
+  }, []);
+
+  return (
   <AppErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
@@ -68,6 +84,7 @@ const App = () => (
       </AuthProvider>
     </QueryClientProvider>
   </AppErrorBoundary>
-);
+  );
+};
 
 export default App;

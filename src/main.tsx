@@ -63,4 +63,3 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 createRoot(document.getElementById("root")!).render(<App />);
-window.__regraphBoot?.markMounted();
