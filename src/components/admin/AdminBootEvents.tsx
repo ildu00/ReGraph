@@ -178,23 +178,25 @@ export const AdminBootEvents = () => {
             className="pl-10"
           />
         </div>
-        <Select value={reasonFilter} onValueChange={setReasonFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Filter by reason" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Reasons</SelectItem>
-            {uniqueReasons.map((reason) => (
-              <SelectItem key={reason} value={reason}>
-                {reason}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Button variant="outline" onClick={fetchEvents} className="gap-2">
-          <RefreshCw className="h-4 w-4" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Select value={reasonFilter} onValueChange={setReasonFilter}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by reason" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Reasons</SelectItem>
+              {uniqueReasons.map((reason) => (
+                <SelectItem key={reason} value={reason}>
+                  {reason}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={fetchEvents} className="shrink-0 sm:gap-2 h-10 w-10 sm:w-auto p-0 sm:px-4">
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">Refresh</span>
+          </Button>
+        </div>
       </div>
 
       {/* Events Table */}
