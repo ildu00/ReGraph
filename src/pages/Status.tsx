@@ -312,10 +312,10 @@ const Status = () => {
             {statsError ? (
               <div className="mt-4 inline-flex flex-col items-center gap-3 rounded-xl border border-border bg-card/60 px-4 py-3">
                 <p className="text-sm text-muted-foreground text-center">
-                  Нет связи с backend (VPN/слабая сеть). Данные могут быть устаревшими.
+                  Backend connection failed (VPN/slow network). Data may be stale.
                 </p>
                 <Button variant="secondary" onClick={fetchStats} disabled={loading}>
-                  {loading ? "Повтор…" : "Повторить загрузку"}
+                  {loading ? "Retrying…" : "Retry"}
                 </Button>
               </div>
             ) : null}

@@ -42,8 +42,8 @@
       <div class="boot-card">
         <div class="boot-spinner" aria-hidden="true"></div>
         <div>
-          <div id="boot-title" class="boot-title">Загрузка…</div>
-          <div id="boot-detail" class="boot-detail">Если долго не открывается (VPN/слабая сеть), подождите 10–15 сек.</div>
+          <div id="boot-title" class="boot-title">Loading…</div>
+          <div id="boot-detail" class="boot-detail">If it takes too long (VPN/slow network), wait 10–15 sec.</div>
         </div>
       </div>
     </div>
@@ -67,7 +67,7 @@
           if (loader.querySelector('[data-reload]')) return;
           var btn = document.createElement('button');
           btn.type = 'button';
-          btn.textContent = 'Перезагрузить';
+          btn.textContent = 'Reload';
           btn.setAttribute('data-reload', '1');
           btn.onclick = function () {
             var url = new URL(window.location.href);
@@ -93,7 +93,7 @@
             if (el) el.remove();
           },
           showError: function (title, detail) {
-            setText(title || 'Ошибка загрузки', detail || '');
+            setText(title || 'Loading error', detail || '');
             var spinner = loader.querySelector('.boot-spinner');
             if (spinner) spinner.style.display = 'none';
             addReloadButton();
@@ -103,7 +103,7 @@
         // If React never mounts (slow network / blocked), show actionable message.
         setTimeout(function () {
           if (document.getElementById('boot-loader')) {
-            setText('Сайт загружается слишком долго', 'Похоже, сеть блокирует загрузку скриптов или API. Нажмите «Перезагрузить».');
+            setText('Site is taking too long to load', 'Network may be blocking scripts or API. Click "Reload".');
             addReloadButton();
           }
         }, 12000);
