@@ -102,7 +102,6 @@ serve(async (req) => {
         JSON.stringify({
           audio: data.audio,
           audio_format: data.audio_format || "mp3",
-          model: data.model,
           voice: data.voice || "nova",
         }),
         { headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -116,7 +115,6 @@ serve(async (req) => {
           id: "img_" + crypto.randomUUID().slice(0, 8),
           object: "image",
           created: Math.floor(Date.now() / 1000),
-          model: data.model || model,
           data: [
             {
               url: data.imageUrl,
@@ -133,7 +131,6 @@ serve(async (req) => {
       return new Response(
         JSON.stringify({
           object: "list",
-          model: data.model || model,
           data: [
             {
               object: "embedding",
@@ -154,7 +151,6 @@ serve(async (req) => {
       id: "inf_" + crypto.randomUUID().slice(0, 8),
       object: "chat.completion",
       created: Math.floor(Date.now() / 1000),
-      model: data.model || model,
       choices: [
         {
           index: 0,
