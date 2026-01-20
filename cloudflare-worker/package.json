@@ -1,5 +1,9 @@
 {
   "name": "regraph-api-worker",
   "version": "1.0.0",
-  "private": true
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build required'",
+    "deploy": "wrangler deploy"
+  }
 }
