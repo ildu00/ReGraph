@@ -1,5 +1,5 @@
 # Cloudflare Worker configuration for api.regraph.tech
-name = "regraph-api"
+name = "regraph"
 main = "worker.js"
 compatibility_date = "2024-01-01"
 
