@@ -114,9 +114,14 @@
     <!-- Preconnect to critical origins -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://rwzyvgralronyuzqwyhu.supabase.co" />
+    
     <!-- Load fonts asynchronously to prevent render blocking -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" media="print" onload="this.media='all'" />
     <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800&display=swap" /></noscript>
+    
+    <!-- Preload critical route for faster FCP -->
+    <link rel="modulepreload" href="/src/main.tsx" />
     
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
@@ -153,15 +158,15 @@
         var PARAM = "__regraph_boot";
         var LEGACY_PARAM = "__regrarph_boot";
 
-        // Be conservative on mobile: a slow parse/exec can exceed 6s and cause unnecessary reload loops.
+        // Be conservative on mobile: a slow parse/exec can exceed 10s and cause unnecessary reload loops.
         // Strategy:
-        // 1) Wait longer before first recovery check
+        // 1) Wait longer before first recovery check (15s for slow 3G/Safari)
         // 2) Probe main module. If it is reachable (200), prefer waiting (no reload) once.
         // 3) If still not mounted after a second probe, reload once and log why.
         var START_TS = Date.now();
-        var RECOVER_INITIAL_DELAY_MS = 10000;
-        var RECOVER_RECHECK_DELAY_MS = 7000;
-        var FATAL_DEADLINE_MS = 25000;
+        var RECOVER_INITIAL_DELAY_MS = 15000;  // 15s first check - slower devices need more time
+        var RECOVER_RECHECK_DELAY_MS = 10000;  // 10s between rechecks
+        var FATAL_DEADLINE_MS = 45000;         // 45s hard deadline - be very patient on slow mobile
 
         var recoverChecks = 0;
         var sent = false;
