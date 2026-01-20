@@ -237,7 +237,7 @@ const ApiKeysTab = () => {
       {/* API Keys List */}
       {loading ? (
         <div className="flex items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
         </div>
       ) : apiKeys.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center">

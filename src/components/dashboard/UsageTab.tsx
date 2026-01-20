@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { BarChart3, Loader2 } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 import {
   AreaChart,
   Area,
@@ -117,7 +117,7 @@ const UsageTab = () => {
         <h2 className="text-lg font-semibold mb-4">API Calls Over Time</h2>
         {loading ? (
           <div className="h-64 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
           </div>
         ) : (
           <div className="h-64">
@@ -163,7 +163,7 @@ const UsageTab = () => {
         </div>
         {loading ? (
           <div className="p-12 flex items-center justify-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
           </div>
         ) : usageLogs.length === 0 ? (
           <div className="p-12 text-center">
