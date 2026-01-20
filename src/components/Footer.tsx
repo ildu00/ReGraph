@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
@@ -53,6 +53,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
     setIsSubmitting(true);
     
     try {
+      const { supabase } = await import("@/integrations/supabase/client");
       const { error } = await supabase.from("support_requests").insert({
         name: formData.name.trim(),
         email: formData.email.trim(),
