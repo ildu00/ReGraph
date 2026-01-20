@@ -1,4 +1,4 @@
-import { useLayoutEffect } from "react";
+import { Suspense, lazy, useLayoutEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -7,23 +7,26 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import ScrollToTop from "@/components/ScrollToTop";
 import AppErrorBoundary from "@/components/AppErrorBoundary";
-import Index from "./pages/Index";
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Docs from "./pages/Docs";
-import Models from "./pages/Models";
-import PrivacyPolicy from "./pages/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService";
-import CookiePolicy from "./pages/CookiePolicy";
-import Status from "./pages/Status";
-import Support from "./pages/Support";
-import Changelog from "./pages/Changelog";
-import Legal from "./pages/Legal";
-import About from "./pages/About";
-import Careers from "./pages/Careers";
-import Blog from "./pages/Blog";
-import NotFound from "./pages/NotFound";
-import Admin from "./pages/Admin";
+
+// Route-level code-splitting:
+// prevents one broken/unsupported module (or auth storage issue) from blocking the landing page.
+const Index = lazy(() => import("./pages/Index"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Docs = lazy(() => import("./pages/Docs"));
+const Models = lazy(() => import("./pages/Models"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TermsOfService = lazy(() => import("./pages/TermsOfService"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const Status = lazy(() => import("./pages/Status"));
+const Support = lazy(() => import("./pages/Support"));
+const Changelog = lazy(() => import("./pages/Changelog"));
+const Legal = lazy(() => import("./pages/Legal"));
+const About = lazy(() => import("./pages/About"));
+const Careers = lazy(() => import("./pages/Careers"));
+const Blog = lazy(() => import("./pages/Blog"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Admin = lazy(() => import("./pages/Admin"));
 
 declare global {
   interface Window {
@@ -57,26 +60,34 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
-              <Routes>
-                <Route path="/" element={<Index />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/dashboard" element={<Dashboard />} />
-                <Route path="/docs" element={<Docs />} />
-                <Route path="/models" element={<Models />} />
-                <Route path="/privacy" element={<PrivacyPolicy />} />
-                <Route path="/terms" element={<TermsOfService />} />
-                <Route path="/cookies" element={<CookiePolicy />} />
-                <Route path="/status" element={<Status />} />
-                <Route path="/support" element={<Support />} />
-                <Route path="/changelog" element={<Changelog />} />
-                <Route path="/legal" element={<Legal />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/careers" element={<Careers />} />
-                <Route path="/blog" element={<Blog />} />
-                <Route path="/admin" element={<Admin />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense
+                fallback={
+                  <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
+                    <div className="text-sm text-muted-foreground">Загрузка…</div>
+                  </div>
+                }
+              >
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/auth" element={<Auth />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/docs" element={<Docs />} />
+                  <Route path="/models" element={<Models />} />
+                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsOfService />} />
+                  <Route path="/cookies" element={<CookiePolicy />} />
+                  <Route path="/status" element={<Status />} />
+                  <Route path="/support" element={<Support />} />
+                  <Route path="/changelog" element={<Changelog />} />
+                  <Route path="/legal" element={<Legal />} />
+                  <Route path="/about" element={<About />} />
+                  <Route path="/careers" element={<Careers />} />
+                  <Route path="/blog" element={<Blog />} />
+                  <Route path="/admin" element={<Admin />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>

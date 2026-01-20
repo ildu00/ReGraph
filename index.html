@@ -7,6 +7,104 @@
     <meta http-equiv="Cache-Control" content="no-store, max-age=0" />
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
+
+    <!-- Some mobile browsers (notably iOS private mode) can throw on localStorage access.
+         If that happens during auth/client init, the app can fail before React mounts.
+         Patch Storage methods to fall back to in-memory storage instead of throwing. -->
+    <script>
+      (function () {
+        function canUseStorage(s) {
+          try {
+            if (!s) return false;
+            var k = "__regraph_storage_test__";
+            s.setItem(k, "1");
+            s.removeItem(k);
+            return true;
+          } catch (e) {
+            return false;
+          }
+        }
+
+        var okLocal = canUseStorage(window.localStorage);
+        var okSession = canUseStorage(window.sessionStorage);
+        if (okLocal && okSession) return;
+
+        var memLocal = new Map();
+        var memSession = new Map();
+
+        function pick(thisArg) {
+          try {
+            if (thisArg === window.sessionStorage) return memSession;
+          } catch (e) {
+            // ignore
+          }
+          return memLocal;
+        }
+
+        function wrap(proto, name, fn) {
+          try {
+            var orig = proto[name];
+            if (typeof orig !== "function") return;
+            proto[name] = function () {
+              try {
+                return orig.apply(this, arguments);
+              } catch (e) {
+                return fn.apply(this, arguments);
+              }
+            };
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        try {
+          var proto = window.Storage && window.Storage.prototype;
+          if (!proto) return;
+
+          wrap(proto, "getItem", function (key) {
+            var m = pick(this);
+            key = String(key);
+            return m.has(key) ? m.get(key) : null;
+          });
+          wrap(proto, "setItem", function (key, value) {
+            var m = pick(this);
+            m.set(String(key), String(value));
+          });
+          wrap(proto, "removeItem", function (key) {
+            var m = pick(this);
+            m.delete(String(key));
+          });
+          wrap(proto, "clear", function () {
+            pick(this).clear();
+          });
+          wrap(proto, "key", function (i) {
+            var keys = Array.from(pick(this).keys());
+            return keys[i] || null;
+          });
+
+          // Best-effort length getter fallback
+          try {
+            Object.defineProperty(proto, "length", {
+              get: function () {
+                try {
+                  // If native works, prefer it
+                  return Object.getOwnPropertyDescriptor(window.localStorage.__proto__, "length")?.get?.call(this);
+                } catch (e) {
+                  return pick(this).size;
+                }
+              },
+              configurable: true,
+            });
+          } catch (e) {
+            // ignore
+          }
+
+          window.__regraph_storage_fallback = true;
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
     <title>ReGraph - Decentralized AI Compute Marketplace | 80% Cheaper Than Cloud</title>
     <meta name="description" content="Access 50+ AI models at up to 80% lower cost than AWS, Google Cloud & OpenAI. Decentralized GPU, TPU & NPU network for inference and training. OpenAI-compatible API." />
     <meta name="keywords" content="AI compute, decentralized AI, GPU marketplace, AI inference, machine learning, LLM API, GPT-5, Claude, Llama, cheap AI, distributed computing, GPU rental, AI training, neural network, crypto AI" />
@@ -106,6 +204,75 @@
           if (el) el.remove();
         }
 
+        function showFatalScreen(reason) {
+          removeSpinner();
+
+          try {
+            var existing = document.getElementById("boot-fatal");
+            if (existing) return;
+
+            var diag = "";
+            try {
+              diag = localStorage.getItem("__regraph_boot_diag") || "";
+            } catch (e) {
+              diag = "";
+            }
+
+            var box = document.createElement("div");
+            box.id = "boot-fatal";
+            box.setAttribute("role", "alert");
+            box.style.cssText =
+              "position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:10000;padding:24px;background:rgba(0,0,0,0.88);color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;";
+
+            var card = document.createElement("div");
+            card.style.cssText =
+              "max-width:560px;width:100%;border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:18px;background:rgba(20,20,20,0.92);";
+
+            var h = document.createElement("div");
+            h.textContent = "Не удалось загрузить приложение";
+            h.style.cssText = "font-weight:700;font-size:18px;";
+
+            var p = document.createElement("div");
+            p.textContent =
+              "Похоже, браузер отдал устаревшие файлы или сломалось сохранение сессии. Нажмите ‘Перезапустить’ — страница перезагрузится с принудительным обновлением.";
+            p.style.cssText = "margin-top:10px;line-height:1.35;font-size:13px;opacity:0.92;";
+
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = "Перезапустить";
+            btn.style.cssText =
+              "margin-top:14px;appearance:none;border:0;border-radius:10px;padding:10px 14px;background:#ffffff;color:#000;font-weight:700;cursor:pointer;";
+            btn.onclick = function () {
+              var u = safeUrl();
+              if (!u) return window.location.reload();
+              u.searchParams.set("__reload", String(now()));
+              u.searchParams.set("__regraph_force", "1");
+              u.searchParams.delete(PARAM);
+              u.searchParams.delete(LEGACY_PARAM);
+              window.location.href = u.toString();
+            };
+
+            var pre = document.createElement("pre");
+            pre.style.cssText =
+              "margin-top:14px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.06);max-height:180px;overflow:auto;font-size:11px;white-space:pre-wrap;word-break:break-word;opacity:0.95;";
+            pre.textContent =
+              "reason=" + String(reason || "unknown") + "\n" +
+              "url=" + String(window.location.href) + "\n" +
+              (diag ? "diag=" + diag + "\n" : "") +
+              "ua=" + String(navigator.userAgent);
+
+            card.appendChild(h);
+            card.appendChild(p);
+            card.appendChild(btn);
+            card.appendChild(pre);
+            box.appendChild(card);
+            document.body.appendChild(box);
+          } catch (e) {
+            // If even this fails, at least don't show an infinite spinner.
+            removeSpinner();
+          }
+        }
+
         function recover() {
           if (isMounted()) return;
 
@@ -116,7 +283,7 @@
 
           // After a couple tries, never trap the user behind an infinite spinner.
           if (attempts >= MAX_ATTEMPTS) {
-            removeSpinner();
+            showFatalScreen("max_attempts");
             return;
           }
 
@@ -150,6 +317,11 @@
 
         // Give the app a moment to mount. If it doesn't, recover.
         setTimeout(recover, 6000);
+
+        // Hard deadline: never keep users on an endless spinner.
+        setTimeout(function () {
+          if (!isMounted()) showFatalScreen("deadline");
+        }, 15000);
       })();
     </script>
 
