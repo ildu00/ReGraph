@@ -153,6 +153,19 @@
         var PARAM = "__regraph_boot";
         var LEGACY_PARAM = "__regrarph_boot";
 
+        // Be conservative on mobile: a slow parse/exec can exceed 6s and cause unnecessary reload loops.
+        // Strategy:
+        // 1) Wait longer before first recovery check
+        // 2) Probe main module. If it is reachable (200), prefer waiting (no reload) once.
+        // 3) If still not mounted after a second probe, reload once and log why.
+        var START_TS = Date.now();
+        var RECOVER_INITIAL_DELAY_MS = 10000;
+        var RECOVER_RECHECK_DELAY_MS = 7000;
+        var FATAL_DEADLINE_MS = 25000;
+
+        var recoverChecks = 0;
+        var sent = false;
+
         function now() {
           return Date.now();
         }
@@ -204,21 +217,29 @@
           if (el) el.remove();
         }
 
-        function sendBootEvent(reason, attempts) {
+        function readDiag() {
           try {
-            var diag = null;
-            try {
-              var raw = localStorage.getItem("__regraph_boot_diag");
-              if (raw) diag = JSON.parse(raw);
-            } catch (e) {
-              // ignore
-            }
+            var raw = localStorage.getItem("__regraph_boot_diag");
+            if (!raw) return null;
+            return JSON.parse(raw);
+          } catch (e) {
+            return null;
+          }
+        }
+
+        function sendBootEvent(reason, attempts, extraDiag) {
+          if (sent) return;
+          sent = true;
+          try {
+            var diag = readDiag();
+            var baseDiag = (diag && typeof diag === "object") ? diag : {};
+            var extra = (extraDiag && typeof extraDiag === "object") ? extraDiag : {};
 
             var payload = {
               reason: reason,
               url: window.location.href,
               userAgent: navigator.userAgent,
-              diag: diag,
+              diag: Object.assign({}, baseDiag, extra, { elapsedMs: now() - START_TS }),
               storageFallback: !!window.__regraph_storage_fallback,
               attempts: attempts || 0,
             };
@@ -247,7 +268,7 @@
           try {
             var u = safeUrl();
             var attempts = u ? getAttempts(u) : 0;
-            sendBootEvent(reason, attempts);
+            sendBootEvent(reason, attempts, { stage: "fatal" });
           } catch (e) {
             // ignore
           }
@@ -320,6 +341,11 @@
 
         function recover() {
           if (isMounted()) return;
+          if (document.visibilityState === "hidden") {
+            // Avoid background tab reload loops.
+            setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
+            return;
+          }
 
           var u = safeUrl();
           if (!u) return;
@@ -334,6 +360,17 @@
 
           var main = document.getElementById("boot-main");
           var src = main && main.getAttribute("src");
+          var elapsed = now() - START_TS;
+
+          function doReload(reason, extra) {
+            try {
+              sendBootEvent(reason, attempts, Object.assign({ stage: "recover" }, extra || null));
+            } catch (e) {
+              // ignore
+            }
+            setAttempt(u, attempts + 1);
+            window.location.href = u.toString();
+          }
 
           // Probe whether the main module is reachable (common failure: old HTML points to missing hashed asset).
           if (src) {
@@ -342,31 +379,46 @@
               .then(function (res) {
                 record("probe", res.status + " " + bust);
 
-                setAttempt(u, attempts + 1);
-                // Navigate (changes URL) to force a fresh HTML + asset graph.
-                window.location.href = u.toString();
+                if (res && res.ok) {
+                  recoverChecks += 1;
+
+                  // First time: if the JS file is reachable, give the device more time.
+                  if (recoverChecks < 2 && elapsed < (FATAL_DEADLINE_MS - 5000)) {
+                    setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
+                    return;
+                  }
+
+                  // Still no mount after a second probe => likely JS/runtime stall; reload once.
+                  doReload("recover_no_mount", { probeStatus: res.status, probeUrl: bust, checks: recoverChecks });
+                  return;
+                }
+
+                // Non-200 probe: likely stale asset graph; reload and log.
+                doReload("probe_error", { probeStatus: res ? res.status : "no_res", probeUrl: bust });
               })
               .catch(function (err) {
                 record("probe_error", err);
-
-                setAttempt(u, attempts + 1);
-                window.location.href = u.toString();
+                doReload("probe_error", { error: String(err), probeUrl: bust });
               });
             return;
           }
 
-          // Fallback: just navigate with a cache-buster.
-          setAttempt(u, attempts + 1);
-          window.location.href = u.toString();
+          // No script src found: wait once, then reload.
+          recoverChecks += 1;
+          if (recoverChecks < 2 && elapsed < (FATAL_DEADLINE_MS - 5000)) {
+            setTimeout(recover, RECOVER_RECHECK_DELAY_MS);
+            return;
+          }
+          doReload("recover_no_mount", { checks: recoverChecks, noSrc: true });
         }
 
-        // Give the app a moment to mount. If it doesn't, recover.
-        setTimeout(recover, 6000);
+        // Give the app time to mount. If it doesn't, start a probe-based recovery.
+        setTimeout(recover, RECOVER_INITIAL_DELAY_MS);
 
         // Hard deadline: never keep users on an endless spinner.
         setTimeout(function () {
           if (!isMounted()) showFatalScreen("deadline");
-        }, 15000);
+        }, FATAL_DEADLINE_MS);
       })();
     </script>
 
