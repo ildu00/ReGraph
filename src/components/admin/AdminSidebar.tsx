@@ -8,7 +8,8 @@ import {
   DollarSign, 
   Inbox,
   LogOut,
-  Zap
+  Zap,
+  AlertTriangle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -38,6 +39,7 @@ const navItems = [
   { id: "tasks", label: "Tasks", icon: ListTodo },
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "forms", label: "Form Data", icon: Inbox },
+  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {

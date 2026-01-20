@@ -11,6 +11,7 @@ import { AdminResources } from "@/components/admin/AdminResources";
 import { AdminTasks } from "@/components/admin/AdminTasks";
 import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminForms } from "@/components/admin/AdminForms";
+import { AdminBootEvents } from "@/components/admin/AdminBootEvents";
 import { 
   Menu, 
   X, 
@@ -22,7 +23,8 @@ import {
   ListTodo, 
   DollarSign, 
   Inbox,
-  LogOut
+  LogOut,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,6 +47,7 @@ const navItems = [
   { id: "tasks", label: "Tasks", icon: ListTodo },
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "forms", label: "Form Data", icon: Inbox },
+  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
 ];
 
 const Admin = () => {
@@ -114,6 +117,8 @@ const Admin = () => {
         return <AdminRevenue />;
       case "forms":
         return <AdminForms />;
+      case "boot-events":
+        return <AdminBootEvents />;
       default:
         return <AdminDashboard />;
     }
