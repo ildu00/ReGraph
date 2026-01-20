@@ -47,36 +47,113 @@
 
     <div id="root"></div>
 
-    <!-- If React never mounts (usually stale cached HTML/assets on mobile), try a couple silent hard reloads,
-         then remove the spinner to avoid an endless loader. -->
+    <!-- If React never mounts (mobile cache/BFCache or partial JS eval), recover silently. -->
     <script>
       (function () {
         var MAX_ATTEMPTS = 2;
-        var url;
-        try {
-          url = new URL(window.location.href);
-        } catch (e) {
-          return;
+        var MOUNT_FLAG = "__regraphMounted";
+        var PARAM = "__regraph_boot";
+        var LEGACY_PARAM = "__regrarph_boot";
+
+        function now() {
+          return Date.now();
         }
-        var attempts = parseInt(url.searchParams.get("__regraph_boot") || "0", 10);
 
-        setTimeout(function () {
-          if (window.__regraphMounted) return;
+        function safeUrl() {
+          try {
+            return new URL(window.location.href);
+          } catch (e) {
+            return null;
+          }
+        }
 
-          if (attempts < MAX_ATTEMPTS) {
-            url.searchParams.set("__regraph_boot", String(attempts + 1));
-            url.searchParams.set("__reload", String(Date.now()));
-            window.location.replace(url.toString());
+        function getAttempts(u) {
+          var raw = u.searchParams.get(PARAM) || u.searchParams.get(LEGACY_PARAM) || "0";
+          var n = parseInt(raw, 10);
+          return isFinite(n) ? n : 0;
+        }
+
+        function setAttempt(u, n) {
+          u.searchParams.set(PARAM, String(n));
+          u.searchParams.delete(LEGACY_PARAM);
+          u.searchParams.set("__reload", String(now()));
+        }
+
+        function record(kind, detail) {
+          try {
+            localStorage.setItem(
+              "__regraph_boot_diag",
+              JSON.stringify({ t: now(), kind: kind, detail: String(detail || "") })
+            );
+          } catch (e) {
+            // ignore
+          }
+        }
+
+        window.addEventListener("error", function (e) {
+          record("error", (e && (e.message || (e.error && e.error.message))) || "unknown");
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          record("rejection", e && e.reason ? e.reason : "unknown");
+        });
+
+        function isMounted() {
+          return !!window[MOUNT_FLAG];
+        }
+
+        function removeSpinner() {
+          var el = document.getElementById("boot-spinner");
+          if (el) el.remove();
+        }
+
+        function recover() {
+          if (isMounted()) return;
+
+          var u = safeUrl();
+          if (!u) return;
+
+          var attempts = getAttempts(u);
+
+          // After a couple tries, never trap the user behind an infinite spinner.
+          if (attempts >= MAX_ATTEMPTS) {
+            removeSpinner();
             return;
           }
 
-          var el = document.getElementById("boot-spinner");
-          if (el) el.remove();
-        }, 8000);
+          var main = document.getElementById("boot-main");
+          var src = main && main.getAttribute("src");
+
+          // Probe whether the main module is reachable (common failure: old HTML points to missing hashed asset).
+          if (src) {
+            var bust = src + (src.indexOf("?") === -1 ? "?" : "&") + "__probe=" + now();
+            fetch(bust, { cache: "no-store" })
+              .then(function (res) {
+                record("probe", res.status + " " + bust);
+
+                setAttempt(u, attempts + 1);
+                // Navigate (changes URL) to force a fresh HTML + asset graph.
+                window.location.href = u.toString();
+              })
+              .catch(function (err) {
+                record("probe_error", err);
+
+                setAttempt(u, attempts + 1);
+                window.location.href = u.toString();
+              });
+            return;
+          }
+
+          // Fallback: just navigate with a cache-buster.
+          setAttempt(u, attempts + 1);
+          window.location.href = u.toString();
+        }
+
+        // Give the app a moment to mount. If it doesn't, recover.
+        setTimeout(recover, 6000);
       })();
     </script>
 
-    <script type="module" src="/src/main.tsx"></script>
+    <script id="boot-main" type="module" src="/src/main.tsx"></script>
 
     <style>
       #boot-spinner{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;z-index:9999}
