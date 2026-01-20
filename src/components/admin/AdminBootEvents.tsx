@@ -91,11 +91,40 @@ export const AdminBootEvents = () => {
     );
   }
 
+  const mobileCount = events.filter((e) => isMobile(e.user_agent)).length;
+  const storageFallbackCount = events.filter((e) => e.storage_fallback).length;
+  const todayCount = events.filter((e) => new Date(e.created_at).toDateString() === new Date().toDateString()).length;
+
+  const handleStatClick = (filter: string) => {
+    if (filter === "mobile") {
+      setSearchQuery("iPhone|iPad|Android");
+    } else if (filter === "storage") {
+      // Filter will show storage fallback events
+      setReasonFilter("all");
+      setSearchQuery("");
+    } else if (filter === "today") {
+      setSearchQuery("");
+      setReasonFilter("all");
+    } else {
+      setSearchQuery("");
+      setReasonFilter("all");
+    }
+  };
+
   return (
     <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h1 className="text-2xl font-bold">Boot Events</h1>
+        <p className="text-muted-foreground">Monitor application boot failures and recovery attempts across devices</p>
+      </div>
+
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-4">
-        <Card className="bg-card border-border">
+        <Card 
+          className="bg-card border-border cursor-pointer transition-colors hover:border-primary/50"
+          onClick={() => handleStatClick("all")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Events</CardTitle>
           </CardHeader>
@@ -103,34 +132,37 @@ export const AdminBootEvents = () => {
             <div className="text-2xl font-bold">{events.length}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card 
+          className="bg-card border-border cursor-pointer transition-colors hover:border-orange-500/50"
+          onClick={() => handleStatClick("mobile")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Mobile Failures</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-400">
-              {events.filter((e) => isMobile(e.user_agent)).length}
-            </div>
+            <div className="text-2xl font-bold text-orange-400">{mobileCount}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card 
+          className="bg-card border-border cursor-pointer transition-colors hover:border-yellow-500/50"
+          onClick={() => handleStatClick("storage")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Storage Fallback</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-yellow-400">
-              {events.filter((e) => e.storage_fallback).length}
-            </div>
+            <div className="text-2xl font-bold text-yellow-400">{storageFallbackCount}</div>
           </CardContent>
         </Card>
-        <Card className="bg-card border-border">
+        <Card 
+          className="bg-card border-border cursor-pointer transition-colors hover:border-primary/50"
+          onClick={() => handleStatClick("today")}
+        >
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Today</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">
-              {events.filter((e) => new Date(e.created_at).toDateString() === new Date().toDateString()).length}
-            </div>
+            <div className="text-2xl font-bold text-primary">{todayCount}</div>
           </CardContent>
         </Card>
       </div>
