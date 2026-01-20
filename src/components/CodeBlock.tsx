@@ -2,10 +2,12 @@ import { Copy, Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 
+import "highlight.js/styles/github-dark.css";
 import hljs from "highlight.js/lib/core";
 import bash from "highlight.js/lib/languages/bash";
 import json from "highlight.js/lib/languages/json";
 import powershell from "highlight.js/lib/languages/powershell";
+
 
 const safeRegister = (name: string, lang: any) => {
   // Vite HMR can evaluate this module multiple times; highlight.js throws on duplicate registration.
