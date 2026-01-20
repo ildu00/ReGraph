@@ -13,6 +13,8 @@ const ROUTES = {
   "/v1/models": "models",
   "/v1/batch": "batch",
   "/v1/training/jobs": "training-jobs",
+  "/v1/devices": "devices",
+  "/v1/status": "status",
 };
 
 export default {

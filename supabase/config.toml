@@ -50,3 +50,12 @@ verify_jwt = false
 
 [functions.models]
 verify_jwt = false
+
+[functions.devices]
+verify_jwt = false
+
+[functions.status]
+verify_jwt = false
+
+[functions.audio-speech]
+verify_jwt = false

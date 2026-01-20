@@ -364,7 +364,7 @@ volumes:
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/audio/speech</td>
-                          <td className="py-3 px-4 text-muted-foreground">Text-to-Speech (returns audio)</td>
+                          <td className="py-3 px-4 text-muted-foreground">Text-to-Speech (returns binary audio)</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
@@ -372,19 +372,64 @@ volumes:
                           <td className="py-3 px-4 text-muted-foreground">OpenAI-compatible chat endpoint</td>
                         </tr>
                         <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/models</td>
+                          <td className="py-3 px-4 text-muted-foreground">List available models (51 models)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/devices</td>
+                          <td className="py-3 px-4 text-muted-foreground">List network devices with filtering</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/devices/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Get specific device details</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/status</td>
+                          <td className="py-3 px-4 text-muted-foreground">Platform status and health</td>
+                        </tr>
+                        <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
-                          <td className="py-3 px-4 text-muted-foreground">Start a training job</td>
+                          <td className="py-3 px-4 text-muted-foreground">Create a training job</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
+                          <td className="py-3 px-4 text-muted-foreground">List training jobs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/training/jobs/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Get training job status</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-red-500 font-mono">DELETE</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/training/jobs/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Cancel training job</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/batch</td>
-                          <td className="py-3 px-4 text-muted-foreground">Submit batch inference</td>
+                          <td className="py-3 px-4 text-muted-foreground">Submit batch inference job</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/models</td>
-                          <td className="py-3 px-4 text-muted-foreground">List available models (51 models)</td>
+                          <td className="py-3 px-4 font-mono text-xs">/batch</td>
+                          <td className="py-3 px-4 text-muted-foreground">List batch jobs</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/batch/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Get batch job status</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-red-500 font-mono">DELETE</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/batch/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Cancel batch job</td>
                         </tr>
                       </tbody>
                     </table>
