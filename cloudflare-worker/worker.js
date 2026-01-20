@@ -32,6 +32,18 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // Handle root path
+    if (path === "/" || path === "") {
+      return new Response(
+        JSON.stringify({
+          error: "Invalid endpoint",
+          message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs",
+          documentation: "https://regraph.lovable.app/docs"
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Find matching route
     let functionName = null;
     for (const [routePath, fn] of Object.entries(ROUTES)) {
@@ -43,8 +55,29 @@ export default {
 
     if (!functionName) {
       return new Response(
-        JSON.stringify({ error: "Endpoint not found", path }),
+        JSON.stringify({
+          error: "Endpoint not found",
+          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs`,
+          documentation: "https://regraph.lovable.app/docs"
+        }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validate HTTP method for specific endpoints
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/batch"];
+    if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
+      return new Response(
+        JSON.stringify({
+          error: "Method not allowed",
+          message: `The endpoint '${path}' requires a POST request with a JSON body. GET requests are not supported.`,
+          example: {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: { model: "llama-3.1-70b", prompt: "Hello, how are you?", max_tokens: 256 }
+          }
+        }),
+        { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json", "Allow": "POST, OPTIONS" } }
       );
     }
 
