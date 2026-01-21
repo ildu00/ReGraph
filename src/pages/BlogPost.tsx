@@ -54,7 +54,10 @@ const BlogPost = () => {
   const prevPost = currentIndex > 0 ? blogPosts[currentIndex - 1] : null;
   const nextPost = currentIndex < blogPosts.length - 1 ? blogPosts[currentIndex + 1] : null;
 
-
+  // Get related posts from the same category (excluding current post)
+  const relatedPosts = blogPosts
+    .filter(p => p.category === post.category && p.slug !== post.slug)
+    .slice(0, 3);
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
@@ -148,6 +151,41 @@ const BlogPost = () => {
               {post.content}
             </ReactMarkdown>
           </div>
+
+          {/* Related Articles */}
+          {relatedPosts.length > 0 && (
+            <section className="border-t border-border mt-12 pt-8">
+              <h2 className="text-2xl font-bold mb-6">Related Articles</h2>
+              <div className="grid gap-6 md:grid-cols-3">
+                {relatedPosts.map((relatedPost) => (
+                  <Link
+                    key={relatedPost.id}
+                    to={`/blog/${relatedPost.slug}`}
+                    className="group rounded-lg border border-border overflow-hidden hover:border-primary/50 transition-colors"
+                  >
+                    <div className="aspect-video overflow-hidden">
+                      <img
+                        src={relatedPost.image}
+                        alt={relatedPost.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      />
+                    </div>
+                    <div className="p-4">
+                      <Badge variant="secondary" className="mb-2 text-xs">
+                        {relatedPost.category}
+                      </Badge>
+                      <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
+                        {relatedPost.title}
+                      </h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {relatedPost.readTime} read
+                      </p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
 
           {/* Navigation */}
           <nav className="border-t border-border mt-12 pt-8">
