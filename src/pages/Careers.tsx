@@ -534,10 +534,50 @@ const Careers = () => {
                 >
                   {/* Job Header */}
                   <div 
-                    className="p-6 cursor-pointer hover:bg-muted/30 transition-colors"
+                    className="p-4 md:p-6 cursor-pointer hover:bg-muted/30 transition-colors"
                     onClick={() => setExpandedJob(expandedJob === job.id ? null : job.id)}
                   >
-                    <div className="flex items-start gap-4">
+                    {/* Mobile Layout */}
+                    <div className="md:hidden">
+                      <div className="flex items-start justify-between gap-3 mb-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            <job.icon className="w-5 h-5 text-primary" />
+                          </div>
+                          <Badge variant="secondary" className="text-xs">{job.segment}</Badge>
+                        </div>
+                        {expandedJob === job.id ? (
+                          <ChevronUp className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        ) : (
+                          <ChevronDown className="w-5 h-5 text-muted-foreground flex-shrink-0" />
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-base mb-1">{job.title}</h3>
+                      <p className="text-xs text-muted-foreground mb-2">{job.department}</p>
+                      <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground mb-3">
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {job.location}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-3 h-3" />
+                          {job.type}
+                        </span>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        className="w-full"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleApply(job.title);
+                        }}
+                      >
+                        Apply Now
+                      </Button>
+                    </div>
+
+                    {/* Desktop Layout */}
+                    <div className="hidden md:flex items-start gap-4">
                       <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <job.icon className="w-6 h-6 text-primary" />
                       </div>
