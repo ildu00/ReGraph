@@ -5,6 +5,13 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Cache configuration: 60 seconds CDN cache, 120 seconds stale-while-revalidate
+const cacheHeaders = {
+  ...corsHeaders,
+  "Content-Type": "application/json",
+  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+};
+
 Deno.serve(async (req) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
@@ -174,7 +181,7 @@ Deno.serve(async (req) => {
     };
 
     return new Response(JSON.stringify(response), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: cacheHeaders,
     });
   } catch (error: unknown) {
     console.error("Error fetching platform stats:", error);
