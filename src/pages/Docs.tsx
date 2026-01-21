@@ -141,7 +141,7 @@ volumes:
             />
             
             <main className="flex-1 min-w-0">
-              <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
+              <div className="px-4 py-8 max-w-5xl mx-auto overflow-hidden">
                   <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
