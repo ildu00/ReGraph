@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Calendar, Clock, ArrowLeft, ArrowRight, Share2 } from "lucide-react";
 import { blogPosts } from "@/data/blogPosts";
 import { Helmet } from "react-helmet-async";
-
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 // Social share icons as inline SVGs for better control
 const TwitterIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current">
@@ -53,49 +54,6 @@ const BlogPost = () => {
   const prevPost = currentIndex > 0 ? blogPosts[currentIndex - 1] : null;
   const nextPost = currentIndex < blogPosts.length - 1 ? blogPosts[currentIndex + 1] : null;
 
-  const renderContent = (content: string) => {
-    return content.split('\n\n').map((paragraph, index) => {
-      if (paragraph.startsWith('**') && paragraph.endsWith('**')) {
-        return <h3 key={index} className="text-xl font-bold mt-6 mb-3">{paragraph.replace(/\*\*/g, '')}</h3>;
-      }
-      if (paragraph.startsWith('```')) {
-        const code = paragraph.replace(/```\w*\n?/g, '').trim();
-        return (
-          <pre key={index} className="bg-muted p-4 rounded-lg overflow-x-auto text-sm my-4">
-            <code>{code}</code>
-          </pre>
-        );
-      }
-      if (paragraph.startsWith('- ')) {
-        const items = paragraph.split('\n').filter(line => line.startsWith('- '));
-        return (
-          <ul key={index} className="list-disc list-inside space-y-1 my-4">
-            {items.map((item, i) => (
-              <li key={i} className="text-muted-foreground">{item.replace('- ', '')}</li>
-            ))}
-          </ul>
-        );
-      }
-      if (/^\d+\./.test(paragraph)) {
-        const items = paragraph.split('\n').filter(line => /^\d+\./.test(line));
-        return (
-          <ol key={index} className="list-decimal list-inside space-y-1 my-4">
-            {items.map((item, i) => (
-              <li key={i} className="text-muted-foreground">{item.replace(/^\d+\.\s*/, '')}</li>
-            ))}
-          </ol>
-        );
-      }
-      // Handle inline bold
-      const formattedText = paragraph.split(/(\*\*[^*]+\*\*)/).map((part, i) => {
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return <strong key={i}>{part.replace(/\*\*/g, '')}</strong>;
-        }
-        return part;
-      });
-      return <p key={index} className="text-muted-foreground mb-4">{formattedText}</p>;
-    });
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -185,8 +143,10 @@ const BlogPost = () => {
           </header>
 
           {/* Article Content */}
-          <div className="prose prose-invert max-w-none">
-            {renderContent(post.content)}
+          <div className="markdown-response">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {post.content}
+            </ReactMarkdown>
           </div>
 
           {/* Navigation */}
