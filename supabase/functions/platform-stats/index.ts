@@ -5,11 +5,11 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Cache configuration: 60 seconds CDN cache, 120 seconds stale-while-revalidate
+// Cache configuration: 2 hours CDN cache, 4 hours stale-while-revalidate
 const cacheHeaders = {
   ...corsHeaders,
   "Content-Type": "application/json",
-  "Cache-Control": "public, s-maxage=60, stale-while-revalidate=120",
+  "Cache-Control": "public, s-maxage=7200, stale-while-revalidate=14400",
 };
 
 Deno.serve(async (req) => {
