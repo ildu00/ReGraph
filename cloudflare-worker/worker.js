@@ -40,7 +40,7 @@ export default {
         JSON.stringify({
           error: "Invalid endpoint",
           message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs",
-          documentation: "https://regraph.lovable.app/docs"
+          documentation: "https://regraph.tech/docs"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
@@ -60,7 +60,7 @@ export default {
         JSON.stringify({
           error: "Endpoint not found",
           message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs`,
-          documentation: "https://regraph.lovable.app/docs"
+          documentation: "https://regraph.tech/docs"
         }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
