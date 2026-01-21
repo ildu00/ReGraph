@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Asset Probe</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <style>
+      :root {
+        color-scheme: dark;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
+          "Apple Color Emoji", "Segoe UI Emoji";
+        background: #0b0b0d;
+        color: #eaeaf2;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 18px;
+      }
+      p {
+        margin: 0 0 16px;
+        opacity: 0.8;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+      .card {
+        max-width: 900px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 16px;
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 12px;
+        padding: 10px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .k {
+        font-size: 12px;
+        opacity: 0.7;
+      }
+      .v {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
+          "Courier New", monospace;
+        font-size: 12px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .ok {
+        color: #8ef0a3;
+      }
+      .bad {
+        color: #ff8a8a;
+      }
+      button {
+        appearance: none;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        background: #6d28d9;
+        color: #fff;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 12px;
+      }
+      a {
+        color: #c4b5fd;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <h1>Asset probe</h1>
+      <p>
+        This page tries to fetch the entry module and core assets. If these requests fail (timeout,
+        abort, wrong content-type), something on the network/path is blocking JS module loading.
+      </p>
+
+      <div id="out"></div>
+      <button id="run">Run probe</button>
+    </div>
+
+    <script>
+      const out = document.getElementById("out");
+      const btn = document.getElementById("run");
+
+      const addRow = (k, v, status) => {
+        const row = document.createElement("div");
+        row.className = "row";
+        const kk = document.createElement("div");
+        kk.className = "k";
+        kk.textContent = k;
+        const vv = document.createElement("div");
+        vv.className = "v" + (status === "ok" ? " ok" : status === "bad" ? " bad" : "");
+        vv.textContent = v;
+        row.appendChild(kk);
+        row.appendChild(vv);
+        out.appendChild(row);
+      };
+
+      const safeText = async (res, max = 600) => {
+        try {
+          const text = await res.text();
+          return text.slice(0, max);
+        } catch {
+          return "<unable to read body>";
+        }
+      };
+
+      const fetchWithTimeout = async (url, timeoutMs = 8000) => {
+        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+        const t = setTimeout(() => {
+          try {
+            controller && controller.abort();
+          } catch {}
+        }, timeoutMs);
+        try {
+          const res = await fetch(url, {
+            method: "GET",
+            cache: "no-store",
+            headers: {
+              // Many CDNs support it; if not, server will ignore.
+              Range: "bytes=0-2047",
+            },
+            signal: controller ? controller.signal : undefined,
+          });
+          return { res, timeoutMs };
+        } finally {
+          clearTimeout(t);
+        }
+      };
+
+      const parseEntrySrc = (html) => {
+        try {
+          const m = html.match(/<script[^>]*type=\"module\"[^>]*src=\"([^\"]+)\"/i);
+          return m ? m[1] : null;
+        } catch {
+          return null;
+        }
+      };
+
+      const run = async () => {
+        out.innerHTML = "";
+        addRow("URL", location.href);
+        addRow("UA", navigator.userAgent);
+        addRow("Time", new Date().toISOString());
+
+        // 1) Fetch homepage HTML
+        let html = "";
+        try {
+          const { res } = await fetchWithTimeout("/", 8000);
+          addRow("GET / status", String(res.status), res.ok ? "ok" : "bad");
+          addRow("GET / content-type", res.headers.get("content-type") || "<none>");
+          html = await safeText(res, 200000);
+        } catch (e) {
+          addRow("GET / error", String(e), "bad");
+          return;
+        }
+
+        const entry = parseEntrySrc(html);
+        addRow("Entry module (from HTML)", entry || "<not found>", entry ? "ok" : "bad");
+        if (!entry) return;
+
+        // 2) Fetch entry module
+        try {
+          const { res } = await fetchWithTimeout(entry, 12000);
+          addRow("GET entry status", String(res.status), res.ok ? "ok" : "bad");
+          addRow("GET entry content-type", res.headers.get("content-type") || "<none>");
+          const snippet = await safeText(res, 700);
+          addRow("GET entry body (first 700 chars)", snippet);
+
+          // 3) Try to find and probe one vendor chunk from the entry (best-effort)
+          const vendorMatch = snippet.match(/assets\/(vendor-react-[a-zA-Z0-9_-]+\.js)/);
+          const vendor = vendorMatch ? "/assets/" + vendorMatch[1] : null;
+          addRow("Vendor chunk (best-effort)", vendor || "<not found>", vendor ? "ok" : "bad");
+          if (vendor) {
+            try {
+              const { res: vres } = await fetchWithTimeout(vendor, 12000);
+              addRow("GET vendor status", String(vres.status), vres.ok ? "ok" : "bad");
+              addRow("GET vendor content-type", vres.headers.get("content-type") || "<none>");
+              addRow("GET vendor body (first 200 chars)", (await safeText(vres, 200)));
+            } catch (e) {
+              addRow("GET vendor error", String(e), "bad");
+            }
+          }
+        } catch (e) {
+          addRow("GET entry error", String(e), "bad");
+        }
+
+        addRow(
+          "Next",
+          "If entry/vendor fails or content-type is text/html, your network/proxy is blocking or rewriting JS modules. Share a screenshot of this page.",
+          "ok"
+        );
+      };
+
+      btn.addEventListener("click", run);
+      // auto-run
+      run();
+    </script>
+  </body>
+</html>

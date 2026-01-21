@@ -575,7 +575,9 @@
             h.style.cssText = "font-weight:700;font-size:20px;margin-bottom:12px;";
 
             var p = document.createElement("div");
-            p.textContent = "The app did not start. Try refreshing. If it keeps failing, stale cached files may be blocking module loading.";
+            p.innerHTML =
+              "The app did not start. Try refreshing. If it keeps failing, something may be blocking JavaScript module loading on this network." +
+              "<br/><br/>Open <a href=\"/asset-probe.html\" style=\"color:#c4b5fd\">/asset-probe.html</a> to see which asset request is failing.";
             p.style.cssText = "line-height:1.5;font-size:14px;opacity:0.85;margin-bottom:16px;";
 
             var btn = document.createElement("button");
