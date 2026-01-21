@@ -114,6 +114,17 @@ const apiEndpoints = [
   },
   {
     method: "POST",
+    path: "/v1/audio/speech",
+    description: "Convert text to speech with multiple voices",
+    params: ["model", "input", "voice", "response_format"],
+    request: `curl -X POST https://api.regraph.tech/v1/audio/speech \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{"model": "tts-1", "input": "Hello world", "voice": "alloy"}'`,
+    response: `Binary audio data (mp3/opus/aac/flac)`,
+  },
+  {
+    method: "POST",
     path: "/v1/training/jobs",
     description: "Submit fine-tuning or training jobs",
     params: ["model", "dataset", "config", "hardware", "callback_url"],
@@ -173,91 +184,40 @@ const apiEndpoints = [
     {"id": "meta-llama/Llama-3-70B", "category": "llm", "price_per_1k_tokens": 0.0002},
     {"id": "mistralai/Mixtral-8x7B", "category": "llm", "price_per_1k_tokens": 0.0001}
   ],
-  "total": 150,
+  "total": 51,
   "page": 1
 }`,
   },
   {
-    method: "POST",
-    path: "/v1/models/deploy",
-    description: "Deploy a custom model to the network",
-    params: ["model_url", "framework", "config"],
-    request: `curl -X POST https://api.regraph.tech/v1/models/deploy \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"model_url": "s3://bucket/model.safetensors", "framework": "transformers"}'`,
+    method: "GET",
+    path: "/v1/devices",
+    description: "List available compute devices on the network",
+    params: ["status", "type", "min_vram"],
+    request: `curl https://api.regraph.tech/v1/devices?status=online \\
+  -H "Authorization: Bearer YOUR_API_KEY"`,
     response: `{
-  "deployment_id": "dep_ghi012",
-  "status": "deploying",
-  "model_name": "my-custom-model",
-  "estimated_ready": "2024-01-15T10:45:00Z"
-}`,
-  },
-  {
-    method: "POST",
-    path: "/v1/provider/register",
-    description: "Register hardware to earn from compute jobs",
-    params: ["hardware", "availability", "pricing"],
-    request: `curl -X POST https://api.regraph.tech/v1/provider/register \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"hardware": {"type": "gpu", "model": "RTX 4090", "vram_gb": 24}}'`,
-    response: `{
-  "provider_id": "prov_jkl345",
-  "connection_key": "rg_conn_abc123xyz",
-  "status": "pending_verification",
-  "estimated_hourly_earnings": 0.35
+  "devices": [
+    {"id": "dev_abc123", "type": "gpu", "model": "RTX 4090", "vram_gb": 24, "status": "online"},
+    {"id": "dev_def456", "type": "gpu", "model": "A100", "vram_gb": 80, "status": "online"}
+  ],
+  "total": 1250
 }`,
   },
   {
     method: "GET",
-    path: "/v1/provider/earnings",
-    description: "View earnings and payout history",
-    params: ["start_date", "end_date"],
-    request: `curl "https://api.regraph.tech/v1/provider/earnings?start_date=2024-01-01" \\
-  -H "Authorization: Bearer YOUR_API_KEY"`,
+    path: "/v1/status",
+    description: "Get platform health and compute statistics",
+    params: [],
+    request: `curl https://api.regraph.tech/v1/status`,
     response: `{
-  "total_earnings_usd": 245.67,
-  "pending_payout_usd": 45.20,
-  "compute_hours": 512,
-  "payouts": [{"date": "2024-01-10", "amount": 200.47, "status": "completed"}]
-}`,
-  },
-  {
-    method: "POST",
-    path: "/v1/hardware/rent",
-    description: "Rent dedicated hardware by the hour",
-    params: ["gpu_type", "gpu_count", "duration_hours", "region"],
-    request: `curl -X POST https://api.regraph.tech/v1/hardware/rent \\
-  -H "Authorization: Bearer YOUR_API_KEY" \\
-  -H "Content-Type: application/json" \\
-  -d '{"gpu_type": "A100", "gpu_count": 4, "duration_hours": 2}'`,
-    response: `{
-  "rental_id": "rent_mno678",
-  "status": "provisioning",
-  "ssh_command": "ssh user@node-123.regraph.tech",
-  "expires_at": "2024-01-15T12:30:00Z",
-  "total_cost_usd": 8.00
-}`,
-  },
-  {
-    method: "GET",
-    path: "/v1/usage",
-    description: "Get detailed usage and billing information",
-    params: ["start_date", "end_date", "group_by"],
-    request: `curl "https://api.regraph.tech/v1/usage?start_date=2024-01-01&group_by=day" \\
-  -H "Authorization: Bearer YOUR_API_KEY"`,
-    response: `{
-  "total_cost_usd": 42.15,
-  "total_tokens": 1250000,
-  "usage": [
-    {"date": "2024-01-14", "cost_usd": 15.20, "tokens": 450000},
-    {"date": "2024-01-15", "cost_usd": 26.95, "tokens": 800000}
-  ]
+  "status": "operational",
+  "uptime_percent": 99.95,
+  "active_devices": 1250,
+  "total_compute_hours": 45000,
+  "avg_response_time_ms": 120
 }`,
   },
 ];
-
 const APISection = () => {
   const [activeTab, setActiveTab] = useState<keyof typeof codeExamples>("inference");
   const [expandedEndpoint, setExpandedEndpoint] = useState<number | null>(null);
