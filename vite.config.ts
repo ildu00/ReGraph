@@ -16,6 +16,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // CRITICAL: Target Safari 15+ explicitly to avoid unsupported ES features
+    // Safari has stricter ES module parsing than Chrome/Firefox
+    target: ["es2020", "safari15", "chrome90", "firefox90"],
     // Improve chunk loading reliability
     modulePreload: {
       polyfill: true,
