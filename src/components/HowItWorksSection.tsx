@@ -56,8 +56,8 @@ const StepCard = ({ step, index, delay }: { step: typeof providerSteps[0]; index
       <p className="text-muted-foreground flex-1">{step.description}</p>
     </div>
     {index < 2 && (
-      <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
-        <ArrowRight className="h-6 w-6 text-muted-foreground" />
+      <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-6 z-10">
+        <ArrowRight className="h-5 w-5 text-primary" />
       </div>
     )}
   </motion.div>
@@ -97,7 +97,7 @@ const HowItWorksSection = () => {
               Earn money
             </span>
           </motion.div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10">
             {providerSteps.map((step, i) => (
               <StepCard key={step.title} step={step} index={i} delay={0.1 + i * 0.15} />
             ))}
@@ -118,7 +118,7 @@ const HowItWorksSection = () => {
               Save money
             </span>
           </motion.div>
-          <div className="grid md:grid-cols-3 gap-8">
+          <div className="grid md:grid-cols-3 gap-10">
             {userSteps.map((step, i) => (
               <StepCard key={step.title} step={step} index={i} delay={0.4 + i * 0.15} />
             ))}
