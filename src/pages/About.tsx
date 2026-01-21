@@ -16,9 +16,18 @@ import {
   Target,
   CheckCircle,
   ArrowRight,
+  Linkedin,
+  Facebook,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
+
+// X (Twitter) icon component
+const XIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" className={className} fill="currentColor">
+    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+  </svg>
+);
 
 const About = () => {
   const values = [
@@ -132,19 +141,26 @@ const About = () => {
       name: "Ilya Dushin",
       role: "CEO",
       description: "Visionary leader with 15+ years in tech entrepreneurship and AI infrastructure.",
-      photo: ilyaDushinPhoto
+      photo: ilyaDushinPhoto,
+      socials: {
+        linkedin: "https://ru.linkedin.com/in/idushin",
+        x: "https://x.com/i_dushin",
+        facebook: "https://www.facebook.com/ildushin/"
+      }
     },
     {
       name: "Gabriel Mikhaeli",
       role: "CFO",
       description: "Financial strategist with expertise in crypto markets and venture capital.",
-      photo: null
+      photo: null,
+      socials: null
     },
     {
       name: "Alexey Ivlev",
       role: "CTO",
       description: "Technical architect specializing in distributed systems and neural networks.",
-      photo: null
+      photo: null,
+      socials: null
     }
   ];
 
@@ -415,7 +431,44 @@ const About = () => {
                   )}
                   <Badge className="bg-primary text-primary-foreground mb-3">{leader.role}</Badge>
                   <h3 className="font-bold text-lg mb-2">{leader.name}</h3>
-                  <p className="text-sm text-muted-foreground">{leader.description}</p>
+                  <p className="text-sm text-muted-foreground mb-3">{leader.description}</p>
+                  {leader.socials && (
+                    <div className="flex justify-center gap-3">
+                      {leader.socials.linkedin && (
+                        <a
+                          href={leader.socials.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          aria-label={`${leader.name} LinkedIn`}
+                        >
+                          <Linkedin className="w-5 h-5" />
+                        </a>
+                      )}
+                      {leader.socials.x && (
+                        <a
+                          href={leader.socials.x}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          aria-label={`${leader.name} X`}
+                        >
+                          <XIcon className="w-5 h-5" />
+                        </a>
+                      )}
+                      {leader.socials.facebook && (
+                        <a
+                          href={leader.socials.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-primary transition-colors"
+                          aria-label={`${leader.name} Facebook`}
+                        >
+                          <Facebook className="w-5 h-5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                 </motion.div>
               ))}
             </div>
