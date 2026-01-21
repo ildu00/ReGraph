@@ -8,6 +8,7 @@ const ComparisonSection = lazyWithRetry(() => import("@/components/ComparisonSec
 const HowItWorksSection = lazyWithRetry(() => import("@/components/HowItWorksSection"));
 const FeaturesSection = lazyWithRetry(() => import("@/components/FeaturesSection"));
 const APISection = lazyWithRetry(() => import("@/components/APISection"));
+const SDKSection = lazyWithRetry(() => import("@/components/SDKSection"));
 const CTASection = lazyWithRetry(() => import("@/components/CTASection"));
 
 const SectionPlaceholder = () => (
@@ -38,6 +39,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <APISection />
+        </Suspense>
+        <Suspense fallback={<SectionPlaceholder />}>
+          <SDKSection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <CTASection />
