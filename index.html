@@ -276,12 +276,74 @@
             try {
               if (window.__regraphMainLoaded) return;
 
-              var scriptEl = document.getElementById("boot-main");
-              var src = scriptEl && scriptEl.getAttribute ? scriptEl.getAttribute("src") : null;
+              function getEntryScriptSrc() {
+                // Prefer our explicit marker if it survives the build pipeline.
+                try {
+                  var boot = document.getElementById("boot-main");
+                  if (boot) {
+                    var bootSrc =
+                      (boot.getAttribute && boot.getAttribute("src")) ||
+                      (boot.src ? String(boot.src) : null);
+                    if (bootSrc) {
+                      return { src: bootSrc, via: "boot-main" };
+                    }
+                    return { src: null, via: "boot-main-no-src" };
+                  }
+                } catch (e) {
+                  // ignore
+                }
 
-              // If we can't find a script src, log and allow the fatal UI to kick in.
+                // Fallback: find the first module script with a src.
+                try {
+                  var moduleScripts = document.querySelectorAll('script[type="module"][src]');
+                  if (moduleScripts && moduleScripts.length) {
+                    var el = moduleScripts[0];
+                    var s =
+                      (el.getAttribute && el.getAttribute("src")) ||
+                      (el.src ? String(el.src) : null);
+                    if (s) {
+                      return { src: s, via: "querySelector-module" };
+                    }
+                  }
+                } catch (e) {
+                  // ignore
+                }
+
+                // Last resort: iterate document.scripts (some browsers are pickier with querySelector).
+                try {
+                  var list = document.scripts;
+                  for (var i = 0; i < (list ? list.length : 0); i++) {
+                    var sEl = list[i];
+                    if (!sEl) continue;
+                    var t = (sEl.getAttribute && sEl.getAttribute("type")) || sEl.type;
+                    if (String(t || "").toLowerCase() !== "module") continue;
+                    var ss =
+                      (sEl.getAttribute && sEl.getAttribute("src")) ||
+                      (sEl.src ? String(sEl.src) : null);
+                    if (ss) {
+                      return { src: ss, via: "document.scripts" };
+                    }
+                  }
+                } catch (e) {
+                  // ignore
+                }
+
+                return { src: null, via: "not_found" };
+              }
+
+              var found = getEntryScriptSrc();
+              var src = found && found.src ? String(found.src) : null;
+
+              // If we can't find an entry script src, log and allow the fatal UI to kick in.
               if (!src) {
-                sendBootEvent("main_not_started", { stage: "progress", probe: "no_boot_main" });
+                sendBootEvent("main_not_started", {
+                  stage: "progress",
+                  probe: "no_entry_script",
+                  via: found ? found.via : "unknown",
+                });
+                // If HTML is stale/malformed enough that we can't locate the entry script,
+                // a single cache-busting reload is the safest self-heal.
+                reloadOnce("no_entry_script");
                 return;
               }
 
@@ -295,8 +357,18 @@
                 } catch (e) {}
               }, 2500);
 
+              function withProbeParam(u) {
+                try {
+                  // Ensure the probe never hits a cached response.
+                  var sep = u.indexOf("?") === -1 ? "?" : "&";
+                  return u + sep + "__probe=" + String(now());
+                } catch (e) {
+                  return u;
+                }
+              }
+
               var doFetch = function (method) {
-                return fetch(src, {
+                return fetch(withProbeParam(src), {
                   method: method,
                   cache: "no-store",
                   signal: controller ? controller.signal : undefined,
@@ -320,6 +392,7 @@
                     sendBootEvent("main_not_started", {
                       stage: "progress",
                       probe: "entry_fetch_not_ok",
+                      via: found ? found.via : "unknown",
                       entrySrc: src,
                       status: status,
                     });
@@ -331,6 +404,7 @@
                   sendBootEvent("main_slow_start", {
                     stage: "progress",
                     probe: timedOut ? "entry_fetch_timeout" : "entry_fetch_ok",
+                    via: found ? found.via : "unknown",
                     entrySrc: src,
                     status: status,
                   });
@@ -341,6 +415,7 @@
                   sendBootEvent("main_not_started", {
                     stage: "progress",
                     probe: "entry_fetch_error",
+                    via: found ? found.via : "unknown",
                     entrySrc: src,
                     message: String((err && err.message) || err || "fetch_error"),
                   });
