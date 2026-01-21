@@ -21,6 +21,61 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://regraph.tech/blog/future-of-decentralized-ai-inference</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/gpt5-new-era-reasoning-models</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/gemini-3-pro-google-multimodal-ai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/building-ai-applications-best-practices-2026</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/regraph-network-10000-providers-milestone</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/understanding-ai-model-benchmarks</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/rise-of-small-language-models</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/introducing-batch-processing-api</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/ai-ethics-responsible-development</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/getting-started-with-regraph-complete-guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/regraph-platform-launch-new-era</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://regraph.tech/status</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
