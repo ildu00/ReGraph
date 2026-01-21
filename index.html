@@ -105,6 +105,24 @@
         }
       })();
     </script>
+
+    <!-- Cache-busting path restore: used by boot reload logic to bypass edge caches
+         that may ignore query params for HTML. -->
+    <script>
+      (function () {
+        try {
+          var h = String(window.location.hash || "");
+          if (h.indexOf("#__regraph_restore=") !== 0) return;
+          var encoded = h.slice("#__regraph_restore=".length);
+          if (!encoded) return;
+          var restored = decodeURIComponent(encoded);
+          if (!restored || restored.charAt(0) !== "/") return;
+          history.replaceState(null, "", restored);
+        } catch (e) {
+          // ignore
+        }
+      })();
+    </script>
     <title>ReGraph - Decentralized AI Compute Marketplace | 80% Cheaper Than Cloud</title>
     <meta name="description" content="Access 50+ AI models at up to 80% lower cost than AWS, Google Cloud & OpenAI. Decentralized GPU, TPU & NPU network for inference and training. OpenAI-compatible API." />
     <meta name="keywords" content="AI compute, decentralized AI, GPU marketplace, AI inference, machine learning, LLM API, GPT-5, Claude, Llama, cheap AI, distributed computing, GPU rental, AI training, neural network, crypto AI" />
@@ -805,8 +823,15 @@
             sendBootEvent("reload_once", { stage: "reload", trigger: String(triggerReason || "unknown") });
           } catch (e) {}
 
+          // Some edge caches ignore query params for HTML. Use a unique path to force a miss,
+          // then restore the original SPA route (stored in hash) before React boots.
+          var originalRoute = String(u.pathname || "/") + String(u.search || "");
+
           u.searchParams.set(RELOAD_PARAM, "1");
           u.searchParams.set("__reload", String(now()));
+          u.searchParams.set("__regraph_force", "1");
+          u.pathname = "/__regraph__/" + String(now()).toString(36) + "/";
+          u.hash = "__regraph_restore=" + encodeURIComponent(originalRoute);
 
           try {
             window.location.replace(u.toString());
