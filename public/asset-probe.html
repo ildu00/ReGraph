@@ -3,256 +3,175 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asset Probe</title>
+    <title>Asset Probe – Deep Check</title>
     <meta name="robots" content="noindex, nofollow" />
     <style>
-      :root {
-        color-scheme: dark;
-      }
-      body {
-        margin: 0;
-        padding: 24px;
-        font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial,
-          "Apple Color Emoji", "Segoe UI Emoji";
-        background: #0b0b0d;
-        color: #eaeaf2;
-      }
-      h1 {
-        margin: 0 0 8px;
-        font-size: 18px;
-      }
-      p {
-        margin: 0 0 16px;
-        opacity: 0.8;
-        font-size: 13px;
-        line-height: 1.45;
-      }
-      .card {
-        max-width: 900px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        border-radius: 14px;
-        padding: 16px;
-        background: rgba(255, 255, 255, 0.03);
-      }
-      .row {
-        display: grid;
-        grid-template-columns: 220px 1fr;
-        gap: 12px;
-        padding: 10px 0;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-      }
-      .row:first-child {
-        border-top: 0;
-        padding-top: 0;
-      }
-      .k {
-        font-size: 12px;
-        opacity: 0.7;
-      }
-      .v {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono",
-          "Courier New", monospace;
-        font-size: 12px;
-        white-space: pre-wrap;
-        word-break: break-word;
-      }
-      .ok {
-        color: #8ef0a3;
-      }
-      .bad {
-        color: #ff8a8a;
-      }
-      button {
-        appearance: none;
-        border: 0;
-        border-radius: 10px;
-        padding: 10px 14px;
-        background: #6d28d9;
-        color: #fff;
-        font-weight: 700;
-        cursor: pointer;
-        margin-top: 12px;
-      }
-      a {
-        color: #c4b5fd;
-      }
+      :root { color-scheme: dark; }
+      body { margin: 0; padding: 16px; font-family: ui-sans-serif, system-ui, -apple-system, sans-serif; background: #0b0b0d; color: #eaeaf2; font-size: 13px; }
+      h1 { margin: 0 0 8px; font-size: 18px; }
+      p { margin: 0 0 12px; opacity: 0.8; font-size: 12px; }
+      .card { max-width: 900px; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px; padding: 16px; background: rgba(255,255,255,0.03); }
+      .row { display: grid; grid-template-columns: 200px 1fr; gap: 8px; padding: 8px 0; border-top: 1px solid rgba(255,255,255,0.08); }
+      .row:first-child { border-top: 0; }
+      .k { font-size: 11px; opacity: 0.7; }
+      .v { font-family: ui-monospace, monospace; font-size: 11px; white-space: pre-wrap; word-break: break-word; }
+      .ok { color: #8ef0a3; }
+      .bad { color: #ff8a8a; }
+      .warn { color: #facc15; }
+      .nested { margin-left: 12px; padding-left: 8px; border-left: 2px solid #333; font-size: 10px; }
+      button { appearance: none; border: 0; border-radius: 10px; padding: 10px 14px; background: #6d28d9; color: #fff; font-weight: 700; cursor: pointer; margin-top: 12px; }
+      #status { padding: 8px; background: #1a1a1a; border-radius: 8px; margin-bottom: 12px; font-size: 12px; }
     </style>
   </head>
   <body>
     <div class="card">
-      <h1>Asset probe</h1>
-      <p>
-        This page tries to fetch the entry module and core assets. If these requests fail (timeout,
-        abort, wrong content-type), something on the network/path is blocking JS module loading.
-      </p>
-
+      <h1>🔬 Asset Probe – Deep Dependency Check</h1>
+      <p>Fetches entry module, extracts all nested imports (2 levels), and verifies each returns JS (not HTML/404).</p>
+      <div id="status">Initializing...</div>
       <div id="out"></div>
-      <button id="run">Run probe</button>
+      <button id="run">Re-run probe</button>
     </div>
 
     <script>
       const out = document.getElementById("out");
+      const status = document.getElementById("status");
       const btn = document.getElementById("run");
 
-      const addRow = (k, v, status) => {
+      const setStatus = (s) => { status.textContent = s; };
+
+      const addRow = (k, v, cls = "") => {
         const row = document.createElement("div");
         row.className = "row";
-        const kk = document.createElement("div");
-        kk.className = "k";
-        kk.textContent = k;
-        const vv = document.createElement("div");
-        vv.className = "v" + (status === "ok" ? " ok" : status === "bad" ? " bad" : "");
-        vv.textContent = v;
-        row.appendChild(kk);
-        row.appendChild(vv);
+        row.innerHTML = `<div class="k">${k}</div><div class="v ${cls}">${v}</div>`;
         out.appendChild(row);
+        return row;
       };
 
-      const safeText = async (res, max = 600) => {
+      const fetchAsset = async (url, timeout = 10000) => {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), timeout);
         try {
+          const res = await fetch(url, { cache: "no-store", signal: controller.signal });
+          const ct = res.headers.get("content-type") || "";
           const text = await res.text();
-          return text.slice(0, max);
-        } catch {
-          return "<unable to read body>";
-        }
-      };
-
-      const fetchWithTimeout = async (url, timeoutMs = 8000) => {
-        const controller = typeof AbortController !== "undefined" ? new AbortController() : null;
-        const t = setTimeout(() => {
-          try {
-            controller && controller.abort();
-          } catch {}
-        }, timeoutMs);
-        try {
-          const res = await fetch(url, {
-            method: "GET",
-            cache: "no-store",
-            headers: {
-              // Many CDNs support it; if not, server will ignore.
-              Range: "bytes=0-2047",
-            },
-            signal: controller ? controller.signal : undefined,
-          });
-          return { res, timeoutMs };
+          return { url, status: res.status, ct, text, ok: res.ok };
+        } catch (e) {
+          return { url, status: 0, ct: "", text: "", ok: false, error: e.message };
         } finally {
           clearTimeout(t);
         }
       };
 
-      const parseEntrySrc = (html) => {
-        try {
-          const m = html.match(/<script[^>]*type=\"module\"[^>]*src=\"([^\"]+)\"/i);
-          return m ? m[1] : null;
-        } catch {
-          return null;
-        }
+      // Extract import statements from minified JS
+      const extractImports = (code) => {
+        const imports = new Set();
+        // Static: import ... from "..."
+        const staticRe = /from\s*["']([^"']+)["']/g;
+        let m;
+        while ((m = staticRe.exec(code))) imports.add(m[1]);
+        // Dynamic: import("...")
+        const dynRe = /import\s*\(\s*["']([^"']+)["']\s*\)/g;
+        while ((m = dynRe.exec(code))) imports.add(m[1]);
+        return Array.from(imports);
       };
 
-      const extractDepsFromEntry = (jsText) => {
-        try {
-          // Prefer Vite's dependency array if present.
-          const m = jsText.match(/m\.f\s*\|\|\s*\(m\.f\s*=\s*(\[[^\]]+\])\)/);
-          if (m && m[1]) {
-            try {
-              const parsed = JSON.parse(m[1]);
-              if (Array.isArray(parsed) && parsed.length) return parsed;
-            } catch {
-              // Fallback to string extraction
-              const list = [];
-              const re = /\"([^\"]+)\"/g;
-              let mm;
-              while ((mm = re.exec(m[1]))) list.push(mm[1]);
-              if (list.length) return list;
-            }
-          }
-
-          // Last resort: find quoted asset paths.
-          const hits = jsText.match(/\"assets\/[^"]+\.js\"/g);
-          if (!hits) return [];
-          const uniq = new Set();
-          for (const h of hits) {
-            const s = String(h).replace(/^\"|\"$/g, "");
-            uniq.add(s);
-            if (uniq.size >= 24) break;
-          }
-          return Array.from(uniq);
-        } catch {
-          return [];
+      // Resolve relative path against base
+      const resolvePath = (base, rel) => {
+        if (rel.startsWith("/") || rel.startsWith("http")) return rel;
+        if (!rel.startsWith(".")) return null; // bare specifier, skip
+        const baseParts = base.split("/").slice(0, -1);
+        for (const part of rel.split("/")) {
+          if (part === "..") baseParts.pop();
+          else if (part !== ".") baseParts.push(part);
         }
-      };
-
-      const normalizeDep = (p) => {
-        if (!p) return null;
-        const s = String(p);
-        if (s.startsWith("/")) return s;
-        if (s.startsWith("assets/")) return "/" + s;
-        return s;
+        return baseParts.join("/");
       };
 
       const run = async () => {
         out.innerHTML = "";
+        setStatus("Fetching index.html...");
+
         addRow("URL", location.href);
         addRow("UA", navigator.userAgent);
         addRow("Time", new Date().toISOString());
 
-        // 1) Fetch homepage HTML
-        let html = "";
-        try {
-          const { res } = await fetchWithTimeout("/", 8000);
-          addRow("GET / status", String(res.status), res.ok ? "ok" : "bad");
-          addRow("GET / content-type", res.headers.get("content-type") || "<none>");
-          html = await safeText(res, 200000);
-        } catch (e) {
-          addRow("GET / error", String(e), "bad");
-          return;
-        }
+        // 1) Fetch HTML
+        const html = await fetchAsset("/");
+        addRow("GET /", `${html.status} | ${html.ct}`, html.ok ? "ok" : "bad");
 
-        const entry = parseEntrySrc(html);
-        addRow("Entry module (from HTML)", entry || "<not found>", entry ? "ok" : "bad");
-        if (!entry) return;
+        const entryMatch = html.text.match(/<script[^>]*type="module"[^>]*src="([^"]+)"/i);
+        const entrySrc = entryMatch ? entryMatch[1] : null;
+        addRow("Entry module", entrySrc || "NOT FOUND", entrySrc ? "" : "bad");
+        if (!entrySrc) { setStatus("Done – no entry"); return; }
 
-        // 2) Fetch entry module
-        try {
-          const { res } = await fetchWithTimeout(entry, 12000);
-          addRow("GET entry status", String(res.status), res.ok ? "ok" : "bad");
-          addRow("GET entry content-type", res.headers.get("content-type") || "<none>");
-          const entryText = await safeText(res, 200000);
-          addRow("GET entry body (first 700 chars)", entryText.slice(0, 700));
+        // 2) Fetch entry
+        setStatus("Fetching entry module...");
+        const entry = await fetchAsset(entrySrc);
+        addRow("Entry status", `${entry.status} | ${entry.ct}`, entry.ok ? "ok" : "bad");
+        if (!entry.ok) { setStatus("Done – entry failed"); return; }
 
-          // 3) Probe deps from Vite mapDeps (best-effort but much more complete)
-          const deps = extractDepsFromEntry(entryText).map(normalizeDep).filter(Boolean);
-          addRow("Deps found", String(deps.length), deps.length ? "ok" : "bad");
-          if (deps.length) {
-            const max = 12;
-            const list = deps.slice(0, max);
-            addRow("Deps (first 12)", list.join("\n"));
+        // 3) Extract L1 deps
+        const l1Imports = extractImports(entry.text);
+        const l1Assets = l1Imports.map(i => resolvePath(entrySrc, i)).filter(p => p && p.startsWith("/assets/"));
+        addRow("Entry → L1 deps", l1Assets.length + " asset imports found");
 
-            for (const dep of list) {
-              try {
-                const { res: dres } = await fetchWithTimeout(dep, 12000);
-                const ct = dres.headers.get("content-type") || "<none>";
-                const ok = dres.ok && !String(ct).toLowerCase().includes("text/html");
-                const tag = ok ? "ok" : "bad";
-                addRow(`GET ${dep}`, `${dres.status} | ${ct}\n${ok ? "" : await safeText(dres, 180)}`, tag);
-              } catch (e) {
-                addRow(`GET ${dep} error`, String(e), "bad");
+        const analyzed = new Set([entrySrc]);
+        const problems = [];
+
+        // 4) Fetch each L1 dep and check L2
+        for (const l1 of l1Assets) {
+          if (analyzed.has(l1)) continue;
+          analyzed.add(l1);
+
+          setStatus(`Checking ${l1}...`);
+          const r1 = await fetchAsset(l1);
+          const isJs = r1.ct.includes("javascript");
+          const isHtml = r1.ct.includes("text/html");
+          const l1Ok = r1.ok && isJs && !isHtml;
+
+          const row = addRow(l1, `${r1.status} | ${r1.ct}`, l1Ok ? "ok" : (isHtml ? "warn" : "bad"));
+
+          if (!l1Ok) {
+            problems.push({ url: l1, status: r1.status, ct: r1.ct });
+          }
+
+          // L2: nested imports
+          if (l1Ok) {
+            const l2Imports = extractImports(r1.text);
+            const l2Assets = l2Imports.map(i => resolvePath(l1, i)).filter(p => p && p.startsWith("/assets/") && !analyzed.has(p));
+
+            if (l2Assets.length > 0) {
+              const nested = document.createElement("div");
+              nested.className = "nested";
+              row.appendChild(nested);
+
+              for (const l2 of l2Assets.slice(0, 6)) {
+                analyzed.add(l2);
+                setStatus(`Checking ${l2}...`);
+                const r2 = await fetchAsset(l2);
+                const l2Ok = r2.ok && r2.ct.includes("javascript");
+                nested.innerHTML += `<div class="${l2Ok ? 'ok' : 'bad'}">↳ ${l2}: ${r2.status} | ${r2.ct}</div>`;
+                if (!l2Ok) problems.push({ url: l2, status: r2.status, ct: r2.ct, parent: l1 });
+              }
+              if (l2Assets.length > 6) {
+                nested.innerHTML += `<div>... +${l2Assets.length - 6} more</div>`;
               }
             }
           }
-        } catch (e) {
-          addRow("GET entry error", String(e), "bad");
         }
 
-        addRow(
-          "Next",
-          "If entry/vendor fails or content-type is text/html, your network/proxy is blocking or rewriting JS modules. Share a screenshot of this page.",
-          "ok"
-        );
+        // Summary
+        if (problems.length > 0) {
+          addRow("⚠️ PROBLEMS", JSON.stringify(problems, null, 1), "bad");
+          setStatus(`Done – ${problems.length} problem(s) found!`);
+        } else {
+          addRow("✅ Result", "All dependencies (L1+L2) loaded with correct JS content-type.", "ok");
+          addRow("Next", "Assets load OK via fetch(). Issue may be Safari module parsing or content blocker. Try:\n1) Clear Safari cache fully\n2) Disable content blockers\n3) Test in Chrome/Firefox on same device", "");
+          setStatus("Done – all assets OK");
+        }
       };
 
       btn.addEventListener("click", run);
-      // auto-run
       run();
     </script>
   </body>
