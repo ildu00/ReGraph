@@ -10,6 +10,34 @@ type AppErrorBoundaryState = {
   errorMessage?: string;
 };
 
+const getBuildFingerprint = () => {
+  try {
+    const fromStorage = localStorage.getItem("__regraph_build");
+    if (fromStorage) return fromStorage;
+  } catch {
+    // ignore
+  }
+
+  try {
+    const w = window as any;
+    if (w.__regraph_build) return String(w.__regraph_build);
+  } catch {
+    // ignore
+  }
+
+  try {
+    const el =
+      document.getElementById("boot-main") ||
+      document.querySelector('script[type="module"][src]');
+    const raw = el?.getAttribute("src") || (el as HTMLScriptElement | null)?.src;
+    if (!raw) return null;
+    const u = new URL(raw, window.location.href);
+    return u.pathname.split("/").pop() || u.pathname;
+  } catch {
+    return null;
+  }
+};
+
 const isRecoverableModuleError = (message: string) => {
   const m = (message || "").toLowerCase();
   return (
@@ -132,11 +160,17 @@ export default class AppErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       const showHardReload = isRecoverableModuleError(this.state.errorMessage || "");
+      const build = getBuildFingerprint();
 
       return (
         <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-6">
           <div className="w-full max-w-lg rounded-xl border border-border bg-card p-6">
             <h1 className="text-xl font-semibold">App failed to load</h1>
+            {build ? (
+              <p className="mt-1 text-xs text-muted-foreground">
+                Build: <code className="rounded bg-muted/30 px-1 py-0.5">{build}</code>
+              </p>
+            ) : null}
             <p className="mt-2 text-sm text-muted-foreground">
               Something went wrong. Click "Reload" to try again.
             </p>
