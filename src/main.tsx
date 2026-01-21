@@ -39,9 +39,21 @@ const hasReloadMarker = () => {
 const reloadOnce = (force = false) => {
   try {
     const u = new URL(window.location.href);
+
+    // Some edge caches ignore query params for HTML. In that case, a query-only reload
+    // can keep serving the same stale index.html that references old chunks.
+    // Use a unique pathname (but restore the original route before React boots).
+    const originalRoute = `${u.pathname}${u.search}`;
+
     u.searchParams.set("__regraph_reload", "1");
     u.searchParams.set("__reload", Date.now().toString());
     if (force) u.searchParams.set("__regraph_force", "1");
+
+    if (force) {
+      u.pathname = `/__regraph__/${Date.now().toString(36)}/`;
+      u.hash = `__regraph_restore=${encodeURIComponent(originalRoute)}`;
+    }
+
     window.location.replace(u.toString());
   } catch {
     window.location.reload();
