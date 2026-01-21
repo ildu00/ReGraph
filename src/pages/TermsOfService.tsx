@@ -72,7 +72,7 @@ const TermsOfService = () => {
       <Navbar />
       
       <main className="container px-4 pt-24 pb-16">
-        <div className="max-w-4xl mx-auto prose prose-invert prose-purple">
+        <div className="max-w-5xl mx-auto prose prose-invert prose-purple">
           <h1 className="text-4xl font-bold mb-2">Terms of Service</h1>
           <p className="text-muted-foreground mb-8">Last updated: January 9, 2026</p>
 
