@@ -44,9 +44,9 @@ class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error 
           textAlign: "center",
         }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
-          <h2 style={{ margin: "0 0 8px", fontSize: "18px" }}>Не удалось загрузить приложение</h2>
+          <h2 style={{ margin: "0 0 8px", fontSize: "18px" }}>Failed to load application</h2>
           <p style={{ margin: "0 0 16px", opacity: 0.7, fontSize: "14px", maxWidth: "300px" }}>
-            Возможно, проблема с сетью или кэшем браузера.
+            This may be a network or browser cache issue.
           </p>
           <button
             onClick={() => {
@@ -66,7 +66,7 @@ class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error 
               cursor: "pointer",
             }}
           >
-            Перезагрузить
+            Reload
           </button>
           <p style={{ marginTop: "24px", opacity: 0.4, fontSize: "11px", maxWidth: "280px" }}>
             {this.state.error.message}
