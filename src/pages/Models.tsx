@@ -233,6 +233,12 @@ const Models = () => {
           className="flex-col"
           style={{ ["--sidebar-fixed-left" as any]: sidebarFixedLeft } as CSSProperties}
         >
+          {/* Sidebar gutter fill for wide screens */}
+          <div
+            className="hidden md:block fixed top-16 left-0 bottom-0 bg-sidebar z-[5]"
+            style={{ width: `calc(${sidebarFixedLeft})` }}
+            aria-hidden="true"
+          />
           <div className="flex w-full flex-1">
             <ModelsSidebar 
               activeCategory={activeCategory} 
