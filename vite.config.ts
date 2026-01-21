@@ -24,34 +24,26 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Split vendor chunks for better caching and smaller initial load
         manualChunks: {
-          // React core (keep small for mobile Safari)
-          "vendor-react": [
-            "react",
-            "react-dom",
-          ],
-          // React Router (separate to reduce react chunk size)
-          "vendor-router": [
-            "react-router-dom",
-          ],
-          // JSX runtime (critical, must load early)
-          "vendor-jsx": [
-            "react/jsx-runtime",
-            "react/jsx-dev-runtime",
-          ],
+          // CRITICAL: Keep React minimal for Safari iOS
+          "vendor-react": ["react", "react-dom"],
+          "vendor-router": ["react-router-dom"],
+          "vendor-jsx": ["react/jsx-runtime", "react/jsx-dev-runtime"],
           // Split Radix UI into smaller chunks (Safari has module size limits)
-          "vendor-radix": [
+          "vendor-radix-1": [
             "@radix-ui/react-dialog",
             "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-tooltip",
           ],
-          "vendor-radix-forms": [
+          "vendor-radix-2": [
+            "@radix-ui/react-tooltip",
+            "@radix-ui/react-popover",
+          ],
+          "vendor-radix-3": [
             "@radix-ui/react-tabs",
             "@radix-ui/react-select",
           ],
-          "vendor-radix-overlay": [
+          "vendor-radix-4": [
             "@radix-ui/react-accordion",
             "@radix-ui/react-alert-dialog",
-            "@radix-ui/react-popover",
           ],
           // Heavy animation library - only needed on pages with animations
           "vendor-motion": ["framer-motion"],
@@ -68,7 +60,7 @@ export default defineConfig(({ mode }) => ({
         },
       },
     },
-    // Increase chunk size warning threshold since we're splitting intentionally
-    chunkSizeWarningLimit: 600,
+    // Lower threshold to catch Safari iOS size limits
+    chunkSizeWarningLimit: 400,
   },
 }));
