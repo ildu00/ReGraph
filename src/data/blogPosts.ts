@@ -32,7 +32,7 @@ export const blogPosts: BlogPost[] = [
     excerpt: "How distributed computing is reshaping the AI landscape and why ReGraph is at the forefront of this revolution.",
     content: `The AI industry is undergoing a fundamental transformation. As models grow larger and more capable, the centralized infrastructure that powers them is struggling to keep up with demand. This is where decentralized AI inference comes in.
 
-**The Problem with Centralized AI**
+## The Problem with Centralized AI
 
 Traditional AI infrastructure relies on massive data centers owned by a handful of tech giants. This creates several issues:
 - High costs that get passed on to developers
@@ -40,7 +40,7 @@ Traditional AI infrastructure relies on massive data centers owned by a handful 
 - Geographic limitations and latency issues
 - Limited access for smaller organizations
 
-**ReGraph's Decentralized Approach**
+## ReGraph's Decentralized Approach
 
 At ReGraph, we're building a distributed network of compute providers that includes everything from enterprise GPUs to consumer devices. This approach offers:
 
@@ -49,7 +49,7 @@ At ReGraph, we're building a distributed network of compute providers that inclu
 3. **Global Coverage**: Providers worldwide mean lower latency for users everywhere.
 4. **Democratized Access**: Anyone can access powerful AI models without massive infrastructure investments.
 
-**Looking Ahead**
+## Looking Ahead
 
 As we enter 2026, the demand for AI compute will only grow. Decentralized networks like ReGraph are positioned to meet this demand while keeping AI accessible to everyone.`,
     date: "2026-01-11",
@@ -65,7 +65,7 @@ As we enter 2026, the demand for AI compute will only grow. Decentralized networ
     excerpt: "OpenAI's latest model brings unprecedented reasoning capabilities. Here's what it means for developers.",
     content: `OpenAI's GPT-5 represents a significant leap in AI capabilities, particularly in reasoning and complex problem-solving.
 
-**What Makes GPT-5 Different**
+## What Makes GPT-5 Different
 
 Unlike its predecessors, GPT-5 demonstrates:
 - Enhanced multi-step reasoning
@@ -73,7 +73,7 @@ Unlike its predecessors, GPT-5 demonstrates:
 - Better understanding of nuanced context
 - More reliable code generation
 
-**Performance on ReGraph**
+## Performance on ReGraph
 
 Since adding GPT-5 to our model catalog, we've seen remarkable adoption. Developers are using it for:
 - Complex data analysis pipelines
@@ -81,11 +81,11 @@ Since adding GPT-5 to our model catalog, we've seen remarkable adoption. Develop
 - Scientific research assistance
 - Legal document analysis
 
-**Cost Considerations**
+## Cost Considerations
 
 While GPT-5 is more expensive per token than smaller models, its improved accuracy often means fewer iterations and corrections, potentially lowering total costs for complex tasks.
 
-**Best Practices**
+## Best Practices
 
 When using GPT-5 through ReGraph:
 1. Use it for tasks that require deep reasoning
@@ -103,7 +103,7 @@ When using GPT-5 through ReGraph:
     excerpt: "Google's Gemini 3 Pro brings impressive improvements in multimodal understanding and generation.",
     content: `Google's Gemini 3 Pro represents the next evolution in multimodal AI, building on the strong foundation of Gemini 2.5.
 
-**Key Improvements**
+## Key Improvements
 
 Gemini 3 Pro offers significant advances:
 - **Better Vision Understanding**: More accurate image analysis and object recognition
@@ -111,7 +111,7 @@ Gemini 3 Pro offers significant advances:
 - **Faster Response Times**: Optimized architecture for lower latency
 - **Extended Context**: Handle longer documents and conversations
 
-**Image Generation with Gemini 3**
+## Image Generation with Gemini 3
 
 The new Gemini 3 Pro Image Preview model offers:
 - Higher resolution outputs
@@ -119,11 +119,11 @@ The new Gemini 3 Pro Image Preview model offers:
 - More consistent style across generations
 - Improved handling of complex scenes
 
-**Integration with ReGraph**
+## Integration with ReGraph
 
 We've fully integrated Gemini 3 Pro into our inference pipeline. Developers can access it through our standard API with no additional configuration required.
 
-**Use Cases**
+## Use Cases
 
 Popular applications include:
 - Document analysis and OCR
@@ -142,14 +142,14 @@ Popular applications include:
     excerpt: "Essential patterns and practices for developing robust AI-powered applications in the modern era.",
     content: `As AI becomes more integrated into software applications, developers need to adopt best practices that ensure reliability, cost-efficiency, and user satisfaction.
 
-**1. Model Selection Strategy**
+## 1. Model Selection Strategy
 
 Not every task requires the most powerful model:
 - Use lightweight models (GPT-5-nano, Gemini Flash Lite) for simple classifications
 - Reserve powerful models for complex reasoning tasks
 - Implement fallback chains for reliability
 
-**2. Prompt Engineering**
+## 2. Prompt Engineering
 
 Effective prompts are crucial:
 - Be specific and provide context
@@ -157,7 +157,7 @@ Effective prompts are crucial:
 - Include examples when possible
 - Test and iterate systematically
 
-**3. Error Handling**
+## 3. Error Handling
 
 AI systems can fail in unexpected ways:
 - Implement graceful degradation
@@ -165,7 +165,7 @@ AI systems can fail in unexpected ways:
 - Monitor for quality degradation over time
 - Have human review processes for critical decisions
 
-**4. Cost Management**
+## 4. Cost Management
 
 Control your AI spending:
 - Cache responses when appropriate
@@ -173,7 +173,7 @@ Control your AI spending:
 - Use streaming for long responses
 - Monitor token usage closely
 
-**5. Security Considerations**
+## 5. Security Considerations
 
 Protect your AI applications:
 - Never expose API keys client-side
@@ -192,7 +192,7 @@ Protect your AI applications:
     excerpt: "Our decentralized compute network reaches a major milestone with providers spanning 50+ countries.",
     content: `We're thrilled to announce that ReGraph has reached 10,000 active compute providers on our network!
 
-**Global Reach**
+## Global Reach
 
 Our provider network now spans:
 - 50+ countries across 6 continents
@@ -200,7 +200,7 @@ Our provider network now spans:
 - 2,500+ TPU and NPU devices
 - Growing smartphone compute network
 
-**What This Means for Developers**
+## What This Means for Developers
 
 With our expanded network:
 - **Lower Latency**: Regional providers mean faster responses
@@ -208,7 +208,7 @@ With our expanded network:
 - **Better Pricing**: Competition drives costs down
 - **More Capacity**: Handle larger batch jobs efficiently
 
-**Provider Success Stories**
+## Provider Success Stories
 
 We've seen incredible stories from our providers:
 - Research labs monetizing idle GPU time
@@ -216,7 +216,7 @@ We've seen incredible stories from our providers:
 - Data centers adding new revenue streams
 - Individual enthusiasts contributing to AI accessibility
 
-**Looking Forward**
+## Looking Forward
 
 Our goal for 2026 is to reach 50,000 providers and add support for new hardware types including the latest NVIDIA and AMD GPUs.`,
     date: "2025-12-20",
@@ -231,25 +231,25 @@ Our goal for 2026 is to reach 50,000 providers and add support for new hardware 
     excerpt: "A comprehensive guide to interpreting AI model benchmarks and choosing the right model for your needs.",
     content: `With dozens of AI models available, understanding benchmarks is essential for making informed choices.
 
-**Common Benchmark Categories**
+## Common Benchmark Categories
 
-**Reasoning Benchmarks**
+### Reasoning Benchmarks
 - MMLU (Massive Multitask Language Understanding)
 - ARC (AI2 Reasoning Challenge)
 - HellaSwag
 - GSM8K (Grade School Math)
 
-**Coding Benchmarks**
+### Coding Benchmarks
 - HumanEval
 - MBPP (Mostly Basic Python Problems)
 - CodeContests
 
-**Multimodal Benchmarks**
+### Multimodal Benchmarks
 - MMMU (Massive Multi-discipline Multimodal Understanding)
 - VQAv2 (Visual Question Answering)
 - TextVQA
 
-**Beyond Benchmarks**
+## Beyond Benchmarks
 
 While benchmarks are useful, they don't tell the whole story:
 - Real-world performance may differ
@@ -257,7 +257,7 @@ While benchmarks are useful, they don't tell the whole story:
 - Some tasks don't have good benchmarks
 - Model behavior on edge cases varies
 
-**Practical Recommendations**
+## Practical Recommendations
 
 1. Start with a model known for your use case
 2. Run your own evaluation on representative tasks
@@ -276,24 +276,24 @@ While benchmarks are useful, they don't tell the whole story:
     excerpt: "Why smaller, specialized models are becoming increasingly important in the AI ecosystem.",
     content: `While headlines focus on ever-larger models, there's a quiet revolution happening with smaller, more efficient AI models.
 
-**Why Small Models Matter**
+## Why Small Models Matter
 
-**Cost Efficiency**
+### Cost Efficiency
 - 10-100x cheaper per request
 - Sustainable for high-volume applications
 - Accessible to startups and individuals
 
-**Speed**
+### Speed
 - Millisecond response times
 - Better for real-time applications
 - Improved user experience
 
-**Deployment Flexibility**
+### Deployment Flexibility
 - Run on edge devices
 - Lower infrastructure requirements
 - Better privacy (local processing)
 
-**When to Use Small Models**
+## When to Use Small Models
 
 Small models excel at:
 - Text classification
@@ -302,14 +302,14 @@ Small models excel at:
 - Entity extraction
 - Basic summarization
 
-**ReGraph's Small Model Offerings**
+## ReGraph's Small Model Offerings
 
 We offer several efficient models:
 - GPT-5-nano for simple text tasks
 - Gemini 2.5 Flash Lite for balanced performance
 - Specialized models for specific domains
 
-**The Future**
+## The Future
 
 Expect to see more specialized small models that match or exceed large model performance on specific tasks while being dramatically more efficient.`,
     date: "2025-12-08",
@@ -324,24 +324,24 @@ Expect to see more specialized small models that match or exceed large model per
     excerpt: "Process millions of requests efficiently with our new batch processing endpoints.",
     content: `We're excited to announce our new Batch Processing API, designed for high-volume AI workloads.
 
-**Key Features**
+## Key Features
 
-**Asynchronous Processing**
+### Asynchronous Processing
 - Submit large batches without waiting
 - Receive results via webhook or polling
 - Track progress in real-time
 
-**Cost Savings**
+### Cost Savings
 - Up to 50% discount on batch requests
 - Optimized scheduling for efficiency
 - No minimum commitment
 
-**Reliability**
+### Reliability
 - Automatic retries on failures
 - Checkpoint and resume support
 - Priority queuing options
 
-**Use Cases**
+## Use Cases
 
 Perfect for:
 - Dataset labeling and annotation
@@ -350,7 +350,7 @@ Perfect for:
 - Research experiments
 - Data enrichment tasks
 
-**Getting Started**
+## Getting Started
 
 \`\`\`json
 POST /v1/batch
@@ -374,34 +374,34 @@ Check our documentation for complete API reference and examples.`,
     excerpt: "Our commitment to ethical AI and the principles guiding ReGraph's development.",
     content: `As AI becomes more powerful, the responsibility to develop and deploy it ethically becomes more critical.
 
-**ReGraph's Ethical Principles**
+## ReGraph's Ethical Principles
 
-**1. Transparency**
+### 1. Transparency
 - Clear documentation of model capabilities and limitations
 - Honest communication about AI-generated content
 - Open about our provider network and data practices
 
-**2. Accessibility**
+### 2. Accessibility
 - Making AI affordable for everyone
 - Supporting education and research use cases
 - Building for global accessibility
 
-**3. Safety**
+### 3. Safety
 - Content moderation on our platform
 - Abuse prevention measures
 - Collaboration with safety researchers
 
-**4. Privacy**
+### 4. Privacy
 - Minimal data retention
 - No training on user data without consent
 - Strong encryption and security practices
 
-**5. Sustainability**
+### 5. Sustainability
 - Optimizing for energy efficiency
 - Supporting carbon offset initiatives
 - Promoting efficient model usage
 
-**Developer Responsibilities**
+## Developer Responsibilities
 
 We encourage all developers using our platform to:
 - Consider the impact of their applications
@@ -409,7 +409,7 @@ We encourage all developers using our platform to:
 - Be transparent with their users
 - Report potential misuse
 
-**Looking Forward**
+## Looking Forward
 
 We're committed to evolving our practices as the AI landscape changes and new challenges emerge.`,
     date: "2025-11-15",
@@ -424,15 +424,15 @@ We're committed to evolving our practices as the AI landscape changes and new ch
     excerpt: "Everything you need to know to start building with ReGraph's AI infrastructure.",
     content: `Welcome to ReGraph! This guide will walk you through everything you need to start building AI-powered applications.
 
-**Step 1: Create Your Account**
+## Step 1: Create Your Account
 
 Sign up at regraph.tech and complete the verification process. New accounts receive free credits to explore our platform.
 
-**Step 2: Generate API Keys**
+## Step 2: Generate API Keys
 
 Navigate to your dashboard and create an API key. Keep it secure - it provides full access to your account.
 
-**Step 3: Make Your First Request**
+## Step 3: Make Your First Request
 
 \`\`\`bash
 curl https://api.regraph.tech/v1/chat/completions \\
@@ -444,15 +444,15 @@ curl https://api.regraph.tech/v1/chat/completions \\
   }'
 \`\`\`
 
-**Step 4: Explore Models**
+## Step 4: Explore Models
 
 Visit our Models page to browse available models. Each model has different strengths and pricing.
 
-**Step 5: Monitor Usage**
+## Step 5: Monitor Usage
 
 Use the dashboard to track your usage, costs, and performance metrics.
 
-**Next Steps**
+## Next Steps
 
 - Read our API documentation
 - Join our developer community
@@ -472,25 +472,25 @@ Welcome aboard!`,
     excerpt: "Announcing the public launch of ReGraph - decentralized AI compute for everyone.",
     content: `Today marks a milestone in our journey: the public launch of ReGraph!
 
-**Our Mission**
+## Our Mission
 
 We set out to solve a fundamental problem: AI compute is too expensive and too centralized. Our solution is a decentralized network that connects developers who need AI capabilities with providers who have compute resources.
 
-**What We're Launching**
+## What We're Launching
 
-**For Developers**
+### For Developers
 - OpenAI-compatible API
 - Access to leading AI models
 - Competitive pricing
 - Reliable infrastructure
 
-**For Providers**
+### For Providers
 - Easy onboarding
 - Flexible commitment
 - Fair compensation
 - Growing demand
 
-**Early Traction**
+## Early Traction
 
 Since our beta:
 - 500+ developers on the platform
@@ -498,7 +498,7 @@ Since our beta:
 - 10M+ API requests processed
 - 99.9% uptime
 
-**What's Next**
+## What's Next
 
 Our roadmap includes:
 - More model options
