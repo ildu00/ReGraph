@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import legacy from "@vitejs/plugin-legacy";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -9,16 +10,25 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    // CRITICAL: Generate legacy fallback for Safari iOS that may reject modern ES modules
+    legacy({
+      targets: ["defaults", "safari >= 14", "iOS >= 14"],
+      // Generate both modern + legacy builds; Safari will auto-pick
+      modernPolyfills: true,
+    }),
+    mode === "development" && componentTagger(),
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
   build: {
-    // CRITICAL: Target Safari 15+ explicitly to avoid unsupported ES features
+    // CRITICAL: Target Safari 14+ explicitly to avoid unsupported ES features
     // Safari has stricter ES module parsing than Chrome/Firefox
-    target: ["es2020", "safari15", "chrome90", "firefox90"],
+    target: ["es2020", "safari14", "chrome90", "firefox90", "ios14"],
     // Improve chunk loading reliability
     modulePreload: {
       polyfill: true,
