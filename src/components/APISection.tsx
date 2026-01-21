@@ -399,27 +399,6 @@ const APISection = () => {
             ))}
           </div>
         </motion.div>
-
-        {/* SDK Links */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          whileInView={{ opacity: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.4 }}
-          className="mt-12 text-center"
-        >
-          <p className="text-muted-foreground mb-4">Official SDKs available for</p>
-          <div className="flex flex-wrap justify-center gap-4">
-            {["Python", "Node.js", "Go", "Rust", "Java", "C#"].map((lang) => (
-              <span
-                key={lang}
-                className="px-4 py-2 rounded-lg bg-card border border-border font-mono text-sm hover:border-primary/50 transition-colors cursor-pointer"
-              >
-                {lang}
-              </span>
-            ))}
-          </div>
-        </motion.div>
       </div>
     </section>
   );

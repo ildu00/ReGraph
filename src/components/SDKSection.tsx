@@ -9,9 +9,17 @@ const sdks = [
     color: "#3776AB",
     href: "https://github.com/ildu00/ReGraph/tree/main/sdk/python",
     icon: (
-      <svg className="h-8 w-8" viewBox="0 0 256 255" fill="currentColor">
-        <path d="M126.916.072c-64.832 0-60.784 28.115-60.784 28.115l.072 29.128h61.868v8.745H41.631S.145 61.355.145 126.77c0 65.417 36.21 63.097 36.21 63.097h21.61v-30.356s-1.165-36.21 35.632-36.21h61.362s34.475.557 34.475-33.319V33.97S194.67.072 126.916.072zM92.802 19.66a11.12 11.12 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13 11.12 11.12 0 0 1-11.13-11.13 11.12 11.12 0 0 1 11.13-11.13z"/>
-        <path d="M128.757 254.126c64.832 0 60.784-28.115 60.784-28.115l-.072-29.127H127.6v-8.745h86.441s41.486 4.705 41.486-60.712c0-65.416-36.21-63.096-36.21-63.096h-21.61v30.355s1.165 36.21-35.632 36.21h-61.362s-34.475-.557-34.475 33.32v56.013s-5.235 33.897 62.518 33.897zm34.114-19.586a11.12 11.12 0 0 1-11.13-11.13 11.12 11.12 0 0 1 11.13-11.131 11.12 11.12 0 0 1 11.13 11.13 11.12 11.12 0 0 1-11.13 11.13z"/>
+      <svg className="h-8 w-8" viewBox="0 0 128 128">
+        <linearGradient id="python-original-a" gradientUnits="userSpaceOnUse" x1="70.252" y1="1237.476" x2="170.659" y2="1151.089" gradientTransform="matrix(.563 0 0 -.568 -29.215 707.817)">
+          <stop offset="0" stopColor="#5A9FD4"/>
+          <stop offset="1" stopColor="#306998"/>
+        </linearGradient>
+        <linearGradient id="python-original-b" gradientUnits="userSpaceOnUse" x1="209.474" y1="1098.811" x2="173.62" y2="1149.537" gradientTransform="matrix(.563 0 0 -.568 -29.215 707.817)">
+          <stop offset="0" stopColor="#FFD43B"/>
+          <stop offset="1" stopColor="#FFE873"/>
+        </linearGradient>
+        <path fill="url(#python-original-a)" d="M63.391 1.988c-4.222.02-8.252.379-11.8 1.007-10.45 1.846-12.346 5.71-12.346 12.837v9.411h24.693v3.137H29.977c-7.176 0-13.46 4.313-15.426 12.521-2.268 9.405-2.368 15.275 0 25.096 1.755 7.311 5.947 12.519 13.124 12.519h8.491V67.234c0-8.151 7.051-15.34 15.426-15.34h24.665c6.866 0 12.346-5.654 12.346-12.548V15.833c0-6.693-5.646-11.72-12.346-12.837-4.244-.706-8.645-1.027-12.866-1.008zM50.037 9.557c2.55 0 4.634 2.117 4.634 4.721 0 2.593-2.083 4.69-4.634 4.69-2.56 0-4.633-2.097-4.633-4.69-.001-2.604 2.073-4.721 4.633-4.721z"/>
+        <path fill="url(#python-original-b)" d="M91.682 28.38v10.966c0 8.5-7.208 15.655-15.426 15.655H51.591c-6.756 0-12.346 5.783-12.346 12.549v23.515c0 6.691 5.818 10.628 12.346 12.547 7.816 2.297 15.312 2.713 24.665 0 6.216-1.801 12.346-5.423 12.346-12.547v-9.412H63.938v-3.138h37.012c7.176 0 9.852-5.005 12.348-12.519 2.578-7.735 2.467-15.174 0-25.096-1.774-7.145-5.161-12.521-12.348-12.521h-9.268zM77.809 87.927c2.561 0 4.634 2.097 4.634 4.692 0 2.602-2.074 4.719-4.634 4.719-2.55 0-4.633-2.117-4.633-4.719 0-2.595 2.083-4.692 4.633-4.692z"/>
       </svg>
     ),
   },
@@ -21,8 +29,9 @@ const sdks = [
     color: "#F7DF1E",
     href: "https://github.com/ildu00/ReGraph/tree/main/sdk/javascript",
     icon: (
-      <svg className="h-8 w-8" viewBox="0 0 256 256" fill="currentColor">
-        <path d="M0 0h256v256H0V0zm243.3 189.4c-2-13-9.8-24-33.1-34.2-8.1-3.8-17.1-6.5-19.8-12.6-1-2.3-1.2-3.6-0.5-5.1 1.8-5 7.3-6.5 12.1-5.1 3.1 1 6 3.4 7.8 7.3 8.3-5.4 8.3-5.4 14-9-2.1-3.3-3.2-4.8-4.7-6.2-5-5.8-11.7-8.7-22.6-8.5l-5.6 0.7c-5.4 1.2-10.5 3.9-13.5 7.4-9 10.6-6.4 29.1 4.5 36.8 10.8 8.2 26.6 10 28.6 17.7 1.9 9.2-6.8 12.2-15.4 11.1-6.3-1.4-9.8-4.6-13.6-10.5l-14.6 8.4c1.7 3.9 3.6 5.6 6.5 9 9.8 10 22.9 13.1 38.4 10.6 0.9-0.2 1.9-0.4 2.8-0.7 11.8-4.3 17.6-14 16.7-27.8zm-64.3-43h-18c0 14.9 0 29.9 0 44.9 0 9.4 0.5 18.1-1.1 20.8-2.5 5.3-9 4.7-11.9 3.7-2.9-1.3-4.4-3.2-6.1-5.9-0.5-0.8-0.9-1.4-1-1.4l-14.6 9c2.5 5.1 6.1 9.4 10.7 12.2 6.8 4 15.9 5.3 25.5 3 6.3-1.6 11.7-5.2 14.6-10.4 4-6.3 3.1-14 3.1-22.6 0-17.8 0-35.5 0-53.4z"/>
+      <svg className="h-8 w-8" viewBox="0 0 128 128">
+        <path fill="#F0DB4F" d="M1.408 1.408h125.184v125.185H1.408z"/>
+        <path fill="#323330" d="M116.347 96.736c-.917-5.711-4.641-10.508-15.672-14.981-3.832-1.761-8.104-3.022-9.377-5.926-.452-1.69-.512-2.642-.226-3.665.821-3.32 4.784-4.355 7.925-3.403 2.023.678 3.938 2.237 5.093 4.724 5.402-3.498 5.391-3.475 9.163-5.879-1.381-2.141-2.118-3.129-3.022-4.045-3.249-3.629-7.676-5.498-14.756-5.355l-3.688.477c-3.534.893-6.902 2.748-8.877 5.235-5.926 6.724-4.236 18.492 2.975 23.335 7.104 5.332 17.54 6.545 18.873 11.531 1.297 6.104-4.486 8.08-10.234 7.378-4.236-.881-6.592-3.034-9.139-6.949-4.688 2.713-4.688 2.713-9.508 5.485 1.143 2.499 2.344 3.63 4.26 5.795 9.068 9.198 31.76 8.746 35.83-5.176.165-.478 1.261-3.666.38-8.581zM69.462 58.943H57.753l-.048 30.272c0 6.438.333 12.34-.714 14.149-1.713 3.558-6.152 3.117-8.175 2.427-2.059-1.012-3.106-2.451-4.319-4.485-.333-.584-.583-1.036-.667-1.071l-9.52 5.83c1.583 3.249 3.915 6.069 6.902 7.901 4.462 2.678 10.459 3.499 16.731 2.059 4.082-1.189 7.604-3.652 9.448-7.401 2.666-4.915 2.094-10.864 2.07-17.444.06-10.735.001-21.468.001-32.237z"/>
       </svg>
     ),
   },
@@ -30,10 +39,11 @@ const sdks = [
     name: "Go",
     description: "go get regraph.tech/sdk",
     color: "#00ADD8",
-    href: null, // Coming soon
+    href: null,
     icon: (
-      <svg className="h-8 w-8" viewBox="0 0 256 348" fill="currentColor">
-        <path d="M31.61 128.75c-.56 0-.9-.34-.68-.79l2.46-3.15c.23-.45.79-.79 1.24-.79h41.76c.56 0 .79.45.56.9l-2 3.04c-.22.45-.67.9-1.12.9l-42.22-.11zM.15 148.34c-.56 0-.9-.34-.68-.79l2.46-3.15c.23-.45.79-.79 1.24-.79h53.35c.56 0 .9.45.68.9l-.9 2.81c-.11.56-.68.9-1.12.9L.15 148.34zm49.55 19.48c-.56 0-.9-.45-.68-.9l1.58-2.92c.22-.45.68-.9 1.24-.9h23.44c.56 0 .9.45.9.9l-.34 2.81c0 .56-.56.9-1.01.9l-25.13.11zm95.73-11.66l-17.13 4.5c-1.57.45-1.68.56-3.04-1.12-1.57-1.91-2.81-3.15-5.06-4.27-6.85-3.6-13.48-2.59-19.65 1.68-7.4 5.17-11.22 12.7-11.1 21.78.11 9.08 6.39 16.6 15.36 17.94 7.74 1.12 14.37-1.46 19.65-7.29 1.12-1.24 2.13-2.59 3.37-4.16h-21.33c-2.25 0-2.81-1.35-2.02-3.15 1.35-3.26 3.94-8.77 5.4-11.56.34-.67 1.12-1.8 2.7-1.8h39.96c-.22 3.15-.22 6.29-.68 9.42-.9 6.52-3.15 12.7-6.74 18.32-5.73 9.08-13.59 15.7-23.67 19.2-8.32 2.92-16.76 3.37-25.19.79-8.32-2.59-15.02-7.63-19.76-15.02-4.05-6.52-5.96-13.7-5.84-21.45.22-10.99 3.82-20.86 11-29.27 7.51-8.88 16.98-14.37 28.42-16.15 9.31-1.46 18.32-.56 26.53 4.27 5.51 3.26 9.76 7.74 12.91 13.48.68 1.01.22 1.57-1.01 1.91l-.11.45zm48.09 59.71c-8.88-.22-17.02-2.59-24.09-8.1-5.96-4.72-9.98-10.77-11.56-18.21-2.25-10.43-.34-20.19 5.39-29.04 6.07-9.42 14.48-15.47 25.3-17.94 9.31-2.13 18.32-1.46 26.75 3.26 7.51 4.16 12.69 10.43 15.36 18.55 3.26 10.21 2.47 20.08-2.59 29.38-4.38 8.1-10.77 14.03-19.42 17.72-5.28 2.36-10.77 3.48-15.14 4.38zm18.32-45.01c-.11-1.8-.11-3.15-.45-4.5-2.25-9.87-11.79-14.93-21.11-11.45-9.08 3.37-14.03 10.21-15.14 19.76-.9 7.85 3.6 15.59 10.77 18.44 5.73 2.25 11.33 1.57 16.5-1.8 6.52-4.27 9.54-10.43 9.43-20.45z"/>
+      <svg className="h-8 w-8" viewBox="0 0 128 128">
+        <path fill="#00acd7" d="M18.8 69.3c-.1 0-.2-.1-.1-.2l.7-1c.1-.1.2-.2.4-.2h12.5c.1 0 .2.1.1.2l-.6.9c-.1.1-.2.2-.4.2l-12.6.1zM7.6 74.6c-.1 0-.2-.1-.1-.2l.7-1c.1-.1.2-.2.4-.2h16c.1 0 .2.1.2.2l-.3.9c0 .1-.2.2-.3.2l-16.6.1zM21.5 80c-.1 0-.2-.1-.1-.2l.4-.9c.1-.1.2-.2.4-.2h7c.1 0 .2.1.2.2l-.1.8c0 .1-.1.2-.2.2l-7.6.1zM78.9 68.9c-2.4.6-4.1 1.1-6.5 1.7-.5.1-.6.2-1-.4-.5-.6-.9-1-1.6-1.4-2.2-1.1-4.4-.8-6.4.5-2.4 1.5-3.6 3.8-3.6 6.7 0 2.8 2 5 4.8 5.4 2.4.3 4.4-.5 6-2.3.3-.4.6-.8 1-1.3h-6.8c-.7 0-.9-.5-.7-1.1.5-1.2 1.3-3.2 1.8-4.2.1-.3.4-.7.9-.7h12.7c-.1 1-.1 2-.2 3-.4 2.4-1.3 4.7-2.7 6.7-2.3 3.2-5.3 5.4-9.2 6.2-3.2.7-6.3.4-9.1-1.3-2.6-1.6-4.2-3.9-4.8-6.9-.7-3.5.1-6.7 1.9-9.7 2-3.2 4.8-5.4 8.4-6.5 3-.9 6-.9 8.8.4 1.9.8 3.3 2.2 4.3 4 .3.3.2.5-.3.6zM105.7 86.5c-2.9-.1-5.5-.8-7.8-2.6-1.9-1.5-3.1-3.5-3.5-5.9-.6-3.6.3-6.9 2.2-9.8 2.1-3.2 5-5.2 8.7-6 3.1-.6 6.1-.4 8.8 1.2 2.4 1.4 3.9 3.5 4.5 6.2.7 4-.1 7.6-2.5 10.8-1.8 2.4-4.2 4-7 5-1.3.4-2.8.2-3.4.1zm7.6-12.6c0-.5 0-.8-.1-1.2-.5-2.7-2.7-4.2-5.4-3.8-2.7.4-4.6 1.9-5.6 4.5-.8 2.2-.5 4.4 1.2 6.1 1.1 1.2 2.6 1.6 4.2 1.4 2.8-.4 4.8-1.9 5.6-4.6.2-.8.1-1.7.1-2.4z"/>
+        <path fill="#00acd7" d="M60.1 86.7c-2.8-.1-5.4-.8-7.6-2.5-1.8-1.4-3-3.3-3.4-5.6-.6-3.4.2-6.5 1.9-9.3 2-3.3 4.9-5.5 8.7-6.4 3-.7 5.9-.5 8.6 1 2.5 1.4 4 3.5 4.6 6.3.7 3.9-.1 7.5-2.4 10.6-1.8 2.5-4.2 4.2-7.2 5.1-1.2.5-2.5.7-4.2.8zm7.5-12.4c0-.5 0-.8-.1-1.2-.5-2.6-2.6-4.2-5.3-3.8-2.7.4-4.7 1.9-5.7 4.4-.9 2.3-.6 4.5 1.2 6.3 1.2 1.2 2.6 1.6 4.3 1.4 2.8-.4 4.7-1.9 5.5-4.6.2-.8.1-1.8.1-2.5z"/>
       </svg>
     ),
   },
@@ -41,10 +51,113 @@ const sdks = [
     name: "Ruby",
     description: "gem install regraph",
     color: "#CC342D",
-    href: null, // Coming soon
+    href: null,
     icon: (
-      <svg className="h-8 w-8" viewBox="0 0 256 255" fill="currentColor">
-        <path d="M0 167.2L51.5 208 207.6 52.1l47.8 0L0 167.2zm229.3 36.4L179.5 254l75.9-45.4 0-5zM138.7 255.3l116.8-38.7-21.9-26.1L138.7 255.3zM254.7 94.2L226.8 84l-86.6 86.6 114.5-26.9 0-49.5zm-254.7 96.4l42.8 39.5 196.6-134.2-131.2 26.2L0 190.6zM28.5 6.2L0 47.2 53.6 0 28.5 6.2zm72.3-5.7L61.1 10.1 0 66.1 100.8 0.5zM255.4 48.7L230.1 2l-109 29.1 134.3 17.6zM227.5 0.6L119.4 5.3 176.3 0l51.2 0.6z"/>
+      <svg className="h-8 w-8" viewBox="0 0 128 128">
+        <linearGradient id="ruby-original-a" gradientUnits="userSpaceOnUse" x1="157.08" y1="2382.05" x2="131.682" y2="2426.892" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#FB7655"/>
+          <stop offset="0" stopColor="#FB7655"/>
+          <stop offset=".41" stopColor="#E42B1E"/>
+          <stop offset=".99" stopColor="#900"/>
+          <stop offset="1" stopColor="#900"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-a)" d="M118.5 97.5L59 124l50-22.5z"/>
+        <linearGradient id="ruby-original-b" gradientUnits="userSpaceOnUse" x1="169.731" y1="2419.72" x2="136.998" y2="2441.685" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#871101"/>
+          <stop offset="0" stopColor="#871101"/>
+          <stop offset=".99" stopColor="#911209"/>
+          <stop offset="1" stopColor="#911209"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-b)" d="M109 101.5L59 124l18 3z"/>
+        <linearGradient id="ruby-original-c" gradientUnits="userSpaceOnUse" x1="143.542" y1="2432.81" x2="110.81" y2="2454.774" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#871101"/>
+          <stop offset="0" stopColor="#871101"/>
+          <stop offset=".99" stopColor="#911209"/>
+          <stop offset="1" stopColor="#911209"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-c)" d="M77 127l-18-3 10 4z"/>
+        <linearGradient id="ruby-original-d" gradientUnits="userSpaceOnUse" x1="74.817" y1="2435.622" x2="79.891" y2="2402.644" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset=".23" stopColor="#E57252"/>
+          <stop offset=".46" stopColor="#DE3B20"/>
+          <stop offset=".99" stopColor="#A60003"/>
+          <stop offset="1" stopColor="#A60003"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-d)" d="M16 102l43 22 8-46z"/>
+        <linearGradient id="ruby-original-e" gradientUnits="userSpaceOnUse" x1="109.719" y1="2466.413" x2="111.589" y2="2432.757" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset=".23" stopColor="#E4714E"/>
+          <stop offset=".56" stopColor="#BE1A0D"/>
+          <stop offset=".99" stopColor="#A80D00"/>
+          <stop offset="1" stopColor="#A80D00"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-e)" d="M67 78L16 102l51 22z"/>
+        <linearGradient id="ruby-original-f" gradientUnits="userSpaceOnUse" x1="140.691" y1="2469.963" x2="146.289" y2="2424.379" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset=".18" stopColor="#E46342"/>
+          <stop offset=".4" stopColor="#C82410"/>
+          <stop offset=".99" stopColor="#A80D00"/>
+          <stop offset="1" stopColor="#A80D00"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-f)" d="M109 101.5L67 78l-8 46z"/>
+        <linearGradient id="ruby-original-g" gradientUnits="userSpaceOnUse" x1="123.6" y1="2506.018" x2="147.719" y2="2518.789" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset=".54" stopColor="#C81F11"/>
+          <stop offset=".99" stopColor="#BF0905"/>
+          <stop offset="1" stopColor="#BF0905"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-g)" d="M118.5 97.5L109 16.5l-42 61.5z"/>
+        <linearGradient id="ruby-original-h" gradientUnits="userSpaceOnUse" x1="66.333" y1="2496.149" x2="81.417" y2="2475.363" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset="0" stopColor="#fff"/>
+          <stop offset=".31" stopColor="#DE4024"/>
+          <stop offset=".99" stopColor="#BF190B"/>
+          <stop offset="1" stopColor="#BF190B"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-h)" d="M43 26l24 52 42-61.5z"/>
+        <linearGradient id="ruby-original-i" gradientUnits="userSpaceOnUse" x1="67.086" y1="2468.379" x2="53.378" y2="2442.778" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#BD0012"/>
+          <stop offset="0" stopColor="#BD0012"/>
+          <stop offset=".07" stopColor="#fff"/>
+          <stop offset=".17" stopColor="#fff"/>
+          <stop offset=".27" stopColor="#C82F1C"/>
+          <stop offset=".33" stopColor="#820C01"/>
+          <stop offset=".46" stopColor="#A31601"/>
+          <stop offset=".72" stopColor="#B31301"/>
+          <stop offset=".99" stopColor="#E82609"/>
+          <stop offset="1" stopColor="#E82609"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-i)" d="M16 102l51-24-24-52z"/>
+        <linearGradient id="ruby-original-j" gradientUnits="userSpaceOnUse" x1="109.5" y1="2506.375" x2="109.5" y2="2469.625" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#8C0C01"/>
+          <stop offset="0" stopColor="#8C0C01"/>
+          <stop offset=".54" stopColor="#990C00"/>
+          <stop offset=".99" stopColor="#A80D0E"/>
+          <stop offset="1" stopColor="#A80D0E"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-j)" d="M109 16.5l-42 61.5-24-52z"/>
+        <linearGradient id="ruby-original-k" gradientUnits="userSpaceOnUse" x1="94.5" y1="2512" x2="94.5" y2="2492" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#7E110B"/>
+          <stop offset="0" stopColor="#7E110B"/>
+          <stop offset=".99" stopColor="#9E0C00"/>
+          <stop offset="1" stopColor="#9E0C00"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-k)" d="M109 16.5L43 26l-33 3z"/>
+        <linearGradient id="ruby-original-l" gradientUnits="userSpaceOnUse" x1="55" y1="2492" x2="55" y2="2432" gradientTransform="matrix(1 0 0 -1 -47.5 2517)">
+          <stop offset="0" stopColor="#79130D"/>
+          <stop offset="0" stopColor="#79130D"/>
+          <stop offset=".99" stopColor="#9E120B"/>
+          <stop offset="1" stopColor="#9E120B"/>
+        </linearGradient>
+        <path fill="url(#ruby-original-l)" d="M10 29l6 73 27-76z"/>
+        <path fill="#9E1209" d="M109 16.5L43 26 10 29l6 73z"/>
+        <path fill="#fff" fillOpacity=".8" d="M10 29l6 73 51-24 42-61.5L43 26z"/>
+        <path fill="#BD0012" d="M10 29l47.6-3H43l-33 3z"/>
+        <path fill="#fff" fillOpacity=".2" d="M10 29l6 73 51-24z"/>
       </svg>
     ),
   },
@@ -93,10 +206,7 @@ const SDKSection = () => {
                   rel="noopener noreferrer"
                   className="group flex flex-col items-center gap-3 p-6 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-primary/5 transition-all duration-300"
                 >
-                  <div 
-                    className="transition-transform group-hover:scale-110"
-                    style={{ color: sdk.color }}
-                  >
+                  <div className="transition-transform group-hover:scale-110">
                     {sdk.icon}
                   </div>
                   <div className="text-center">
@@ -111,9 +221,7 @@ const SDKSection = () => {
                 </a>
               ) : (
                 <div className="flex flex-col items-center gap-3 p-6 rounded-xl border border-border/50 bg-card/50 opacity-60">
-                  <div style={{ color: sdk.color }}>
-                    {sdk.icon}
-                  </div>
+                  <div>{sdk.icon}</div>
                   <div className="text-center">
                     <div className="font-semibold">{sdk.name}</div>
                     <div className="text-xs font-mono text-muted-foreground mt-1">
