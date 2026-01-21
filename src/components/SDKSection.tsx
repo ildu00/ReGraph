@@ -24,8 +24,8 @@ const sdks = [
   {
     name: "Ruby",
     command: "gem install regraph",
-    href: null,
-    available: false,
+    href: "https://github.com/ildu00/ReGraph/tree/main/sdk/ruby",
+    available: true,
   },
 ];
 
