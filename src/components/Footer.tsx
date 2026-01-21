@@ -39,7 +39,8 @@ const Footer = ({ insetLeft }: FooterProps) => {
   const isActiveLink = (href: string) => {
     if (href === "#" || href.startsWith("/#")) return false;
     const path = href.split("#")[0];
-    return location.pathname === path;
+    // Check for exact match or if current path starts with the link path (for nested routes like /blog/slug)
+    return location.pathname === path || (path !== "/" && location.pathname.startsWith(path + "/"));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
