@@ -2,10 +2,37 @@ import { Cpu, Globe, Server, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const HeroSection = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+
+  const { data: platformStats } = useQuery({
+    queryKey: ["platform-stats-hero"],
+    queryFn: async () => {
+      const { data, error } = await supabase.functions.invoke("platform-stats");
+      if (error) throw error;
+      return data as {
+        devices: { total: number; online: number };
+        platform: { totalProviders: number };
+      };
+    },
+    staleTime: 60 * 1000, // Cache for 1 minute
+    refetchOnWindowFocus: false,
+  });
+
+  const formatNodeCount = (count: number): string => {
+    if (count >= 1000) {
+      return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k+`;
+    }
+    return count > 0 ? `${count}+` : "50,000+";
+  };
+
+  const nodeCount = platformStats?.devices?.total 
+    ? formatNodeCount(platformStats.devices.total)
+    : "50,000+";
 
   const handleStartBuilding = () => {
     if (user) {
@@ -54,7 +81,7 @@ const HeroSection = () => {
           <div className="flex flex-wrap justify-center gap-8 mb-12">
             {[
               { value: "$0.0001", label: "per inference" },
-              { value: "50,000+", label: "GPU nodes" },
+              { value: nodeCount, label: "GPU nodes" },
               { value: "99.9%", label: "uptime SLA" },
             ].map((stat) => (
               <div key={stat.label} className="text-center">
@@ -95,4 +122,3 @@ const HeroSection = () => {
 };
 
 export default HeroSection;
-
