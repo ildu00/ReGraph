@@ -16,6 +16,34 @@ const getBootEventUrl = () => {
   return null;
 };
 
+const getBuildFingerprint = () => {
+  try {
+    const fromStorage = localStorage.getItem("__regraph_build");
+    if (fromStorage) return fromStorage;
+  } catch {
+    // ignore
+  }
+
+  try {
+    const w = window as any;
+    if (w.__regraph_build) return String(w.__regraph_build);
+  } catch {
+    // ignore
+  }
+
+  try {
+    const el =
+      document.getElementById("boot-main") ||
+      document.querySelector('script[type="module"][src]');
+    const raw = el?.getAttribute("src") || (el as HTMLScriptElement | null)?.src;
+    if (!raw) return null;
+    const u = new URL(raw, window.location.href);
+    return u.pathname.split("/").pop() || u.pathname;
+  } catch {
+    return null;
+  }
+};
+
 // Error boundary to catch lazy load failures and show a reload UI
 class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -30,6 +58,7 @@ class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error 
 
   render() {
     if (this.state.error) {
+      const build = getBuildFingerprint();
       return (
         <div style={{
           position: "fixed",
@@ -45,6 +74,11 @@ class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error 
         }}>
           <div style={{ fontSize: "48px", marginBottom: "16px" }}>⚠️</div>
           <h2 style={{ margin: "0 0 8px", fontSize: "18px" }}>Failed to load application</h2>
+          {build ? (
+            <p style={{ margin: "0 0 12px", opacity: 0.6, fontSize: "12px" }}>
+              Build: <code style={{ opacity: 0.9 }}>{build}</code>
+            </p>
+          ) : null}
           <p style={{ margin: "0 0 16px", opacity: 0.7, fontSize: "14px", maxWidth: "300px" }}>
             This may be a network or browser cache issue.
           </p>
