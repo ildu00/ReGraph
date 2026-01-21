@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Cpu, Globe, Server, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -5,11 +6,35 @@ import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+const CACHE_KEY = "regraph-hero-node-count";
+
+const getCachedNodeCount = (): number | null => {
+  try {
+    const cached = localStorage.getItem(CACHE_KEY);
+    if (cached) {
+      const { value, timestamp } = JSON.parse(cached);
+      // Cache valid for 5 minutes
+      if (Date.now() - timestamp < 5 * 60 * 1000) {
+        return value;
+      }
+    }
+  } catch {}
+  return null;
+};
+
+const setCachedNodeCount = (value: number) => {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({ value, timestamp: Date.now() }));
+  } catch {}
+};
+
 const HeroSection = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: platformStats } = useQuery({
+  const cachedCount = getCachedNodeCount();
+
+  const { data: platformStats, isLoading } = useQuery({
     queryKey: ["platform-stats-hero"],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("platform-stats");
@@ -19,20 +44,30 @@ const HeroSection = () => {
         platform: { totalProviders: number };
       };
     },
-    staleTime: 60 * 1000, // Cache for 1 minute
+    staleTime: 60 * 1000,
     refetchOnWindowFocus: false,
   });
+
+  // Cache the fetched value
+  useEffect(() => {
+    if (platformStats?.devices?.total) {
+      setCachedNodeCount(platformStats.devices.total);
+    }
+  }, [platformStats?.devices?.total]);
 
   const formatNodeCount = (count: number): string => {
     if (count >= 1000) {
       return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k+`;
     }
-    return count > 0 ? `${count}+` : "50,000+";
+    return `${count}+`;
   };
 
+  // Priority: fetched data > cached data > loading state
   const nodeCount = platformStats?.devices?.total 
     ? formatNodeCount(platformStats.devices.total)
-    : "50,000+";
+    : cachedCount 
+      ? formatNodeCount(cachedCount)
+      : null;
 
   const handleStartBuilding = () => {
     if (user) {
@@ -79,16 +114,22 @@ const HeroSection = () => {
 
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-8 mb-12">
-            {[
-              { value: "$0.0001", label: "per inference" },
-              { value: nodeCount, label: "GPU nodes" },
-              { value: "99.9%", label: "uptime SLA" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-3xl md:text-4xl font-bold font-mono text-primary">{stat.value}</div>
-                <div className="text-sm text-muted-foreground">{stat.label}</div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">$0.0001</div>
+              <div className="text-sm text-muted-foreground">per inference</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold font-mono text-primary min-w-[80px]">
+                {nodeCount ?? (
+                  <span className="inline-block w-16 h-8 bg-primary/20 rounded animate-pulse" />
+                )}
               </div>
-            ))}
+              <div className="text-sm text-muted-foreground">GPU nodes</div>
+            </div>
+            <div className="text-center">
+              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">99.9%</div>
+              <div className="text-sm text-muted-foreground">uptime SLA</div>
+            </div>
           </div>
 
           {/* CTAs */}
