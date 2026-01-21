@@ -43,17 +43,17 @@ const StepCard = ({ step, index, delay }: { step: typeof providerSteps[0]; index
     whileInView={{ opacity: 1, y: 0 }}
     viewport={{ once: true }}
     transition={{ delay }}
-    className="relative"
+    className="relative h-full"
   >
-    <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors">
+    <div className="flex flex-col items-center text-center p-6 rounded-xl bg-card border border-border hover:border-primary/30 transition-colors h-full">
       <div className="w-14 h-14 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
         <step.icon className="h-7 w-7 text-primary" />
       </div>
-      <div className="absolute -top-3 -left-3 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-sm">
+      <div className="absolute -top-3 -left-3 w-9 h-9 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-mono font-bold text-base shadow-lg">
         {index + 1}
       </div>
       <h3 className="text-xl font-semibold mb-2">{step.title}</h3>
-      <p className="text-muted-foreground">{step.description}</p>
+      <p className="text-muted-foreground flex-1">{step.description}</p>
     </div>
     {index < 2 && (
       <div className="hidden md:block absolute top-1/2 -right-4 transform -translate-y-1/2 z-10">
