@@ -24,15 +24,34 @@ export default defineConfig(({ mode }) => ({
       output: {
         // Split vendor chunks for better caching and smaller initial load
         manualChunks: {
-          // React core - rarely changes, cache well
-          // IMPORTANT: include react/jsx-runtime so it doesn't end up bundled into unrelated chunks
-          // (e.g. vendor-motion), which would make that chunk critical-path on initial load.
+          // React core (keep small for mobile Safari)
           "vendor-react": [
             "react",
             "react-dom",
+          ],
+          // React Router (separate to reduce react chunk size)
+          "vendor-router": [
             "react-router-dom",
+          ],
+          // JSX runtime (critical, must load early)
+          "vendor-jsx": [
             "react/jsx-runtime",
             "react/jsx-dev-runtime",
+          ],
+          // Split Radix UI into smaller chunks (Safari has module size limits)
+          "vendor-radix": [
+            "@radix-ui/react-dialog",
+            "@radix-ui/react-dropdown-menu",
+            "@radix-ui/react-tooltip",
+          ],
+          "vendor-radix-forms": [
+            "@radix-ui/react-tabs",
+            "@radix-ui/react-select",
+          ],
+          "vendor-radix-overlay": [
+            "@radix-ui/react-accordion",
+            "@radix-ui/react-alert-dialog",
+            "@radix-ui/react-popover",
           ],
           // Heavy animation library - only needed on pages with animations
           "vendor-motion": ["framer-motion"],
@@ -40,17 +59,6 @@ export default defineConfig(({ mode }) => ({
           "vendor-query": ["@tanstack/react-query"],
           // Icons - large, tree-shake per route
           "vendor-icons": ["lucide-react"],
-          // UI primitives - shared across routes
-          "vendor-radix": [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-tabs",
-            "@radix-ui/react-tooltip",
-            "@radix-ui/react-select",
-            "@radix-ui/react-popover",
-            "@radix-ui/react-accordion",
-            "@radix-ui/react-alert-dialog",
-          ],
           // Supabase client
           "vendor-supabase": ["@supabase/supabase-js"],
           // Charts - only for dashboard
