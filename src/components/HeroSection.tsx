@@ -1,6 +1,6 @@
-import { Cpu, Globe, Server, Smartphone, ArrowRight } from "lucide-react";
+import { Cpu, Globe, Server, Smartphone, ArrowRight, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
 const HeroSection = () => {
@@ -79,6 +79,29 @@ const HeroSection = () => {
               Provide Compute
               <Server className="ml-2 h-5 w-5" />
             </Button>
+          </div>
+
+          {/* SDK Links */}
+          <div className="mt-6 flex justify-center items-center gap-6 text-sm">
+            <a 
+              href="https://github.com/ildu00/ReGraph/tree/main/sdk/python" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 0c-6.627 0-12 5.373-12 12s5.373 12 12 12 12-5.373 12-12-5.373-12-12-12zm-2 18.878c-.316.052-.647.082-.989.082-3.012 0-5.476-2.319-5.476-5.476 0-.657.118-1.289.331-1.876l6.134 6.134zm9.041-4.878c0 .898-.218 1.746-.599 2.499l-7.041-7.041c.753-.381 1.601-.599 2.499-.599 3.012 0 5.476 2.319 5.476 5.476h-.335z"/>
+              </svg>
+              Python SDK
+              <ExternalLink className="h-3 w-3" />
+            </a>
+            <Link 
+              to="/docs" 
+              className="inline-flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors"
+            >
+              API Documentation
+              <ArrowRight className="h-3 w-3" />
+            </Link>
           </div>
 
           {/* Device icons */}
