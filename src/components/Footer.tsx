@@ -126,9 +126,9 @@ const Footer = ({ insetLeft }: FooterProps) => {
                 <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
                   <MessageCircle className="h-5 w-5" />
                 </a>
-                <a href="#" className="text-muted-foreground hover:text-primary transition-colors">
+                <button onClick={() => setContactOpen(true)} className="text-muted-foreground hover:text-primary transition-colors">
                   <Mail className="h-5 w-5" />
-                </a>
+                </button>
               </div>
             </div>
 
