@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,7 @@ import DocsSidebar from "@/components/docs/DocsSidebar";
 import SupportForm from "@/components/SupportForm";
 
 const Docs = () => {
+  const sidebarFixedLeft = "max(1rem, calc((100vw - 1400px) / 2 + 1rem))";
   const [copiedSection, setCopiedSection] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, section: string) => {
@@ -133,7 +134,11 @@ volumes:
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">
-        <SidebarProvider defaultOpen={true} className="flex-col">
+        <SidebarProvider
+          defaultOpen={true}
+          className="flex-col"
+          style={{ ["--sidebar-fixed-left" as any]: sidebarFixedLeft } as CSSProperties}
+        >
           <div className="flex w-full flex-1">
             <DocsSidebar 
               activeSection={activeSection} 
