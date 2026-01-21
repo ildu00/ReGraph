@@ -25,7 +25,15 @@ export default defineConfig(({ mode }) => ({
         // Split vendor chunks for better caching and smaller initial load
         manualChunks: {
           // React core - rarely changes, cache well
-          "vendor-react": ["react", "react-dom", "react-router-dom"],
+          // IMPORTANT: include react/jsx-runtime so it doesn't end up bundled into unrelated chunks
+          // (e.g. vendor-motion), which would make that chunk critical-path on initial load.
+          "vendor-react": [
+            "react",
+            "react-dom",
+            "react-router-dom",
+            "react/jsx-runtime",
+            "react/jsx-dev-runtime",
+          ],
           // Heavy animation library - only needed on pages with animations
           "vendor-motion": ["framer-motion"],
           // Data fetching
