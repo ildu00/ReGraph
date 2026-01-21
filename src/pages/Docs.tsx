@@ -211,21 +211,8 @@ volumes:
                           The recommended way to run the ReGraph agent in production. Supports GPU passthrough and automatic restarts.
                         </p>
                         
+                        <p className="text-xs text-muted-foreground mb-2">docker-compose.yml</p>
                         <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-muted-foreground font-mono">docker-compose.yml</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(dockerComposeExample, "docker")}
-                            >
-                              {copiedSection === "docker" ? (
-                                <Check className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
                           <CodeBlock code={dockerComposeExample} language="yaml" />
                         </div>
 
@@ -248,21 +235,8 @@ volumes:
                           One-line installation script for Linux and macOS systems.
                         </p>
                         
+                        <p className="text-xs text-muted-foreground mb-2">Terminal</p>
                         <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-muted-foreground font-mono">Terminal</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(installScriptBash, "bash")}
-                            >
-                              {copiedSection === "bash" ? (
-                                <Check className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
                           <CodeBlock code={installScriptBash} language="bash" />
                         </div>
 
@@ -279,21 +253,8 @@ volumes:
                           PowerShell installation script for Windows systems.
                         </p>
                         
+                        <p className="text-xs text-muted-foreground mb-2">PowerShell (Admin)</p>
                         <div className="mb-4">
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="text-xs text-muted-foreground font-mono">PowerShell (Admin)</span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => copyToClipboard(installScriptPowershell, "powershell")}
-                            >
-                              {copiedSection === "powershell" ? (
-                                <Check className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Copy className="h-4 w-4" />
-                              )}
-                            </Button>
-                          </div>
                           <CodeBlock code={installScriptPowershell} language="powershell" />
                         </div>
 
