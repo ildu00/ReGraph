@@ -85,11 +85,11 @@ async function bootApp() {
     const reactDom = await import("react-dom/client");
     logImportAttempt("react-dom/client", "success");
 
-    // Step 2: Import App
-    logImportAttempt("./App", "start");
+    // Step 2: Import AppShell (minimal, no heavy deps)
+    logImportAttempt("./AppShell", "start");
     window.__regraphBootStage = "import_app";
-    const app = await import("./App");
-    logImportAttempt("./App", "success");
+    const app = await import("./AppShell");
+    logImportAttempt("./AppShell", "success");
 
     // Step 3: Render
     window.__regraphBootStage = "render_start";
