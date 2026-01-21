@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { RefreshCw, Search, AlertTriangle, Smartphone, Monitor } from "lucide-react";
+import { RefreshCw, Search, AlertTriangle, Smartphone, Monitor, ChevronLeft, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -23,12 +23,15 @@ interface BootEvent {
   ip_address: string | null;
 }
 
+const ITEMS_PER_PAGE = 20;
+
 export const AdminBootEvents = () => {
   const [events, setEvents] = useState<BootEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [reasonFilter, setReasonFilter] = useState<string>("all");
   const [selectedEvent, setSelectedEvent] = useState<BootEvent | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     fetchEvents();
@@ -68,6 +71,11 @@ export const AdminBootEvents = () => {
     return colors[reason] || "bg-muted text-muted-foreground";
   };
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, reasonFilter]);
+
   const filteredEvents = events.filter((event) => {
     const q = searchQuery.trim().toLowerCase();
     const terms = q.includes("|") ? q.split("|").map((t) => t.trim()).filter(Boolean) : (q ? [q] : []);
@@ -89,6 +97,12 @@ export const AdminBootEvents = () => {
 
     return matchesSearch && matchesReason;
   });
+
+  const totalPages = Math.ceil(filteredEvents.length / ITEMS_PER_PAGE);
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   const uniqueReasons = [...new Set(events.map((e) => e.reason))];
 
@@ -224,14 +238,14 @@ export const AdminBootEvents = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredEvents.length === 0 ? (
+              {paginatedEvents.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                     No boot events found
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredEvents.slice(0, 100).map((event) => (
+                paginatedEvents.map((event) => (
                   <TableRow key={event.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEvent(event)}>
                     <TableCell className="text-sm">
                       {format(new Date(event.created_at), "MMM d, HH:mm:ss")}
@@ -267,6 +281,36 @@ export const AdminBootEvents = () => {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+              <div className="text-sm text-muted-foreground">
+                Showing {((currentPage - 1) * ITEMS_PER_PAGE) + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredEvents.length)} of {filteredEvents.length}
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 
