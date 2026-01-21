@@ -54,34 +54,75 @@ window.addEventListener("pageshow", (e) => {
   }
 });
 
-// Load React + the app lazily to reduce upfront parsing cost on mobile.
+// Helper to log detailed import diagnostics
+const logImportAttempt = (name: string, stage: string, error?: unknown) => {
+  try {
+    const payload = {
+      name,
+      stage,
+      error: error instanceof Error ? error.message : error ? String(error) : undefined,
+      timestamp: Date.now(),
+    };
+    console.log(`[boot] import ${name}: ${stage}`, error || "");
+    
+    // Also store for boot event
+    const existing = localStorage.getItem("__regraph_import_log") || "[]";
+    const logs = JSON.parse(existing);
+    logs.push(payload);
+    localStorage.setItem("__regraph_import_log", JSON.stringify(logs.slice(-10)));
+  } catch {
+    // ignore
+  }
+};
+
+// Load React + the app with detailed diagnostics for Safari debugging.
 // The boot spinner stays visible until React mounts and App.tsx removes it.
-Promise.all([import("react-dom/client"), import("./App")])
-  .then(([reactDom, app]) => {
+async function bootApp() {
+  try {
+    // Step 1: Import react-dom/client
+    logImportAttempt("react-dom/client", "start");
+    window.__regraphBootStage = "import_react";
+    const reactDom = await import("react-dom/client");
+    logImportAttempt("react-dom/client", "success");
+
+    // Step 2: Import App
+    logImportAttempt("./App", "start");
+    window.__regraphBootStage = "import_app";
+    const app = await import("./App");
+    logImportAttempt("./App", "success");
+
+    // Step 3: Render
     window.__regraphBootStage = "render_start";
     const rootEl = document.getElementById("root");
-    if (!rootEl) return;
+    if (!rootEl) {
+      logImportAttempt("render", "no_root");
+      return;
+    }
 
     reactDom.createRoot(rootEl).render(<app.default />);
     window.__regraphBootStage = "render_called";
-  })
-  .catch((err: unknown) => {
+    logImportAttempt("render", "success");
+  } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));
     const message = error.message;
-    console.error("[boot] failed to start", error);
+    
+    logImportAttempt(window.__regraphBootStage || "unknown", "error", error);
+    console.error("[boot] failed to start at stage:", window.__regraphBootStage, error);
 
-    setBootDiag("main_boot_error", message);
+    setBootDiag("main_boot_error", `${window.__regraphBootStage}: ${message}`);
 
     // If startup failed due to a transient chunk/cache issue, do a single controlled reload.
-    // (Catching the error would otherwise prevent the watchdog from seeing it and leave the spinner forever.)
     if (!hasReloadMarker()) {
       reloadOnce(true);
       return;
     }
 
-    // Bubble the error to the watchdog (and window.onerror) without causing an infinite loop.
+    // Bubble the error to the watchdog without causing an infinite loop.
     setTimeout(() => {
       throw error;
     }, 0);
-  });
+  }
+}
+
+bootApp();
 

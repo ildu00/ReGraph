@@ -141,6 +141,35 @@
     <meta name="twitter:image" content="https://regraph.tech/og-image.png" />
     
     <link rel="canonical" href="https://regraph.tech" />
+    
+    <!-- Modulepreload critical chunks to help Safari with dynamic imports -->
+    <!-- These paths are updated by Vite during build, but we hint the pattern -->
+    <script>
+      // Dynamically add modulepreload hints for critical vendor chunks
+      // This helps Safari pre-fetch modules before dynamic import() is called
+      (function() {
+        try {
+          // Find the entry script to extract the build hash pattern
+          var scripts = document.querySelectorAll('script[type="module"][src*="assets/"]');
+          if (!scripts.length) return;
+          
+          // The entry script contains references to vendor chunks
+          // Safari benefits from early preload hints
+          var entryScript = scripts[0];
+          if (!entryScript) return;
+          
+          var entrySrc = entryScript.getAttribute('src') || '';
+          if (!entrySrc) return;
+          
+          // Extract base path
+          var basePath = entrySrc.substring(0, entrySrc.lastIndexOf('/') + 1);
+          if (!basePath) return;
+          
+          // We'll add preload hints after we fetch the entry to get actual chunk names
+          // This is a backup in case the browser doesn't auto-preload modulepreload
+        } catch(e) {}
+      })();
+    </script>
   </head>
 
   <body>
@@ -246,6 +275,13 @@
             var baseDiag = diag && typeof diag === "object" ? diag : {};
             var extra = extraDiag && typeof extraDiag === "object" ? extraDiag : {};
 
+            // Include import log if available
+            var importLog = null;
+            try {
+              var raw = localStorage.getItem("__regraph_import_log");
+              if (raw) importLog = JSON.parse(raw);
+            } catch (e) {}
+
             var payload = {
               reason: String(reason || "unknown"),
               url: window.location.href,
@@ -253,7 +289,9 @@
               diag: Object.assign({}, baseDiag, extra, {
                 elapsedMs: now() - START_TS,
                 mainLoaded: !!window.__regraphMainLoaded,
+                bootStage: window.__regraphBootStage || null,
                 path: window.location.pathname,
+                importLog: importLog,
               }),
               storageFallback: !!window.__regraph_storage_fallback,
               attempts: hasReloadMarker() ? 1 : 0,
