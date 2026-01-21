@@ -142,37 +142,8 @@
     
     <link rel="canonical" href="https://regraph.tech" />
     
-    <!-- Modulepreload critical chunks to help Safari with dynamic imports -->
-    <script>
-      (function() {
-        try {
-          // Parse HTML to find actual chunk names and add modulepreload
-          var html = document.documentElement.outerHTML;
-          
-          // Extract vendor chunk names from the entry script's __vite__mapDeps array
-          var match = html.match(/assets\/(vendor-[a-zA-Z0-9_-]+\.js)/g);
-          if (!match) return;
-          
-          var head = document.head || document.getElementsByTagName('head')[0];
-          if (!head) return;
-          
-          // Add modulepreload for each vendor chunk
-          var seen = {};
-          for (var i = 0; i < match.length && i < 10; i++) {
-            var chunk = match[i];
-            if (seen[chunk]) continue;
-            seen[chunk] = true;
-            
-            var link = document.createElement('link');
-            link.rel = 'modulepreload';
-            link.href = '/' + chunk;
-            link.as = 'script';
-            link.crossOrigin = '';
-            head.appendChild(link);
-          }
-        } catch(e) {}
-      })();
-    </script>
+    <!-- NOTE: Avoid custom modulepreload injection here. If the entry script fails,
+         it is almost always an origin/CDN caching or content-type issue, not a missing preload. -->
   </head>
 
   <body>
@@ -420,7 +391,7 @@
                 }
               }
 
-              function injectModuleScript(u, label) {
+               function injectModuleScript(u, label) {
                 try {
                   if (document.getElementById("boot-main-retry")) return;
                   var s = document.createElement("script");
@@ -429,11 +400,74 @@
                   s.src = withProbeParam(u);
                   // In case the browser blocks/errs, capture it.
                   s.onerror = function () {
-                    sendBootEvent("entry_script_error", {
+                     sendBootEvent("entry_script_error", {
                       stage: "retry",
                       label: String(label || "retry"),
                       entrySrc: String(u || ""),
                     });
+
+                     // Extra: probe the same URL to capture status + content-type.
+                     // This helps differentiate:
+                     // - 404 missing hashed asset (stale cached HTML)
+                     // - HTML served instead of JS (CDN error/challenge page)
+                     // - wrong content-type
+                     try {
+                       var probeUrl = withProbeParam(String(u || ""));
+                       fetch(probeUrl, { method: "GET", cache: "no-store" })
+                         .then(function (res) {
+                           var ct = null;
+                           try {
+                             ct = res && res.headers ? res.headers.get("content-type") : null;
+                           } catch (e) {
+                             ct = null;
+                           }
+
+                           // Read a small snippet; ignore errors.
+                           return res
+                             .text()
+                             .then(function (txt) {
+                               var snippet = String(txt || "").slice(0, 220);
+                               sendBootEvent("entry_script_probe", {
+                                 stage: "retry",
+                                 label: String(label || "retry"),
+                                 entrySrc: String(u || ""),
+                                 probeStatus: res ? res.status : 0,
+                                 probeOk: !!(res && res.ok),
+                                 contentType: ct,
+                                 snippet: snippet,
+                               });
+
+                               // If we clearly got the wrong thing, try one controlled reload.
+                               if (!hasReloadMarker()) {
+                                 var isHtml = ct && String(ct).toLowerCase().indexOf("text/html") !== -1;
+                                 if ((res && res.status === 404) || isHtml) {
+                                   reloadOnce("entry_script_probe");
+                                 }
+                               }
+                             })
+                             .catch(function () {
+                               sendBootEvent("entry_script_probe", {
+                                 stage: "retry",
+                                 label: String(label || "retry"),
+                                 entrySrc: String(u || ""),
+                                 probeStatus: res ? res.status : 0,
+                                 probeOk: !!(res && res.ok),
+                                 contentType: ct,
+                                 snippet: null,
+                               });
+                             });
+                         })
+                         .catch(function (err) {
+                           sendBootEvent("entry_script_probe", {
+                             stage: "retry",
+                             label: String(label || "retry"),
+                             entrySrc: String(u || ""),
+                             probeError: String((err && err.message) || err || "fetch_error"),
+                           });
+                         });
+                     } catch (e) {
+                       // ignore
+                     }
                   };
                   // Note: load for scripts happens after fetch+evaluate.
                   s.onload = function () {
