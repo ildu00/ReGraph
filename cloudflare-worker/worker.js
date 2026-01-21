@@ -11,10 +11,15 @@ const ROUTES = {
   "/v1/completions": "inference",
   "/v1/audio/speech": "audio-speech",
   "/v1/models": "models",
+  "/v1/models/deploy": "models-deploy",
   "/v1/batch": "batch",
   "/v1/training/jobs": "training-jobs",
   "/v1/devices": "devices",
   "/v1/status": "status",
+  "/v1/usage": "usage",
+  "/v1/provider/register": "provider",
+  "/v1/provider/earnings": "provider",
+  "/v1/hardware/rent": "hardware-rent",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
@@ -41,7 +46,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Invalid endpoint",
-          message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs",
+          message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/register, /v1/provider/earnings, /v1/hardware/rent, /v1/models/deploy",
           documentation: "https://regraph.tech/docs"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,7 +66,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Endpoint not found",
-          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/chat/completions, /v1/models, /v1/audio/speech, /v1/batch, /v1/training/jobs`,
+          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/register, /v1/provider/earnings, /v1/hardware/rent, /v1/models/deploy`,
           documentation: "https://regraph.tech/docs"
         }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
