@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Cpu, Globe, Server, Smartphone, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { motion, useInView, animate } from "framer-motion";
 
 const CACHE_KEY = "regraph-hero-node-count";
 
@@ -26,6 +27,44 @@ const setCachedNodeCount = (value: number) => {
   try {
     localStorage.setItem(CACHE_KEY, JSON.stringify({ value, timestamp: Date.now() }));
   } catch {}
+};
+
+const AnimatedNumber = ({ 
+  from, 
+  to, 
+  decimals = 0, 
+  prefix = "", 
+  suffix = "",
+  duration = 1.5 
+}: { 
+  from: number; 
+  to: number; 
+  decimals?: number; 
+  prefix?: string; 
+  suffix?: string;
+  duration?: number;
+}) => {
+  const [value, setValue] = useState(from);
+  const ref = useRef<HTMLSpanElement>(null);
+  const isInView = useInView(ref, { once: true, margin: "-100px" });
+
+  useEffect(() => {
+    if (!isInView) return;
+    
+    const controls = animate(from, to, {
+      duration,
+      ease: "easeOut",
+      onUpdate: (v) => setValue(v),
+    });
+
+    return () => controls.stop();
+  }, [isInView, from, to, duration]);
+
+  return (
+    <span ref={ref}>
+      {prefix}{value.toFixed(decimals)}{suffix}
+    </span>
+  );
 };
 
 const HeroSection = () => {
@@ -55,19 +94,8 @@ const HeroSection = () => {
     }
   }, [platformStats?.devices?.total]);
 
-  const formatNodeCount = (count: number): string => {
-    if (count >= 1000) {
-      return `${(count / 1000).toFixed(1).replace(/\.0$/, "")}k+`;
-    }
-    return `${count}+`;
-  };
-
-  // Priority: fetched data > cached data > loading state
-  const nodeCount = platformStats?.devices?.total 
-    ? formatNodeCount(platformStats.devices.total)
-    : cachedCount 
-      ? formatNodeCount(cachedCount)
-      : null;
+  // Get raw node count for animation
+  const nodeCountRaw = platformStats?.devices?.total ?? cachedCount ?? null;
 
   const handleStartBuilding = () => {
     if (user) {
@@ -115,19 +143,27 @@ const HeroSection = () => {
           {/* Stats */}
           <div className="flex flex-wrap justify-center gap-8 mb-12">
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">$0.0001</div>
+              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">
+                $<AnimatedNumber from={0.0009} to={0.0001} decimals={4} />
+              </div>
               <div className="text-sm text-muted-foreground">per inference</div>
             </div>
             <div className="text-center">
               <div className="text-3xl md:text-4xl font-bold font-mono text-primary min-w-[80px]">
-                {nodeCount ?? (
+                {nodeCountRaw !== null ? (
+                  <>
+                    <AnimatedNumber from={0} to={nodeCountRaw} decimals={0} suffix="+" />
+                  </>
+                ) : (
                   <span className="inline-block w-16 h-8 bg-primary/20 rounded animate-pulse" />
                 )}
               </div>
               <div className="text-sm text-muted-foreground">GPU nodes</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">99.9%</div>
+              <div className="text-3xl md:text-4xl font-bold font-mono text-primary">
+                <AnimatedNumber from={80} to={99.9} decimals={1} suffix="%" />
+              </div>
               <div className="text-sm text-muted-foreground">uptime SLA</div>
             </div>
           </div>
