@@ -437,6 +437,129 @@
                                  snippet: snippet,
                                });
 
+                                // Probe entry script dependencies (the most common cause of
+                                // "Importing a module script failed" is a nested import failing).
+                                // We extract Vite's dependency map from the fetched entry script.
+                                try {
+                                  var text = String(txt || "");
+                                  var deps = null;
+
+                                  function extractDeps(jsText) {
+                                    try {
+                                      // Vite output typically contains: m.f||(m.f=["assets/...js", ...])
+                                      var m = jsText.match(
+                                        /m\\.f\s*\|\|\s*\(m\\.f\s*=\s*(\[[^\]]+\])\)/
+                                      );
+                                      if (!m) {
+                                        // Fallback: any direct assignment m.f=[...]
+                                        m = jsText.match(/m\\.f\s*=\s*(\[[^\]]+\])/);
+                                      }
+                                      if (!m || !m[1]) return null;
+                                      return JSON.parse(m[1]);
+                                    } catch (e) {
+                                      return null;
+                                    }
+                                  }
+
+                                  deps = extractDeps(text);
+
+                                  if (deps && deps.length) {
+                                    var maxDeps = 10;
+                                    var list = deps.slice(0, maxDeps);
+
+                                    function normalizeDepPath(p) {
+                                      p = String(p || "");
+                                      if (!p) return null;
+                                      // Vite deps are often like "assets/foo.js".
+                                      if (p[0] === "/") return p;
+                                      if (p.indexOf("assets/") === 0) return "/" + p;
+                                      return p;
+                                    }
+
+                                    function probeDep(depPath) {
+                                      return new Promise(function (resolve) {
+                                        try {
+                                          var dep = normalizeDepPath(depPath);
+                                          if (!dep) return resolve({ dep: String(depPath || ""), ok: false, status: 0, contentType: null });
+
+                                          var depUrl = withProbeParam(dep);
+                                          fetch(depUrl, { method: "GET", cache: "no-store" })
+                                            .then(function (r) {
+                                              var depCt = null;
+                                              try {
+                                                depCt = r && r.headers ? r.headers.get("content-type") : null;
+                                              } catch (e) {
+                                                depCt = null;
+                                              }
+                                              // Only read a snippet when the response is suspicious.
+                                              var suspicious = !r.ok || (depCt && String(depCt).toLowerCase().indexOf("text/html") !== -1);
+                                              if (!suspicious) {
+                                                resolve({ dep: dep, ok: true, status: r.status, contentType: depCt });
+                                                return;
+                                              }
+                                              r.text()
+                                                .then(function (t2) {
+                                                  resolve({
+                                                    dep: dep,
+                                                    ok: !!r.ok,
+                                                    status: r.status,
+                                                    contentType: depCt,
+                                                    snippet: String(t2 || "").slice(0, 140),
+                                                  });
+                                                })
+                                                .catch(function () {
+                                                  resolve({ dep: dep, ok: !!r.ok, status: r.status, contentType: depCt, snippet: null });
+                                                });
+                                            })
+                                            .catch(function (e) {
+                                              resolve({ dep: dep, ok: false, status: 0, contentType: null, error: String((e && e.message) || e || "fetch_error") });
+                                            });
+                                        } catch (e) {
+                                          resolve({ dep: String(depPath || ""), ok: false, status: 0, contentType: null, error: "probe_exception" });
+                                        }
+                                      });
+                                    }
+
+                                    Promise.all(list.map(probeDep))
+                                      .then(function (results) {
+                                        try {
+                                          sendBootEvent("entry_deps_probe", {
+                                            stage: "retry",
+                                            label: String(label || "retry"),
+                                            entrySrc: String(u || ""),
+                                            deps: list,
+                                            results: results,
+                                          });
+
+                                          // Self-heal: if any dependency is clearly wrong, do one cache-busting reload.
+                                          if (!hasReloadMarker()) {
+                                            for (var i = 0; i < results.length; i++) {
+                                              var rr = results[i];
+                                              var rct = rr && rr.contentType ? String(rr.contentType).toLowerCase() : "";
+                                              var isHtml2 = rct.indexOf("text/html") !== -1;
+                                              if ((rr && rr.status === 404) || isHtml2 || rr.ok === false) {
+                                                reloadOnce("dep_probe");
+                                                break;
+                                              }
+                                            }
+                                          }
+                                        } catch (e) {
+                                          // ignore
+                                        }
+                                      })
+                                      .catch(function (e) {
+                                        sendBootEvent("entry_deps_probe", {
+                                          stage: "retry",
+                                          label: String(label || "retry"),
+                                          entrySrc: String(u || ""),
+                                          probeError: String((e && e.message) || e || "deps_probe_error"),
+                                        });
+                                      });
+                                  }
+                                } catch (e) {
+                                  // ignore
+                                }
+
                                // If we clearly got the wrong thing, try one controlled reload.
                                if (!hasReloadMarker()) {
                                  var isHtml = ct && String(ct).toLowerCase().indexOf("text/html") !== -1;
