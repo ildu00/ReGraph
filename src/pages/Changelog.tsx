@@ -38,6 +38,36 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.5.0",
+    date: "January 21, 2026",
+    title: "Admin & Navigation Improvements",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Added Admin Panel link to dashboard sidebar for admin users" },
+      { category: "feature", description: "Added Dashboard link to admin sidebar for quick navigation" },
+      { category: "feature", description: "Added pagination to Boot Events with 20 items per page" },
+      { category: "improvement", description: "Updated How It Works section arrows to purple color on homepage and About page" },
+      { category: "improvement", description: "Repositioned step arrows to appear between cards instead of overlapping" },
+      { category: "improvement", description: "Enhanced sidebar layout with flex column for proper footer positioning" },
+      { category: "fix", description: "Fixed arrow positioning in How It Works sections across all pages" },
+    ]
+  },
+  {
+    version: "2.4.1",
+    date: "January 15, 2026",
+    title: "Boot Diagnostics & Monitoring",
+    type: "patch",
+    changes: [
+      { category: "feature", description: "Added Boot Events admin page for monitoring app initialization failures" },
+      { category: "feature", description: "Interactive stat cards with quick filters for mobile and storage issues" },
+      { category: "feature", description: "Detailed event view dialog with diagnostic data display" },
+      { category: "feature", description: "Device type detection with mobile/desktop icons" },
+      { category: "improvement", description: "Multi-term search support with pipe separator for complex queries" },
+      { category: "improvement", description: "Responsive refresh button with icon-only on mobile" },
+      { category: "security", description: "Admin-only access to boot event logs via RLS policies" },
+    ]
+  },
+  {
     version: "2.4.0",
     date: "January 11, 2026",
     title: "Support Center & Status Dashboard",
