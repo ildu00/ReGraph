@@ -15,7 +15,7 @@ import {
   Rocket,
   Target,
   CheckCircle,
-  
+  ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -290,7 +290,9 @@ const About = () => {
                     <p className="text-sm text-muted-foreground flex-1">{item.description}</p>
                   </div>
                   {index < 3 && (
-                    <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-0.5 bg-border" />
+                    <div className="hidden md:flex absolute top-1/2 -right-5 transform -translate-y-1/2 z-10 w-10 items-center justify-center">
+                      <ArrowRight className="h-5 w-5 text-primary" />
+                    </div>
                   )}
                 </div>
               ))}
