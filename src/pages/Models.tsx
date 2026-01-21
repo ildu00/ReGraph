@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
@@ -160,6 +160,7 @@ const categoryDescriptions: Record<string, string> = {
 };
 
 const Models = () => {
+  const sidebarFixedLeft = "max(1rem, calc((100vw - 1400px) / 2 + 1rem))";
   const [activeCategory, setActiveCategory] = useState("llm");
   const [selectedModel, setSelectedModel] = useState<Model | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -227,7 +228,11 @@ const Models = () => {
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">
-        <SidebarProvider defaultOpen={true} className="flex-col">
+        <SidebarProvider
+          defaultOpen={true}
+          className="flex-col"
+          style={{ ["--sidebar-fixed-left" as any]: sidebarFixedLeft } as CSSProperties}
+        >
           <div className="flex w-full flex-1">
             <ModelsSidebar 
               activeCategory={activeCategory} 
