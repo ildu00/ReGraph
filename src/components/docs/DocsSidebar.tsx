@@ -118,7 +118,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
       style={footerOverlapPx ? { bottom: footerOverlapPx } : undefined}
       className="border-r border-border/50"
     >
-      <SidebarContent className="pt-4">
+      <SidebarContent className="pt-20 pl-4">
         <div className="px-3 mb-2">
           <SidebarTrigger />
         </div>
