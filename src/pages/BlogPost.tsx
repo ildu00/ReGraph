@@ -92,9 +92,9 @@ const BlogPost = () => {
       
       <Navbar />
       
-      <main className="pt-24 pb-16">
+      <main className="pb-16">
         {/* Hero Image */}
-        <div className="w-full h-64 md:h-96 overflow-hidden">
+        <div className="w-full h-64 md:h-96 overflow-hidden pt-16">
           <img 
             src={post.image} 
             alt={post.title}
