@@ -1,4 +1,4 @@
-import { lazy, Suspense, useLayoutEffect, useState, Component, ReactNode } from "react";
+import { lazy, Suspense, useLayoutEffect, Component, ReactNode } from "react";
 
 declare global {
   interface Window {
@@ -104,15 +104,7 @@ const MinimalLoader = () => (
 // This ensures Safari iOS can at least mount React before trying to load heavy chunks
 const RealApp = lazy(() => {
   console.log('[AppShell] Starting dynamic import of AppCore');
-  
-  // Add a timeout to prevent infinite hang on slow networks
-  const timeoutPromise = new Promise<never>((_, reject) => {
-    setTimeout(() => {
-      reject(new Error('AppCore load timeout after 30s'));
-    }, 30000);
-  });
-  
-  const importPromise = import("./AppCore")
+  return import("./AppCore")
     .then(mod => {
       console.log('[AppShell] AppCore loaded successfully');
       return mod;
@@ -155,29 +147,15 @@ const RealApp = lazy(() => {
       
       throw err;
     });
-    
-  return Promise.race([importPromise, timeoutPromise]);
 });
 
 const AppShell = () => {
-  const [mounted, setMounted] = useState(false);
-
   useLayoutEffect(() => {
     // Mark mounted for boot watchdog + remove boot spinner
     window.__regraphMounted = true;
     console.log('[AppShell] Mounted, removing spinner');
     document.getElementById("boot-spinner")?.remove();
-    
-    // Trigger dynamic import after first paint
-    requestAnimationFrame(() => {
-      console.log('[AppShell] Triggering AppCore load');
-      setMounted(true);
-    });
   }, []);
-
-  if (!mounted) {
-    return <MinimalLoader />;
-  }
 
   return (
     <AppCoreBoundary>
