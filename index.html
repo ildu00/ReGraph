@@ -234,17 +234,23 @@
           }
         }
 
-         function getBootLogUrl() {
+         function getBootLogUrls() {
+           // IMPORTANT: keep both options.
+           // Some mobile networks/content-blockers may block direct backend calls;
+           // while sometimes the API gateway route may be misconfigured.
+           var direct = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
+           var gateway = "https://api.regraph.tech/v1/log-boot-event";
            try {
-             // Prefer our API domain when on production host to avoid mobile blockers on the backend domain.
              var h = String(window.location.hostname || "");
              if (h === "regraph.tech" || /(^|\.)regraph\.tech$/i.test(h)) {
-               return "https://api.regraph.tech/v1/log-boot-event";
+               // Prefer direct first (historically reliable), then gateway as fallback.
+               return [direct, gateway];
              }
            } catch (e) {
              // ignore
            }
-           return "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
+           // Non-prod/preview: direct only.
+           return [direct];
          }
 
          function sendBootEvent(reason, extraDiag) {
@@ -284,26 +290,38 @@
               attempts: hasReloadMarker() ? 1 : 0,
             };
 
-             var url = getBootLogUrl();
+             var urls = getBootLogUrls();
              var body = JSON.stringify(payload);
-             if (navigator.sendBeacon) {
-               // Safari can return false (or silently drop) when payload is too large.
-               // Fall back to keepalive fetch for reliability.
-               var ok = false;
-               try {
-                 ok = navigator.sendBeacon(url, body);
-               } catch (e) {
-                 ok = false;
-               }
-               if (ok) return;
-             }
 
-             fetch(url, {
-               method: "POST",
-               headers: { "Content-Type": "application/json" },
-               body: body,
-               keepalive: true,
-             }).catch(function () {});
+             for (var i = 0; i < (urls ? urls.length : 0); i++) {
+               var url = urls[i];
+               if (!url) continue;
+
+               if (navigator.sendBeacon) {
+                 // Safari can return false (or silently drop) when payload is too large.
+                 // Fall back to keepalive fetch for reliability.
+                 var ok = false;
+                 try {
+                   ok = navigator.sendBeacon(url, body);
+                 } catch (e) {
+                   ok = false;
+                 }
+                 if (ok) return;
+               }
+
+               try {
+                 fetch(url, {
+                   method: "POST",
+                   headers: { "Content-Type": "application/json" },
+                   body: body,
+                   keepalive: true,
+                 }).catch(function () {});
+                 // If fetch is scheduled successfully, stop trying more URLs.
+                 return;
+               } catch (e) {
+                 // try next url
+               }
+             }
           } catch (e) {
             // ignore
           }

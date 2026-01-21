@@ -62,6 +62,25 @@
         }
       };
 
+      const importWithTimeout = async (url, timeoutMs = 12000) => {
+        // Add cache-busting but keep same-origin path
+        const u = new URL(url, location.origin);
+        u.searchParams.set("__imp", String(Date.now()));
+        const spec = u.pathname + u.search;
+
+        let t;
+        try {
+          return await Promise.race([
+            import(spec),
+            new Promise((_, reject) => {
+              t = setTimeout(() => reject(new Error(`import timeout after ${timeoutMs}ms`)), timeoutMs);
+            }),
+          ]);
+        } finally {
+          clearTimeout(t);
+        }
+      };
+
       // Extract import statements from minified JS
       const extractImports = (code) => {
         const imports = new Set();
@@ -117,6 +136,8 @@
 
         const analyzed = new Set([entrySrc]);
         const problems = [];
+        const importProblems = [];
+        const modulesToImport = [];
 
         // 4) Fetch each L1 dep and check L2
         for (const l1 of l1Assets) {
@@ -141,6 +162,8 @@
             const l2Assets = l2Imports.map(i => resolvePath(l1, i)).filter(p => p && p.startsWith("/assets/") && !analyzed.has(p));
 
             if (l2Assets.length > 0) {
+              // keep a sample for module-loader test
+              for (const p of l2Assets.slice(0, 12)) modulesToImport.push(p);
               const nested = document.createElement("div");
               nested.className = "nested";
               row.appendChild(nested);
@@ -158,12 +181,38 @@
               }
             }
           }
+
+          // keep a sample for module-loader test
+          modulesToImport.push(l1);
         }
 
         // Summary
-        if (problems.length > 0) {
+        // 5) Module loader test (Safari can fail here even when fetch() succeeds)
+        addRow("Module loader test", "Starting dynamic import() checks...", "");
+        const uniqToImport = Array.from(new Set([entrySrc, ...modulesToImport])).filter(
+          (p) => typeof p === "string" && p.startsWith("/assets/")
+        );
+
+        for (const m of uniqToImport.slice(0, 20)) {
+          setStatus(`import() ${m}...`);
+          try {
+            await importWithTimeout(m, 12000);
+            addRow(`import ${m}`, "OK", "ok");
+          } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            importProblems.push({ url: m, error: msg });
+            addRow(`import ${m}`, msg, "bad");
+            // stop at first failing module — this is the smoking gun
+            break;
+          }
+        }
+
+        if (problems.length > 0 || importProblems.length > 0) {
           addRow("⚠️ PROBLEMS", JSON.stringify(problems, null, 1), "bad");
-          setStatus(`Done – ${problems.length} problem(s) found!`);
+          if (importProblems.length) {
+            addRow("⚠️ import() failure", JSON.stringify(importProblems, null, 1), "bad");
+          }
+          setStatus(`Done – ${problems.length + importProblems.length} problem(s) found!`);
         } else {
           addRow("✅ Result", "All dependencies (L1+L2) loaded with correct JS content-type.", "ok");
           addRow("Next", "Assets load OK via fetch(). Issue may be Safari module parsing or content blocker. Try:\n1) Clear Safari cache fully\n2) Disable content blockers\n3) Test in Chrome/Firefox on same device", "");
