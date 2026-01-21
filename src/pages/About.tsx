@@ -126,6 +126,35 @@ const About = () => {
     { value: "99.9%", label: "Network Uptime" }
   ];
 
+  const leadership = [
+    {
+      name: "Ilya Dushin",
+      role: "CEO",
+      description: "Visionary leader with 15+ years in tech entrepreneurship and AI infrastructure."
+    },
+    {
+      name: "Gabriel Mikhaeli",
+      role: "CFO",
+      description: "Financial strategist with expertise in crypto markets and venture capital."
+    },
+    {
+      name: "Alexey Ivlev",
+      role: "CTO",
+      description: "Technical architect specializing in distributed systems and neural networks."
+    }
+  ];
+
+  const teamMembers = [
+    { name: "Elena Volkov", role: "Head of Engineering", department: "Engineering" },
+    { name: "Marcus Chen", role: "Lead ML Engineer", department: "Engineering" },
+    { name: "Sarah Mitchell", role: "Product Manager", department: "Product" },
+    { name: "David Kim", role: "DevOps Lead", department: "Engineering" },
+    { name: "Anna Petrova", role: "UX Designer", department: "Design" },
+    { name: "James Wilson", role: "Security Engineer", department: "Engineering" },
+    { name: "Maria Santos", role: "Community Manager", department: "Marketing" },
+    { name: "Alex Turner", role: "Backend Developer", department: "Engineering" }
+  ];
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -342,6 +371,61 @@ const About = () => {
                   </Badge>
                   <h3 className="font-semibold mb-2">{cred.title}</h3>
                   <p className="text-sm text-muted-foreground">{cred.description}</p>
+                </motion.div>
+              ))}
+            </div>
+          </motion.section>
+
+          {/* Team Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.55 }}
+            className="mb-16"
+          >
+            <h2 className="text-3xl font-bold text-center mb-4">Our Team</h2>
+            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Meet the people behind ReGraph's innovation
+            </p>
+            
+            {/* Leadership */}
+            <div className="grid md:grid-cols-3 gap-6 mb-8">
+              {leadership.map((leader, index) => (
+                <motion.div
+                  key={leader.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.55 + index * 0.1 }}
+                  className="p-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center"
+                >
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                    <Users className="w-8 h-8 text-primary" />
+                  </div>
+                  <Badge className="bg-primary text-primary-foreground mb-3">{leader.role}</Badge>
+                  <h3 className="font-bold text-lg mb-2">{leader.name}</h3>
+                  <p className="text-sm text-muted-foreground">{leader.description}</p>
+                </motion.div>
+              ))}
+            </div>
+
+            {/* Team Members */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              {teamMembers.map((member, index) => (
+                <motion.div
+                  key={member.name}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 + index * 0.05 }}
+                  className="p-4 rounded-xl border border-border bg-card text-center"
+                >
+                  <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-3">
+                    <span className="text-lg font-semibold text-muted-foreground">
+                      {member.name.split(' ').map(n => n[0]).join('')}
+                    </span>
+                  </div>
+                  <h4 className="font-semibold text-sm">{member.name}</h4>
+                  <p className="text-xs text-muted-foreground">{member.role}</p>
+                  <Badge variant="outline" className="mt-2 text-xs">{member.department}</Badge>
                 </motion.div>
               ))}
             </div>
