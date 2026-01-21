@@ -463,8 +463,48 @@
                                         // Fallback: any direct assignment m.f=[...]
                                         m = jsText.match(/m\\.f\s*=\s*(\[[^\]]+\])/);
                                       }
-                                      if (!m || !m[1]) return null;
-                                      return JSON.parse(m[1]);
+                                      if (m && m[1]) {
+                                        // First try JSON.parse (best case)
+                                        try {
+                                          var parsed = JSON.parse(m[1]);
+                                          if (parsed && parsed.length) return parsed;
+                                        } catch (e) {
+                                          // ignore, fall through
+                                        }
+
+                                        // Fallback: extract quoted strings from within the array literal
+                                        try {
+                                          var list = [];
+                                          var re = /\"([^\"]+)\"/g;
+                                          var mm;
+                                          while ((mm = re.exec(m[1]))) {
+                                            list.push(mm[1]);
+                                          }
+                                          if (list.length) return list;
+                                        } catch (e) {
+                                          // ignore
+                                        }
+                                      }
+
+                                      // Last resort: scan for common asset paths anywhere in the entry
+                                      try {
+                                        var hits = jsText.match(/\"assets\/[^"]+\.js\"/g);
+                                        if (!hits || !hits.length) return null;
+                                        var uniq = {};
+                                        var out = [];
+                                        for (var i = 0; i < hits.length; i++) {
+                                          var s = String(hits[i] || "");
+                                          s = s.replace(/^\"|\"$/g, "");
+                                          if (!uniq[s]) {
+                                            uniq[s] = true;
+                                            out.push(s);
+                                          }
+                                          if (out.length >= 24) break;
+                                        }
+                                        return out.length ? out : null;
+                                      } catch (e) {
+                                        return null;
+                                      }
                                     } catch (e) {
                                       return null;
                                     }
@@ -472,7 +512,17 @@
 
                                   deps = extractDeps(text);
 
-                                  if (deps && deps.length) {
+                                  if (!deps || !deps.length) {
+                                    // Always log why deps probe didn't run so we can iterate.
+                                    sendBootEvent("entry_deps_probe", {
+                                      stage: "retry",
+                                      label: String(label || "retry"),
+                                      entrySrc: String(u || ""),
+                                      probeError: "deps_not_extracted",
+                                      // include a tiny hint (do not bloat payload)
+                                      snippet: String(text || "").slice(0, 240),
+                                    });
+                                  } else {
                                     var maxDeps = 10;
                                     var list = deps.slice(0, maxDeps);
 

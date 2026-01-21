@@ -149,6 +149,47 @@
         }
       };
 
+      const extractDepsFromEntry = (jsText) => {
+        try {
+          // Prefer Vite's dependency array if present.
+          const m = jsText.match(/m\.f\s*\|\|\s*\(m\.f\s*=\s*(\[[^\]]+\])\)/);
+          if (m && m[1]) {
+            try {
+              const parsed = JSON.parse(m[1]);
+              if (Array.isArray(parsed) && parsed.length) return parsed;
+            } catch {
+              // Fallback to string extraction
+              const list = [];
+              const re = /\"([^\"]+)\"/g;
+              let mm;
+              while ((mm = re.exec(m[1]))) list.push(mm[1]);
+              if (list.length) return list;
+            }
+          }
+
+          // Last resort: find quoted asset paths.
+          const hits = jsText.match(/\"assets\/[^"]+\.js\"/g);
+          if (!hits) return [];
+          const uniq = new Set();
+          for (const h of hits) {
+            const s = String(h).replace(/^\"|\"$/g, "");
+            uniq.add(s);
+            if (uniq.size >= 24) break;
+          }
+          return Array.from(uniq);
+        } catch {
+          return [];
+        }
+      };
+
+      const normalizeDep = (p) => {
+        if (!p) return null;
+        const s = String(p);
+        if (s.startsWith("/")) return s;
+        if (s.startsWith("assets/")) return "/" + s;
+        return s;
+      };
+
       const run = async () => {
         out.innerHTML = "";
         addRow("URL", location.href);
@@ -176,21 +217,27 @@
           const { res } = await fetchWithTimeout(entry, 12000);
           addRow("GET entry status", String(res.status), res.ok ? "ok" : "bad");
           addRow("GET entry content-type", res.headers.get("content-type") || "<none>");
-          const snippet = await safeText(res, 700);
-          addRow("GET entry body (first 700 chars)", snippet);
+          const entryText = await safeText(res, 200000);
+          addRow("GET entry body (first 700 chars)", entryText.slice(0, 700));
 
-          // 3) Try to find and probe one vendor chunk from the entry (best-effort)
-          const vendorMatch = snippet.match(/assets\/(vendor-react-[a-zA-Z0-9_-]+\.js)/);
-          const vendor = vendorMatch ? "/assets/" + vendorMatch[1] : null;
-          addRow("Vendor chunk (best-effort)", vendor || "<not found>", vendor ? "ok" : "bad");
-          if (vendor) {
-            try {
-              const { res: vres } = await fetchWithTimeout(vendor, 12000);
-              addRow("GET vendor status", String(vres.status), vres.ok ? "ok" : "bad");
-              addRow("GET vendor content-type", vres.headers.get("content-type") || "<none>");
-              addRow("GET vendor body (first 200 chars)", (await safeText(vres, 200)));
-            } catch (e) {
-              addRow("GET vendor error", String(e), "bad");
+          // 3) Probe deps from Vite mapDeps (best-effort but much more complete)
+          const deps = extractDepsFromEntry(entryText).map(normalizeDep).filter(Boolean);
+          addRow("Deps found", String(deps.length), deps.length ? "ok" : "bad");
+          if (deps.length) {
+            const max = 12;
+            const list = deps.slice(0, max);
+            addRow("Deps (first 12)", list.join("\n"));
+
+            for (const dep of list) {
+              try {
+                const { res: dres } = await fetchWithTimeout(dep, 12000);
+                const ct = dres.headers.get("content-type") || "<none>";
+                const ok = dres.ok && !String(ct).toLowerCase().includes("text/html");
+                const tag = ok ? "ok" : "bad";
+                addRow(`GET ${dep}`, `${dres.status} | ${ct}\n${ok ? "" : await safeText(dres, 180)}`, tag);
+              } catch (e) {
+                addRow(`GET ${dep} error`, String(e), "bad");
+              }
             }
           }
         } catch (e) {
