@@ -95,15 +95,15 @@ const BlogPost = () => {
 
           {/* Article Header */}
           <header className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex flex-wrap items-center gap-2 md:gap-3 mb-4">
               <Badge>{post.category}</Badge>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                {new Date(post.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+              <span className="text-xs md:text-sm text-muted-foreground flex items-center gap-1">
+                <Calendar className="w-3 h-3 md:w-4 md:h-4" />
+                {new Date(post.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
               </span>
-              <span className="text-sm text-muted-foreground flex items-center gap-1">
-                <Clock className="w-4 h-4" />
-                {post.readTime} read
+              <span className="text-xs md:text-sm text-muted-foreground flex items-center gap-1">
+                <Clock className="w-3 h-3 md:w-4 md:h-4" />
+                {post.readTime}
               </span>
             </div>
             <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4">{post.title}</h1>
