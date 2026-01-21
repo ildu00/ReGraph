@@ -54,10 +54,10 @@ const BlogPost = () => {
   const prevPost = currentIndex > 0 ? blogPosts[currentIndex - 1] : null;
   const nextPost = currentIndex < blogPosts.length - 1 ? blogPosts[currentIndex + 1] : null;
 
-  // Get related posts from the same category (excluding current post)
-  const relatedPosts = blogPosts
-    .filter(p => p.category === post.category && p.slug !== post.slug)
-    .slice(0, 3);
+  // Get related posts from the same category (excluding current post), fill with other posts if needed
+  const sameCategoryPosts = blogPosts.filter(p => p.category === post.category && p.slug !== post.slug);
+  const otherPosts = blogPosts.filter(p => p.category !== post.category && p.slug !== post.slug);
+  const relatedPosts = [...sameCategoryPosts, ...otherPosts].slice(0, 3);
   return (
     <div className="min-h-screen bg-background">
       <Helmet>
