@@ -2,6 +2,7 @@ import { useMemo, useState, useEffect } from "react";
 import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -25,6 +26,7 @@ import {
   Loader2,
   Server,
   Wallet,
+  Shield,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
@@ -35,6 +37,7 @@ import WalletTab from "@/components/dashboard/WalletTab";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const [searchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -129,11 +132,11 @@ const Dashboard = () => {
       </AlertDialog>
 
       {/* Sidebar - Desktop */}
-      <aside className="hidden md:block fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4">
+      <aside className="hidden md:flex md:flex-col fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4">
         <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
           Dashboard
         </div>
-        <nav className="mt-2 space-y-1">
+        <nav className="mt-2 space-y-1 flex-1">
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.value;
@@ -154,6 +157,19 @@ const Dashboard = () => {
             );
           })}
         </nav>
+        
+        {/* Admin Link */}
+        {isAdmin && (
+          <div className="border-t border-border pt-4 mt-4">
+            <Link
+              to="/admin"
+              className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+            >
+              <Shield className="h-4 w-4" />
+              <span>Admin Panel</span>
+            </Link>
+          </div>
+        )}
       </aside>
 
       {/* Sidebar - Mobile */}
@@ -172,12 +188,12 @@ const Dashboard = () => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 md:hidden"
+              className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 md:hidden flex flex-col"
             >
               <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Dashboard
               </div>
-              <nav className="mt-2 space-y-1">
+              <nav className="mt-2 space-y-1 flex-1">
                 {navItems.map((item) => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.value;
@@ -201,6 +217,20 @@ const Dashboard = () => {
                   );
                 })}
               </nav>
+              
+              {/* Admin Link - Mobile */}
+              {isAdmin && (
+                <div className="border-t border-border pt-4 mt-4">
+                  <Link
+                    to="/admin"
+                    onClick={() => setIsSidebarOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-secondary/50 transition-colors"
+                  >
+                    <Shield className="h-4 w-4" />
+                    <span>Admin Panel</span>
+                  </Link>
+                </div>
+              )}
             </motion.aside>
           </>
         )}
