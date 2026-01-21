@@ -267,18 +267,90 @@
           }
         }
 
-        // If main.tsx never executed, remove the overlay spinner and log it.
-        // The homepage should still be usable via the instant HTML fallback.
+        // If the entry script never executed, DO NOT remove the spinner (black screen is worse).
+        // Instead, probe whether the entry script URL is reachable:
+        // - If unreachable (common after deploy + cached HTML), auto-reload once with cache-busting params.
+        // - If reachable, treat as "slow start" and keep the spinner until React mounts or fatal deadline.
         setTimeout(function () {
-          try {
-            if (!window.__regraphMainLoaded) {
-              removeSpinner();
-              sendBootEvent("main_not_started", { stage: "progress" });
+          (function () {
+            try {
+              if (window.__regraphMainLoaded) return;
+
+              var scriptEl = document.getElementById("boot-main");
+              var src = scriptEl && scriptEl.getAttribute ? scriptEl.getAttribute("src") : null;
+
+              // If we can't find a script src, log and allow the fatal UI to kick in.
+              if (!src) {
+                sendBootEvent("main_not_started", { stage: "progress", probe: "no_boot_main" });
+                return;
+              }
+
+              // Probe with cache bypass to detect stale cached HTML pointing at missing hashed assets.
+              var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
+              var timedOut = false;
+              var t = setTimeout(function () {
+                timedOut = true;
+                try {
+                  if (controller) controller.abort();
+                } catch (e) {}
+              }, 2500);
+
+              var doFetch = function (method) {
+                return fetch(src, {
+                  method: method,
+                  cache: "no-store",
+                  signal: controller ? controller.signal : undefined,
+                });
+              };
+
+              // HEAD is cheaper; some hosts may not support it, so fall back to GET.
+              doFetch("HEAD")
+                .catch(function () {
+                  return doFetch("GET");
+                })
+                .then(function (res) {
+                  clearTimeout(t);
+                  if (window.__regraphMainLoaded) return;
+
+                  var ok = !!(res && res.ok);
+                  var status = res ? res.status : 0;
+
+                  if (!ok) {
+                    // Entry script is not reachable -> likely stale cache / missing build asset.
+                    sendBootEvent("main_not_started", {
+                      stage: "progress",
+                      probe: "entry_fetch_not_ok",
+                      entrySrc: src,
+                      status: status,
+                    });
+                    reloadOnce("entry_fetch_status_" + String(status || "unknown"));
+                    return;
+                  }
+
+                  // Reachable, but still not executing: likely slow parse/CPU or some runtime block.
+                  sendBootEvent("main_slow_start", {
+                    stage: "progress",
+                    probe: timedOut ? "entry_fetch_timeout" : "entry_fetch_ok",
+                    entrySrc: src,
+                    status: status,
+                  });
+                })
+                .catch(function (err) {
+                  clearTimeout(t);
+                  if (window.__regraphMainLoaded) return;
+                  sendBootEvent("main_not_started", {
+                    stage: "progress",
+                    probe: "entry_fetch_error",
+                    entrySrc: src,
+                    message: String((err && err.message) || err || "fetch_error"),
+                  });
+                  reloadOnce("entry_fetch_error");
+                });
+            } catch (e) {
+              // ignore
             }
-          } catch (e) {
-            // ignore
-          }
-        }, 2000);
+          })();
+        }, 2500);
 
         function reloadOnce(triggerReason) {
           if (hasReloadMarker()) return;
