@@ -416,8 +416,46 @@ const About = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.55 + index * 0.1 }}
-                  className="p-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center"
+                  className="relative p-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center"
                 >
+                  {/* Social links in top-right corner */}
+                  {leader.socials && (
+                    <div className="absolute top-3 right-3 flex gap-1.5">
+                      {leader.socials.linkedin && (
+                        <a
+                          href={leader.socials.linkedin}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground/60 hover:text-primary transition-colors"
+                          aria-label={`${leader.name} LinkedIn`}
+                        >
+                          <Linkedin className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {leader.socials.x && (
+                        <a
+                          href={leader.socials.x}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground/60 hover:text-primary transition-colors"
+                          aria-label={`${leader.name} X`}
+                        >
+                          <XIcon className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                      {leader.socials.facebook && (
+                        <a
+                          href={leader.socials.facebook}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground/60 hover:text-primary transition-colors"
+                          aria-label={`${leader.name} Facebook`}
+                        >
+                          <Facebook className="w-3.5 h-3.5" />
+                        </a>
+                      )}
+                    </div>
+                  )}
                   {leader.photo ? (
                     <img 
                       src={leader.photo} 
@@ -431,44 +469,7 @@ const About = () => {
                   )}
                   <Badge className="bg-primary text-primary-foreground mb-3">{leader.role}</Badge>
                   <h3 className="font-bold text-lg mb-2">{leader.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">{leader.description}</p>
-                  {leader.socials && (
-                    <div className="flex justify-center gap-3">
-                      {leader.socials.linkedin && (
-                        <a
-                          href={leader.socials.linkedin}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={`${leader.name} LinkedIn`}
-                        >
-                          <Linkedin className="w-5 h-5" />
-                        </a>
-                      )}
-                      {leader.socials.x && (
-                        <a
-                          href={leader.socials.x}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={`${leader.name} X`}
-                        >
-                          <XIcon className="w-5 h-5" />
-                        </a>
-                      )}
-                      {leader.socials.facebook && (
-                        <a
-                          href={leader.socials.facebook}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-primary transition-colors"
-                          aria-label={`${leader.name} Facebook`}
-                        >
-                          <Facebook className="w-5 h-5" />
-                        </a>
-                      )}
-                    </div>
-                  )}
+                  <p className="text-sm text-muted-foreground">{leader.description}</p>
                 </motion.div>
               ))}
             </div>
