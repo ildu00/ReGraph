@@ -18,6 +18,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
 
 const About = () => {
   const values = [
@@ -130,17 +131,20 @@ const About = () => {
     {
       name: "Ilya Dushin",
       role: "CEO",
-      description: "Visionary leader with 15+ years in tech entrepreneurship and AI infrastructure."
+      description: "Visionary leader with 15+ years in tech entrepreneurship and AI infrastructure.",
+      photo: ilyaDushinPhoto
     },
     {
       name: "Gabriel Mikhaeli",
       role: "CFO",
-      description: "Financial strategist with expertise in crypto markets and venture capital."
+      description: "Financial strategist with expertise in crypto markets and venture capital.",
+      photo: null
     },
     {
       name: "Alexey Ivlev",
       role: "CTO",
-      description: "Technical architect specializing in distributed systems and neural networks."
+      description: "Technical architect specializing in distributed systems and neural networks.",
+      photo: null
     }
   ];
 
@@ -398,9 +402,17 @@ const About = () => {
                   transition={{ delay: 0.55 + index * 0.1 }}
                   className="p-6 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/5 to-transparent text-center"
                 >
-                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                    <Users className="w-8 h-8 text-primary" />
-                  </div>
+                  {leader.photo ? (
+                    <img 
+                      src={leader.photo} 
+                      alt={leader.name}
+                      className="w-20 h-20 rounded-full object-cover mx-auto mb-4 border-2 border-primary/20"
+                    />
+                  ) : (
+                    <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                      <Users className="w-8 h-8 text-primary" />
+                    </div>
+                  )}
                   <Badge className="bg-primary text-primary-foreground mb-3">{leader.role}</Badge>
                   <h3 className="font-bold text-lg mb-2">{leader.name}</h3>
                   <p className="text-sm text-muted-foreground">{leader.description}</p>
