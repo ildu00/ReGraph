@@ -69,12 +69,21 @@ export const AdminBootEvents = () => {
   };
 
   const filteredEvents = events.filter((event) => {
+    const q = searchQuery.trim().toLowerCase();
+    const terms = q.includes("|") ? q.split("|").map((t) => t.trim()).filter(Boolean) : (q ? [q] : []);
+
+    const fields = [
+      event.reason,
+      event.url,
+      event.user_agent,
+      event.ip_address,
+    ]
+      .filter(Boolean)
+      .map((v) => String(v).toLowerCase());
+
     const matchesSearch =
-      searchQuery === "" ||
-      event.reason.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.url?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.user_agent?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      event.ip_address?.toLowerCase().includes(searchQuery.toLowerCase());
+      terms.length === 0 ||
+      terms.some((term) => fields.some((f) => f.includes(term)));
 
     const matchesReason = reasonFilter === "all" || event.reason === reasonFilter;
 
