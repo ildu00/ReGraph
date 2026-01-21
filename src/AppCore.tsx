@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { HelmetProvider } from "react-helmet-async";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -27,6 +28,7 @@ const Legal = lazyWithRetry(() => import("./pages/Legal"));
 const About = lazyWithRetry(() => import("./pages/About"));
 const Careers = lazyWithRetry(() => import("./pages/Careers"));
 const Blog = lazyWithRetry(() => import("./pages/Blog"));
+const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
@@ -43,48 +45,51 @@ const queryClient = new QueryClient({
 
 const AppCore = () => {
   return (
-    <AppErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <ScrollToTop />
-              <Suspense
-                fallback={
-                  <div className="min-h-screen bg-background flex items-center justify-center">
-                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-                  </div>
-                }
-              >
-                <Routes>
-                  <Route path="/" element={<Index />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/docs" element={<Docs />} />
-                  <Route path="/models" element={<Models />} />
-                  <Route path="/privacy" element={<PrivacyPolicy />} />
-                  <Route path="/terms" element={<TermsOfService />} />
-                  <Route path="/cookies" element={<CookiePolicy />} />
-                  <Route path="/status" element={<Status />} />
-                  <Route path="/support" element={<Support />} />
-                  <Route path="/changelog" element={<Changelog />} />
-                  <Route path="/legal" element={<Legal />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/careers" element={<Careers />} />
-                  <Route path="/blog" element={<Blog />} />
-                  <Route path="/admin" element={<Admin />} />
-                  <Route path="/debug/boot" element={<DebugBoot />} />
-                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </TooltipProvider>
-        </AuthProvider>
-      </QueryClientProvider>
-    </AppErrorBoundary>
+    <HelmetProvider>
+      <AppErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <ScrollToTop />
+                <Suspense
+                  fallback={
+                    <div className="min-h-screen bg-background flex items-center justify-center">
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+                    </div>
+                  }
+                >
+                  <Routes>
+                    <Route path="/" element={<Index />} />
+                    <Route path="/auth" element={<Auth />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/docs" element={<Docs />} />
+                    <Route path="/models" element={<Models />} />
+                    <Route path="/privacy" element={<PrivacyPolicy />} />
+                    <Route path="/terms" element={<TermsOfService />} />
+                    <Route path="/cookies" element={<CookiePolicy />} />
+                    <Route path="/status" element={<Status />} />
+                    <Route path="/support" element={<Support />} />
+                    <Route path="/changelog" element={<Changelog />} />
+                    <Route path="/legal" element={<Legal />} />
+                    <Route path="/about" element={<About />} />
+                    <Route path="/careers" element={<Careers />} />
+                    <Route path="/blog" element={<Blog />} />
+                    <Route path="/blog/:slug" element={<BlogPost />} />
+                    <Route path="/admin" element={<Admin />} />
+                    <Route path="/debug/boot" element={<DebugBoot />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Suspense>
+              </BrowserRouter>
+            </TooltipProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </AppErrorBoundary>
+    </HelmetProvider>
   );
 };
 
