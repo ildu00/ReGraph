@@ -1,3 +1,6 @@
+import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+
 import { 
   Book, 
   Server, 
@@ -52,6 +55,66 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
   const { state } = useSidebar();
   const isCollapsed = state === "collapsed";
 
+  // Keep the sidebar fixed while scrolling, but when the footer enters the viewport,
+  // lift the sidebar up so it never overlaps the footer.
+  const [footerOverlapPx, setFooterOverlapPx] = useState(0);
+
+  // Align the fixed sidebar with the docs content container (so it doesn't hug the viewport edge).
+  const [containerLeftPx, setContainerLeftPx] = useState<number>(0);
+
+  useEffect(() => {
+    const footerEl = document.getElementById("site-footer") ?? document.querySelector("footer");
+    if (!footerEl) return;
+
+    let raf = 0;
+
+    const update = () => {
+      raf = 0;
+      const rect = footerEl.getBoundingClientRect();
+      const overlap = Math.max(0, window.innerHeight - rect.top);
+      setFooterOverlapPx(Math.round(overlap));
+    };
+
+    const onScroll = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  useEffect(() => {
+    const containerEl = document.getElementById("docs-workspace");
+    if (!containerEl) return;
+
+    let raf = 0;
+    const update = () => {
+      raf = 0;
+      const rect = containerEl.getBoundingClientRect();
+      setContainerLeftPx(Math.round(rect.left));
+    };
+
+    const onResize = () => {
+      if (raf) return;
+      raf = window.requestAnimationFrame(update);
+    };
+
+    update();
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (raf) window.cancelAnimationFrame(raf);
+    };
+  }, []);
+
   const handleClick = (sectionId: string) => {
     onSectionChange(sectionId);
     document.getElementById(sectionId)?.scrollIntoView({ behavior: "smooth" });
@@ -74,12 +137,21 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
     </SidebarMenu>
   );
 
+  const sidebarStyle: CSSProperties | undefined = footerOverlapPx || containerLeftPx
+    ? {
+        ...(footerOverlapPx ? { bottom: footerOverlapPx } : {}),
+        ...(containerLeftPx ? { left: containerLeftPx } : {}),
+      }
+    : undefined;
+
   return (
     <Sidebar 
       collapsible="icon" 
-      className="border-r border-border/50 sticky top-16 h-[calc(100vh-4rem)] shrink-0"
+      desktopMode="fixed"
+      style={sidebarStyle}
+      className="border-r border-border/50"
     >
-      <SidebarContent className="pt-4">
+      <SidebarContent className="pt-20">
         <div className="px-3 mb-2">
           <SidebarTrigger />
         </div>

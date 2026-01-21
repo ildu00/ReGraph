@@ -133,21 +133,21 @@ volumes:
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">
-        <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col px-4 lg:px-8">
-          <SidebarProvider defaultOpen={true} className="flex-col flex-1">
-            <div className="flex w-full flex-1 relative">
+        <div id="docs-workspace" className="container px-4 flex-1">
+          <SidebarProvider defaultOpen={true} className="flex-col">
+            <div className="flex w-full flex-1">
               <DocsSidebar 
                 activeSection={activeSection} 
                 onSectionChange={setActiveSection} 
               />
               
               <main className="flex-1 min-w-0">
-                <div className="py-8 max-w-4xl overflow-hidden">
+                <div className="px-4 py-8 max-w-4xl mx-auto overflow-hidden">
                   <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              >
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5 }}
+                  >
                 {/* Getting Started */}
                 <section id="getting-started" className="mb-16">
                   <h1 className="text-4xl font-bold mb-4">
