@@ -356,14 +356,18 @@
               }
 
               // Probe with cache bypass to detect stale cached HTML pointing at missing hashed assets.
+              // IMPORTANT: Some networks/devices are simply slow. Aborting too aggressively can
+              // create a self-inflicted reload loop (especially on Safari). Use a more forgiving
+              // timeout and never auto-reload on a probe timeout.
               var controller = typeof AbortController !== "undefined" ? new AbortController() : null;
               var timedOut = false;
+              var PROBE_TIMEOUT_MS = 8000;
               var t = setTimeout(function () {
                 timedOut = true;
                 try {
                   if (controller) controller.abort();
                 } catch (e) {}
-              }, 2500);
+              }, PROBE_TIMEOUT_MS);
 
               function withProbeParam(u) {
                 try {
@@ -468,12 +472,33 @@
                 .catch(function (err) {
                   clearTimeout(t);
                   if (window.__regraphMainLoaded) return;
+
+                  var msg = String((err && err.message) || err || "fetch_error");
+                  var isAbort =
+                    timedOut ||
+                    (err && err.name === "AbortError") ||
+                    msg.toLowerCase().indexOf("aborted") !== -1;
+
+                  // If the probe times out, do NOT reload. Let the original <script type="module">
+                  // continue loading; otherwise we'll keep interrupting a slow-but-valid connection.
+                  if (isAbort) {
+                    sendBootEvent("main_not_started", {
+                      stage: "progress",
+                      probe: "entry_fetch_timeout",
+                      via: found ? found.via : "unknown",
+                      entrySrc: src,
+                      message: msg,
+                      timeoutMs: PROBE_TIMEOUT_MS,
+                    });
+                    return;
+                  }
+
                   sendBootEvent("main_not_started", {
                     stage: "progress",
                     probe: "entry_fetch_error",
                     via: found ? found.via : "unknown",
                     entrySrc: src,
-                    message: String((err && err.message) || err || "fetch_error"),
+                    message: msg,
                   });
                   reloadOnce("entry_fetch_error");
                 });
