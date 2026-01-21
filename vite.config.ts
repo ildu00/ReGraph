@@ -1,6 +1,7 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import legacy from "@vitejs/plugin-legacy";
+import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
@@ -18,6 +19,78 @@ export default defineConfig(({ mode }) => ({
       targets: ["defaults", "safari >= 14", "iOS >= 14"],
       // Generate both modern + legacy builds; Safari will auto-pick
       modernPolyfills: true,
+    }),
+    // Service Worker for cache versioning: auto-clears stale caches on new deploys
+    VitePWA({
+      registerType: "autoUpdate",
+      // Inline SW registration in HTML for immediate effect
+      injectRegister: "inline",
+      workbox: {
+        // Cache JS/CSS/fonts/images
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        // Clean old caches automatically
+        cleanupOutdatedCaches: true,
+        // Skip waiting - new SW takes over immediately
+        skipWaiting: true,
+        clientsClaim: true,
+        // Limit cache age to 7 days
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "google-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "gstatic-fonts-cache",
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+              },
+              cacheableResponse: {
+                statuses: [0, 200],
+              },
+            },
+          },
+          {
+            // Don't cache API calls or Supabase
+            urlPattern: /^https:\/\/(api\.regraph\.tech|.*\.supabase\.co)\/.*/i,
+            handler: "NetworkOnly",
+          },
+        ],
+      },
+      manifest: {
+        name: "ReGraph - Decentralized AI Compute",
+        short_name: "ReGraph",
+        description: "Access 50+ AI models at up to 80% lower cost",
+        theme_color: "#7c3aed",
+        background_color: "#09090b",
+        display: "standalone",
+        start_url: "/",
+        icons: [
+          {
+            src: "/favicon.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "/favicon.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
     }),
     mode === "development" && componentTagger(),
   ].filter(Boolean),
