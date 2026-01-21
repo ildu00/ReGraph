@@ -276,7 +276,7 @@ const About = () => {
             className="mb-16"
           >
             <h2 className="text-3xl font-bold text-center mb-8">How ReGraph Works</h2>
-            <div className="grid md:grid-cols-4 gap-6">
+            <div className="grid md:grid-cols-4 gap-10">
               {[
                 { step: "01", title: "Connect & Offer", description: "Devices connect and offer their resources to the network." },
                 { step: "02", title: "Execute Tasks", description: "Based on demand, AI inference or transactions are executed on user devices." },
@@ -290,7 +290,7 @@ const About = () => {
                     <p className="text-sm text-muted-foreground flex-1">{item.description}</p>
                   </div>
                   {index < 3 && (
-                    <div className="hidden md:flex absolute top-1/2 -right-5 transform -translate-y-1/2 z-10 w-10 items-center justify-center">
+                    <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-7 z-10">
                       <ArrowRight className="h-5 w-5 text-primary" />
                     </div>
                   )}
