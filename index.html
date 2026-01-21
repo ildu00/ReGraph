@@ -272,16 +272,25 @@
             };
 
             var url = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
-            if (navigator.sendBeacon) {
-              navigator.sendBeacon(url, JSON.stringify(payload));
-            } else {
-              fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-                keepalive: true,
-              }).catch(function () {});
-            }
+             var body = JSON.stringify(payload);
+             if (navigator.sendBeacon) {
+               // Safari can return false (or silently drop) when payload is too large.
+               // Fall back to keepalive fetch for reliability.
+               var ok = false;
+               try {
+                 ok = navigator.sendBeacon(url, body);
+               } catch (e) {
+                 ok = false;
+               }
+               if (ok) return;
+             }
+
+             fetch(url, {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: body,
+               keepalive: true,
+             }).catch(function () {});
           } catch (e) {
             // ignore
           }
