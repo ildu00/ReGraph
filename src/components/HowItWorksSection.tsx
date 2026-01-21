@@ -56,7 +56,7 @@ const StepCard = ({ step, index, delay }: { step: typeof providerSteps[0]; index
       <p className="text-muted-foreground flex-1">{step.description}</p>
     </div>
     {index < 2 && (
-      <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-6 z-10">
+      <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 -right-[30px] z-10">
         <ArrowRight className="h-5 w-5 text-primary" />
       </div>
     )}
