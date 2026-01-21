@@ -15,6 +15,8 @@ const ROUTES = {
   "/v1/training/jobs": "training-jobs",
   "/v1/devices": "devices",
   "/v1/status": "status",
+  // Boot diagnostics logging (used by index.html watchdog)
+  "/v1/log-boot-event": "log-boot-event",
 };
 
 export default {

@@ -234,7 +234,20 @@
           }
         }
 
-        function sendBootEvent(reason, extraDiag) {
+         function getBootLogUrl() {
+           try {
+             // Prefer our API domain when on production host to avoid mobile blockers on the backend domain.
+             var h = String(window.location.hostname || "");
+             if (h === "regraph.tech" || /(^|\.)regraph\.tech$/i.test(h)) {
+               return "https://api.regraph.tech/v1/log-boot-event";
+             }
+           } catch (e) {
+             // ignore
+           }
+           return "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
+         }
+
+         function sendBootEvent(reason, extraDiag) {
           try {
             var key = String(reason || "unknown");
             if (sentReasons[key]) return;
@@ -271,7 +284,7 @@
               attempts: hasReloadMarker() ? 1 : 0,
             };
 
-            var url = "https://rwzyvgralronyuzqwyhu.supabase.co/functions/v1/log-boot-event";
+             var url = getBootLogUrl();
              var body = JSON.stringify(payload);
              if (navigator.sendBeacon) {
                // Safari can return false (or silently drop) when payload is too large.
