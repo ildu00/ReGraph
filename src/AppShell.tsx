@@ -6,6 +6,16 @@ declare global {
   }
 }
 
+const getBootEventUrl = () => {
+  try {
+    const base = (import.meta as any)?.env?.VITE_SUPABASE_URL;
+    if (base && typeof base === "string") return `${base}/functions/v1/log-boot-event`;
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
 // Error boundary to catch lazy load failures and show a reload UI
 class AppCoreBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   state = { error: null as Error | null };
@@ -111,13 +121,28 @@ const RealApp = lazy(() => {
       
       // Try to send to backend for debugging
       try {
-        const payload = JSON.stringify({
-          reason: 'appcore_load_failed',
-          url: location.href,
-          user_agent: navigator.userAgent,
-          diag: errInfo,
-        });
-        navigator.sendBeacon?.('/api/log-boot-event', payload);
+        const url = getBootEventUrl();
+        if (url) {
+          const payload = JSON.stringify({
+            reason: "appcore_load_failed",
+            url: location.href,
+            userAgent: navigator.userAgent,
+            diag: errInfo,
+          });
+          if (navigator.sendBeacon) {
+            try {
+              navigator.sendBeacon(url, payload);
+            } catch {
+              // ignore
+            }
+          }
+          fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: payload,
+            keepalive: true,
+          }).catch(() => {});
+        }
       } catch {}
       
       throw err;
