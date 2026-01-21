@@ -89,11 +89,13 @@ const HowItWorksSection = () => {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="flex items-center gap-3 mb-8"
+            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-8"
           >
-            <Server className="h-6 w-6 text-primary" />
-            <h3 className="text-2xl font-semibold">For Hardware Providers</h3>
-            <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1 rounded-full">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Server className="h-6 w-6 text-primary" />
+              <h3 className="text-2xl font-semibold">For Hardware Providers</h3>
+            </div>
+            <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1 rounded-full w-fit">
               Earn money
             </span>
           </motion.div>
@@ -110,11 +112,13 @@ const HowItWorksSection = () => {
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
-            className="flex items-center gap-3 mb-8"
+            className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-8"
           >
-            <Cloud className="h-6 w-6 text-primary" />
-            <h3 className="text-2xl font-semibold">For AI Developers</h3>
-            <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1 rounded-full">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <Cloud className="h-6 w-6 text-primary" />
+              <h3 className="text-2xl font-semibold">For AI Developers</h3>
+            </div>
+            <span className="text-sm font-mono bg-primary/10 text-primary px-3 py-1 rounded-full w-fit">
               Save money
             </span>
           </motion.div>
