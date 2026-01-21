@@ -15,9 +15,13 @@ export default defineConfig(({ mode }) => ({
     // CRITICAL: Generate legacy fallback for Safari iOS that may reject modern ES modules
     // Only apply in production to avoid slowing down dev server
     mode === "production" && legacy({
-      targets: ["defaults", "safari >= 14", "iOS >= 14"],
+      // Safari can still throw "Importing a module script failed" when parsing
+      // newer output on certain iOS configurations. Target Safari 13+/iOS 13+
+      // and render legacy chunks for maximum compatibility.
+      targets: ["defaults", "safari >= 13", "iOS >= 13", "not dead"],
       // Generate both modern + legacy builds; Safari will auto-pick
       modernPolyfills: true,
+      renderLegacyChunks: true,
     }),
     mode === "development" && componentTagger(),
   ].filter(Boolean),
@@ -27,9 +31,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // CRITICAL: Target Safari 14+ explicitly to avoid unsupported ES features
+    // CRITICAL: Target older Safari explicitly to avoid unsupported ES features
     // Safari has stricter ES module parsing than Chrome/Firefox
-    target: ["es2020", "safari14", "chrome90", "firefox90", "ios14"],
+    target: ["es2019", "safari13", "chrome90", "firefox90", "ios13"],
     // Improve chunk loading reliability
     modulePreload: {
       polyfill: true,
