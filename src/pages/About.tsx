@@ -283,11 +283,11 @@ const About = () => {
                 { step: "03", title: "Earn Tokens", description: "Participants receive tokens for their work, managed automatically." },
                 { step: "04", title: "Validate & Scale", description: "Transactions are validated by multiple devices in parallel." }
               ].map((item, index) => (
-                <div key={item.step} className="relative">
-                  <div className="p-6 rounded-xl border border-border bg-card">
-                    <div className="text-4xl font-bold text-primary/20 mb-4">{item.step}</div>
+                <div key={item.step} className="relative h-full">
+                  <div className="p-6 rounded-xl border border-border bg-card h-full flex flex-col">
+                    <div className="text-4xl font-bold text-primary mb-4">{item.step}</div>
                     <h3 className="font-semibold mb-2">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground">{item.description}</p>
+                    <p className="text-sm text-muted-foreground flex-1">{item.description}</p>
                   </div>
                   {index < 3 && (
                     <div className="hidden md:block absolute top-1/2 -right-3 w-6 h-0.5 bg-border" />
