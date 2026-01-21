@@ -1,4 +1,4 @@
-import { Suspense, useLayoutEffect } from "react";
+import { Suspense } from "react";
 import "./index.css";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -32,12 +32,6 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
 
-declare global {
-  interface Window {
-    __regraphMounted?: boolean;
-  }
-}
-
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -48,13 +42,7 @@ const queryClient = new QueryClient({
   },
 });
 
-const App = () => {
-  useLayoutEffect(() => {
-    // Mark mounted for boot watchdog + remove boot spinner.
-    window.__regraphMounted = true;
-    document.getElementById("boot-spinner")?.remove();
-  }, []);
-
+const AppCore = () => {
   return (
     <AppErrorBoundary>
       <QueryClientProvider client={queryClient}>
@@ -101,4 +89,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default AppCore;
