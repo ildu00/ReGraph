@@ -104,7 +104,15 @@ const MinimalLoader = () => (
 // This ensures Safari iOS can at least mount React before trying to load heavy chunks
 const RealApp = lazy(() => {
   console.log('[AppShell] Starting dynamic import of AppCore');
-  return import("./AppCore")
+  
+  // Add a timeout to prevent infinite hang on slow networks
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    setTimeout(() => {
+      reject(new Error('AppCore load timeout after 30s'));
+    }, 30000);
+  });
+  
+  const importPromise = import("./AppCore")
     .then(mod => {
       console.log('[AppShell] AppCore loaded successfully');
       return mod;
@@ -147,6 +155,8 @@ const RealApp = lazy(() => {
       
       throw err;
     });
+    
+  return Promise.race([importPromise, timeoutPromise]);
 });
 
 const AppShell = () => {

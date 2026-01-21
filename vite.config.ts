@@ -13,10 +13,13 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     // CRITICAL: Generate legacy fallback for Safari iOS that may reject modern ES modules
+    // Using aggressive targeting for older Safari versions
     legacy({
-      targets: ["defaults", "safari >= 14", "iOS >= 14"],
+      targets: ["defaults", "safari >= 13", "iOS >= 13", "not dead"],
       // Generate both modern + legacy builds; Safari will auto-pick
       modernPolyfills: true,
+      // Render legacy chunks inline for better compatibility
+      renderLegacyChunks: true,
     }),
     mode === "development" && componentTagger(),
   ].filter(Boolean),
@@ -26,13 +29,15 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    // CRITICAL: Target Safari 14+ explicitly to avoid unsupported ES features
+    // CRITICAL: Target older Safari explicitly to avoid unsupported ES features
     // Safari has stricter ES module parsing than Chrome/Firefox
-    target: ["es2020", "safari14", "chrome90", "firefox90", "ios14"],
+    target: ["es2019", "safari13", "chrome90", "firefox90", "ios13"],
     // Improve chunk loading reliability
     modulePreload: {
       polyfill: true,
     },
+    // Ensure consistent chunk naming for better cache behavior
+    cssCodeSplit: true,
     rollupOptions: {
       output: {
         // Split vendor chunks for better caching and smaller initial load
