@@ -87,7 +87,14 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
           </nav>
 
           {/* Footer */}
-          <div className="border-t border-border p-4">
+          <div className="border-t border-border p-4 space-y-1">
+            <Link
+              to="/dashboard"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+              Dashboard
+            </Link>
             <button
               onClick={() => setShowSignOutDialog(true)}
               className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
