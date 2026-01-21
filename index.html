@@ -167,8 +167,9 @@
         // Allow at most one automatic reload for recoverable stale-chunk/module errors.
         var RELOAD_PARAM = "__regraph_reload";
 
-        // single event per page-load
-        var sent = false;
+        // Allow multiple events per page-load, but de-dupe per reason and cap total.
+        var sentReasons = Object.create(null);
+        var sentCount = 0;
 
         function now() {
           return Date.now();
@@ -231,8 +232,15 @@
         }
 
         function sendBootEvent(reason, extraDiag) {
-          if (sent) return;
-          sent = true;
+          try {
+            var key = String(reason || "unknown");
+            if (sentReasons[key]) return;
+            if (sentCount >= 6) return;
+            sentReasons[key] = true;
+            sentCount++;
+          } catch (e) {
+            // ignore
+          }
           try {
             var diag = readDiag();
             var baseDiag = diag && typeof diag === "object" ? diag : {};
@@ -367,6 +375,35 @@
                 }
               }
 
+              function injectModuleScript(u, label) {
+                try {
+                  if (document.getElementById("boot-main-retry")) return;
+                  var s = document.createElement("script");
+                  s.id = "boot-main-retry";
+                  s.type = "module";
+                  s.src = withProbeParam(u);
+                  // In case the browser blocks/errs, capture it.
+                  s.onerror = function () {
+                    sendBootEvent("entry_script_error", {
+                      stage: "retry",
+                      label: String(label || "retry"),
+                      entrySrc: String(u || ""),
+                    });
+                  };
+                  // Note: load for scripts happens after fetch+evaluate.
+                  s.onload = function () {
+                    sendBootEvent("entry_script_loaded", {
+                      stage: "retry",
+                      label: String(label || "retry"),
+                      entrySrc: String(u || ""),
+                    });
+                  };
+                  (document.head || document.documentElement || document.body).appendChild(s);
+                } catch (e) {
+                  // ignore
+                }
+              }
+
               var doFetch = function (method) {
                 return fetch(withProbeParam(src), {
                   method: method,
@@ -386,6 +423,12 @@
 
                   var ok = !!(res && res.ok);
                   var status = res ? res.status : 0;
+                  var contentType = null;
+                  try {
+                    contentType = res && res.headers ? res.headers.get("content-type") : null;
+                  } catch (e) {
+                    contentType = null;
+                  }
 
                   if (!ok) {
                     // Entry script is not reachable -> likely stale cache / missing build asset.
@@ -395,6 +438,7 @@
                       via: found ? found.via : "unknown",
                       entrySrc: src,
                       status: status,
+                      contentType: contentType,
                     });
                     reloadOnce("entry_fetch_status_" + String(status || "unknown"));
                     return;
@@ -407,7 +451,19 @@
                     via: found ? found.via : "unknown",
                     entrySrc: src,
                     status: status,
+                    contentType: contentType,
                   });
+
+                  // If we can fetch the entry but it still hasn't executed, try re-injecting it once.
+                  // This helps in cases where iOS Safari gets stuck with an initial module load.
+                  setTimeout(function () {
+                    try {
+                      if (window.__regraphMainLoaded || isMounted()) return;
+                      injectModuleScript(src, "after_probe");
+                    } catch (e) {
+                      // ignore
+                    }
+                  }, 1200);
                 })
                 .catch(function (err) {
                   clearTimeout(t);
