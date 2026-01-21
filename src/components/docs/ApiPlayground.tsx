@@ -359,41 +359,43 @@ const ApiPlayground = () => {
       </div>
 
       {/* Endpoint Selection */}
-      <div className="grid md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>Endpoint</Label>
-          <Select value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(endpoints).map(([key, config]) => (
-                <SelectItem key={key} value={key}>
-                  <span className="flex items-center gap-2">
-                    <span className={`text-xs font-mono ${config.method === "GET" ? "text-blue-500" : "text-green-500"}`}>
-                      {config.method}
+      <div className="glass-card p-6 rounded-xl">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label>Endpoint</Label>
+            <Select value={endpoint} onValueChange={(v) => setEndpoint(v as Endpoint)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(endpoints).map(([key, config]) => (
+                  <SelectItem key={key} value={key}>
+                    <span className="flex items-center gap-2">
+                      <span className={`text-xs font-mono ${config.method === "GET" ? "text-blue-500" : "text-green-500"}`}>
+                        {config.method}
+                      </span>
+                      <span>{config.path}</span>
                     </span>
-                    <span>{config.path}</span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <p className="text-xs text-muted-foreground">{endpoints[endpoint].description}</p>
-        </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">{endpoints[endpoint].description}</p>
+          </div>
 
-        <div className="space-y-2">
-          <Label>API Key {useLiveApi && <span className="text-red-500">*</span>}</Label>
-          <Input
-            type="password"
-            placeholder="rg_your_api_key_here"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            className={useLiveApi && !apiKey ? "border-yellow-500/50" : ""}
-          />
-          <p className="text-xs text-muted-foreground">
-            {useLiveApi ? "Required for live requests" : "Optional for simulation mode"}
-          </p>
+          <div className="space-y-2">
+            <Label>API Key {useLiveApi && <span className="text-red-500">*</span>}</Label>
+            <Input
+              type="password"
+              placeholder="rg_your_api_key_here"
+              value={apiKey}
+              onChange={(e) => setApiKey(e.target.value)}
+              className={useLiveApi && !apiKey ? "border-yellow-500/50" : ""}
+            />
+            <p className="text-xs text-muted-foreground">
+              {useLiveApi ? "Required for live requests" : "Optional for simulation mode"}
+            </p>
+          </div>
         </div>
       </div>
 
