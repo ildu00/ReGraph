@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
+import gabrielTavitianPhoto from "@/assets/team/gabriel-tavitian.png";
 
 // X (Twitter) icon component
 const XIcon = ({ className }: { className?: string }) => (
@@ -149,10 +150,10 @@ const About = () => {
       }
     },
     {
-      name: "Gabriel Mikhaeli",
+      name: "Gabriel Tavitian",
       role: "CFO",
       description: "Financial strategist with expertise in crypto markets and venture capital.",
-      photo: null,
+      photo: gabrielTavitianPhoto,
       socials: null
     },
     {
