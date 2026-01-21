@@ -170,10 +170,26 @@ const HeroSection = () => {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold" onClick={handleStartBuilding}>
-              Start Building Free
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <motion.div
+              animate={{ 
+                boxShadow: [
+                  "0 0 20px hsl(var(--primary) / 0.3)",
+                  "0 0 40px hsl(var(--primary) / 0.5)",
+                  "0 0 20px hsl(var(--primary) / 0.3)"
+                ]
+              }}
+              transition={{ 
+                duration: 2, 
+                repeat: Infinity, 
+                ease: "easeInOut" 
+              }}
+              className="rounded-md"
+            >
+              <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold w-full" onClick={handleStartBuilding}>
+                Start Building Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
             <Button
               variant="outline"
               size="lg"
