@@ -18,8 +18,8 @@ const sdks = [
   {
     name: "Go",
     command: "go get regraph.tech/sdk",
-    href: null,
-    available: false,
+    href: "https://github.com/ildu00/ReGraph/tree/main/sdk/go",
+    available: true,
   },
   {
     name: "Ruby",
