@@ -450,13 +450,13 @@ const Examples = () => {
                     animate="visible"
                   >
                     {filteredProjects.map((project) => (
-                      <motion.div key={project.id} variants={itemVariants}>
+                      <motion.div key={project.id} variants={itemVariants} className="h-full">
                         <Card 
-                          className={`h-full transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 ${
+                          className={`h-full flex flex-col transition-all duration-300 hover:shadow-lg hover:shadow-primary/10 hover:-translate-y-1 ${
                             project.highlight ? 'border-primary/50 bg-primary/5' : ''
                           }`}
                         >
-                          <CardHeader>
+                          <CardHeader className="flex-none">
                             <div className="flex items-start justify-between">
                               <div className={`p-2.5 rounded-lg ${
                                 project.highlight 
@@ -470,12 +470,12 @@ const Examples = () => {
                               </Badge>
                             </div>
                             <CardTitle className="text-xl mt-3">{project.name}</CardTitle>
-                            <CardDescription className="text-sm leading-relaxed">
-                              {project.description}
-                            </CardDescription>
                           </CardHeader>
-                          <CardContent>
-                            <div className="flex flex-wrap gap-2 mb-4">
+                          <CardContent className="flex-1 flex flex-col">
+                            <p className="text-sm text-muted-foreground leading-relaxed flex-1 min-h-[4.5rem]">
+                              {project.description}
+                            </p>
+                            <div className="flex flex-wrap gap-2 my-4 min-h-[2rem]">
                               {project.tags.map((tag) => (
                                 <Badge key={tag} variant="outline" className="text-xs">
                                   {tag}
@@ -484,7 +484,7 @@ const Examples = () => {
                             </div>
                             <Button 
                               variant={project.highlight ? "default" : "outline"} 
-                              className="w-full group"
+                              className="w-full group mt-auto"
                               asChild
                             >
                               <a href={project.url} target="_blank" rel="noopener noreferrer">
