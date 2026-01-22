@@ -98,7 +98,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
       { label: "GitHub", href: "https://github.com/ildu00/ReGraph" },
       { label: "Telegram", href: "https://t.me/regraphai" },
       { label: "SDK Libraries", href: "https://github.com/ildu00/ReGraph/tree/main/sdk/" },
-      { label: "Examples", href: "#" },
+      { label: "Examples", href: "/examples" },
     ],
   };
 
