@@ -1,3 +1,4 @@
+import { useState, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -17,6 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import CodeBlock from "@/components/CodeBlock";
+
+const categories = ["All", "Text", "Image", "Audio", "Code", "Embeddings"] as const;
+type Category = typeof categories[number];
 
 const examples = [
   {
@@ -195,6 +199,13 @@ const itemVariants = {
 };
 
 const Examples = () => {
+  const [activeCategory, setActiveCategory] = useState<Category>("All");
+
+  const filteredExamples = useMemo(() => {
+    if (activeCategory === "All") return examples;
+    return examples.filter((ex) => ex.category === activeCategory);
+  }, [activeCategory]);
+
   return (
     <>
       <Helmet>
@@ -236,11 +247,12 @@ const Examples = () => {
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              {["Text", "Image", "Audio", "Code", "Embeddings"].map((category) => (
+              {categories.map((category) => (
                 <Badge 
                   key={category} 
-                  variant="secondary" 
+                  variant={activeCategory === category ? "default" : "secondary"}
                   className="cursor-pointer hover:bg-primary hover:text-primary-foreground transition-colors"
+                  onClick={() => setActiveCategory(category)}
                 >
                   {category}
                 </Badge>
@@ -254,7 +266,7 @@ const Examples = () => {
               initial="hidden"
               animate="visible"
             >
-              {examples.map((example) => (
+              {filteredExamples.map((example) => (
                 <motion.div key={example.id} variants={itemVariants}>
                   <Card className="overflow-hidden">
                     <CardHeader className="pb-4">
