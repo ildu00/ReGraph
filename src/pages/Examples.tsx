@@ -378,24 +378,25 @@ const Examples = () => {
                     animate="visible"
                   >
                     {filteredCodeExamples.map((example) => (
-                      <motion.div key={example.id} variants={itemVariants}>
+                      <motion.div key={example.id} variants={itemVariants} className="min-w-0">
                         <Card className="overflow-hidden hover:shadow-lg transition-shadow">
                           <CardHeader className="pb-4">
-                            <div className="flex items-start justify-between gap-4 flex-wrap">
-                              <div className="flex items-center gap-3">
-                                <div className="p-2 rounded-lg bg-primary/10">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
                                   <example.icon className="h-5 w-5 text-primary" />
                                 </div>
-                                <div>
-                                  <CardTitle className="text-xl">{example.title}</CardTitle>
-                                  <CardDescription className="mt-1">
+                                <div className="min-w-0">
+                                  <CardTitle className="text-lg sm:text-xl">{example.title}</CardTitle>
+                                  <CardDescription className="mt-1 text-sm">
                                     {example.description}
                                   </CardDescription>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Badge variant="outline">{example.category}</Badge>
+                              <div className="flex gap-2 shrink-0">
+                                <Badge variant="outline" className="text-xs">{example.category}</Badge>
                                 <Badge 
+                                  className="text-xs"
                                   variant={
                                     example.difficulty === "Beginner" 
                                       ? "secondary" 
@@ -409,8 +410,10 @@ const Examples = () => {
                               </div>
                             </div>
                           </CardHeader>
-                          <CardContent>
-                            <CodeBlock code={example.code} language="typescript" />
+                          <CardContent className="overflow-hidden">
+                            <div className="w-full overflow-x-auto">
+                              <CodeBlock code={example.code} language="typescript" />
+                            </div>
                           </CardContent>
                         </Card>
                       </motion.div>

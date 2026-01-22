@@ -75,10 +75,10 @@ const CodeBlock = ({ code, language = "bash", showCopy = true }: CodeBlockProps)
   const langClass = `language-${normalizeLanguage(language)}`;
 
   return (
-    <div className="relative group">
-      <pre className={`rounded-lg p-4 overflow-x-auto text-sm font-mono hljs ${langClass}`}>
+    <div className="relative group w-full max-w-full overflow-hidden">
+      <pre className={`rounded-lg p-4 overflow-x-auto text-sm font-mono hljs ${langClass} max-w-full`}>
         <code
-          className={`hljs ${langClass} whitespace-pre`}
+          className={`hljs ${langClass} whitespace-pre break-all sm:break-normal`}
           dangerouslySetInnerHTML={{ __html: highlighted }}
         />
       </pre>
