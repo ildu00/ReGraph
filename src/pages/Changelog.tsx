@@ -38,6 +38,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.6.0",
+    date: "January 22, 2026",
+    title: "Examples & Ecosystem Hub",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Unified Examples page with Code Examples and Live Projects tabs" },
+      { category: "feature", description: "Added 7 ecosystem projects built on ReGraph (SpoonOS, CryptoPulse, Voice Flow, QR Wallet Pay, Ticker One, Dark Echo, Game Agents)" },
+      { category: "feature", description: "Category filtering for both code examples and ecosystem projects" },
+      { category: "improvement", description: "Equal-height project cards with consistent layout alignment" },
+      { category: "improvement", description: "Featured project highlighting for SpoonOS with NEO partnership" },
+      { category: "improvement", description: "Partnership CTA section for builders interested in ReGraph infrastructure" },
+    ]
+  },
+  {
     version: "2.5.0",
     date: "January 21, 2026",
     title: "Admin & Navigation Improvements",
@@ -46,10 +60,14 @@ const changelog: ChangelogEntry[] = [
       { category: "feature", description: "Added Admin Panel link to dashboard sidebar for admin users" },
       { category: "feature", description: "Added Dashboard link to admin sidebar for quick navigation" },
       { category: "feature", description: "Added pagination to Boot Events with 20 items per page" },
+      { category: "feature", description: "Examples page with categorized API code snippets" },
+      { category: "feature", description: "Category-based filtering for code examples (Text, Image, Audio, Code, Embeddings)" },
       { category: "improvement", description: "Updated How It Works section arrows to purple color on homepage and About page" },
       { category: "improvement", description: "Repositioned step arrows to appear between cards instead of overlapping" },
       { category: "improvement", description: "Enhanced sidebar layout with flex column for proper footer positioning" },
+      { category: "improvement", description: "Updated provider device statuses in database (470 online, 2 offline, 4 maintenance)" },
       { category: "fix", description: "Fixed arrow positioning in How It Works sections across all pages" },
+      { category: "fix", description: "Fixed category filter functionality on Examples page" },
     ]
   },
   {
