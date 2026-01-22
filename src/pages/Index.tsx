@@ -9,6 +9,7 @@ const HowItWorksSection = lazyWithRetry(() => import("@/components/HowItWorksSec
 const FeaturesSection = lazyWithRetry(() => import("@/components/FeaturesSection"));
 const APISection = lazyWithRetry(() => import("@/components/APISection"));
 const SDKSection = lazyWithRetry(() => import("@/components/SDKSection"));
+const EcosystemSection = lazyWithRetry(() => import("@/components/EcosystemSection"));
 const CTASection = lazyWithRetry(() => import("@/components/CTASection"));
 
 const SectionPlaceholder = () => (
@@ -42,6 +43,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <SDKSection />
+        </Suspense>
+        <Suspense fallback={<SectionPlaceholder />}>
+          <EcosystemSection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <CTASection />
