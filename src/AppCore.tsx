@@ -32,6 +32,7 @@ const BlogPost = lazyWithRetry(() => import("./pages/BlogPost"));
 const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
+const Examples = lazyWithRetry(() => import("./pages/Examples"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +81,7 @@ const AppCore = () => {
                     <Route path="/blog/:slug" element={<BlogPost />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/debug/boot" element={<DebugBoot />} />
+                    <Route path="/examples" element={<Examples />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
