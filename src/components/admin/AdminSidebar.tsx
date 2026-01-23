@@ -54,7 +54,7 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 z-40 h-[100dvh] w-64 border-r border-border bg-card flex flex-col">
+      <aside className="fixed left-0 top-0 z-40 h-[calc(var(--app-vh,1vh)*100)] w-64 border-r border-border bg-card flex flex-col">
         {/* Logo */}
         <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
           <Link to="/" className="flex items-center gap-2">
