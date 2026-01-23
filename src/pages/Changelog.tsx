@@ -38,6 +38,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.6.1",
+    date: "January 23, 2026",
+    title: "Mobile UX & Admin Fixes",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed mobile sidebar visibility on iOS Safari using dynamic viewport height (dvh)" },
+      { category: "fix", description: "Fixed admin sidebar footer (Dashboard/Sign Out) being cut off on mobile devices" },
+      { category: "fix", description: "Fixed code blocks overflowing on mobile in Examples page" },
+      { category: "security", description: "Added RLS policies for admins to view, update, and delete all provider devices" },
+      { category: "improvement", description: "Updated team photo for Gabriel Mikhaeli on About page" },
+      { category: "improvement", description: "Added safe-area-inset support for iPhone notch in admin sidebar" },
+    ]
+  },
+  {
     version: "2.6.0",
     date: "January 22, 2026",
     title: "Examples & Ecosystem Hub",
