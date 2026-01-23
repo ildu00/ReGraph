@@ -66,6 +66,24 @@ const Admin = () => {
     }
   }, [searchParams]);
 
+  // iOS Safari: reliable viewport height for fixed sidebars (vh/dvh can be incorrect)
+  useEffect(() => {
+    const setAppVh = () => {
+      document.documentElement.style.setProperty(
+        "--app-vh",
+        `${window.innerHeight * 0.01}px`
+      );
+    };
+
+    setAppVh();
+    window.addEventListener("resize", setAppVh);
+    window.addEventListener("orientationchange", setAppVh);
+    return () => {
+      window.removeEventListener("resize", setAppVh);
+      window.removeEventListener("orientationchange", setAppVh);
+    };
+  }, []);
+
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
     setSearchParams({ tab });
@@ -196,7 +214,7 @@ const Admin = () => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-16 left-0 h-[calc(100dvh-4rem)] w-64 bg-card border-r border-border z-40 p-4 lg:hidden overflow-y-auto"
+              className="fixed top-16 left-0 h-[calc((var(--app-vh,1vh)*100)-4rem)] w-64 bg-card border-r border-border z-40 p-4 lg:hidden overflow-y-auto"
             >
               <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Admin Panel
