@@ -196,7 +196,7 @@ const Admin = () => {
               animate={{ x: 0 }}
               exit={{ x: -280 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="fixed top-16 left-0 h-[calc(100vh-4rem)] w-64 bg-card border-r border-border z-40 p-4 lg:hidden"
+              className="fixed top-16 left-0 h-[calc(100dvh-4rem)] w-64 bg-card border-r border-border z-40 p-4 lg:hidden overflow-y-auto"
             >
               <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                 Admin Panel
