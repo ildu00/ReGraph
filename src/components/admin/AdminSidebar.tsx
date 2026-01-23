@@ -54,55 +54,53 @@ export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
 
   return (
     <>
-      <aside className="fixed left-0 top-0 z-40 h-screen h-[100dvh] w-64 border-r border-border bg-card overflow-y-auto">
-        <div className="flex min-h-full flex-col">
-          {/* Logo */}
-          <div className="flex h-16 items-center border-b border-border px-6">
-            <Link to="/" className="flex items-center gap-2">
-              <Zap className="h-6 w-6 text-primary" />
-              <span className="text-xl font-bold">
-                <span className="text-gradient">Re</span>
-                <span className="text-primary">Graph</span>
-              </span>
-            </Link>
-          </div>
+      <aside className="fixed left-0 top-0 z-40 h-[100dvh] w-64 border-r border-border bg-card flex flex-col">
+        {/* Logo */}
+        <div className="flex h-16 items-center border-b border-border px-6 shrink-0">
+          <Link to="/" className="flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">
+              <span className="text-gradient">Re</span>
+              <span className="text-primary">Graph</span>
+            </span>
+          </Link>
+        </div>
 
-          {/* Navigation */}
-          <nav className="flex-1 space-y-1 p-4">
-            {navItems.map((item) => (
-              <button
-                key={item.id}
-                onClick={() => onTabChange(item.id)}
-                className={cn(
-                  "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
-                  activeTab === item.id
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </button>
-            ))}
-          </nav>
-
-          {/* Footer */}
-          <div className="border-t border-border p-4 space-y-1">
-            <Link
-              to="/dashboard"
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              <LayoutDashboard className="h-5 w-5" />
-              Dashboard
-            </Link>
+        {/* Navigation - scrollable */}
+        <nav className="flex-1 space-y-1 p-4 overflow-y-auto">
+          {navItems.map((item) => (
             <button
-              onClick={() => setShowSignOutDialog(true)}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              key={item.id}
+              onClick={() => onTabChange(item.id)}
+              className={cn(
+                "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                activeTab === item.id
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+              )}
             >
-              <LogOut className="h-5 w-5" />
-              Sign Out
+              <item.icon className="h-5 w-5" />
+              {item.label}
             </button>
-          </div>
+          ))}
+        </nav>
+
+        {/* Footer - always visible */}
+        <div className="border-t border-border p-4 space-y-1 shrink-0 pb-[env(safe-area-inset-bottom,1rem)]">
+          <Link
+            to="/dashboard"
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <LayoutDashboard className="h-5 w-5" />
+            Dashboard
+          </Link>
+          <button
+            onClick={() => setShowSignOutDialog(true)}
+            className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+          >
+            <LogOut className="h-5 w-5" />
+            Sign Out
+          </button>
         </div>
       </aside>
 
