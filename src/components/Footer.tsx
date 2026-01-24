@@ -188,7 +188,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
             <p className="text-sm text-muted-foreground">
               © 2026 ReGraph. All rights reserved.
             </p>
-            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2 text-sm">
               <Link 
                 to="/privacy" 
                 className={cn(
