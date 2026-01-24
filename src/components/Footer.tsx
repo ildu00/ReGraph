@@ -222,6 +222,14 @@ const Footer = ({ insetLeft }: FooterProps) => {
               >
                 Cookie Policy
               </Link>
+              <a 
+                href="/ReGraph_Whitepaper_v1.01.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Whitepaper v1.01
+              </a>
             </div>
           </div>
         </div>
