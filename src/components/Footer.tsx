@@ -188,45 +188,56 @@ const Footer = ({ insetLeft }: FooterProps) => {
             <p className="text-sm text-muted-foreground">
               © 2026 ReGraph. All rights reserved.
             </p>
-            <div className="flex flex-wrap justify-center md:justify-end gap-x-6 gap-y-2 text-sm">
-              <Link 
-                to="/privacy" 
-                className={cn(
-                  "transition-colors",
-                  location.pathname === "/privacy" 
-                    ? "text-primary font-medium" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Privacy Policy
-              </Link>
-              <Link 
-                to="/terms" 
-                className={cn(
-                  "transition-colors",
-                  location.pathname === "/terms" 
-                    ? "text-primary font-medium" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Terms of Service
-              </Link>
-              <Link 
-                to="/cookies" 
-                className={cn(
-                  "transition-colors",
-                  location.pathname === "/cookies" 
-                    ? "text-primary font-medium" 
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                Cookie Policy
-              </Link>
+            <div className="flex flex-col sm:flex-row flex-wrap justify-center md:justify-end gap-x-6 gap-y-2 text-sm items-center">
+              <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
+                <Link 
+                  to="/privacy" 
+                  className={cn(
+                    "transition-colors",
+                    location.pathname === "/privacy" 
+                      ? "text-primary font-medium" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Privacy Policy
+                </Link>
+                <Link 
+                  to="/terms" 
+                  className={cn(
+                    "transition-colors",
+                    location.pathname === "/terms" 
+                      ? "text-primary font-medium" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Terms of Service
+                </Link>
+                <Link 
+                  to="/cookies" 
+                  className={cn(
+                    "transition-colors",
+                    location.pathname === "/cookies" 
+                      ? "text-primary font-medium" 
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  Cookie Policy
+                </Link>
+                <a 
+                  href="https://regraph.tech/ReGraph_Whitepaper_v1.01.pdf"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground hover:text-foreground transition-colors hidden lg:inline"
+                >
+                  Whitepaper v1.01
+                </a>
+              </div>
+              {/* Whitepaper on separate line for tablet, centered for mobile */}
               <a 
                 href="https://regraph.tech/ReGraph_Whitepaper_v1.01.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors basis-full md:basis-auto text-center md:text-left"
+                className="text-muted-foreground hover:text-foreground transition-colors lg:hidden"
               >
                 Whitepaper v1.01
               </a>
