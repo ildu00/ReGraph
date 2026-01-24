@@ -188,7 +188,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
             <p className="text-sm text-muted-foreground">
               © 2026 ReGraph. All rights reserved.
             </p>
-            <div className="flex gap-6 text-sm">
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm">
               <Link 
                 to="/privacy" 
                 className={cn(
@@ -226,7 +226,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
                 href="/ReGraph_Whitepaper_v1.01.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors"
+                className="text-muted-foreground hover:text-foreground transition-colors basis-full md:basis-auto"
               >
                 Whitepaper v1.01
               </a>
