@@ -26,8 +26,8 @@ export default defineConfig(({ mode }) => ({
       // Inline SW registration in HTML for immediate effect
       injectRegister: "inline",
       workbox: {
-        // Cache JS/CSS/fonts/images
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,pdf}"],
+        // Cache JS/CSS/fonts/images (NOT pdf - too large for precache)
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         // CRITICAL: Don't serve the SPA shell for real files (e.g. /whitepaper.pdf)
         // Otherwise navigation requests opened in a new tab can be intercepted and routed to NotFound.
         navigateFallbackDenylist: [
