@@ -226,7 +226,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
                 href="/ReGraph_Whitepaper_v1.01.pdf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-muted-foreground hover:text-foreground transition-colors basis-full md:basis-auto"
+                className="text-muted-foreground hover:text-foreground transition-colors basis-full md:basis-auto text-center md:text-left"
               >
                 Whitepaper v1.01
               </a>
