@@ -27,7 +27,12 @@ export default defineConfig(({ mode }) => ({
       injectRegister: "inline",
       workbox: {
         // Cache JS/CSS/fonts/images
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
+        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2,pdf}"],
+        // CRITICAL: Don't serve the SPA shell for real files (e.g. /whitepaper.pdf)
+        // Otherwise navigation requests opened in a new tab can be intercepted and routed to NotFound.
+        navigateFallbackDenylist: [
+          /\.(?:pdf|png|jpe?g|svg|webp|ico|css|js|map|woff2?)$/i,
+        ],
         // Clean old caches automatically
         cleanupOutdatedCaches: true,
         // Skip waiting - new SW takes over immediately
