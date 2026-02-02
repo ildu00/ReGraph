@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -29,6 +30,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { Lightbox } from "@/components/ui/lightbox";
 
 // Event gallery images
 import event1 from "@/assets/events/event-1.jpg";
@@ -201,6 +203,25 @@ const About = () => {
     { src: event6, alt: "ReGraph booth at industry event" },
     { src: event7, alt: "ReGraph team at AI economics presentation" },
   ];
+
+  // Lightbox state
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const closeLightbox = () => setLightboxOpen(false);
+
+  const nextImage = () => {
+    setLightboxIndex((prev) => (prev + 1) % eventGallery.length);
+  };
+
+  const prevImage = () => {
+    setLightboxIndex((prev) => (prev - 1 + eventGallery.length) % eventGallery.length);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -470,13 +491,16 @@ const About = () => {
                 <CarouselContent className="-ml-2 md:-ml-4">
                   {eventGallery.map((image, index) => (
                     <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
-                      <div className="aspect-[4/3] rounded-xl overflow-hidden border border-border bg-card">
+                      <button
+                        onClick={() => openLightbox(index)}
+                        className="aspect-[4/3] rounded-xl overflow-hidden border border-border bg-card w-full cursor-pointer group"
+                      >
                         <img
                           src={image.src}
                           alt={image.alt}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                      </div>
+                      </button>
                     </CarouselItem>
                   ))}
                 </CarouselContent>
@@ -652,6 +676,15 @@ const About = () => {
       </main>
 
       <Footer />
+
+      <Lightbox
+        images={eventGallery}
+        isOpen={lightboxOpen}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onNext={nextImage}
+        onPrevious={prevImage}
+      />
     </div>
   );
 };
