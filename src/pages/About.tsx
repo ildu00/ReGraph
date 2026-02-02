@@ -201,6 +201,31 @@ const About = () => {
             </p>
           </motion.div>
 
+          {/* Video Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="mb-16"
+          >
+            <div className="max-w-4xl mx-auto">
+              <div className="aspect-video rounded-xl overflow-hidden border border-border bg-card shadow-lg">
+                <video
+                  controls
+                  className="w-full h-full object-cover"
+                  poster="/videos/about-video-poster.jpg"
+                >
+                  <source src="/videos/about-video.mov" type="video/quicktime" />
+                  <source src="/videos/about-video.mov" type="video/mp4" />
+                  Your browser does not support the video tag.
+                </video>
+              </div>
+              <p className="text-center text-sm text-muted-foreground mt-4">
+                Watch our project overview video
+              </p>
+            </div>
+          </motion.div>
+
           {/* Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
