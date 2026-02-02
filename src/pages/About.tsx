@@ -22,6 +22,22 @@ import {
 import { Badge } from "@/components/ui/badge";
 import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
 import gabrielMikhaeliPhoto from "@/assets/team/gabriel-mikhaeli.jpg";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
+
+// Event gallery images
+import event1 from "@/assets/events/event-1.jpg";
+import event2 from "@/assets/events/event-2.jpg";
+import event3 from "@/assets/events/event-3.jpg";
+import event4 from "@/assets/events/event-4.jpg";
+import event5 from "@/assets/events/event-5.jpg";
+import event6 from "@/assets/events/event-6.jpg";
+import event7 from "@/assets/events/event-7.jpg";
 
 // X (Twitter) icon component
 const XIcon = ({ className }: { className?: string }) => (
@@ -174,6 +190,16 @@ const About = () => {
     { name: "James Wilson", role: "Security Engineer", department: "Engineering" },
     { name: "Maria Santos", role: "Community Manager", department: "Marketing" },
     { name: "Alex Turner", role: "Backend Developer", department: "Engineering" }
+  ];
+
+  const eventGallery = [
+    { src: event1, alt: "ReGraph team networking at tech conference" },
+    { src: event2, alt: "Product demonstration at ReGraph booth" },
+    { src: event3, alt: "ReGraph team presenting enterprise architecture" },
+    { src: event4, alt: "ReGraph booth showcasing developer experience" },
+    { src: event5, alt: "Interactive demo at ReGraph exhibition" },
+    { src: event6, alt: "ReGraph booth at industry event" },
+    { src: event7, alt: "ReGraph team at AI economics presentation" },
   ];
 
   return (
@@ -419,6 +445,44 @@ const About = () => {
                   <p className="text-sm text-muted-foreground">{cred.description}</p>
                 </motion.div>
               ))}
+            </div>
+          </motion.section>
+
+          {/* Events & Gallery Section */}
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.52 }}
+            className="mb-16"
+          >
+            <h2 className="text-3xl font-bold text-center mb-4">Events & Conferences</h2>
+            <p className="text-center text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Connecting with industry leaders and showcasing our technology at global events
+            </p>
+            <div className="max-w-5xl mx-auto px-12">
+              <Carousel
+                opts={{
+                  align: "start",
+                  loop: true,
+                }}
+                className="w-full"
+              >
+                <CarouselContent className="-ml-2 md:-ml-4">
+                  {eventGallery.map((image, index) => (
+                    <CarouselItem key={index} className="pl-2 md:pl-4 basis-full md:basis-1/2 lg:basis-1/3">
+                      <div className="aspect-[4/3] rounded-xl overflow-hidden border border-border bg-card">
+                        <img
+                          src={image.src}
+                          alt={image.alt}
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
+                    </CarouselItem>
+                  ))}
+                </CarouselContent>
+                <CarouselPrevious className="hidden md:flex" />
+                <CarouselNext className="hidden md:flex" />
+              </Carousel>
             </div>
           </motion.section>
 
