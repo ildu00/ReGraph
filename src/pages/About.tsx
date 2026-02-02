@@ -210,10 +210,10 @@ const About = () => {
           >
             <div className="max-w-4xl mx-auto">
               <div className="aspect-video rounded-xl overflow-hidden border border-border bg-card shadow-lg">
-                <video
+              <video
                   controls
+                  preload="metadata"
                   className="w-full h-full object-cover"
-                  poster="/videos/about-video-poster.jpg"
                 >
                   <source src="/videos/about-video.mov" type="video/quicktime" />
                   <source src="/videos/about-video.mov" type="video/mp4" />
