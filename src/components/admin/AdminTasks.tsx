@@ -456,13 +456,13 @@ export const AdminTasks = () => {
                           onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
                         />
                       </TableCell>
-                      <TableCell>
-                        <div>
-                          <div className={`font-medium ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
+                      <TableCell className="overflow-hidden">
+                        <div className="min-w-0">
+                          <div className={`font-medium truncate ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
                             {task.title}
                           </div>
                           {task.description && (
-                            <div className="text-xs text-muted-foreground truncate max-w-[200px]">
+                            <div className="text-xs text-muted-foreground truncate">
                               {task.description}
                             </div>
                           )}
