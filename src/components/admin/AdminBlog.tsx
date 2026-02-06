@@ -309,13 +309,13 @@ export const AdminBlog = () => {
         <Table className="table-fixed w-full">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[50px]">Featured</TableHead>
+              <TableHead className="w-[44px]">Featured</TableHead>
               <TableHead className="w-[60px] hidden sm:table-cell">Image</TableHead>
               <TableHead>Title</TableHead>
-              <TableHead className="hidden md:table-cell">Category</TableHead>
-              <TableHead className="hidden md:table-cell">Date</TableHead>
-              <TableHead className="hidden sm:table-cell">Read Time</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead className="hidden md:table-cell w-[130px]">Category</TableHead>
+              <TableHead className="hidden md:table-cell w-[110px]">Date</TableHead>
+              <TableHead className="hidden sm:table-cell w-[80px]">Read Time</TableHead>
+              <TableHead className="w-[140px] text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
