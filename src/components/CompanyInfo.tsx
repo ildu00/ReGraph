@@ -94,7 +94,7 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
               <h3 className="font-medium mb-1">Website</h3>
               <p className="text-muted-foreground">
                 <a 
-                  href="https://www.polite-moose.com" 
+                  href="https://regraph.tech" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
