@@ -12,7 +12,7 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
         <p className="text-xs text-muted-foreground">
           <strong>Polite Moose Limited</strong><br />
           Rm 7B, One Capital Place 18 Luard Road, Wan Chai, Hong Kong<br />
-          Company No: 3179926 | <a href="mailto:info@polite-moose.com" className="text-primary hover:underline">info@polite-moose.com</a>
+          Company No: 3179926 | <a href="mailto:info@regraph.tech" className="text-primary hover:underline">info@regraph.tech</a>
         </p>
       </div>
     );
@@ -81,8 +81,8 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
             <div>
               <h3 className="font-medium mb-1">Contact</h3>
               <p className="text-muted-foreground">
-                <a href="mailto:info@polite-moose.com" className="text-primary hover:underline">
-                  info@polite-moose.com
+                <a href="mailto:info@regraph.tech" className="text-primary hover:underline">
+                  info@regraph.tech
                 </a>
               </p>
             </div>
@@ -94,12 +94,12 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
               <h3 className="font-medium mb-1">Website</h3>
               <p className="text-muted-foreground">
                 <a 
-                  href="https://www.polite-moose.com" 
+                  href="https://regraph.tech" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  www.polite-moose.com
+                  regraph.tech
                 </a>
               </p>
             </div>
