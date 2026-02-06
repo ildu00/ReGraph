@@ -490,7 +490,7 @@ export const AdminTasks = () => {
                       <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                         {new Date(task.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right w-10 sm:w-14 pr-2 sm:pr-4">
+                      <TableCell className="text-right w-10 pr-1 sm:pr-2">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
