@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { blogPosts, BlogPost } from "@/data/blogPosts";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +40,10 @@ import {
   ExternalLink,
   Plus,
   Image,
-  Trash2
+  Trash2,
+  Upload,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,6 +76,10 @@ export const AdminBlog = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreatePost = () => {
     setEditingPost(createEmptyPost());
@@ -143,6 +151,91 @@ export const AdminBlog = () => {
       .replace(/\s+/g, "-")
       .replace(/-+/g, "-")
       .trim();
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingPost) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const slug = editingPost.slug || generateSlug(editingPost.title) || "untitled";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${slug}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("blog-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("blog-images")
+        .getPublicUrl(fileName);
+
+      setEditingPost({ ...editingPost, image: urlData.publicUrl });
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Handle AI image generation
+  const handleGenerateImage = async () => {
+    if (!editingPost) return;
+
+    const prompt = aiPrompt.trim() || editingPost.title;
+    if (!prompt) {
+      toast.error("Please enter a prompt or article title first");
+      return;
+    }
+
+    const slug = editingPost.slug || generateSlug(editingPost.title) || "untitled";
+    
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-blog-image", {
+        body: { prompt, slug },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setEditingPost({ ...editingPost, image: data.imageUrl });
+      setAiPrompt("");
+      toast.success("Image generated successfully");
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
@@ -372,34 +465,96 @@ export const AdminBlog = () => {
                 />
               </div>
 
-              {/* Image URL Field */}
-              <div className="grid gap-2">
-                <Label htmlFor="image">Image URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="image"
-                    value={editingPost.image}
-                    onChange={(e) =>
-                      setEditingPost({ ...editingPost, image: e.target.value })
-                    }
-                    placeholder="https://example.com/image.jpg or /assets/blog/image.jpg"
-                    className="flex-1"
-                  />
-                </div>
-                {editingPost.image && (
-                  <div className="mt-2 aspect-video max-w-xs rounded-lg overflow-hidden bg-muted">
+              {/* Image Section */}
+              <div className="grid gap-3">
+                <Label>Article Image</Label>
+                
+                {/* Image Preview */}
+                <div className="aspect-video max-w-md rounded-lg overflow-hidden bg-muted border border-border relative">
+                  {editingPost.image ? (
                     <img
                       src={editingPost.image}
                       alt="Preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
+                        (e.target as HTMLImageElement).src = "";
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                      <Image className="h-12 w-12 mb-2" />
+                      <span className="text-sm">No image selected</span>
+                    </div>
+                  )}
+                  {(isUploading || isGenerating) && (
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Image URL Input */}
+                <Input
+                  id="image"
+                  value={editingPost.image}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, image: e.target.value })
+                  }
+                  placeholder="Enter image URL manually..."
+                />
+
+                {/* Upload and Generate Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading || isGenerating}
+                    className="flex-1"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    Upload Image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={isUploading || isGenerating || (!aiPrompt.trim() && !editingPost.title.trim())}
+                    className="flex-1"
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Generate with AI
+                  </Button>
+                </div>
+
+                {/* AI Prompt Input */}
+                <div className="flex gap-2">
+                  <Input
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="AI prompt (optional, uses title if empty)..."
+                    className="flex-1"
+                    disabled={isGenerating}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  For local images, use imported assets from src/assets/blog/. For new images, add them to src/assets/blog/ and import in blogPosts.ts
+                  Upload an image or generate one using AI based on the article title or custom prompt.
                 </p>
               </div>
 
