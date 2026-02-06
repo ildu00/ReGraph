@@ -84,7 +84,19 @@ serve(async (req: Request): Promise<Response> => {
       html,
     });
 
-    console.log("Notification sent successfully:", emailResponse);
+    // Check for Resend API errors
+    if (emailResponse.error) {
+      console.error("Resend API error:", emailResponse.error);
+      return new Response(
+        JSON.stringify({ 
+          error: emailResponse.error.message || "Failed to send email",
+          details: emailResponse.error
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("Notification sent successfully:", emailResponse.data);
 
     return new Response(
       JSON.stringify({ 
