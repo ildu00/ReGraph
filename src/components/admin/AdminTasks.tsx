@@ -430,12 +430,12 @@ export const AdminTasks = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">Done</TableHead>
+                  <TableHead className="w-[40px]"></TableHead>
                   <SortableHeader field="title">Title</SortableHeader>
-                  <SortableHeader field="priority">Priority</SortableHeader>
-                  <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="due_date">Due Date</SortableHeader>
-                  <SortableHeader field="created_at">Created</SortableHeader>
+                  <SortableHeader field="priority"><span className="hidden sm:inline">Priority</span><span className="sm:hidden">Pri</span></SortableHeader>
+                  <SortableHeader field="status"><span className="hidden md:inline">Status</span></SortableHeader>
+                  <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
+                  <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -449,7 +449,7 @@ export const AdminTasks = () => {
                 ) : (
                   paginatedTasks.map((task) => (
                     <TableRow key={task.id} className={task.status === "done" ? "opacity-60" : ""}>
-                      <TableCell>
+                      <TableCell className="pr-0">
                         <Checkbox
                           checked={task.status === "done"}
                           onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
@@ -465,11 +465,14 @@ export const AdminTasks = () => {
                               {task.description}
                             </div>
                           )}
+                          <div className="md:hidden mt-1">
+                            {getStatusBadge(task.status)}
+                          </div>
                         </div>
                       </TableCell>
                       <TableCell>{getPriorityBadge(task.priority)}</TableCell>
-                      <TableCell>{getStatusBadge(task.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">{getStatusBadge(task.status)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {task.due_date ? (
                           <div className="flex items-center gap-1 text-sm">
                             <Calendar className="h-3 w-3" />
@@ -479,7 +482,7 @@ export const AdminTasks = () => {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                         {new Date(task.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">

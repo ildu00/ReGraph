@@ -266,11 +266,11 @@ export const AdminRequests = () => {
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="name">From</SortableHeader>
-                  <TableHead>Account</TableHead>
-                  <SortableHeader field="subject">Category</SortableHeader>
-                  <TableHead>Message</TableHead>
+                  <TableHead className="hidden lg:table-cell">Account</TableHead>
+                  <SortableHeader field="subject"><span className="hidden sm:inline">Category</span><span className="sm:hidden">Cat.</span></SortableHeader>
+                  <TableHead className="hidden xl:table-cell">Message</TableHead>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="created_at">Date</SortableHeader>
+                  <SortableHeader field="created_at"><span className="hidden md:inline">Date</span><span className="md:hidden">Date</span></SortableHeader>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -288,9 +288,19 @@ export const AdminRequests = () => {
                         <div>
                           <div className="font-medium">{request.name}</div>
                           <div className="text-xs text-muted-foreground">{request.email}</div>
+                          <div className="lg:hidden mt-1">
+                            {request.user_id ? (
+                              <span className="text-xs text-primary flex items-center gap-1">
+                                <User className="h-3 w-3" />
+                                {request.profile?.display_name || "User"}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground">Guest</span>
+                            )}
+                          </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden lg:table-cell">
                         {request.user_id ? (
                           <div className="flex items-center gap-1.5">
                             <User className="h-3 w-3 text-primary" />
@@ -305,18 +315,19 @@ export const AdminRequests = () => {
                       <TableCell>
                         <Badge variant="outline">{request.subject || "General"}</Badge>
                       </TableCell>
-                      <TableCell className="max-w-[200px] truncate">
+                      <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
                         {request.message}
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8"
                             onClick={() => setSelectedRequest(request)}
                           >
                             <Eye className="h-4 w-4" />
@@ -324,6 +335,7 @@ export const AdminRequests = () => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8 hidden sm:inline-flex"
                             onClick={() => updateStatus(request.id, "in_progress")}
                           >
                             <Clock className="h-4 w-4 text-blue-500" />
@@ -331,6 +343,7 @@ export const AdminRequests = () => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            className="h-8 w-8 hidden sm:inline-flex"
                             onClick={() => updateStatus(request.id, "resolved")}
                           >
                             <CheckCircle className="h-4 w-4 text-green-500" />

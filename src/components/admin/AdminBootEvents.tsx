@@ -230,10 +230,10 @@ export const AdminBootEvents = () => {
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>Reason</TableHead>
-                <TableHead>Device</TableHead>
-                <TableHead>Attempts</TableHead>
-                <TableHead>Storage</TableHead>
-                <TableHead>IP</TableHead>
+                <TableHead className="hidden sm:table-cell">Device</TableHead>
+                <TableHead className="hidden md:table-cell">Attempts</TableHead>
+                <TableHead className="hidden lg:table-cell">Storage</TableHead>
+                <TableHead className="hidden lg:table-cell">IP</TableHead>
                 <TableHead></TableHead>
               </TableRow>
             </TableHeader>
@@ -248,29 +248,38 @@ export const AdminBootEvents = () => {
                 paginatedEvents.map((event) => (
                   <TableRow key={event.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEvent(event)}>
                     <TableCell className="text-sm">
-                      {format(new Date(event.created_at), "MMM d, HH:mm:ss")}
+                      <div>{format(new Date(event.created_at), "MMM d, HH:mm:ss")}</div>
+                      <div className="flex items-center gap-2 sm:hidden mt-1">
+                        {isMobile(event.user_agent) ? (
+                          <Smartphone className="h-3 w-3 text-orange-400" />
+                        ) : (
+                          <Monitor className="h-3 w-3 text-muted-foreground" />
+                        )}
+                        <span className="text-xs text-muted-foreground">×{event.attempts}</span>
+                        {event.storage_fallback && <AlertTriangle className="h-3 w-3 text-yellow-400" />}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className={getReasonBadge(event.reason)}>
                         {event.reason}
                       </Badge>
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell">
                       {isMobile(event.user_agent) ? (
                         <Smartphone className="h-4 w-4 text-orange-400" />
                       ) : (
                         <Monitor className="h-4 w-4 text-muted-foreground" />
                       )}
                     </TableCell>
-                    <TableCell>{event.attempts}</TableCell>
-                    <TableCell>
+                    <TableCell className="hidden md:table-cell">{event.attempts}</TableCell>
+                    <TableCell className="hidden lg:table-cell">
                       {event.storage_fallback ? (
                         <AlertTriangle className="h-4 w-4 text-yellow-400" />
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-xs text-muted-foreground font-mono">
+                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">
                       {event.ip_address || "—"}
                     </TableCell>
                     <TableCell>
