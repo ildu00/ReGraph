@@ -266,10 +266,10 @@ export const AdminRequests = () => {
                 <TableRow>
                   <SortableHeader field="name">From</SortableHeader>
                   <TableHead className="hidden lg:table-cell">Account</TableHead>
-                  <SortableHeader field="subject"><span className="hidden sm:inline">Category</span><span className="sm:hidden">Cat.</span></SortableHeader>
+                  <SortableHeader field="subject" className="hidden sm:table-cell">Category</SortableHeader>
                   <TableHead className="hidden xl:table-cell">Message</TableHead>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="created_at"><span className="hidden md:inline">Date</span><span className="md:hidden">Date</span></SortableHeader>
+                  <SortableHeader field="created_at" className="hidden md:table-cell">Date</SortableHeader>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
