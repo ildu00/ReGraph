@@ -237,16 +237,18 @@ export const AdminNotifications = () => {
       }
 
       toast.success(`Notification sent to ${data.recipients} recipient(s)`);
-      
-      setSendHistory((prev) => [
-        {
-          date: new Date().toISOString(),
-          recipients: selectedUsers.length,
-          subject,
-          status: "success",
-        },
-        ...prev,
-      ]);
+
+      // Persist to database
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("notification_logs").insert({
+        sent_by: user?.id,
+        recipients_count: selectedUsers.length,
+        subject,
+        status: "success",
+      });
+
+      // Refresh history from DB
+      await fetchSendHistory();
 
       // Reset form
       setSelectedUsers([]);
@@ -256,16 +258,17 @@ export const AdminNotifications = () => {
     } catch (error) {
       console.error("Error sending notification:", error);
       toast.error(error instanceof Error ? error.message : "Failed to send notification");
-      
-      setSendHistory((prev) => [
-        {
-          date: new Date().toISOString(),
-          recipients: selectedUsers.length,
-          subject,
-          status: "error",
-        },
-        ...prev,
-      ]);
+
+      // Log failure too
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from("notification_logs").insert({
+        sent_by: user?.id,
+        recipients_count: selectedUsers.length,
+        subject: subject || "(no subject)",
+        status: "error",
+      });
+
+      await fetchSendHistory();
     } finally {
       setIsSending(false);
     }
