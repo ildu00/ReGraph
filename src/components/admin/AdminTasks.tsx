@@ -482,7 +482,7 @@ export const AdminTasks = () => {
                           <span className="text-muted-foreground">—</span>
                         )}
                       </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
+                      <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                         {new Date(task.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">

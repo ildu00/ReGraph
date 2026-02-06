@@ -518,7 +518,6 @@ export const AdminResources = () => {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
                           onClick={() => setDeleteDeviceId(device.id)}
                           className="text-destructive hover:text-destructive h-8 w-8"
                         >
