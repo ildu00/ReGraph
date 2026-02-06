@@ -12,7 +12,7 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
         <p className="text-xs text-muted-foreground">
           <strong>Polite Moose Limited</strong><br />
           Rm 7B, One Capital Place 18 Luard Road, Wan Chai, Hong Kong<br />
-          Company No: 3179926 | <a href="mailto:info@polite-moose.com" className="text-primary hover:underline">info@polite-moose.com</a>
+          Company No: 3179926 | <a href="mailto:info@regraph.tech" className="text-primary hover:underline">info@regraph.tech</a>
         </p>
       </div>
     );
