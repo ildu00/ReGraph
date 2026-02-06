@@ -420,14 +420,14 @@ export const AdminTasks = () => {
       </Card>
 
       {/* Tasks Table */}
-      <Card>
+      <Card className="overflow-hidden">
         <CardHeader>
-          <CardTitle>
+          <CardTitle className="text-base sm:text-lg">
             Tasks ({filteredAndSortedTasks.length})
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-2 sm:px-6">
             <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
