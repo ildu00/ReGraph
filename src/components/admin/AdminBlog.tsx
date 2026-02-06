@@ -350,7 +350,7 @@ export const AdminBlog = () => {
                     </div>
                   )}
                 </TableCell>
-                <TableCell>
+                <TableCell className="max-w-0">
                   <div className="flex flex-col">
                     <span className="font-medium line-clamp-1">
                       {post.title}
