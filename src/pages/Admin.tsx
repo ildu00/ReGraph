@@ -153,14 +153,14 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
       </div>
 
       {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-4 lg:hidden">
+      <header className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-3 sm:px-4 lg:hidden overflow-hidden">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
@@ -287,8 +287,8 @@ const Admin = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0">
-        <div className="p-6 lg:p-8">{renderContent()}</div>
+      <main className="lg:ml-64 pt-16 lg:pt-0 min-w-0">
+        <div className="p-3 sm:p-6 lg:p-8">{renderContent()}</div>
       </main>
     </div>
   );
