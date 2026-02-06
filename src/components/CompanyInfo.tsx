@@ -81,8 +81,8 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
             <div>
               <h3 className="font-medium mb-1">Contact</h3>
               <p className="text-muted-foreground">
-                <a href="mailto:info@polite-moose.com" className="text-primary hover:underline">
-                  info@polite-moose.com
+                <a href="mailto:info@regraph.tech" className="text-primary hover:underline">
+                  info@regraph.tech
                 </a>
               </p>
             </div>
