@@ -465,97 +465,98 @@ export const AdminBlog = () => {
                 />
               </div>
 
-              {/* Image Section */}
-              <div className="grid gap-3">
+              {/* Image Section - Compact layout for md+ */}
+              <div className="grid gap-2">
                 <Label>Article Image</Label>
                 
-                {/* Image Preview */}
-                <div className="aspect-video max-w-md rounded-lg overflow-hidden bg-muted border border-border relative">
-                  {editingPost.image ? (
-                    <img
-                      src={editingPost.image}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = "";
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
+                <div className="flex flex-col md:flex-row gap-4">
+                  {/* Image Preview */}
+                  <div className="w-full md:w-40 lg:w-48 shrink-0">
+                    <div className="aspect-video rounded-lg overflow-hidden bg-muted border border-border relative">
+                      {editingPost.image ? (
+                        <img
+                          src={editingPost.image}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = "";
+                            (e.target as HTMLImageElement).style.display = "none";
+                          }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                          <Image className="h-8 w-8 md:h-6 md:w-6" />
+                        </div>
+                      )}
+                      {(isUploading || isGenerating) && (
+                        <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Image Controls */}
+                  <div className="flex-1 flex flex-col gap-2">
+                    <Input
+                      id="image"
+                      value={editingPost.image}
+                      onChange={(e) =>
+                        setEditingPost({ ...editingPost, image: e.target.value })
+                      }
+                      placeholder="Image URL..."
+                      className="text-sm"
                     />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
-                      <Image className="h-12 w-12 mb-2" />
-                      <span className="text-sm">No image selected</span>
+                    
+                    <div className="flex gap-2">
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading || isGenerating}
+                        className="flex-1"
+                      >
+                        {isUploading ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Upload className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        Upload
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateImage}
+                        disabled={isUploading || isGenerating || (!aiPrompt.trim() && !editingPost.title.trim())}
+                        className="flex-1"
+                      >
+                        {isGenerating ? (
+                          <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                        )}
+                        AI Generate
+                      </Button>
                     </div>
-                  )}
-                  {(isUploading || isGenerating) && (
-                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
-                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                    </div>
-                  )}
-                </div>
 
-                {/* Image URL Input */}
-                <Input
-                  id="image"
-                  value={editingPost.image}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, image: e.target.value })
-                  }
-                  placeholder="Enter image URL manually..."
-                />
-
-                {/* Upload and Generate Buttons */}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={isUploading || isGenerating}
-                    className="flex-1"
-                  >
-                    {isUploading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Upload className="h-4 w-4 mr-2" />
-                    )}
-                    Upload Image
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleGenerateImage}
-                    disabled={isUploading || isGenerating || (!aiPrompt.trim() && !editingPost.title.trim())}
-                    className="flex-1"
-                  >
-                    {isGenerating ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 mr-2" />
-                    )}
-                    Generate with AI
-                  </Button>
+                    <Input
+                      value={aiPrompt}
+                      onChange={(e) => setAiPrompt(e.target.value)}
+                      placeholder="AI prompt (uses title if empty)..."
+                      className="text-sm"
+                      disabled={isGenerating}
+                    />
+                  </div>
                 </div>
-
-                {/* AI Prompt Input */}
-                <div className="flex gap-2">
-                  <Input
-                    value={aiPrompt}
-                    onChange={(e) => setAiPrompt(e.target.value)}
-                    placeholder="AI prompt (optional, uses title if empty)..."
-                    className="flex-1"
-                    disabled={isGenerating}
-                  />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Upload an image or generate one using AI based on the article title or custom prompt.
-                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
