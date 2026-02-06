@@ -1,0 +1,269 @@
+import { useEffect, useState, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ChevronLeft, ChevronRight, RefreshCw, Activity } from "lucide-react";
+
+interface ApiRequestLog {
+  id: string;
+  method: string;
+  endpoint: string;
+  status_code: number;
+  response_time_ms: number;
+  user_agent: string | null;
+  ip_address: string | null;
+  api_key_prefix: string | null;
+  error_message: string | null;
+  created_at: string;
+}
+
+const PAGE_SIZE = 20;
+
+const methodColor = (method: string) => {
+  switch (method.toUpperCase()) {
+    case "GET": return "bg-blue-500/15 text-blue-400 border-blue-500/30";
+    case "POST": return "bg-green-500/15 text-green-400 border-green-500/30";
+    case "PUT": return "bg-amber-500/15 text-amber-400 border-amber-500/30";
+    case "DELETE": return "bg-red-500/15 text-red-400 border-red-500/30";
+    default: return "bg-muted text-muted-foreground";
+  }
+};
+
+const statusColor = (code: number) => {
+  if (code < 300) return "text-green-400";
+  if (code < 400) return "text-amber-400";
+  if (code < 500) return "text-orange-400";
+  return "text-red-400";
+};
+
+export const AdminApiLogs = () => {
+  const [logs, setLogs] = useState<ApiRequestLog[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
+  const [methodFilter, setMethodFilter] = useState<string>("all");
+  const [endpointFilter, setEndpointFilter] = useState<string>("all");
+  const [endpoints, setEndpoints] = useState<string[]>([]);
+
+  const fetchLogs = useCallback(async () => {
+    setLoading(true);
+    try {
+      let query = supabase
+        .from("api_request_logs")
+        .select("*", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(page * PAGE_SIZE, (page + 1) * PAGE_SIZE - 1);
+
+      if (methodFilter !== "all") {
+        query = query.eq("method", methodFilter);
+      }
+      if (endpointFilter !== "all") {
+        query = query.eq("endpoint", endpointFilter);
+      }
+
+      const { data, count, error } = await query;
+
+      if (error) {
+        console.error("Error fetching API logs:", error);
+        return;
+      }
+
+      setLogs((data as ApiRequestLog[]) || []);
+      setTotalCount(count || 0);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, methodFilter, endpointFilter]);
+
+  // Fetch distinct endpoints for filter
+  useEffect(() => {
+    const fetchEndpoints = async () => {
+      const { data } = await supabase
+        .from("api_request_logs")
+        .select("endpoint")
+        .order("endpoint");
+      
+      if (data) {
+        const unique = [...new Set(data.map((d: { endpoint: string }) => d.endpoint))];
+        setEndpoints(unique);
+      }
+    };
+    fetchEndpoints();
+  }, []);
+
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
+
+  const totalPages = Math.ceil(totalCount / PAGE_SIZE);
+
+  const formatTime = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleString(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold">API Logs</h1>
+          <p className="text-muted-foreground">
+            {totalCount} total requests
+          </p>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => fetchLogs()}
+          disabled={loading}
+        >
+          <RefreshCw className={`h-4 w-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+          Refresh
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-3">
+        <Select value={methodFilter} onValueChange={(v) => { setMethodFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue placeholder="Method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Methods</SelectItem>
+            <SelectItem value="GET">GET</SelectItem>
+            <SelectItem value="POST">POST</SelectItem>
+            <SelectItem value="PUT">PUT</SelectItem>
+            <SelectItem value="DELETE">DELETE</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={endpointFilter} onValueChange={(v) => { setEndpointFilter(v); setPage(0); }}>
+          <SelectTrigger className="w-[200px]">
+            <SelectValue placeholder="Endpoint" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Endpoints</SelectItem>
+            {endpoints.map((ep) => (
+              <SelectItem key={ep} value={ep}>{ep}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
+      <Card>
+        <CardContent className="p-0">
+          {loading && logs.length === 0 ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+              <Activity className="h-10 w-10 mb-3 opacity-40" />
+              <p>No API requests logged yet</p>
+              <p className="text-sm mt-1">Requests to api.regraph.tech will appear here</p>
+            </div>
+          ) : (
+            <div className="overflow-hidden">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[70px]">Method</TableHead>
+                    <TableHead>Endpoint</TableHead>
+                    <TableHead className="w-[60px]">Status</TableHead>
+                    <TableHead className="w-[70px] hidden sm:table-cell">Time</TableHead>
+                    <TableHead className="w-[100px] hidden md:table-cell">API Key</TableHead>
+                    <TableHead className="w-[110px] hidden lg:table-cell">IP</TableHead>
+                    <TableHead className="w-[140px]">Date</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {logs.map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <Badge variant="outline" className={`text-xs font-mono ${methodColor(log.method)}`}>
+                          {log.method}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs truncate max-w-[200px]" title={log.endpoint}>
+                        {log.endpoint}
+                      </TableCell>
+                      <TableCell>
+                        <span className={`font-mono text-xs font-semibold ${statusColor(log.status_code)}`}>
+                          {log.status_code}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
+                        {log.response_time_ms}ms
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-xs font-mono text-muted-foreground truncate max-w-[100px]">
+                        {log.api_key_prefix || "—"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                        {log.ip_address || "—"}
+                      </TableCell>
+                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                        {formatTime(log.created_at)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Page {page + 1} of {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+              disabled={page === 0}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
+              disabled={page >= totalPages - 1}
+            >
+              Next
+              <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
