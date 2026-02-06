@@ -260,17 +260,17 @@ export const AdminRequests = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-            <Table>
+        <CardContent className="overflow-x-hidden">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <SortableHeader field="name">From</SortableHeader>
-                  <TableHead className="hidden lg:table-cell">Account</TableHead>
-                  <SortableHeader field="subject" className="hidden sm:table-cell">Category</SortableHeader>
-                  <TableHead className="hidden xl:table-cell">Message</TableHead>
-                  <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="created_at" className="hidden md:table-cell">Date</SortableHeader>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <SortableHeader field="name" className="w-[30%] sm:w-[22%]">From</SortableHeader>
+                  <TableHead className="hidden lg:table-cell w-[12%]">Account</TableHead>
+                  <SortableHeader field="subject" className="hidden sm:table-cell w-[14%]">Category</SortableHeader>
+                  <TableHead className="hidden xl:table-cell w-[20%]">Message</TableHead>
+                  <SortableHeader field="status" className="w-[20%] sm:w-[12%]">Status</SortableHeader>
+                  <SortableHeader field="created_at" className="hidden md:table-cell w-[10%]">Date</SortableHeader>
+                  <TableHead className="w-[44px] sm:w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
