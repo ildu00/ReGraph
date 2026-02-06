@@ -252,8 +252,8 @@ export const AdminUsers = () => {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{user.display_name || "No name"}</div>
-                          <div className="text-xs text-muted-foreground md:hidden">{user.email || "—"}</div>
+                          <div className="font-medium truncate">{user.display_name || "No name"}</div>
+                          <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
                           {user.role && user.role !== "user" && (
                             <Badge variant="destructive" className="mt-1 text-xs">
                               {user.role}
