@@ -13,6 +13,7 @@ import { AdminRevenue } from "@/components/admin/AdminRevenue";
 import { AdminForms } from "@/components/admin/AdminForms";
 import { AdminBootEvents } from "@/components/admin/AdminBootEvents";
 import { AdminBlog } from "@/components/admin/AdminBlog";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { 
   Menu, 
   X, 
