@@ -145,6 +145,8 @@ const Admin = () => {
         return <AdminBootEvents />;
       case "blog":
         return <AdminBlog />;
+      case "notifications":
+        return <AdminNotifications />;
       default:
         return <AdminDashboard />;
     }
