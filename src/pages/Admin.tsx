@@ -160,7 +160,7 @@ const Admin = () => {
       </div>
 
       {/* Mobile Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-4 lg:hidden">
+      <header className="fixed top-0 left-0 right-0 z-50 flex h-16 items-center justify-between border-b border-border bg-card/80 backdrop-blur-xl px-3 sm:px-4 lg:hidden overflow-hidden">
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsMobileSidebarOpen(!isMobileSidebarOpen)}
