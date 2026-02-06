@@ -1,5 +1,7 @@
 import { useState, useRef } from "react";
 import { blogPosts, BlogPost } from "@/data/blogPosts";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
