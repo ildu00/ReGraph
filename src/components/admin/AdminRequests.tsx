@@ -260,17 +260,17 @@ export const AdminRequests = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent>
-            <Table>
+        <CardContent className="overflow-x-hidden">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <SortableHeader field="name">From</SortableHeader>
-                  <TableHead className="hidden lg:table-cell">Account</TableHead>
-                  <SortableHeader field="subject" className="hidden sm:table-cell">Category</SortableHeader>
-                  <TableHead className="hidden xl:table-cell">Message</TableHead>
-                  <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="created_at" className="hidden md:table-cell">Date</SortableHeader>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <SortableHeader field="name" className="w-[30%] sm:w-[22%]">From</SortableHeader>
+                  <TableHead className="hidden lg:table-cell w-[12%]">Account</TableHead>
+                  <SortableHeader field="subject" className="hidden sm:table-cell w-[14%]">Category</SortableHeader>
+                  <TableHead className="hidden xl:table-cell w-[20%]">Message</TableHead>
+                  <SortableHeader field="status" className="w-[20%] sm:w-[12%]">Status</SortableHeader>
+                  <SortableHeader field="created_at" className="hidden md:table-cell w-[10%]">Date</SortableHeader>
+                  <TableHead className="w-[44px] sm:w-[100px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -283,33 +283,31 @@ export const AdminRequests = () => {
                 ) : (
                   paginatedRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium truncate">{request.name}</div>
-                          <div className="text-xs text-muted-foreground truncate">{request.email}</div>
-                          <div className="sm:hidden mt-0.5">
-                            <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
-                          </div>
-                          <div className="lg:hidden mt-1">
-                            {request.user_id ? (
-                              <span className="text-xs text-primary flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {request.profile?.display_name || "User"}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Guest</span>
-                            )}
-                          </div>
-                          <div className="md:hidden text-xs text-muted-foreground mt-0.5">
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </div>
+                      <TableCell className="max-w-0">
+                        <div className="truncate font-medium">{request.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{request.email}</div>
+                        <div className="sm:hidden mt-0.5">
+                          <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
+                        </div>
+                        <div className="lg:hidden mt-1">
+                          {request.user_id ? (
+                            <span className="text-xs text-primary flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              <span className="truncate">{request.profile?.display_name || "User"}</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Guest</span>
+                          )}
+                        </div>
+                        <div className="md:hidden text-xs text-muted-foreground mt-0.5">
+                          {new Date(request.created_at).toLocaleDateString()}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden lg:table-cell max-w-0">
                         {request.user_id ? (
-                          <div className="flex items-center gap-1.5">
-                            <User className="h-3 w-3 text-primary" />
-                            <span className="text-sm">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <User className="h-3 w-3 text-primary shrink-0" />
+                            <span className="text-sm truncate">
                               {request.profile?.display_name || "User"}
                             </span>
                           </div>
@@ -318,16 +316,16 @@ export const AdminRequests = () => {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="outline">{request.subject || "General"}</Badge>
+                        <Badge variant="outline" className="truncate max-w-full">{request.subject || "General"}</Badge>
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
-                        {request.message}
+                      <TableCell className="hidden xl:table-cell max-w-0">
+                        <span className="truncate block">{request.message}</span>
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       <TableCell className="hidden md:table-cell text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right p-1">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
