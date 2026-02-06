@@ -218,9 +218,9 @@ export const AdminResources = () => {
     }
   };
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <TableHead 
-      className="cursor-pointer hover:bg-muted/50 select-none"
+      className={`cursor-pointer hover:bg-muted/50 select-none ${className || ""}`}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
