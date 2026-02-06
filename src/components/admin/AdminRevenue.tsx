@@ -358,15 +358,15 @@ export const AdminRevenue = () => {
             {transactions.length} total
           </span>
         </CardHeader>
-        <CardContent>
-            <Table>
+        <CardContent className="overflow-x-hidden">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden md:table-cell">User ID</TableHead>
-                  <TableHead className="hidden sm:table-cell">Date</TableHead>
+                  <TableHead className="w-[25%] sm:w-[20%]">Type</TableHead>
+                  <TableHead className="w-[25%] sm:w-[20%]">Amount</TableHead>
+                  <TableHead className="w-[25%] sm:w-[15%]">Status</TableHead>
+                  <TableHead className="hidden md:table-cell w-[20%]">User ID</TableHead>
+                  <TableHead className="hidden sm:table-cell w-[25%]">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

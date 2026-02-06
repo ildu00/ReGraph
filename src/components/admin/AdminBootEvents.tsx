@@ -224,17 +224,17 @@ export const AdminBootEvents = () => {
 
       {/* Events Table */}
       <Card className="bg-card border-border">
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-x-hidden">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">Time</TableHead>
-                <TableHead>Reason</TableHead>
-                <TableHead className="hidden sm:table-cell">Device</TableHead>
-                <TableHead className="hidden md:table-cell">Attempts</TableHead>
-                <TableHead className="hidden lg:table-cell">Storage</TableHead>
-                <TableHead className="hidden lg:table-cell">IP</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="w-[30%] sm:w-[20%]">Time</TableHead>
+                <TableHead className="w-[30%] sm:w-[20%]">Reason</TableHead>
+                <TableHead className="hidden sm:table-cell w-[10%]">Device</TableHead>
+                <TableHead className="hidden md:table-cell w-[10%]">Attempts</TableHead>
+                <TableHead className="hidden lg:table-cell w-[10%]">Storage</TableHead>
+                <TableHead className="hidden lg:table-cell w-[15%]">IP</TableHead>
+                <TableHead className="w-[44px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
