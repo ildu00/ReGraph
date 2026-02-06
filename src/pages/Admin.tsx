@@ -153,7 +153,7 @@ const Admin = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background overflow-hidden max-w-[100vw]">
+    <div className="min-h-screen bg-background max-w-[100vw] overflow-x-clip">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AdminSidebar activeTab={activeTab} onTabChange={handleTabChange} />
