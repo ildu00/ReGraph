@@ -224,8 +224,8 @@ export const AdminBootEvents = () => {
 
       {/* Events Table */}
       <Card className="bg-card border-border">
-        <CardContent className="p-0">
-          <Table>
+        <CardContent className="p-0 overflow-x-hidden">
+          <Table className="table-fixed w-full">
             <TableHeader>
               <TableRow>
                 <TableHead className="whitespace-nowrap">Time</TableHead>
