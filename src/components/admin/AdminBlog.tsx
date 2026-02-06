@@ -465,34 +465,96 @@ export const AdminBlog = () => {
                 />
               </div>
 
-              {/* Image URL Field */}
-              <div className="grid gap-2">
-                <Label htmlFor="image">Image URL</Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="image"
-                    value={editingPost.image}
-                    onChange={(e) =>
-                      setEditingPost({ ...editingPost, image: e.target.value })
-                    }
-                    placeholder="https://example.com/image.jpg or /assets/blog/image.jpg"
-                    className="flex-1"
-                  />
-                </div>
-                {editingPost.image && (
-                  <div className="mt-2 aspect-video max-w-xs rounded-lg overflow-hidden bg-muted">
+              {/* Image Section */}
+              <div className="grid gap-3">
+                <Label>Article Image</Label>
+                
+                {/* Image Preview */}
+                <div className="aspect-video max-w-md rounded-lg overflow-hidden bg-muted border border-border relative">
+                  {editingPost.image ? (
                     <img
                       src={editingPost.image}
                       alt="Preview"
                       className="w-full h-full object-cover"
                       onError={(e) => {
+                        (e.target as HTMLImageElement).src = "";
                         (e.target as HTMLImageElement).style.display = "none";
                       }}
                     />
-                  </div>
-                )}
+                  ) : (
+                    <div className="w-full h-full flex flex-col items-center justify-center text-muted-foreground">
+                      <Image className="h-12 w-12 mb-2" />
+                      <span className="text-sm">No image selected</span>
+                    </div>
+                  )}
+                  {(isUploading || isGenerating) && (
+                    <div className="absolute inset-0 bg-background/80 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Image URL Input */}
+                <Input
+                  id="image"
+                  value={editingPost.image}
+                  onChange={(e) =>
+                    setEditingPost({ ...editingPost, image: e.target.value })
+                  }
+                  placeholder="Enter image URL manually..."
+                />
+
+                {/* Upload and Generate Buttons */}
+                <div className="flex flex-col sm:flex-row gap-2">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploading || isGenerating}
+                    className="flex-1"
+                  >
+                    {isUploading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Upload className="h-4 w-4 mr-2" />
+                    )}
+                    Upload Image
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateImage}
+                    disabled={isUploading || isGenerating || (!aiPrompt.trim() && !editingPost.title.trim())}
+                    className="flex-1"
+                  >
+                    {isGenerating ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <Sparkles className="h-4 w-4 mr-2" />
+                    )}
+                    Generate with AI
+                  </Button>
+                </div>
+
+                {/* AI Prompt Input */}
+                <div className="flex gap-2">
+                  <Input
+                    value={aiPrompt}
+                    onChange={(e) => setAiPrompt(e.target.value)}
+                    placeholder="AI prompt (optional, uses title if empty)..."
+                    className="flex-1"
+                    disabled={isGenerating}
+                  />
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  For local images, use imported assets from src/assets/blog/. For new images, add them to src/assets/blog/ and import in blogPosts.ts
+                  Upload an image or generate one using AI based on the article title or custom prompt.
                 </p>
               </div>
 
