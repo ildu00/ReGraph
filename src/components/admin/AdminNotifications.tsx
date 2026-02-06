@@ -328,11 +328,7 @@ export const AdminNotifications = () => {
           </CardHeader>
           <CardContent>
             <p className="text-2xl font-bold">
-              {sendHistory.filter(
-                (h) =>
-                  h.status === "success" &&
-                  new Date(h.date).toDateString() === new Date().toDateString()
-              ).length}
+              {sentTodayCount}
             </p>
           </CardContent>
         </Card>
