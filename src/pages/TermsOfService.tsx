@@ -233,6 +233,10 @@ const TermsOfService = () => {
             </p>
           </section>
 
+          <section className="mb-8 not-prose">
+            <CompanyInfo />
+          </section>
+
           <section className="mb-8">
             <h2 className="text-2xl font-semibold mb-4">15. Contact Us</h2>
             <p className="text-muted-foreground leading-relaxed mb-4">

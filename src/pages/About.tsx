@@ -673,6 +673,16 @@ const About = () => {
               a cornerstone in the future of global technological infrastructure.
             </p>
           </motion.section>
+
+          {/* Company Information */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.75 }}
+            className="mt-12"
+          >
+            <CompanyInfo />
+          </motion.div>
         </div>
       </main>
 
