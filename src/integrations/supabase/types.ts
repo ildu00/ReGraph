@@ -217,6 +217,33 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_logs: {
+        Row: {
+          created_at: string
+          id: string
+          recipients_count: number
+          sent_by: string
+          status: string
+          subject: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by: string
+          status?: string
+          subject: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          recipients_count?: number
+          sent_by?: string
+          status?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           created_at: string
