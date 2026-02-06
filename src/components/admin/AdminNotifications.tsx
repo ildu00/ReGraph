@@ -95,10 +95,46 @@ export const AdminNotifications = () => {
   const [sendHistory, setSendHistory] = useState<
     { date: string; recipients: number; subject: string; status: "success" | "error" }[]
   >([]);
+  const [sentTodayCount, setSentTodayCount] = useState(0);
 
   useEffect(() => {
     fetchProfiles();
+    fetchSendHistory();
   }, []);
+
+  const fetchSendHistory = async () => {
+    try {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from("notification_logs")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      const logs = data || [];
+      setSendHistory(
+        logs.map((l: any) => ({
+          date: l.created_at,
+          recipients: l.recipients_count,
+          subject: l.subject,
+          status: l.status as "success" | "error",
+        }))
+      );
+      setSentTodayCount(
+        logs.filter(
+          (l: any) =>
+            l.status === "success" &&
+            new Date(l.created_at).toDateString() === new Date().toDateString()
+        ).length
+      );
+    } catch (error) {
+      console.error("Error fetching send history:", error);
+    }
+  };
 
   const fetchProfiles = async () => {
     setIsLoading(true);
