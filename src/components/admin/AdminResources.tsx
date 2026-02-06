@@ -218,9 +218,9 @@ export const AdminResources = () => {
     }
   };
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <TableHead 
-      className="cursor-pointer hover:bg-muted/50 select-none"
+      className={`cursor-pointer hover:bg-muted/50 select-none ${className || ""}`}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -473,10 +473,10 @@ export const AdminResources = () => {
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="device_name">Device</SortableHeader>
-                  <SortableHeader field="device_type"><span className="hidden sm:inline">Type</span><span className="sm:hidden">T</span></SortableHeader>
+                  <SortableHeader field="device_type" className="hidden sm:table-cell">Type</SortableHeader>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="vram_gb"><span className="hidden lg:inline">VRAM</span><span className="lg:hidden hidden md:inline">VR</span></SortableHeader>
-                  <SortableHeader field="price_per_hour"><span className="hidden md:inline">Price/hr</span><span className="md:hidden">$/h</span></SortableHeader>
+                  <SortableHeader field="vram_gb" className="hidden md:table-cell">VRAM</SortableHeader>
+                  <SortableHeader field="price_per_hour" className="hidden sm:table-cell">Price/hr</SortableHeader>
                   <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("total_earnings")}>Earnings <ArrowUpDown className={`h-3 w-3 ${sortField === "total_earnings" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
                   <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created <ArrowUpDown className={`h-3 w-3 ${sortField === "created_at" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
                   <TableHead className="w-[50px]"></TableHead>
@@ -497,18 +497,22 @@ export const AdminResources = () => {
                         <div className="text-xs text-muted-foreground font-mono truncate">
                           {device.id.slice(0, 8)}...
                         </div>
-                        <div className="lg:hidden text-xs text-muted-foreground mt-0.5">
+                        <div className="sm:hidden text-xs text-muted-foreground mt-0.5">
+                          <Badge variant="outline" className="mr-1">{device.device_type?.toUpperCase()}</Badge>
+                          ${Number(device.price_per_hour).toFixed(2)}/hr
+                        </div>
+                        <div className="hidden sm:block lg:hidden text-xs text-muted-foreground mt-0.5">
                           ${Number(device.total_earnings).toFixed(2)} earned
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="outline">{device.device_type?.toUpperCase()}</Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(device.status)}</TableCell>
                       <TableCell className="hidden md:table-cell">
                         {device.vram_gb ? `${device.vram_gb} GB` : "-"}
                       </TableCell>
-                      <TableCell className="text-sm">${Number(device.price_per_hour).toFixed(2)}</TableCell>
+                      <TableCell className="hidden sm:table-cell text-sm">${Number(device.price_per_hour).toFixed(2)}</TableCell>
                       <TableCell className="hidden lg:table-cell">${Number(device.total_earnings).toFixed(2)}</TableCell>
                       <TableCell className="hidden xl:table-cell text-sm">
                         {new Date(device.created_at).toLocaleDateString()}

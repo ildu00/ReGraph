@@ -199,9 +199,9 @@ export const AdminTasks = () => {
     setCurrentPage(1);
   }, [filter, priorityFilter, searchQuery, itemsPerPage]);
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <TableHead
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      className={`cursor-pointer hover:bg-muted/50 transition-colors ${className || ""}`}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -431,8 +431,8 @@ export const AdminTasks = () => {
                 <TableRow>
                   <TableHead className="w-[40px]"></TableHead>
                   <SortableHeader field="title">Title</SortableHeader>
-                  <SortableHeader field="priority"><span className="hidden sm:inline">Priority</span><span className="sm:hidden">Pri</span></SortableHeader>
-                  <SortableHeader field="status"><span className="hidden md:inline">Status</span></SortableHeader>
+                  <SortableHeader field="priority" className="hidden sm:table-cell">Priority</SortableHeader>
+                  <SortableHeader field="status" className="hidden md:table-cell">Status</SortableHeader>
                   <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -464,12 +464,16 @@ export const AdminTasks = () => {
                               {task.description}
                             </div>
                           )}
-                          <div className="md:hidden mt-1">
+                          <div className="flex items-center gap-1.5 mt-1 sm:hidden">
+                            {getPriorityBadge(task.priority)}
+                            {getStatusBadge(task.status)}
+                          </div>
+                          <div className="hidden sm:block md:hidden mt-1">
                             {getStatusBadge(task.status)}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{getPriorityBadge(task.priority)}</TableCell>
                       <TableCell className="hidden md:table-cell">{getStatusBadge(task.status)}</TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {task.due_date ? (

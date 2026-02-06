@@ -166,9 +166,9 @@ export const AdminRequests = () => {
     setCurrentPage(1);
   }, [statusFilter, searchQuery, itemsPerPage]);
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <TableHead
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      className={`cursor-pointer hover:bg-muted/50 transition-colors ${className || ""}`}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
@@ -266,10 +266,10 @@ export const AdminRequests = () => {
                 <TableRow>
                   <SortableHeader field="name">From</SortableHeader>
                   <TableHead className="hidden lg:table-cell">Account</TableHead>
-                  <SortableHeader field="subject"><span className="hidden sm:inline">Category</span><span className="sm:hidden">Cat.</span></SortableHeader>
+                  <SortableHeader field="subject" className="hidden sm:table-cell">Category</SortableHeader>
                   <TableHead className="hidden xl:table-cell">Message</TableHead>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="created_at"><span className="hidden md:inline">Date</span><span className="md:hidden">Date</span></SortableHeader>
+                  <SortableHeader field="created_at" className="hidden md:table-cell">Date</SortableHeader>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -287,6 +287,9 @@ export const AdminRequests = () => {
                         <div>
                           <div className="font-medium truncate">{request.name}</div>
                           <div className="text-xs text-muted-foreground truncate">{request.email}</div>
+                          <div className="sm:hidden mt-0.5">
+                            <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
+                          </div>
                           <div className="lg:hidden mt-1">
                             {request.user_id ? (
                               <span className="text-xs text-primary flex items-center gap-1">
@@ -296,6 +299,9 @@ export const AdminRequests = () => {
                             ) : (
                               <span className="text-xs text-muted-foreground">Guest</span>
                             )}
+                          </div>
+                          <div className="md:hidden text-xs text-muted-foreground mt-0.5">
+                            {new Date(request.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       </TableCell>
@@ -311,14 +317,14 @@ export const AdminRequests = () => {
                           <span className="text-xs text-muted-foreground">Guest</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="outline">{request.subject || "General"}</Badge>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
                         {request.message}
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell className="text-xs">
+                      <TableCell className="hidden md:table-cell text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
