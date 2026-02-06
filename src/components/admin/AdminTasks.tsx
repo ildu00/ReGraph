@@ -427,8 +427,8 @@ export const AdminTasks = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-0 sm:px-6 sm:pb-6">
-            <Table>
+        <CardContent className="p-0 sm:px-6 sm:pb-6 overflow-x-hidden">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-8 sm:w-10 pl-2 sm:pl-4"></TableHead>

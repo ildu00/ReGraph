@@ -65,7 +65,7 @@ export const AdminForms = () => {
   ];
 
   const renderTable = (data: SupportRequest[]) => (
-      <Table>
+      <Table className="table-fixed w-full">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
