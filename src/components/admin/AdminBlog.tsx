@@ -705,11 +705,13 @@ export const AdminBlog = () => {
               <p className="text-muted-foreground">{previewPost.excerpt}</p>
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
-                  Content Preview (Markdown)
+                  Content Preview
                 </h4>
-                <pre className="whitespace-pre-wrap text-sm bg-muted p-4 rounded-lg overflow-auto max-h-64">
-                  {previewPost.content}
-                </pre>
+                <div className="markdown-response bg-muted/30 p-4 rounded-lg overflow-auto max-h-96">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                    {previewPost.content}
+                  </ReactMarkdown>
+                </div>
               </div>
             </div>
           )}
