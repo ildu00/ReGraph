@@ -14,6 +14,7 @@ import { AdminForms } from "@/components/admin/AdminForms";
 import { AdminBootEvents } from "@/components/admin/AdminBootEvents";
 import { AdminBlog } from "@/components/admin/AdminBlog";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
+import { AdminApiLogs } from "@/components/admin/AdminApiLogs";
 import { 
   Menu, 
   X, 
