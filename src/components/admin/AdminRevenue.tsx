@@ -400,7 +400,6 @@ export const AdminRevenue = () => {
                 ))}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

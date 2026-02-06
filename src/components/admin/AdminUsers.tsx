@@ -303,7 +303,6 @@ export const AdminUsers = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

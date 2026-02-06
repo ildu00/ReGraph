@@ -354,7 +354,6 @@ export const AdminRequests = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
