@@ -393,27 +393,30 @@ export const AdminNotifications = () => {
                   No users found
                 </div>
               ) : (
-                <Table>
+                <Table className="table-fixed w-full">
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[40px]"></TableHead>
+                      <TableHead className="w-8 sm:w-10"></TableHead>
                       <TableHead>Email</TableHead>
-                      <TableHead className="hidden sm:table-cell">Name</TableHead>
+                      <TableHead className="hidden sm:table-cell w-[120px]">Name</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {filteredProfiles.map((profile) => (
                       <TableRow key={profile.id}>
-                        <TableCell>
+                        <TableCell className="p-1 sm:p-2">
                           <Checkbox
                             checked={selectedUsers.includes(profile.email!)}
                             onCheckedChange={() => handleUserToggle(profile.email!)}
                           />
                         </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          {profile.email}
+                        <TableCell className="p-1 sm:p-2 max-w-0">
+                          <div className="truncate text-xs font-mono">{profile.email}</div>
+                          <div className="truncate text-xs text-muted-foreground sm:hidden">
+                            {profile.display_name || ""}
+                          </div>
                         </TableCell>
-                        <TableCell className="hidden sm:table-cell text-muted-foreground">
+                        <TableCell className="hidden sm:table-cell text-muted-foreground truncate p-2">
                           {profile.display_name || "—"}
                         </TableCell>
                       </TableRow>
