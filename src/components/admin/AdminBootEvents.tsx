@@ -259,8 +259,8 @@ export const AdminBootEvents = () => {
                         {event.storage_fallback && <AlertTriangle className="h-3 w-3 text-yellow-400" />}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <Badge variant="outline" className={getReasonBadge(event.reason)}>
+                    <TableCell className="truncate max-w-0">
+                      <Badge variant="outline" className={`${getReasonBadge(event.reason)} truncate max-w-full`}>
                         {event.reason}
                       </Badge>
                     </TableCell>
