@@ -450,13 +450,13 @@ export const AdminTasks = () => {
                 ) : (
                   paginatedTasks.map((task) => (
                     <TableRow key={task.id} className={task.status === "done" ? "opacity-60" : ""}>
-                      <TableCell className="pr-0">
+                      <TableCell className="pr-0 pl-2 sm:pl-4 w-8 sm:w-10">
                         <Checkbox
                           checked={task.status === "done"}
                           onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
                         />
                       </TableCell>
-                      <TableCell className="overflow-hidden">
+                      <TableCell className="overflow-hidden max-w-0">
                         <div className="min-w-0">
                           <div className={`font-medium truncate ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
                             {task.title}
