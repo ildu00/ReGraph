@@ -450,7 +450,7 @@ export const AdminTasks = () => {
                 ) : (
                   paginatedTasks.map((task) => (
                     <TableRow key={task.id} className={task.status === "done" ? "opacity-60" : ""}>
-                      <TableCell className="pr-0 pl-2 sm:pl-4 w-8 sm:w-10">
+                      <TableCell className="pr-0 pl-2 sm:pl-4 w-8">
                         <Checkbox
                           checked={task.status === "done"}
                           onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
