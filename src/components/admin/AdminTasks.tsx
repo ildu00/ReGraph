@@ -464,12 +464,16 @@ export const AdminTasks = () => {
                               {task.description}
                             </div>
                           )}
-                          <div className="md:hidden mt-1">
+                          <div className="flex items-center gap-1.5 mt-1 sm:hidden">
+                            {getPriorityBadge(task.priority)}
+                            {getStatusBadge(task.status)}
+                          </div>
+                          <div className="hidden sm:block md:hidden mt-1">
                             {getStatusBadge(task.status)}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getPriorityBadge(task.priority)}</TableCell>
+                      <TableCell className="hidden sm:table-cell">{getPriorityBadge(task.priority)}</TableCell>
                       <TableCell className="hidden md:table-cell">{getStatusBadge(task.status)}</TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {task.due_date ? (

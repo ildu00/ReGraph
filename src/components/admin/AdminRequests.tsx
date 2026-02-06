@@ -287,6 +287,9 @@ export const AdminRequests = () => {
                         <div>
                           <div className="font-medium truncate">{request.name}</div>
                           <div className="text-xs text-muted-foreground truncate">{request.email}</div>
+                          <div className="sm:hidden mt-0.5">
+                            <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
+                          </div>
                           <div className="lg:hidden mt-1">
                             {request.user_id ? (
                               <span className="text-xs text-primary flex items-center gap-1">
@@ -296,6 +299,9 @@ export const AdminRequests = () => {
                             ) : (
                               <span className="text-xs text-muted-foreground">Guest</span>
                             )}
+                          </div>
+                          <div className="md:hidden text-xs text-muted-foreground mt-0.5">
+                            {new Date(request.created_at).toLocaleDateString()}
                           </div>
                         </div>
                       </TableCell>
@@ -311,14 +317,14 @@ export const AdminRequests = () => {
                           <span className="text-xs text-muted-foreground">Guest</span>
                         )}
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="hidden sm:table-cell">
                         <Badge variant="outline">{request.subject || "General"}</Badge>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
                         {request.message}
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell className="text-xs">
+                      <TableCell className="hidden md:table-cell text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell className="text-right">
