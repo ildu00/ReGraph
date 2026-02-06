@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
+import CompanyInfo from "@/components/CompanyInfo";
 import Footer from "@/components/Footer";
 import { 
   Zap, 
