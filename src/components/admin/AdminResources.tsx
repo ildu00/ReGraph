@@ -473,10 +473,10 @@ export const AdminResources = () => {
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="device_name">Device</SortableHeader>
-                  <SortableHeader field="device_type"><span className="hidden sm:inline">Type</span><span className="sm:hidden">T</span></SortableHeader>
+                  <SortableHeader field="device_type" className="hidden sm:table-cell">Type</SortableHeader>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="vram_gb"><span className="hidden lg:inline">VRAM</span><span className="lg:hidden hidden md:inline">VR</span></SortableHeader>
-                  <SortableHeader field="price_per_hour"><span className="hidden md:inline">Price/hr</span><span className="md:hidden">$/h</span></SortableHeader>
+                  <SortableHeader field="vram_gb" className="hidden md:table-cell">VRAM</SortableHeader>
+                  <SortableHeader field="price_per_hour" className="hidden sm:table-cell">Price/hr</SortableHeader>
                   <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("total_earnings")}>Earnings <ArrowUpDown className={`h-3 w-3 ${sortField === "total_earnings" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
                   <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created <ArrowUpDown className={`h-3 w-3 ${sortField === "created_at" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
                   <TableHead className="w-[50px]"></TableHead>
