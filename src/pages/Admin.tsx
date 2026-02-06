@@ -140,6 +140,8 @@ const Admin = () => {
         return <AdminForms />;
       case "boot-events":
         return <AdminBootEvents />;
+      case "blog":
+        return <AdminBlog />;
       default:
         return <AdminDashboard />;
     }
