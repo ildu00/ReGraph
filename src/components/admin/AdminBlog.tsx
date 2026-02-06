@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { blogPosts, BlogPost } from "@/data/blogPosts";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -39,7 +40,10 @@ import {
   ExternalLink,
   Plus,
   Image,
-  Trash2
+  Trash2,
+  Upload,
+  Sparkles,
+  Loader2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -72,6 +76,10 @@ export const AdminBlog = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCreatePost = () => {
     setEditingPost(createEmptyPost());
