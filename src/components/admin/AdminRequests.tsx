@@ -261,7 +261,6 @@ export const AdminRequests = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -286,8 +285,8 @@ export const AdminRequests = () => {
                     <TableRow key={request.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{request.name}</div>
-                          <div className="text-xs text-muted-foreground">{request.email}</div>
+                          <div className="font-medium truncate">{request.name}</div>
+                          <div className="text-xs text-muted-foreground truncate">{request.email}</div>
                           <div className="lg:hidden mt-1">
                             {request.user_id ? (
                               <span className="text-xs text-primary flex items-center gap-1">
@@ -355,7 +354,6 @@ export const AdminRequests = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

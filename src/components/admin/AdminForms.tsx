@@ -65,7 +65,6 @@ export const AdminForms = () => {
   ];
 
   const renderTable = (data: SupportRequest[]) => (
-    <div className="overflow-x-auto">
       <Table>
         <TableHeader>
           <TableRow>
@@ -126,7 +125,6 @@ export const AdminForms = () => {
           )}
         </TableBody>
       </Table>
-    </div>
   );
 
   if (loading) {

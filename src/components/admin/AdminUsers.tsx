@@ -229,7 +229,6 @@ export const AdminUsers = () => {
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -253,8 +252,8 @@ export const AdminUsers = () => {
                     <TableRow key={user.id}>
                       <TableCell>
                         <div>
-                          <div className="font-medium">{user.display_name || "No name"}</div>
-                          <div className="text-xs text-muted-foreground md:hidden">{user.email || "—"}</div>
+                          <div className="font-medium truncate">{user.display_name || "No name"}</div>
+                          <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
                           {user.role && user.role !== "user" && (
                             <Badge variant="destructive" className="mt-1 text-xs">
                               {user.role}
@@ -262,7 +261,7 @@ export const AdminUsers = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[180px]">
                         {user.email || "—"}
                       </TableCell>
                       <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>
@@ -304,7 +303,6 @@ export const AdminUsers = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

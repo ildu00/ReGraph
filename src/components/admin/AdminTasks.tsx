@@ -426,7 +426,6 @@ export const AdminTasks = () => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -520,7 +519,6 @@ export const AdminTasks = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

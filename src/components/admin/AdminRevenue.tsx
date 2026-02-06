@@ -359,7 +359,6 @@ export const AdminRevenue = () => {
           </span>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -401,7 +400,6 @@ export const AdminRevenue = () => {
                 ))}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
