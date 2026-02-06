@@ -38,6 +38,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.7.0",
+    date: "February 6, 2026",
+    title: "API Request Logging & Observability",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Added API request logging directly in edge functions (model-inference, models, batch, training-jobs, audio-speech, inference)" },
+      { category: "feature", description: "Created shared log-request utility for fire-and-forget request logging across all backend functions" },
+      { category: "feature", description: "API key prefix extraction for secure request attribution in logs" },
+      { category: "improvement", description: "Frontend requests from Models Playground now appear in Admin API Logs" },
+      { category: "improvement", description: "Consistent logging format with method, endpoint, status code, response time, and error messages" },
+      { category: "fix", description: "Fixed missing API logs for requests bypassing the Cloudflare Worker proxy" },
+    ]
+  },
+  {
     version: "2.6.1",
     date: "January 23, 2026",
     title: "Mobile UX & Admin Fixes",
