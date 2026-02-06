@@ -427,17 +427,17 @@ export const AdminTasks = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-            <Table className="table-fixed w-full">
+        <CardContent className="p-0 sm:px-6 sm:pb-6">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8 sm:w-10"></TableHead>
+                  <TableHead className="w-8 sm:w-10 pl-2 sm:pl-4"></TableHead>
                   <SortableHeader field="title">Title</SortableHeader>
                   <SortableHeader field="priority" className="hidden sm:table-cell w-[100px]">Priority</SortableHeader>
                   <SortableHeader field="status" className="hidden md:table-cell w-[110px]">Status</SortableHeader>
                   <TableHead className="hidden lg:table-cell w-[110px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="hidden xl:table-cell w-[100px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
-                  <TableHead className="text-right w-10 sm:w-14">Actions</TableHead>
+                  <TableHead className="text-right w-10 sm:w-14 pr-2 sm:pr-4">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
