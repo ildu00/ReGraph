@@ -150,6 +150,8 @@ const Admin = () => {
         return <AdminBlog />;
       case "notifications":
         return <AdminNotifications />;
+      case "api-logs":
+        return <AdminApiLogs />;
       default:
         return <AdminDashboard />;
     }
