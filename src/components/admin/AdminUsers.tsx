@@ -261,7 +261,7 @@ export const AdminUsers = () => {
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[180px]">
                         {user.email || "—"}
                       </TableCell>
                       <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>

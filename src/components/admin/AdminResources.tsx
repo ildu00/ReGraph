@@ -493,8 +493,8 @@ export const AdminResources = () => {
                   paginatedDevices.map((device) => (
                     <TableRow key={device.id}>
                       <TableCell>
-                        <div className="font-medium">{device.device_name}</div>
-                        <div className="text-xs text-muted-foreground font-mono">
+                        <div className="font-medium truncate">{device.device_name}</div>
+                        <div className="text-xs text-muted-foreground font-mono truncate">
                           {device.id.slice(0, 8)}...
                         </div>
                         <div className="lg:hidden text-xs text-muted-foreground mt-0.5">

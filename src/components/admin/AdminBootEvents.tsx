@@ -279,7 +279,7 @@ export const AdminBootEvents = () => {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">
+                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono truncate max-w-[120px]">
                       {event.ip_address || "—"}
                     </TableCell>
                     <TableCell>
