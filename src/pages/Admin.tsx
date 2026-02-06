@@ -27,7 +27,8 @@ import {
   Inbox,
   LogOut,
   AlertTriangle,
-  BookOpen
+  BookOpen,
+  Mail
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
