@@ -228,13 +228,13 @@ export const AdminBootEvents = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
+                <TableHead className="w-[130px]">Time</TableHead>
                 <TableHead>Reason</TableHead>
-                <TableHead className="hidden sm:table-cell">Device</TableHead>
-                <TableHead className="hidden md:table-cell">Attempts</TableHead>
-                <TableHead className="hidden lg:table-cell">Storage</TableHead>
-                <TableHead className="hidden lg:table-cell">IP</TableHead>
-                <TableHead></TableHead>
+                <TableHead className="hidden sm:table-cell w-[60px]">Device</TableHead>
+                <TableHead className="hidden md:table-cell w-[70px]">Attempts</TableHead>
+                <TableHead className="hidden lg:table-cell w-[70px]">Storage</TableHead>
+                <TableHead className="hidden lg:table-cell w-[120px]">IP</TableHead>
+                <TableHead className="w-[60px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
