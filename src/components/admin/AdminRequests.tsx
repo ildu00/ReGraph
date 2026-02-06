@@ -325,7 +325,7 @@ export const AdminRequests = () => {
                       <TableCell className="hidden md:table-cell text-xs">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right p-1">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
