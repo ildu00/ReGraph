@@ -283,26 +283,24 @@ export const AdminRequests = () => {
                 ) : (
                   paginatedRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium truncate">{request.name}</div>
-                          <div className="text-xs text-muted-foreground truncate">{request.email}</div>
-                          <div className="sm:hidden mt-0.5">
-                            <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
-                          </div>
-                          <div className="lg:hidden mt-1">
-                            {request.user_id ? (
-                              <span className="text-xs text-primary flex items-center gap-1">
-                                <User className="h-3 w-3" />
-                                {request.profile?.display_name || "User"}
-                              </span>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">Guest</span>
-                            )}
-                          </div>
-                          <div className="md:hidden text-xs text-muted-foreground mt-0.5">
-                            {new Date(request.created_at).toLocaleDateString()}
-                          </div>
+                      <TableCell className="max-w-0">
+                        <div className="truncate font-medium">{request.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{request.email}</div>
+                        <div className="sm:hidden mt-0.5">
+                          <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
+                        </div>
+                        <div className="lg:hidden mt-1">
+                          {request.user_id ? (
+                            <span className="text-xs text-primary flex items-center gap-1">
+                              <User className="h-3 w-3" />
+                              <span className="truncate">{request.profile?.display_name || "User"}</span>
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Guest</span>
+                          )}
+                        </div>
+                        <div className="md:hidden text-xs text-muted-foreground mt-0.5">
+                          {new Date(request.created_at).toLocaleDateString()}
                         </div>
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
