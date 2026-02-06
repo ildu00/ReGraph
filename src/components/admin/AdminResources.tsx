@@ -492,7 +492,7 @@ export const AdminResources = () => {
                 ) : (
                   paginatedDevices.map((device) => (
                     <TableRow key={device.id}>
-                      <TableCell>
+                      <TableCell className="max-w-0">
                         <div className="font-medium truncate">{device.device_name}</div>
                         <div className="text-xs text-muted-foreground font-mono truncate">
                           {device.id.slice(0, 8)}...
