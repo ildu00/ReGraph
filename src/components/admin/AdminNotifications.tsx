@@ -103,14 +103,38 @@ export const AdminNotifications = () => {
   const fetchProfiles = async () => {
     setIsLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("id, user_id, email, display_name")
-        .not("email", "is", null)
-        .order("created_at", { ascending: false });
+      const [profilesRes, testUsersRes] = await Promise.all([
+        supabase
+          .from("profiles")
+          .select("id, user_id, email, display_name")
+          .not("email", "is", null)
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("test_users")
+          .select("id, email, display_name")
+          .order("created_at", { ascending: false }),
+      ]);
 
-      if (error) throw error;
-      setProfiles(data || []);
+      if (profilesRes.error) throw profilesRes.error;
+      if (testUsersRes.error) throw testUsersRes.error;
+
+      const fromProfiles: Profile[] = (profilesRes.data || []).map((p) => ({
+        id: p.id,
+        user_id: p.user_id,
+        email: p.email,
+        display_name: p.display_name,
+      }));
+
+      const fromTestUsers: Profile[] = (testUsersRes.data || [])
+        .filter((t) => t.email && !fromProfiles.some((p) => p.email === t.email))
+        .map((t) => ({
+          id: t.id,
+          user_id: t.id,
+          email: t.email,
+          display_name: t.display_name,
+        }));
+
+      setProfiles([...fromProfiles, ...fromTestUsers]);
     } catch (error) {
       console.error("Error fetching profiles:", error);
       toast.error("Failed to load users");
