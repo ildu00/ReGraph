@@ -469,7 +469,6 @@ export const AdminResources = () => {
           <CardTitle>Devices ({filteredAndSortedDevices.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
