@@ -303,11 +303,11 @@ export const AdminRequests = () => {
                           {new Date(request.created_at).toLocaleDateString()}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden lg:table-cell max-w-0">
                         {request.user_id ? (
-                          <div className="flex items-center gap-1.5">
-                            <User className="h-3 w-3 text-primary" />
-                            <span className="text-sm">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <User className="h-3 w-3 text-primary shrink-0" />
+                            <span className="text-sm truncate">
                               {request.profile?.display_name || "User"}
                             </span>
                           </div>
@@ -316,10 +316,10 @@ export const AdminRequests = () => {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="outline">{request.subject || "General"}</Badge>
+                        <Badge variant="outline" className="truncate max-w-full">{request.subject || "General"}</Badge>
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-[200px] truncate">
-                        {request.message}
+                      <TableCell className="hidden xl:table-cell max-w-0">
+                        <span className="truncate block">{request.message}</span>
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
                       <TableCell className="hidden md:table-cell text-xs">
