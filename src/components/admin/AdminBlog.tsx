@@ -153,6 +153,91 @@ export const AdminBlog = () => {
       .trim();
   };
 
+  // Handle file upload
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingPost) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file");
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Image must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const slug = editingPost.slug || generateSlug(editingPost.title) || "untitled";
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${slug}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("blog-images")
+        .upload(fileName, file);
+
+      if (uploadError) {
+        throw uploadError;
+      }
+
+      const { data: urlData } = supabase.storage
+        .from("blog-images")
+        .getPublicUrl(fileName);
+
+      setEditingPost({ ...editingPost, image: urlData.publicUrl });
+      toast.success("Image uploaded successfully");
+    } catch (error) {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload image");
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // Handle AI image generation
+  const handleGenerateImage = async () => {
+    if (!editingPost) return;
+
+    const prompt = aiPrompt.trim() || editingPost.title;
+    if (!prompt) {
+      toast.error("Please enter a prompt or article title first");
+      return;
+    }
+
+    const slug = editingPost.slug || generateSlug(editingPost.title) || "untitled";
+    
+    setIsGenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-blog-image", {
+        body: { prompt, slug },
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.error) {
+        throw new Error(data.error);
+      }
+
+      setEditingPost({ ...editingPost, image: data.imageUrl });
+      setAiPrompt("");
+      toast.success("Image generated successfully");
+    } catch (error) {
+      console.error("Generation error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to generate image");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
