@@ -99,7 +99,7 @@ const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
                   rel="noopener noreferrer"
                   className="text-primary hover:underline"
                 >
-                  www.polite-moose.com
+                  regraph.tech
                 </a>
               </p>
             </div>
