@@ -36,7 +36,10 @@ import {
   Calendar, 
   Clock,
   FileText,
-  ExternalLink
+  ExternalLink,
+  Plus,
+  Image,
+  Trash2
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,15 +52,36 @@ const categories = [
   "Product Updates",
 ];
 
+const createEmptyPost = (): BlogPost => ({
+  id: Date.now().toString(),
+  slug: "",
+  title: "",
+  excerpt: "",
+  content: "",
+  date: new Date().toISOString().split("T")[0],
+  readTime: "5 min",
+  category: "Industry Insights",
+  image: "",
+  featured: false,
+});
+
 export const AdminBlog = () => {
   const [posts, setPosts] = useState<BlogPost[]>(blogPosts);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [previewPost, setPreviewPost] = useState<BlogPost | null>(null);
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreatePost = () => {
+    setEditingPost(createEmptyPost());
+    setIsCreating(true);
+    setIsEditDialogOpen(true);
+  };
 
   const handleEditPost = (post: BlogPost) => {
     setEditingPost({ ...post });
+    setIsCreating(false);
     setIsEditDialogOpen(true);
   };
 
@@ -69,16 +93,38 @@ export const AdminBlog = () => {
   const handleSavePost = () => {
     if (!editingPost) return;
 
-    setPosts((prev) =>
-      prev.map((p) => (p.id === editingPost.id ? editingPost : p))
-    );
-    
-    toast.success("Article updated", {
-      description: "Note: Changes are stored in local state only. To persist changes, update the blogPosts.ts file.",
-    });
+    if (!editingPost.title.trim()) {
+      toast.error("Title is required");
+      return;
+    }
+
+    if (!editingPost.slug.trim()) {
+      toast.error("Slug is required");
+      return;
+    }
+
+    if (isCreating) {
+      setPosts((prev) => [editingPost, ...prev]);
+      toast.success("Article created", {
+        description: "Note: Changes are stored in local state only. To persist, update blogPosts.ts file.",
+      });
+    } else {
+      setPosts((prev) =>
+        prev.map((p) => (p.id === editingPost.id ? editingPost : p))
+      );
+      toast.success("Article updated", {
+        description: "Note: Changes are stored in local state only. To persist, update blogPosts.ts file.",
+      });
+    }
     
     setIsEditDialogOpen(false);
     setEditingPost(null);
+    setIsCreating(false);
+  };
+
+  const handleDeletePost = (postId: string) => {
+    setPosts((prev) => prev.filter((p) => p.id !== postId));
+    toast.success("Article deleted");
   };
 
   const handleToggleFeatured = (postId: string) => {
@@ -90,18 +136,33 @@ export const AdminBlog = () => {
     toast.success("Featured status updated");
   };
 
+  const generateSlug = (title: string) => {
+    return title
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .replace(/\s+/g, "-")
+      .replace(/-+/g, "-")
+      .trim();
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold">Blog Articles</h1>
           <p className="text-muted-foreground">
             Manage and edit blog posts ({posts.length} articles)
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          Static Data Source
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline" className="text-xs">
+            Static Data Source
+          </Badge>
+          <Button onClick={handleCreatePost}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Article
+          </Button>
+        </div>
       </div>
 
       {/* Stats Cards */}
@@ -137,12 +198,12 @@ export const AdminBlog = () => {
             <span className="text-sm">Avg Read Time</span>
           </div>
           <p className="text-2xl font-bold">
-            {Math.round(
-              posts.reduce(
-                (acc, p) => acc + parseInt(p.readTime),
-                0
-              ) / posts.length
-            )}{" "}
+            {posts.length > 0
+              ? Math.round(
+                  posts.reduce((acc, p) => acc + parseInt(p.readTime), 0) /
+                    posts.length
+                )
+              : 0}{" "}
             min
           </p>
         </div>
@@ -154,6 +215,7 @@ export const AdminBlog = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[50px]">Featured</TableHead>
+              <TableHead className="w-[60px] hidden sm:table-cell">Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead className="hidden md:table-cell">Category</TableHead>
               <TableHead className="hidden md:table-cell">Date</TableHead>
@@ -177,6 +239,21 @@ export const AdminBlog = () => {
                       }`}
                     />
                   </button>
+                </TableCell>
+                <TableCell className="hidden sm:table-cell">
+                  {post.image ? (
+                    <div className="w-12 h-8 rounded overflow-hidden bg-muted">
+                      <img
+                        src={post.image}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-12 h-8 rounded bg-muted flex items-center justify-center">
+                      <Image className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col">
@@ -233,6 +310,15 @@ export const AdminBlog = () => {
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeletePost(post.id)}
+                      title="Delete"
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
                   </div>
                 </TableCell>
               </TableRow>
@@ -241,13 +327,17 @@ export const AdminBlog = () => {
         </Table>
       </div>
 
-      {/* Edit Dialog */}
+      {/* Edit/Create Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Article</DialogTitle>
+            <DialogTitle>
+              {isCreating ? "Create New Article" : "Edit Article"}
+            </DialogTitle>
             <DialogDescription>
-              Make changes to the blog article. Click save when you're done.
+              {isCreating
+                ? "Fill in the details for the new blog article."
+                : "Make changes to the blog article. Click save when you're done."}
             </DialogDescription>
           </DialogHeader>
           {editingPost && (
@@ -257,9 +347,17 @@ export const AdminBlog = () => {
                 <Input
                   id="title"
                   value={editingPost.title}
-                  onChange={(e) =>
-                    setEditingPost({ ...editingPost, title: e.target.value })
-                  }
+                  onChange={(e) => {
+                    const newTitle = e.target.value;
+                    setEditingPost({
+                      ...editingPost,
+                      title: newTitle,
+                      slug: isCreating && !editingPost.slug
+                        ? generateSlug(newTitle)
+                        : editingPost.slug,
+                    });
+                  }}
+                  placeholder="Enter article title..."
                 />
               </div>
               <div className="grid gap-2">
@@ -270,8 +368,41 @@ export const AdminBlog = () => {
                   onChange={(e) =>
                     setEditingPost({ ...editingPost, slug: e.target.value })
                   }
+                  placeholder="article-url-slug"
                 />
               </div>
+
+              {/* Image URL Field */}
+              <div className="grid gap-2">
+                <Label htmlFor="image">Image URL</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="image"
+                    value={editingPost.image}
+                    onChange={(e) =>
+                      setEditingPost({ ...editingPost, image: e.target.value })
+                    }
+                    placeholder="https://example.com/image.jpg or /assets/blog/image.jpg"
+                    className="flex-1"
+                  />
+                </div>
+                {editingPost.image && (
+                  <div className="mt-2 aspect-video max-w-xs rounded-lg overflow-hidden bg-muted">
+                    <img
+                      src={editingPost.image}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  </div>
+                )}
+                <p className="text-xs text-muted-foreground">
+                  For local images, use imported assets from src/assets/blog/. For new images, add them to src/assets/blog/ and import in blogPosts.ts
+                </p>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="category">Category</Label>
@@ -337,6 +468,7 @@ export const AdminBlog = () => {
                     setEditingPost({ ...editingPost, excerpt: e.target.value })
                   }
                   rows={2}
+                  placeholder="Brief description of the article..."
                 />
               </div>
               <div className="grid gap-2">
@@ -349,15 +481,24 @@ export const AdminBlog = () => {
                   }
                   rows={12}
                   className="font-mono text-sm"
+                  placeholder="Write your article content here using Markdown..."
                 />
               </div>
             </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditDialogOpen(false);
+                setIsCreating(false);
+              }}
+            >
               Cancel
             </Button>
-            <Button onClick={handleSavePost}>Save Changes</Button>
+            <Button onClick={handleSavePost}>
+              {isCreating ? "Create Article" : "Save Changes"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -371,13 +512,19 @@ export const AdminBlog = () => {
           {previewPost && (
             <div className="space-y-4">
               <div className="aspect-video relative rounded-lg overflow-hidden bg-muted">
-                <img
-                  src={previewPost.image}
-                  alt={previewPost.title}
-                  className="w-full h-full object-cover"
-                />
+                {previewPost.image ? (
+                  <img
+                    src={previewPost.image}
+                    alt={previewPost.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Image className="h-12 w-12 text-muted-foreground" />
+                  </div>
+                )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Badge>{previewPost.category}</Badge>
                 <span className="text-sm text-muted-foreground">
                   {new Date(previewPost.date).toLocaleDateString("en-US", {
