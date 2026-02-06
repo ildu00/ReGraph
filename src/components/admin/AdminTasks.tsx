@@ -437,7 +437,7 @@ export const AdminTasks = () => {
                   <SortableHeader field="status" className="hidden md:table-cell w-[110px]">Status</SortableHeader>
                   <TableHead className="hidden lg:table-cell w-[110px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="hidden xl:table-cell w-[100px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
-                  <TableHead className="text-right w-10 sm:w-14 pr-2 sm:pr-4">Actions</TableHead>
+                  <TableHead className="text-right w-10 pr-1 sm:pr-2"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
