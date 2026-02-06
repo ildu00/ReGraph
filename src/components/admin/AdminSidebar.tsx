@@ -43,6 +43,7 @@ const navItems = [
   { id: "forms", label: "Form Data", icon: Inbox },
   { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
   { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "notifications", label: "Notifications", icon: Mail },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
