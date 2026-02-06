@@ -359,7 +359,7 @@ export const AdminNotifications = () => {
               </Button>
             </div>
 
-            <div className="border rounded-lg max-h-[300px] overflow-y-auto">
+            <div className="rounded-lg max-h-[300px] overflow-y-auto bg-muted/30">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
