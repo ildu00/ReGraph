@@ -228,16 +228,16 @@ export const AdminUsers = () => {
         <CardHeader>
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
-        <CardContent>
-            <Table>
+        <CardContent className="overflow-x-hidden">
+            <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead><SortButton field="display_name">Name</SortButton></TableHead>
-                  <TableHead className="hidden md:table-cell">Email</TableHead>
-                  <TableHead><SortButton field="balance_usd">Balance</SortButton></TableHead>
-                  <TableHead><SortButton field="status">Status</SortButton></TableHead>
-                  <TableHead className="hidden sm:table-cell"><SortButton field="created_at">Joined</SortButton></TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[35%] sm:w-[25%]"><SortButton field="display_name">Name</SortButton></TableHead>
+                  <TableHead className="hidden md:table-cell w-[20%]">Email</TableHead>
+                  <TableHead className="w-[18%] sm:w-[15%]"><SortButton field="balance_usd">Balance</SortButton></TableHead>
+                  <TableHead className="w-[18%] sm:w-[15%]"><SortButton field="status">Status</SortButton></TableHead>
+                  <TableHead className="hidden sm:table-cell w-[15%]"><SortButton field="created_at">Joined</SortButton></TableHead>
+                  <TableHead className="w-[44px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -250,19 +250,17 @@ export const AdminUsers = () => {
                 ) : (
                   paginatedUsers.map((user) => (
                     <TableRow key={user.id}>
-                      <TableCell>
-                        <div>
-                          <div className="font-medium truncate">{user.display_name || "No name"}</div>
-                          <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
-                          {user.role && user.role !== "user" && (
-                            <Badge variant="destructive" className="mt-1 text-xs">
-                              {user.role}
-                            </Badge>
-                          )}
-                        </div>
+                      <TableCell className="max-w-0">
+                        <div className="truncate font-medium">{user.display_name || "No name"}</div>
+                        <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
+                        {user.role && user.role !== "user" && (
+                          <Badge variant="destructive" className="mt-1 text-xs">
+                            {user.role}
+                          </Badge>
+                        )}
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground truncate max-w-[180px]">
-                        {user.email || "—"}
+                      <TableCell className="hidden md:table-cell max-w-0">
+                        <span className="truncate block text-muted-foreground">{user.email || "—"}</span>
                       </TableCell>
                       <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>
                         ${user.balance_usd.toFixed(2)}
@@ -275,10 +273,10 @@ export const AdminUsers = () => {
                       <TableCell className="hidden sm:table-cell">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right p-1">
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                               <MoreHorizontal className="h-4 w-4" />
                             </Button>
                           </DropdownMenuTrigger>
