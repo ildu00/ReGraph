@@ -287,8 +287,8 @@ const Admin = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="lg:ml-64 pt-16 lg:pt-0">
-        <div className="p-6 lg:p-8">{renderContent()}</div>
+      <main className="lg:ml-64 pt-16 lg:pt-0 min-w-0">
+        <div className="p-3 sm:p-6 lg:p-8">{renderContent()}</div>
       </main>
     </div>
   );
