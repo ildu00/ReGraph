@@ -431,7 +431,7 @@ export const AdminTasks = () => {
             <Table className="table-fixed w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8 sm:w-10 pl-2 sm:pl-4"></TableHead>
+                  <TableHead className="w-8 pl-2 sm:pl-4"></TableHead>
                   <SortableHeader field="title">Title</SortableHeader>
                   <SortableHeader field="priority" className="hidden sm:table-cell w-[100px]">Priority</SortableHeader>
                   <SortableHeader field="status" className="hidden md:table-cell w-[110px]">Status</SortableHeader>
