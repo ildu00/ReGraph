@@ -427,17 +427,17 @@ export const AdminTasks = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="px-2 sm:px-6">
-            <Table className="table-fixed w-full">
+        <CardContent className="p-0 sm:px-6 sm:pb-6">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-8 sm:w-10"></TableHead>
+                  <TableHead className="w-8 sm:w-10 pl-2 sm:pl-4"></TableHead>
                   <SortableHeader field="title">Title</SortableHeader>
                   <SortableHeader field="priority" className="hidden sm:table-cell w-[100px]">Priority</SortableHeader>
                   <SortableHeader field="status" className="hidden md:table-cell w-[110px]">Status</SortableHeader>
                   <TableHead className="hidden lg:table-cell w-[110px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
                   <TableHead className="hidden xl:table-cell w-[100px]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
-                  <TableHead className="text-right w-10 sm:w-14">Actions</TableHead>
+                  <TableHead className="text-right w-10 sm:w-14 pr-2 sm:pr-4">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -450,13 +450,13 @@ export const AdminTasks = () => {
                 ) : (
                   paginatedTasks.map((task) => (
                     <TableRow key={task.id} className={task.status === "done" ? "opacity-60" : ""}>
-                      <TableCell className="pr-0">
+                      <TableCell className="pr-0 pl-2 sm:pl-4 w-8 sm:w-10">
                         <Checkbox
                           checked={task.status === "done"}
                           onCheckedChange={() => toggleTaskStatus(task.id, task.status)}
                         />
                       </TableCell>
-                      <TableCell className="overflow-hidden">
+                      <TableCell className="overflow-hidden max-w-0">
                         <div className="min-w-0">
                           <div className={`font-medium truncate ${task.status === "done" ? "line-through text-muted-foreground" : ""}`}>
                             {task.title}
@@ -490,7 +490,7 @@ export const AdminTasks = () => {
                       <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                         {new Date(task.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-right w-10 sm:w-14 pr-2 sm:pr-4">
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
                             <Button
@@ -528,7 +528,7 @@ export const AdminTasks = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-4 border-t px-2 sm:px-0 pb-4 sm:pb-0">
               <div className="text-xs sm:text-sm text-muted-foreground">
                 {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredAndSortedTasks.length)} of {filteredAndSortedTasks.length}
               </div>
