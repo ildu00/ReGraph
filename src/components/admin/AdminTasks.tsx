@@ -528,7 +528,7 @@ export const AdminTasks = () => {
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-2 mt-4 pt-4 border-t px-2 sm:px-0 pb-4 sm:pb-0">
               <div className="text-xs sm:text-sm text-muted-foreground">
                 {(currentPage - 1) * itemsPerPage + 1}–{Math.min(currentPage * itemsPerPage, filteredAndSortedTasks.length)} of {filteredAndSortedTasks.length}
               </div>
