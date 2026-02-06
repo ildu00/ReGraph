@@ -366,14 +366,19 @@ export const AdminRevenue = () => {
                   <TableHead>Type</TableHead>
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>User ID</TableHead>
-                  <TableHead>Date</TableHead>
+                  <TableHead className="hidden md:table-cell">User ID</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {paginatedTransactions.map((tx) => (
                   <TableRow key={tx.id}>
-                    <TableCell>{getTypeBadge(tx.transaction_type)}</TableCell>
+                    <TableCell>
+                      {getTypeBadge(tx.transaction_type)}
+                      <div className="sm:hidden text-xs text-muted-foreground mt-1">
+                        {new Date(tx.created_at).toLocaleDateString()}
+                      </div>
+                    </TableCell>
                     <TableCell
                       className={
                         tx.amount_usd < 0 ? "text-red-500" : "text-green-500"
@@ -386,10 +391,10 @@ export const AdminRevenue = () => {
                         {tx.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="hidden md:table-cell font-mono text-xs">
                       {tx.user_id.slice(0, 8)}...
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="hidden sm:table-cell text-sm">
                       {new Date(tx.created_at).toLocaleString()}
                     </TableCell>
                   </TableRow>

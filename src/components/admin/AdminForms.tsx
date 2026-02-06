@@ -70,11 +70,11 @@ export const AdminForms = () => {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Email</TableHead>
-            <TableHead>Subject</TableHead>
+            <TableHead className="hidden md:table-cell">Email</TableHead>
+            <TableHead className="hidden sm:table-cell">Subject</TableHead>
             <TableHead>Status</TableHead>
-            <TableHead>Date</TableHead>
-            <TableHead className="w-[80px]">Actions</TableHead>
+            <TableHead className="hidden lg:table-cell">Date</TableHead>
+            <TableHead className="w-[50px]"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -87,9 +87,13 @@ export const AdminForms = () => {
           ) : (
             data.map((item) => (
               <TableRow key={item.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedRequest(item)}>
-                <TableCell className="font-medium">{item.name}</TableCell>
-                <TableCell>{item.email}</TableCell>
-                <TableCell className="max-w-[200px] truncate">{item.subject}</TableCell>
+                <TableCell>
+                  <div className="font-medium">{item.name}</div>
+                  <div className="text-xs text-muted-foreground md:hidden">{item.email}</div>
+                  <div className="text-xs text-muted-foreground sm:hidden mt-0.5 truncate max-w-[150px]">{item.subject}</div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-muted-foreground">{item.email}</TableCell>
+                <TableCell className="hidden sm:table-cell max-w-[200px] truncate">{item.subject}</TableCell>
                 <TableCell>
                   <Badge
                     variant={
@@ -103,11 +107,12 @@ export const AdminForms = () => {
                     {item.status}
                   </Badge>
                 </TableCell>
-                <TableCell>{new Date(item.created_at).toLocaleDateString()}</TableCell>
+                <TableCell className="hidden lg:table-cell text-sm">{new Date(item.created_at).toLocaleDateString()}</TableCell>
                 <TableCell>
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="h-8 w-8"
                     onClick={(e) => {
                       e.stopPropagation();
                       setSelectedRequest(item);

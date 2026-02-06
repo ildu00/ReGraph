@@ -474,12 +474,12 @@ export const AdminResources = () => {
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="device_name">Device</SortableHeader>
-                  <SortableHeader field="device_type">Type</SortableHeader>
+                  <SortableHeader field="device_type"><span className="hidden sm:inline">Type</span><span className="sm:hidden">T</span></SortableHeader>
                   <SortableHeader field="status">Status</SortableHeader>
-                  <SortableHeader field="vram_gb">VRAM</SortableHeader>
-                  <SortableHeader field="price_per_hour">Price/hr</SortableHeader>
-                  <SortableHeader field="total_earnings">Earnings</SortableHeader>
-                  <SortableHeader field="created_at">Created</SortableHeader>
+                  <SortableHeader field="vram_gb"><span className="hidden lg:inline">VRAM</span><span className="lg:hidden hidden md:inline">VR</span></SortableHeader>
+                  <SortableHeader field="price_per_hour"><span className="hidden md:inline">Price/hr</span><span className="md:hidden">$/h</span></SortableHeader>
+                  <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("total_earnings")}>Earnings <ArrowUpDown className={`h-3 w-3 ${sortField === "total_earnings" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
+                  <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created <ArrowUpDown className={`h-3 w-3 ${sortField === "created_at" ? "text-primary" : "text-muted-foreground"}`} /></div></TableHead>
                   <TableHead className="w-[50px]"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -498,25 +498,29 @@ export const AdminResources = () => {
                         <div className="text-xs text-muted-foreground font-mono">
                           {device.id.slice(0, 8)}...
                         </div>
+                        <div className="lg:hidden text-xs text-muted-foreground mt-0.5">
+                          ${Number(device.total_earnings).toFixed(2)} earned
+                        </div>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">{device.device_type?.toUpperCase()}</Badge>
                       </TableCell>
                       <TableCell>{getStatusBadge(device.status)}</TableCell>
-                      <TableCell>
+                      <TableCell className="hidden md:table-cell">
                         {device.vram_gb ? `${device.vram_gb} GB` : "-"}
                       </TableCell>
-                      <TableCell>${Number(device.price_per_hour).toFixed(2)}</TableCell>
-                      <TableCell>${Number(device.total_earnings).toFixed(2)}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-sm">${Number(device.price_per_hour).toFixed(2)}</TableCell>
+                      <TableCell className="hidden lg:table-cell">${Number(device.total_earnings).toFixed(2)}</TableCell>
+                      <TableCell className="hidden xl:table-cell text-sm">
                         {new Date(device.created_at).toLocaleDateString()}
                       </TableCell>
                       <TableCell>
                         <Button
                           variant="ghost"
                           size="icon"
+                          className="h-8 w-8"
                           onClick={() => setDeleteDeviceId(device.id)}
-                          className="text-destructive hover:text-destructive"
+                          className="text-destructive hover:text-destructive h-8 w-8"
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
