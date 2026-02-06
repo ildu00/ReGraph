@@ -14,6 +14,7 @@ import { AdminForms } from "@/components/admin/AdminForms";
 import { AdminBootEvents } from "@/components/admin/AdminBootEvents";
 import { AdminBlog } from "@/components/admin/AdminBlog";
 import { AdminNotifications } from "@/components/admin/AdminNotifications";
+import { AdminApiLogs } from "@/components/admin/AdminApiLogs";
 import { 
   Menu, 
   X, 
@@ -28,7 +29,8 @@ import {
   LogOut,
   AlertTriangle,
   BookOpen,
-  Mail
+  Mail,
+  Activity
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -54,6 +56,7 @@ const navItems = [
   { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
   { id: "blog", label: "Blog", icon: BookOpen },
   { id: "notifications", label: "Notifications", icon: Mail },
+  { id: "api-logs", label: "API Logs", icon: Activity },
 ];
 
 const Admin = () => {
@@ -147,6 +150,8 @@ const Admin = () => {
         return <AdminBlog />;
       case "notifications":
         return <AdminNotifications />;
+      case "api-logs":
+        return <AdminApiLogs />;
       default:
         return <AdminDashboard />;
     }

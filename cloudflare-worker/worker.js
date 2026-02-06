@@ -24,10 +24,32 @@ const ROUTES = {
   "/v1/log-boot-event": "log-boot-event",
 };
 
+// Paths to skip logging (internal/diagnostic)
+const SKIP_LOG_PATHS = ["/v1/log-boot-event"];
+
+/**
+ * Fire-and-forget: log the API request to Supabase
+ */
+function logApiRequest(ctx, logData) {
+  ctx.waitUntil(
+    fetch(`${SUPABASE_URL}/functions/v1/log-api-request`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      },
+      body: JSON.stringify(logData),
+    }).catch((err) => {
+      console.error("Failed to log API request:", err);
+    })
+  );
+}
+
 export default {
-  async fetch(request) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
+    const startTime = Date.now();
 
     // CORS headers
     const corsHeaders = {
@@ -55,9 +77,11 @@ export default {
 
     // Find matching route
     let functionName = null;
+    let matchedPath = null;
     for (const [routePath, fn] of Object.entries(ROUTES)) {
       if (path === routePath || path.startsWith(routePath + "/")) {
         functionName = fn;
+        matchedPath = routePath;
         break;
       }
     }
@@ -90,6 +114,16 @@ export default {
       );
     }
 
+    // Extract API key prefix for logging
+    const apiKey = request.headers.get("X-API-Key") || request.headers.get("Authorization");
+    let apiKeyPrefix = null;
+    if (apiKey) {
+      const cleanKey = apiKey.replace(/^Bearer\s+/i, "");
+      if (cleanKey.length > 8) {
+        apiKeyPrefix = cleanKey.substring(0, 8) + "...";
+      }
+    }
+
     // Build target URL
     const targetUrl = `${SUPABASE_URL}/functions/v1/${functionName}${path.replace(/^\/v1\/[^/]+/, "")}${url.search}`;
 
@@ -99,7 +133,6 @@ export default {
     headers.set("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
     
     // Pass through API key if provided
-    const apiKey = request.headers.get("X-API-Key") || request.headers.get("Authorization");
     if (apiKey) {
       headers.set("X-API-Key", apiKey);
     }
@@ -121,6 +154,21 @@ export default {
     try {
       const response = await fetch(targetUrl, options);
       const responseBody = await response.text();
+      const responseTimeMs = Date.now() - startTime;
+
+      // Log the request (fire-and-forget) — skip internal paths
+      if (!SKIP_LOG_PATHS.includes(matchedPath)) {
+        logApiRequest(ctx, {
+          method: request.method,
+          endpoint: path,
+          status_code: response.status,
+          response_time_ms: responseTimeMs,
+          user_agent: request.headers.get("User-Agent") || null,
+          ip_address: request.headers.get("CF-Connecting-IP") || null,
+          api_key_prefix: apiKeyPrefix,
+          error_message: response.status >= 400 ? responseBody.substring(0, 500) : null,
+        });
+      }
 
       return new Response(responseBody, {
         status: response.status,
@@ -130,6 +178,22 @@ export default {
         },
       });
     } catch (error) {
+      const responseTimeMs = Date.now() - startTime;
+
+      // Log the error
+      if (!SKIP_LOG_PATHS.includes(matchedPath)) {
+        logApiRequest(ctx, {
+          method: request.method,
+          endpoint: path,
+          status_code: 500,
+          response_time_ms: responseTimeMs,
+          user_agent: request.headers.get("User-Agent") || null,
+          ip_address: request.headers.get("CF-Connecting-IP") || null,
+          api_key_prefix: apiKeyPrefix,
+          error_message: error.message,
+        });
+      }
+
       return new Response(
         JSON.stringify({ error: "Proxy error", message: error.message }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
