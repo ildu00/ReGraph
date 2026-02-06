@@ -166,9 +166,9 @@ export const AdminRequests = () => {
     setCurrentPage(1);
   }, [statusFilter, searchQuery, itemsPerPage]);
 
-  const SortableHeader = ({ field, children }: { field: SortField; children: React.ReactNode }) => (
+  const SortableHeader = ({ field, children, className }: { field: SortField; children: React.ReactNode; className?: string }) => (
     <TableHead
-      className="cursor-pointer hover:bg-muted/50 transition-colors"
+      className={`cursor-pointer hover:bg-muted/50 transition-colors ${className || ""}`}
       onClick={() => handleSort(field)}
     >
       <div className="flex items-center gap-1">
