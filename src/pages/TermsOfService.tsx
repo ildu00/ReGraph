@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CompanyInfo from "@/components/CompanyInfo";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -230,6 +231,10 @@ const TermsOfService = () => {
               by posting the new Terms on this page and updating the "Last updated" date. Your continued 
               use of the Service after such changes constitutes acceptance of the new Terms.
             </p>
+          </section>
+
+          <section className="mb-8 not-prose">
+            <CompanyInfo />
           </section>
 
           <section className="mb-8">

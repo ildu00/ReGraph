@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CompanyInfo from "@/components/CompanyInfo";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -212,6 +213,10 @@ const CookiePolicy = () => {
               or for legal, operational, or regulatory reasons. We will notify you of any material 
               changes by posting the updated policy on this page with a new "Last updated" date.
             </p>
+          </section>
+
+          <section className="mb-8 not-prose">
+            <CompanyInfo />
           </section>
 
           <section className="mb-8">

@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CompanyInfo from "@/components/CompanyInfo";
 
 const contactSchema = z.object({
   name: z.string().trim().min(2, "Name must be at least 2 characters").max(100),
@@ -206,6 +207,10 @@ const PrivacyPolicy = () => {
               posting the new Privacy Policy on this page and updating the "Last updated" date. You are 
               advised to review this Privacy Policy periodically for any changes.
             </p>
+          </section>
+
+          <section className="mb-8 not-prose">
+            <CompanyInfo />
           </section>
 
           <section className="mb-8">

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import CompanyInfo from "@/components/CompanyInfo";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -209,6 +210,16 @@ const Legal = () => {
             </form>
           </motion.section>
 
+          {/* Company Information */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="mb-8"
+          >
+            <CompanyInfo />
+          </motion.div>
+
           {/* Intellectual Property */}
           <motion.section
             initial={{ opacity: 0, y: 20 }}
@@ -223,7 +234,7 @@ const Legal = () => {
             
             <div className="space-y-4 text-muted-foreground">
               <p>
-                The ReGraph name, logo, and all related marks are trademarks of ReGraph Technologies Inc. 
+                The ReGraph name, logo, and all related marks are trademarks of Polite Moose Limited. 
                 All rights reserved worldwide.
               </p>
               <p>
