@@ -40,6 +40,7 @@ type SortOption = "default" | "price-asc" | "price-desc" | "latency-asc" | "late
 
 const modelsData: Model[] = [
   // Large Language Models
+  { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph", category: "llm", description: "ReGraph's proprietary large language model with 256K context window, optimized for decentralized inference across the network.", contextLength: 256000, pricing: "$0.0003/1K", latency: "~500ms", tags: ["Reasoning", "Long Context", "Efficient"], isPopular: true },
   { id: "llama-3.1-70b", name: "LLaMA 3.1 70B", provider: "Meta", category: "llm", description: "State-of-the-art open-source LLM with excellent reasoning and instruction following capabilities.", contextLength: 128000, pricing: "$0.0008/1K", latency: "~800ms", tags: ["Chat", "Reasoning", "Multilingual"], isPopular: true },
   { id: "llama-3.1-8b", name: "LLaMA 3.1 8B", provider: "Meta", category: "llm", description: "Efficient smaller model ideal for quick responses and cost-effective deployments.", contextLength: 128000, pricing: "$0.0002/1K", latency: "~200ms", tags: ["Fast", "Efficient", "Chat"] },
   { id: "mistral-large", name: "Mistral Large", provider: "Mistral AI", category: "llm", description: "Powerful model with strong multilingual and code generation capabilities.", contextLength: 32000, pricing: "$0.0006/1K", latency: "~600ms", tags: ["Code", "Multilingual", "Reasoning"], isPopular: true },
