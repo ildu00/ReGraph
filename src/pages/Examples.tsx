@@ -253,12 +253,21 @@ const ecosystemProjects = [
     icon: Gamepad2,
     tags: ["GameDev", "Agents", "API"],
   },
+  {
+    id: "gloox",
+    name: "Gloox",
+    category: "Fitness",
+    description: "Mobile fitness app for iOS & Android with AI-powered training plans, smartwatch integration, locked-screen workouts, and intuitive progress tracking.",
+    url: "https://gloox.app/",
+    icon: Sparkles,
+    tags: ["Fitness", "Mobile", "AI"],
+  },
 ];
 
 const codeCategories = ["All", "Text", "Image", "Audio", "Code", "Embeddings"] as const;
 type CodeCategory = typeof codeCategories[number];
 
-const projectCategories = ["All", "AI Agents", "Analytics", "Productivity", "Payments", "Trading", "Communication", "GameDev"] as const;
+const projectCategories = ["All", "AI Agents", "Analytics", "Productivity", "Payments", "Trading", "Communication", "GameDev", "Fitness"] as const;
 type ProjectCategory = typeof projectCategories[number];
 
 const containerVariants = {
