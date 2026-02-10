@@ -8,6 +8,7 @@ const corsHeaders = {
 
 // Comprehensive model catalog
 const modelCatalog = [
+  { id: "regraph/ReGraph-LLM", category: "llm", provider: "ReGraph", context_length: 256000, price_per_1k_tokens: 0.0003, latency_ms: 500 },
   { id: "meta-llama/Llama-3-70B", category: "llm", provider: "Meta", context_length: 8192, price_per_1k_tokens: 0.0002, latency_ms: 450 },
   { id: "meta-llama/Llama-3.1-70B", category: "llm", provider: "Meta", context_length: 131072, price_per_1k_tokens: 0.00025, latency_ms: 480 },
   { id: "meta-llama/Llama-3.1-8B", category: "llm", provider: "Meta", context_length: 131072, price_per_1k_tokens: 0.00005, latency_ms: 180 },
