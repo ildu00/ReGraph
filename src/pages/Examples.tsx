@@ -267,7 +267,7 @@ const ecosystemProjects = [
 const codeCategories = ["All", "Text", "Image", "Audio", "Code", "Embeddings"] as const;
 type CodeCategory = typeof codeCategories[number];
 
-const projectCategories = ["All", "AI Agents", "Analytics", "Productivity", "Payments", "Trading", "Communication", "GameDev"] as const;
+const projectCategories = ["All", "AI Agents", "Analytics", "Productivity", "Payments", "Trading", "Communication", "GameDev", "Fitness"] as const;
 type ProjectCategory = typeof projectCategories[number];
 
 const containerVariants = {
