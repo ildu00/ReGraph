@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
 import gabrielMikhaeliPhoto from "@/assets/team/gabriel-mikhaeli.jpg";
+import michaelSmolenskyPhoto from "@/assets/team/michael-smolensky.jpg";
 import {
   Carousel,
   CarouselContent,
@@ -173,6 +174,13 @@ const About = () => {
       role: "CFO",
       description: "Financial strategist with expertise in crypto markets and venture capital.",
       photo: gabrielMikhaeliPhoto,
+      socials: null
+    },
+    {
+      name: "Michael Smolensky",
+      role: "Director of European Operations",
+      description: "Experienced director overseeing European branch operations, partnerships, and regional growth strategy.",
+      photo: michaelSmolenskyPhoto,
       socials: null
     },
     {
