@@ -1,4 +1,4 @@
-import { Building2, MapPin, Hash, Mail, Globe, Calendar, Briefcase } from "lucide-react";
+import { Building2, MapPin, Hash, Mail, Globe, Calendar, Briefcase, Landmark, CreditCard } from "lucide-react";
 
 interface CompanyInfoProps {
   compact?: boolean;
@@ -7,101 +7,222 @@ interface CompanyInfoProps {
 const CompanyInfo = ({ compact = false }: CompanyInfoProps) => {
   if (compact) {
     return (
-      <div className="p-4 rounded-lg bg-muted/30 border border-border">
-        <h4 className="font-semibold mb-2 text-sm">Legal Entity</h4>
-        <p className="text-xs text-muted-foreground">
-          <strong>Polite Moose Limited</strong><br />
-          Rm 7B, One Capital Place 18 Luard Road, Wan Chai, Hong Kong<br />
-          Company No: 3179926 | <a href="mailto:info@regraph.tech" className="text-primary hover:underline">info@regraph.tech</a>
-        </p>
+      <div className="space-y-3">
+        <div className="p-4 rounded-lg bg-muted/30 border border-border">
+          <h4 className="font-semibold mb-2 text-sm">Legal Entity — HQ</h4>
+          <p className="text-xs text-muted-foreground">
+            <strong>Polite Moose Limited</strong><br />
+            Rm 7B, One Capital Place 18 Luard Road, Wan Chai, Hong Kong<br />
+            Company No: 3179926 | <a href="mailto:info@regraph.tech" className="text-primary hover:underline">info@regraph.tech</a>
+          </p>
+        </div>
+        <div className="p-4 rounded-lg bg-muted/30 border border-border">
+          <h4 className="font-semibold mb-2 text-sm">Branch — Europe</h4>
+          <p className="text-xs text-muted-foreground">
+            <strong>GET READY PLUS KFT</strong><br />
+            2161 Csomád, Kossuth Lajos út 103, Hungary<br />
+            Reg: 01-09-398529 | VAT: HU27800982
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <section className="p-6 rounded-xl border border-border bg-card">
-      <div className="flex items-center gap-3 mb-6">
-        <Building2 className="w-6 h-6 text-primary" />
-        <div>
-          <h2 className="text-2xl font-semibold">Company Information</h2>
-          <p className="text-sm text-muted-foreground">Legal entity operating ReGraph services</p>
-        </div>
-      </div>
-      
-      <div className="grid md:grid-cols-2 gap-6">
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Building2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Company Name</h3>
-              <p className="text-muted-foreground">Polite Moose Limited</p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Registered Address</h3>
-              <p className="text-muted-foreground">
-                Rm 7B, One Capital Place<br />
-                18 Luard Road, Wan Chai<br />
-                Hong Kong
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <Hash className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Registration Number</h3>
-              <p className="text-muted-foreground">3179926</p>
-            </div>
+    <section className="space-y-8">
+      {/* HQ */}
+      <div className="p-6 rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-3 mb-6">
+          <Building2 className="w-6 h-6 text-primary" />
+          <div>
+            <h2 className="text-2xl font-semibold">Headquarters</h2>
+            <p className="text-sm text-muted-foreground">Polite Moose Limited — Hong Kong</p>
           </div>
         </div>
         
-        <div className="space-y-4">
-          <div className="flex items-start gap-3">
-            <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Incorporation Date</h3>
-              <p className="text-muted-foreground">09 August 2022</p>
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Building2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Company Name</h3>
+                <p className="text-muted-foreground">Polite Moose Limited</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Registered Address</h3>
+                <p className="text-muted-foreground">
+                  Rm 7B, One Capital Place<br />
+                  18 Luard Road, Wan Chai<br />
+                  Hong Kong
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Hash className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Registration Number</h3>
+                <p className="text-muted-foreground">3179926</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-start gap-3">
-            <Briefcase className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Business Activities</h3>
-              <p className="text-muted-foreground">Public Relations, Marketing, Brand Consultancy Services</p>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Incorporation Date</h3>
+                <p className="text-muted-foreground">09 August 2022</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Briefcase className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Business Activities</h3>
+                <p className="text-muted-foreground">Public Relations, Marketing, Brand Consultancy Services</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Mail className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Contact</h3>
+                <p className="text-muted-foreground">
+                  <a href="mailto:info@regraph.tech" className="text-primary hover:underline">
+                    info@regraph.tech
+                  </a>
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Globe className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Website</h3>
+                <p className="text-muted-foreground">
+                  <a 
+                    href="https://regraph.tech" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    regraph.tech
+                  </a>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Branch — Europe */}
+      <div className="p-6 rounded-xl border border-border bg-card">
+        <div className="flex items-center gap-3 mb-6">
+          <Building2 className="w-6 h-6 text-primary" />
+          <div>
+            <h2 className="text-2xl font-semibold">European Branch</h2>
+            <p className="text-sm text-muted-foreground">GET READY PLUS KFT — Hungary</p>
+          </div>
+        </div>
+        
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Building2 className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Company Name</h3>
+                <p className="text-muted-foreground">GET READY PLUS KFT</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Registered Address</h3>
+                <p className="text-muted-foreground">
+                  2161 Csomád<br />
+                  Kossuth Lajos út 103<br />
+                  Hungary
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Hash className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Registration Number</h3>
+                <p className="text-muted-foreground">01-09-398529</p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <Hash className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">VAT Number</h3>
+                <p className="text-muted-foreground">HU27800982</p>
+              </div>
             </div>
           </div>
           
-          <div className="flex items-start gap-3">
-            <Mail className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Contact</h3>
-              <p className="text-muted-foreground">
-                <a href="mailto:info@regraph.tech" className="text-primary hover:underline">
-                  info@regraph.tech
-                </a>
-              </p>
+          <div className="space-y-4">
+            <div className="flex items-start gap-3">
+              <Calendar className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Registration Date</h3>
+                <p className="text-muted-foreground">23 March 2022</p>
+              </div>
             </div>
-          </div>
-          
-          <div className="flex items-start gap-3">
-            <Globe className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-            <div>
-              <h3 className="font-medium mb-1">Website</h3>
-              <p className="text-muted-foreground">
-                <a 
-                  href="https://regraph.tech" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline"
-                >
-                  regraph.tech
-                </a>
-              </p>
+
+            <div className="flex items-start gap-3">
+              <Briefcase className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Director</h3>
+                <p className="text-muted-foreground">Michael Smolensky</p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Landmark className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Bank Details</h3>
+                <p className="text-muted-foreground">
+                  Raiffeisen Bank Zrt.<br />
+                  H-1133 Budapest, Vaci ut 116-118<br />
+                  SWIFT: UBRTHUHB
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start gap-3">
+              <CreditCard className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">IBAN</h3>
+                <p className="text-muted-foreground font-mono text-sm">
+                  HU46 1201 0453 0182 0094 0020 0000
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-start gap-3">
+              <Globe className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+              <div>
+                <h3 className="font-medium mb-1">Website</h3>
+                <p className="text-muted-foreground">
+                  <a 
+                    href="https://getreadyplus.com/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                  >
+                    getreadyplus.com
+                  </a>
+                </p>
+              </div>
             </div>
           </div>
         </div>
