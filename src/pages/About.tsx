@@ -177,6 +177,13 @@ const About = () => {
       socials: null
     },
     {
+      name: "Michael Smolensky",
+      role: "Director of European Operations",
+      description: "Experienced director overseeing European branch operations, partnerships, and regional growth strategy.",
+      photo: michaelSmolenskyPhoto,
+      socials: null
+    },
+    {
       name: "Alexey Ivlev",
       role: "CTO",
       description: "Technical architect specializing in distributed systems and neural networks.",
