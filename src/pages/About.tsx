@@ -24,6 +24,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import ilyaDushinPhoto from "@/assets/team/ilya-dushin.jpg";
 import gabrielMikhaeliPhoto from "@/assets/team/gabriel-mikhaeli.jpg";
+import michaelSmolenskyPhoto from "@/assets/team/michael-smolensky.jpg";
 import {
   Carousel,
   CarouselContent,
