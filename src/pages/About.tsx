@@ -161,7 +161,7 @@ const About = () => {
     {
       name: "Ilya Dushin",
       role: "CEO",
-      description: "Visionary leader with 15+ years in tech entrepreneurship and AI infrastructure.",
+      description: "Serial entrepreneur with 15+ years in tech, leading product vision and strategic growth.",
       photo: ilyaDushinPhoto,
       socials: {
         linkedin: "https://ru.linkedin.com/in/idushin",
@@ -172,14 +172,14 @@ const About = () => {
     {
       name: "Gabriel Mikhaeli",
       role: "CFO",
-      description: "Financial strategist with expertise in crypto markets and venture capital.",
+      description: "Financial strategist with deep expertise in crypto markets, venture capital, and fundraising.",
       photo: gabrielMikhaeliPhoto,
       socials: null
     },
     {
       name: "Michael Smolensky",
       role: "COO",
-      description: "Chief Operating Officer driving operational excellence, scaling infrastructure, and managing day-to-day business across global markets.",
+      description: "Operations leader driving day-to-day execution, scaling infrastructure across global markets.",
       photo: michaelSmolenskyPhoto,
       socials: null
     },
