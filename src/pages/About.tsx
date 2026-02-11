@@ -178,8 +178,8 @@ const About = () => {
     },
     {
       name: "Michael Smolensky",
-      role: "Director of European Operations",
-      description: "Experienced director overseeing European branch operations, partnerships, and regional growth strategy.",
+      role: "COO",
+      description: "Chief Operating Officer driving operational excellence, scaling infrastructure, and managing day-to-day business across global markets.",
       photo: michaelSmolenskyPhoto,
       socials: null
     },
