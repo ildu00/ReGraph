@@ -30,7 +30,7 @@ const stats = [
   },
 ];
 
-const exampleCode = `curl -X POST https://api.neuralgrid.io/v1/inference \\
+const exampleCode = `curl -X POST https://api.regraph.tech/v1/inference \\
   -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
@@ -47,7 +47,7 @@ const OverviewTab = () => {
       <div>
         <h1 className="text-2xl font-bold">Welcome back!</h1>
         <p className="text-muted-foreground">
-          Here's an overview of your NeuralGrid usage.
+          Here's an overview of your ReGraph usage.
         </p>
       </div>
 
