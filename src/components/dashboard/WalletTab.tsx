@@ -247,16 +247,24 @@ const WalletTab = () => {
       });
 
       if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
       
-      const { widget_url } = response.data;
+      const { session_id, partner_id, click_id } = response.data;
+
+      // Use Wert SDK to open the widget
+      const { default: WertWidget } = await import('@wert-io/widget-initializer');
+      const wertWidget = new WertWidget({
+        partner_id,
+        session_id,
+        click_id,
+      });
       
-      // Open Wert widget in a new window
-      window.open(widget_url, 'wert-widget', 'width=600,height=700');
+      wertWidget.open();
       setWertDialogOpen(false);
       toast.success('Wert.io widget opened. Complete your purchase there.');
     } catch (error: any) {
       console.error('Error opening Wert widget:', error);
-      toast.error('Failed to open Wert.io widget');
+      toast.error(error.message || 'Failed to open Wert.io widget');
     } finally {
       setWertLoading(false);
     }
