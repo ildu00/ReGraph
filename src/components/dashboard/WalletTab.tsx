@@ -257,11 +257,46 @@ const WalletTab = () => {
         partner_id,
         session_id,
         click_id,
+        listeners: {
+          loaded: () => {
+            console.log('Wert widget loaded');
+          },
+          'payment-status': (data: { status: string; payment_id?: string; order_id?: string; tx_id?: string }) => {
+            console.log('Wert payment status:', data);
+            switch (data.status) {
+              case 'pending':
+                toast.info('Payment is being processed...');
+                break;
+              case 'success':
+                toast.success('Payment successful! Your balance will update shortly.');
+                fetchWalletData();
+                break;
+              case 'failed':
+                toast.error('Payment failed. Please try again.');
+                break;
+              case 'canceled':
+                toast.info('Payment was cancelled.');
+                break;
+              case 'failover':
+                toast.info('Payment is being retried with an alternative method...');
+                break;
+            }
+          },
+          position: (data: { step: string }) => {
+            console.log('Wert widget step:', data.step);
+          },
+          close: () => {
+            console.log('Wert widget closed');
+          },
+          error: (data: { name: string; message: string }) => {
+            console.error('Wert widget error:', data);
+            toast.error(`Widget error: ${data.message}`);
+          },
+        },
       });
       
       wertWidget.open();
       setWertDialogOpen(false);
-      toast.success('Wert.io widget opened. Complete your purchase there.');
     } catch (error: any) {
       console.error('Error opening Wert widget:', error);
       toast.error(error.message || 'Failed to open Wert.io widget');
