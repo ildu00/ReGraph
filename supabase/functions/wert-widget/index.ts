@@ -82,15 +82,9 @@ serve(async (req) => {
         metadata: { initiated_at: new Date().toISOString() }
       });
 
-    // Build Wert widget URL
-    // Note: In production, you would sign this request with your private key
-    const origin = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '') || 'regraph';
-    const webhookUrl = `${supabaseUrl}/functions/v1/wert-webhook`;
-    
-    const widgetParams = new URLSearchParams({
-      partner_id: wertPartnerId,
-      click_id: click_id,
-      origin: 'regraph',
+    // Create session via Wert Partner API
+    const sessionPayload: Record<string, unknown> = {
+      flow_type: 'simple',
       commodity: 'USDC',
       network: 'polygon',
       commodities: JSON.stringify([
@@ -101,15 +95,40 @@ serve(async (req) => {
         { commodity: 'SOL', network: 'solana' },
         { commodity: 'BTC', network: 'bitcoin' },
       ]),
-      ...(user_email && { email: user_email }),
+    };
+
+    if (user_email) {
+      sessionPayload.email = user_email;
+    }
+
+    const sessionRes = await fetch('https://partner.wert.io/api/external/hpp/create-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Api-Key': wertPrivateKey,
+      },
+      body: JSON.stringify(sessionPayload),
     });
 
-    const widget_url = `https://widget.wert.io/?${widgetParams.toString()}`;
+    if (!sessionRes.ok) {
+      const errBody = await sessionRes.text();
+      console.error('Wert create-session error:', sessionRes.status, errBody);
+      throw new Error(`Wert session creation failed: ${sessionRes.status}`);
+    }
+
+    const sessionData = await sessionRes.json();
+    const sessionId = sessionData.sessionId;
+
+    if (!sessionId) {
+      console.error('Wert response missing sessionId:', sessionData);
+      throw new Error('Wert session creation did not return a sessionId');
+    }
 
     return new Response(
       JSON.stringify({ 
-        widget_url,
-        click_id
+        session_id: sessionId,
+        partner_id: wertPartnerId,
+        click_id,
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
