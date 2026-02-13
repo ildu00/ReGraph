@@ -195,7 +195,7 @@ export const AdminApiLogs = () => {
                   <TableRow>
                     <TableHead className="w-[70px]">Method</TableHead>
                     <TableHead>Endpoint</TableHead>
-                    <TableHead className="hidden xl:table-cell">Request</TableHead>
+                    <TableHead className="hidden sm:table-cell">Request Body</TableHead>
                     <TableHead className="w-[60px]">Status</TableHead>
                     <TableHead className="w-[70px] hidden sm:table-cell">Time</TableHead>
                     <TableHead className="w-[100px] hidden md:table-cell">API Key</TableHead>
@@ -214,7 +214,7 @@ export const AdminApiLogs = () => {
                       <TableCell className="font-mono text-xs truncate max-w-[200px]" title={log.endpoint}>
                         {log.endpoint}
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-[250px]">
+                      <TableCell className="hidden sm:table-cell max-w-[250px]">
                         <span className="text-xs text-muted-foreground truncate block">
                           {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
                         </span>
