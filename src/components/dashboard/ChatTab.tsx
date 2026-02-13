@@ -138,18 +138,8 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // Lock body scroll + fix iOS Safari keyboard viewport shift
-  const [topOffset, setTopOffset] = useState(0);
-  const [bottomInset, setBottomInset] = useState(0);
-
+  // Prevent background page scroll when chat is mounted
   useEffect(() => {
-    // Measure actual position of the container in the document
-    if (containerRef.current) {
-      const rect = containerRef.current.getBoundingClientRect();
-      setTopOffset(rect.top);
-    }
-
-    // Prevent page scrolling
     const html = document.documentElement;
     const origHtmlOverflow = html.style.overflow;
     const origBodyOverflow = document.body.style.overflow;
@@ -157,39 +147,9 @@ const ChatTab = () => {
     document.body.style.overflow = 'hidden';
     window.scrollTo(0, 0);
 
-    // iOS Safari: add interactive-widget to viewport meta so keyboard resizes content
-    // This keeps fixed elements in the visual viewport when keyboard opens
-    const viewportMeta = document.querySelector('meta[name="viewport"]');
-    const origViewportContent = viewportMeta?.getAttribute('content') || '';
-    if (viewportMeta && !origViewportContent.includes('interactive-widget')) {
-      viewportMeta.setAttribute('content', origViewportContent + ', interactive-widget=resizes-content');
-    }
-
-    // Fallback: use visualViewport API to track keyboard height
-    const vv = window.visualViewport;
-    const handleResize = () => {
-      if (!vv) return;
-      // When keyboard opens, visualViewport.height < window.innerHeight
-      // The difference is the keyboard height
-      const keyboardHeight = window.innerHeight - vv.height;
-      setBottomInset(Math.max(0, keyboardHeight));
-    };
-
-    if (vv) {
-      vv.addEventListener('resize', handleResize);
-      vv.addEventListener('scroll', handleResize);
-    }
-
     return () => {
       html.style.overflow = origHtmlOverflow;
       document.body.style.overflow = origBodyOverflow;
-      if (viewportMeta) {
-        viewportMeta.setAttribute('content', origViewportContent);
-      }
-      if (vv) {
-        vv.removeEventListener('resize', handleResize);
-        vv.removeEventListener('scroll', handleResize);
-      }
     };
   }, []);
 
@@ -351,13 +311,9 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <>
-      {/* Invisible placeholder to measure position */}
-      <div ref={containerRef} className="h-0 w-0" />
-      {/* Fixed overlay chat container - sits below header & tabs, never scrolls away */}
-      <div className="fixed left-0 right-0 md:left-64 z-30 flex flex-col px-4 md:px-8 bg-background" style={{ top: topOffset || 152, bottom: bottomInset }}>
-        {/* Model selector */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
+    <div ref={containerRef} className="flex flex-col flex-1 min-h-0 md:h-[calc(100vh-12rem)]">
+      {/* Model selector */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full sm:w-[280px] bg-card border-border">
@@ -667,7 +623,6 @@ const ChatTab = () => {
         </Button>
       </div>
     </div>
-    </>
   );
 };
 

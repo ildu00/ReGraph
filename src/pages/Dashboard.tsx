@@ -81,10 +81,25 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
+  const isChatActive = activeTab === 'chat';
+
+  // Two layout modes:
+  // Mobile + chat: flex column with h-[100dvh], header IN FLOW (not fixed) — prevents iOS keyboard from pushing header out of visual viewport
+  // Desktop + chat OR any other tab: normal layout with fixed header
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6">
+    <div className={
+      isChatActive
+        ? "h-[100dvh] flex flex-col overflow-hidden md:block md:min-h-screen md:h-auto md:overflow-visible bg-background"
+        : "min-h-screen bg-background"
+    }>
+      {/* Header
+        Mobile + chat: shrink-0 (in flex flow, NOT fixed) — stays visible when keyboard opens
+        Desktop / other tabs: fixed top-0 (standard dashboard behavior) */}
+      <header className={`${
+        isChatActive
+          ? 'shrink-0 md:fixed md:top-0 md:left-0 md:right-0'
+          : 'fixed top-0 left-0 right-0'
+      } h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6`}>
         <div className="flex items-center gap-4">
           <button
             onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -238,10 +253,20 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Content */}
-      <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
-          <TabsList className="bg-card border border-border">
+      {/* Main Content
+        Mobile + chat: flex child, pt-4 (16px gap after header to match the 80px total on desktop: header 64px + 16px gap)
+        Desktop / other tabs: pt-20 with fixed header offset */}
+      <main className={
+        isChatActive
+          ? 'pt-4 px-4 flex-1 min-h-0 flex flex-col overflow-hidden md:pt-20 md:ml-64 md:px-8 md:pb-8 md:block md:flex-none md:overflow-visible'
+          : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
+      }>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className={
+          isChatActive
+            ? 'flex-1 min-h-0 flex flex-col space-y-2 md:block md:flex-none md:space-y-6'
+            : 'space-y-6'
+        }>
+          <TabsList className="bg-card border border-border shrink-0">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Overview</span>
@@ -280,7 +305,11 @@ const Dashboard = () => {
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat">
+          <TabsContent value="chat" className={
+            isChatActive
+              ? 'flex-1 min-h-0 flex flex-col mt-0 md:block md:flex-none'
+              : ''
+          }>
             <ChatTab />
           </TabsContent>
 
@@ -306,4 +335,3 @@ const Dashboard = () => {
 };
 
 export default Dashboard;
-
