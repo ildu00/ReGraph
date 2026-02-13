@@ -138,13 +138,34 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // On mobile, prevent overscroll on the page (not body lock, just overflow)
+  // Lock body scroll and measure where the chat container should start
+  const [topOffset, setTopOffset] = useState(0);
+
   useEffect(() => {
-    const orig = document.body.style.overflow;
+    // Measure actual position of the container in the document
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setTopOffset(rect.top);
+    }
+
+    const origOverflow = document.body.style.overflow;
+    const origPosition = document.body.style.position;
+    const origWidth = document.body.style.width;
+    const origTop = document.body.style.top;
+    const scrollY = window.scrollY;
+
+    // Lock body to prevent iOS Safari from scrolling page on input focus
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${scrollY}px`;
+    document.body.style.width = '100%';
     document.body.style.overflow = 'hidden';
-    window.scrollTo(0, 0);
+
     return () => {
-      document.body.style.overflow = orig;
+      document.body.style.position = origPosition;
+      document.body.style.top = origTop;
+      document.body.style.width = origWidth;
+      document.body.style.overflow = origOverflow;
+      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -306,9 +327,13 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div ref={containerRef} className="flex flex-col" style={{ height: 'calc(100dvh - 11rem)', maxHeight: 'calc(100dvh - 11rem)' }}>
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
+    <>
+      {/* Invisible placeholder to measure position */}
+      <div ref={containerRef} className="h-0 w-0" />
+      {/* Fixed overlay chat container - sits below header & tabs, never scrolls away */}
+      <div className="fixed left-0 right-0 bottom-0 md:left-64 z-30 flex flex-col px-4 md:px-8 bg-background" style={{ top: topOffset || 152 }}>
+        {/* Model selector */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full sm:w-[280px] bg-card border-border">
@@ -618,6 +643,7 @@ const ChatTab = () => {
         </Button>
       </div>
     </div>
+    </>
   );
 };
 
