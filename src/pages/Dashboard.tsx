@@ -272,8 +272,8 @@ const Dashboard = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview">
-            <OverviewTab />
+          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : ""}>
+            <OverviewTab key={activeTab === "overview" ? "active" : "inactive"} />
           </TabsContent>
 
           <TabsContent value="wallet">
@@ -292,8 +292,8 @@ const Dashboard = () => {
             <ProviderTab />
           </TabsContent>
 
-          <TabsContent value="usage">
-            <UsageTab />
+          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : ""}>
+            <UsageTab key={activeTab === "usage" ? "active" : "inactive"} />
           </TabsContent>
 
           <TabsContent value="settings">
