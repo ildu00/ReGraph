@@ -316,11 +316,7 @@ export const AdminRequests = () => {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <div className="flex flex-col gap-1">
-                          {(request.subject || "General").split(",").map((cat, i) => (
-                            <Badge key={i} variant="outline" className="truncate max-w-full w-fit">{cat.trim()}</Badge>
-                          ))}
-                        </div>
+                        <Badge variant="outline" className="whitespace-normal break-words max-w-full w-fit">{request.subject || "General"}</Badge>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-0">
                         <span className="truncate block">{request.message}</span>
