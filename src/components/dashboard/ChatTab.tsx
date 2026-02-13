@@ -1,5 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -115,7 +114,6 @@ const saveMessages = (msgs: ChatMessage[]) => {
 };
 
 const ChatTab = () => {
-  const isMobile = useIsMobile();
   const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
   const [input, setInput] = useState("");
   const [selectedModel, setSelectedModel] = useState(
@@ -139,18 +137,12 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // iOS Safari viewport height fix
-  useLayoutEffect(() => {
-    const setVh = () => {
-      document.documentElement.style.setProperty('--chat-vh', `${window.innerHeight * 0.01}px`);
-    };
-    setVh();
-    window.addEventListener('resize', setVh);
-    // Also listen to visualViewport for iOS keyboard
-    window.visualViewport?.addEventListener('resize', setVh);
+  // Lock body scroll when chat is mounted to prevent iOS Safari from scrolling page on keyboard open
+  useEffect(() => {
+    const orig = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
-      window.removeEventListener('resize', setVh);
-      window.visualViewport?.removeEventListener('resize', setVh);
+      document.body.style.overflow = orig;
     };
   }, []);
 
@@ -312,10 +304,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div
-      className="flex flex-col"
-      style={{ height: `calc(var(--chat-vh, 1vh) * 100 - ${isMobile ? '13rem' : '11rem'})` }}
-    >
+    <div className="flex flex-col h-[calc(100dvh-13rem)] md:h-[calc(100dvh-11rem)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
