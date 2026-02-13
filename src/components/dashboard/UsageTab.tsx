@@ -37,8 +37,7 @@ const UsageTab = () => {
     const { data, error } = await supabase
       .from("usage_logs")
       .select("*")
-      .order("created_at", { ascending: false })
-      .limit(100);
+      .order("created_at", { ascending: false });
 
     if (!error) {
       setUsageLogs(data || []);
