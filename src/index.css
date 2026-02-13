@@ -226,6 +226,30 @@
     margin-bottom: 0.25rem;
   }
 
+  .markdown-response table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+
+  .markdown-response th,
+  .markdown-response td {
+    border: 1px solid hsl(var(--border));
+    padding: 0.625rem 0.75rem;
+    text-align: left;
+  }
+
+  .markdown-response th {
+    background: hsl(var(--muted));
+    font-weight: 600;
+  }
+
+  .markdown-response tr:nth-child(even) {
+    background: hsl(var(--muted) / 0.3);
+  }
+
   .markdown-response pre {
     margin-top: 1rem;
     margin-bottom: 1rem;
