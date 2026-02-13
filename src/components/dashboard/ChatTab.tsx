@@ -28,6 +28,7 @@ import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeBlock from "@/components/CodeBlock";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ChatMessage {
   id: string;
@@ -192,11 +193,15 @@ const ChatTab = () => {
         fullPrompt = `[Attached files: ${fileNames}]\n\n${trimmed}`;
       }
 
+      // Use user's session token for billing, fall back to anon key
+      const { data: sessionData } = await supabase.auth.getSession();
+      const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
       const resp = await fetch(INFERENCE_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
           model: selectedModel,
