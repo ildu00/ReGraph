@@ -79,11 +79,34 @@ const MODELS: ModelOption[] = [
 ];
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
+const STORAGE_KEY = "regraph-chat-messages";
+const MODEL_STORAGE_KEY = "regraph-chat-model";
+
+const loadMessages = (): ChatMessage[] => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    return JSON.parse(raw).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+  } catch { return []; }
+};
+
+const saveMessages = (msgs: ChatMessage[]) => {
+  try {
+    // Don't store image previews in attachments to save space
+    const slim = msgs.map((m) => ({
+      ...m,
+      attachments: m.attachments?.map((a) => ({ name: a.name, type: a.type })),
+    }));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(slim));
+  } catch { /* quota exceeded – silently fail */ }
+};
 
 const ChatTab = () => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState("regraph-llm");
+  const [selectedModel, setSelectedModel] = useState(
+    () => localStorage.getItem(MODEL_STORAGE_KEY) || "regraph-llm"
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -91,6 +114,16 @@ const ChatTab = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist messages to localStorage
+  useEffect(() => {
+    saveMessages(messages);
+  }, [messages]);
+
+  // Persist selected model
+  useEffect(() => {
+    localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
+  }, [selectedModel]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -234,6 +267,7 @@ const ChatTab = () => {
 
   const clearChat = () => {
     setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
     toast.success("Chat cleared");
   };
 
