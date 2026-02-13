@@ -304,7 +304,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col h-[calc(100dvh-9rem)] md:h-[calc(100dvh-8rem)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -546,7 +546,7 @@ const ChatTab = () => {
       )}
 
       {/* Input Area */}
-      <div className="flex gap-2 items-end shrink-0 pb-2 md:pb-4" style={{ paddingBottom: `max(0.5rem, env(safe-area-inset-bottom))` }}>
+      <div className="flex gap-2 items-end shrink-0 pb-[env(safe-area-inset-bottom,0px)] md:pb-4">
         <input
           ref={imageInputRef}
           type="file"
