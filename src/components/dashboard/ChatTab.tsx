@@ -304,9 +304,9 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-13rem)] md:h-[calc(100dvh-11rem)]">
+    <div className="fixed inset-x-0 bottom-0 top-[9.5rem] md:left-64 flex flex-col bg-background z-10 px-4 md:px-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full sm:w-[280px] bg-card border-border">
@@ -533,7 +533,7 @@ const ChatTab = () => {
 
       {/* Attached files preview */}
       {attachedFiles.length > 0 && (
-        <div className="flex flex-wrap gap-2 mb-2">
+        <div className="flex flex-wrap gap-2 mb-2 shrink-0">
           {attachedFiles.map((file, i) => (
             <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1">
               {file.type.startsWith("image/") ? "🖼️" : "📎"} {file.name}
@@ -546,7 +546,7 @@ const ChatTab = () => {
       )}
 
       {/* Input Area */}
-      <div className="flex gap-2 items-end">
+      <div className="flex gap-2 items-end shrink-0 pb-[env(safe-area-inset-bottom,0.5rem)]">
         <input
           ref={imageInputRef}
           type="file"
@@ -566,6 +566,7 @@ const ChatTab = () => {
           variant="ghost"
           size="icon"
           className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => imageInputRef.current?.click()}
           title="Attach image"
         >
@@ -575,6 +576,7 @@ const ChatTab = () => {
           variant="ghost"
           size="icon"
           className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
           onClick={() => fileInputRef.current?.click()}
           title="Attach file"
         >
@@ -585,7 +587,6 @@ const ChatTab = () => {
           value={input}
           onChange={(e) => {
             setInput(e.target.value);
-            // Auto-resize
             const el = e.target;
             el.style.height = 'auto';
             el.style.height = Math.min(el.scrollHeight, 128) + 'px';
@@ -601,6 +602,7 @@ const ChatTab = () => {
           style={{ height: '40px' }}
         />
         <Button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={handleSend}
           disabled={(!input.trim() && attachedFiles.length === 0) || isLoading}
           className="shrink-0 h-10 w-10 glow-primary"
