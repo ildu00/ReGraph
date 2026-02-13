@@ -141,12 +141,21 @@ serve(async (req) => {
       throw new Error("VSEGPT_API_KEY is not configured");
     }
 
-    const { model, prompt, temperature = 0.7, maxTokens = 256, category }: InferenceRequest = await req.json();
+    const rawBody = await req.text();
+    let parsedBody: InferenceRequest;
+    try {
+      parsedBody = JSON.parse(rawBody);
+    } catch {
+      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    const { model, prompt, temperature = 0.7, maxTokens = 256, category } = parsedBody;
+    const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
       statusCode = 400;
       const body = JSON.stringify({ error: "Prompt is required" });
-      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: statusCode, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Prompt is required" });
+      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: statusCode, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Prompt is required", request_body: requestBodyLog });
       return new Response(body, { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
@@ -208,7 +217,7 @@ serve(async (req) => {
     // Helper to log, bill, and return response
     const respond = (body: string, status: number, errorMsg?: string, usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }) => {
       const computeTimeMs = Date.now() - startTime;
-      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null });
+      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null, request_body: requestBodyLog });
       
       // Process billing for authenticated users on success
       if (status === 200 && userId) {
@@ -348,7 +357,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Inference error:", error);
     const errMsg = error instanceof Error ? error.message : "Unknown error";
-    logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 500, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: errMsg });
+    logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 500, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: errMsg, request_body: typeof requestBodyLog !== "undefined" ? requestBodyLog : null });
     return new Response(
       JSON.stringify({ error: errMsg }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
