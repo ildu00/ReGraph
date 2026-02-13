@@ -62,8 +62,9 @@ serve(async (req) => {
     else if (modelLower.includes("bge") || modelLower.includes("e5-") || modelLower.includes("nomic") || modelLower.includes("embed")) { category = "embedding"; }
     else if (modelLower.includes("layoutlm") || modelLower.includes("donut") || modelLower.includes("trocr") || modelLower.includes("surya") || modelLower.includes("ocr")) { category = "document"; }
     else if (modelLower.includes("llama") || modelLower.includes("mistral") || modelLower.includes("qwen") || modelLower.includes("gemma")) { category = "llm"; }
-    else if (modelLower.includes("claude") || modelLower.includes("gpt") || modelLower.includes("gemini") || modelLower.includes("command")) { category = "chat"; }
-    else if (modelLower.includes("o1") || modelLower.includes("deepseek")) { category = "reasoning"; }
+    else if (modelLower.includes("grok") && modelLower.includes("code")) { category = "code"; }
+    else if (modelLower.includes("claude") || modelLower.includes("gpt") || modelLower.includes("gemini") || modelLower.includes("command") || modelLower.includes("grok")) { category = "chat"; }
+    else if (modelLower.includes("o1") || modelLower.includes("deepseek") || modelLower.includes("gpt-5.2")) { category = "reasoning"; }
     else if (modelLower.includes("coder") || modelLower.includes("starcoder") || modelLower.includes("codellama")) { category = "code"; }
     else if (modelLower.includes("vision") || modelLower.includes("llava") || modelLower.includes("cogvlm") || modelLower.includes("internvl") || modelLower.includes("phi-3-vision")) { category = "vision"; }
     
