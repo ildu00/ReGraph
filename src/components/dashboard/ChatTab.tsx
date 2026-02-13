@@ -138,20 +138,23 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // Lock body scroll AND position to prevent iOS Safari from scrolling page on keyboard open
+  // Lock body scroll to prevent iOS Safari from scrolling page on keyboard open
+  // IMPORTANT: scroll to top first so TabsList stays visible (not shifted by saved scrollY)
   useEffect(() => {
     const origOverflow = document.body.style.overflow;
     const origPosition = document.body.style.position;
     const origWidth = document.body.style.width;
     const origHeight = document.body.style.height;
     const origTop = document.body.style.top;
-    const scrollY = window.scrollY;
+
+    // Scroll to top before locking - otherwise body.top = -scrollY hides tabs
+    window.scrollTo(0, 0);
 
     document.body.style.overflow = 'hidden';
     document.body.style.position = 'fixed';
     document.body.style.width = '100%';
     document.body.style.height = '100%';
-    document.body.style.top = `-${scrollY}px`;
+    document.body.style.top = '0px';
 
     return () => {
       document.body.style.overflow = origOverflow;
@@ -159,7 +162,6 @@ const ChatTab = () => {
       document.body.style.width = origWidth;
       document.body.style.height = origHeight;
       document.body.style.top = origTop;
-      window.scrollTo(0, scrollY);
     };
   }, []);
 
@@ -370,7 +372,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div ref={containerRef} className="fixed top-[7rem] md:top-[7.5rem] bottom-0 left-0 right-0 md:left-64 flex flex-col bg-background z-30 px-4 md:px-8">
+    <div ref={containerRef} className="fixed top-[9.5rem] md:top-[9.5rem] bottom-0 left-0 right-0 md:left-64 flex flex-col bg-background z-30 px-4 md:px-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
