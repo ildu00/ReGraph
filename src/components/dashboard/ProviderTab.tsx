@@ -43,6 +43,9 @@ import {
   Clock,
   DollarSign,
   Zap,
+  Search,
+  Filter,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import CodeBlock from "@/components/CodeBlock";
@@ -96,6 +99,13 @@ const ProviderTab = () => {
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [isAddingDevice, setIsAddingDevice] = useState(false);
 
+  // Filters
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState<DeviceType | "all">("all");
+  const [filterStatus, setFilterStatus] = useState<DeviceStatus | "all">("all");
+  const [filterMinVram, setFilterMinVram] = useState("");
+  const [filterMaxPrice, setFilterMaxPrice] = useState("");
+
   // New device form
   const [newDevice, setNewDevice] = useState({
     device_name: "",
@@ -104,6 +114,33 @@ const ProviderTab = () => {
     vram_gb: "",
     price_per_hour: "0.10",
   });
+
+  // Filtered devices
+  const filteredDevices = devices.filter((device) => {
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const matchesSearch =
+        device.device_name.toLowerCase().includes(q) ||
+        (device.device_model?.toLowerCase().includes(q) ?? false) ||
+        device.device_type.toLowerCase().includes(q);
+      if (!matchesSearch) return false;
+    }
+    if (filterType !== "all" && device.device_type !== filterType) return false;
+    if (filterStatus !== "all" && device.status !== filterStatus) return false;
+    if (filterMinVram && device.vram_gb !== null && device.vram_gb < parseInt(filterMinVram)) return false;
+    if (filterMaxPrice && Number(device.price_per_hour) > parseFloat(filterMaxPrice)) return false;
+    return true;
+  });
+
+  const hasActiveFilters = filterType !== "all" || filterStatus !== "all" || filterMinVram !== "" || filterMaxPrice !== "" || searchQuery !== "";
+
+  const clearFilters = () => {
+    setSearchQuery("");
+    setFilterType("all");
+    setFilterStatus("all");
+    setFilterMinVram("");
+    setFilterMaxPrice("");
+  };
 
   useEffect(() => {
     fetchProviderData();
@@ -416,6 +453,75 @@ const ProviderTab = () => {
         </motion.div>
       </div>
 
+      {/* Search & Filters */}
+      {devices.length > 0 && (
+        <div className="bg-card border border-border rounded-xl p-4 space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search devices by name, model, or type..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 bg-secondary border-border"
+              />
+            </div>
+            {hasActiveFilters && (
+              <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground shrink-0">
+                <X className="h-4 w-4 mr-1" />
+                Clear
+              </Button>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <div className="w-36">
+              <Select value={filterType} onValueChange={(v) => setFilterType(v as DeviceType | "all")}>
+                <SelectTrigger className="bg-secondary border-border h-9 text-sm">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="gpu">GPU</SelectItem>
+                  <SelectItem value="tpu">TPU</SelectItem>
+                  <SelectItem value="npu">NPU</SelectItem>
+                  <SelectItem value="cpu">CPU</SelectItem>
+                  <SelectItem value="smartphone">Smartphone</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="w-36">
+              <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as DeviceStatus | "all")}>
+                <SelectTrigger className="bg-secondary border-border h-9 text-sm">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="offline">Offline</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <Input
+              type="number"
+              placeholder="Min VRAM (GB)"
+              value={filterMinVram}
+              onChange={(e) => setFilterMinVram(e.target.value)}
+              className="w-32 bg-secondary border-border h-9 text-sm"
+            />
+            <Input
+              type="number"
+              step="0.01"
+              placeholder="Max $/hr"
+              value={filterMaxPrice}
+              onChange={(e) => setFilterMaxPrice(e.target.value)}
+              className="w-32 bg-secondary border-border h-9 text-sm"
+            />
+          </div>
+        </div>
+      )}
+
       {/* Devices List */}
       {devices.length === 0 ? (
         <div className="bg-card border border-border rounded-xl p-12 text-center">
@@ -425,11 +531,25 @@ const ProviderTab = () => {
             Add your first device to start earning from the network.
           </p>
         </div>
+      ) : filteredDevices.length === 0 ? (
+        <div className="bg-card border border-border rounded-xl p-12 text-center">
+          <Filter className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h3 className="text-lg font-semibold mb-2">No Matching Devices</h3>
+          <p className="text-muted-foreground mb-4">
+            Try adjusting your filters or search query.
+          </p>
+          <Button variant="outline" onClick={clearFilters}>Clear Filters</Button>
+        </div>
       ) : (
         <div className="space-y-4">
-          <h2 className="text-lg font-semibold">Your Devices</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold">Your Devices</h2>
+            <span className="text-sm text-muted-foreground">
+              {filteredDevices.length} of {devices.length} devices
+            </span>
+          </div>
           <AnimatePresence>
-            {devices.map((device) => {
+            {filteredDevices.map((device) => {
               const Icon = deviceTypeIcons[device.device_type];
               return (
                 <motion.div
