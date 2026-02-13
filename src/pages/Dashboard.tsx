@@ -239,7 +239,7 @@ const Dashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className="pt-20 md:ml-64 px-4 md:px-8 pb-8">
+      <main className={`pt-20 md:ml-64 px-4 md:px-8 ${activeTab === 'chat' ? 'pb-2' : 'pb-8'}`}>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
