@@ -195,12 +195,12 @@ export const AdminApiLogs = () => {
                   <TableRow>
                     <TableHead className="w-[70px]">Method</TableHead>
                     <TableHead>Endpoint</TableHead>
-                    <TableHead className="hidden sm:table-cell">Request Body</TableHead>
+                    <TableHead className="hidden lg:table-cell">Request Body</TableHead>
                     <TableHead className="w-[60px]">Status</TableHead>
-                    <TableHead className="w-[70px] hidden sm:table-cell">Time</TableHead>
-                    <TableHead className="w-[100px] hidden md:table-cell">API Key</TableHead>
-                    <TableHead className="w-[110px] hidden lg:table-cell">IP</TableHead>
-                    <TableHead className="w-[160px] hidden sm:table-cell">Date & Time</TableHead>
+                    <TableHead className="w-[60px] hidden md:table-cell">Time</TableHead>
+                    <TableHead className="w-[90px] hidden xl:table-cell">API Key</TableHead>
+                    <TableHead className="w-[100px] hidden xl:table-cell">IP</TableHead>
+                    <TableHead className="w-[150px] hidden sm:table-cell">Date & Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -217,7 +217,7 @@ export const AdminApiLogs = () => {
                           {formatTime(log.created_at)}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell max-w-[250px]">
+                      <TableCell className="hidden lg:table-cell max-w-[250px]">
                         <span className="text-xs text-muted-foreground truncate block">
                           {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
                         </span>
@@ -227,13 +227,13 @@ export const AdminApiLogs = () => {
                           {log.status_code}
                         </span>
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground">
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                         {log.response_time_ms}ms
                       </TableCell>
-                      <TableCell className="hidden md:table-cell text-xs font-mono text-muted-foreground truncate max-w-[100px]">
+                      <TableCell className="hidden xl:table-cell text-xs font-mono text-muted-foreground truncate max-w-[90px]">
                         {log.api_key_prefix || "—"}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                      <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
                         {log.ip_address || "—"}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
