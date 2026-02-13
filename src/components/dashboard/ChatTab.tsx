@@ -548,8 +548,8 @@ const ChatTab = () => {
           onKeyDown={handleKeyDown}
           placeholder={
             modelInfo?.category === "image-gen"
-              ? "Describe the image you want to generate..."
-              : "Type your message... (Shift+Enter for new line)"
+              ? "Describe the image..."
+              : "Type a message..."
           }
           className="min-h-[40px] max-h-32 resize-none py-2 leading-5"
           rows={1}
