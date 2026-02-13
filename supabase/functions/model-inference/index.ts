@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
 
 const corsHeaders = {
@@ -15,6 +16,85 @@ interface InferenceRequest {
   category: string;
 }
 
+/** Extract authenticated user_id from the JWT in the Authorization header */
+async function extractUserId(req: Request): Promise<string | null> {
+  const authHeader = req.headers.get("authorization");
+  if (!authHeader) return null;
+  const token = authHeader.replace("Bearer ", "");
+  // Anon key is short and doesn't represent a user session
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  if (token === anonKey) return null;
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_ANON_KEY")!
+    );
+    const { data } = await supabase.auth.getUser(token);
+    return data?.user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+/** Process billing: log usage + deduct balance for authenticated users */
+async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number) {
+  try {
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+    );
+
+    // Calculate cost
+    const tokenCost = (tokensUsed / 1000) * 0.001;
+    const computeCost = (computeTimeMs / 1000) * 0.0001;
+    const totalCost = Math.max(tokenCost + computeCost, 0.0001);
+
+    // Get wallet
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+
+    if (wallet) {
+      const newBalance = Math.max(parseFloat(wallet.balance_usd) - totalCost, 0);
+      
+      // Deduct balance
+      await supabase
+        .from("wallets")
+        .update({ balance_usd: newBalance, updated_at: new Date().toISOString() })
+        .eq("id", wallet.id);
+
+      // Log transaction
+      await supabase
+        .from("wallet_transactions")
+        .insert({
+          user_id: userId,
+          wallet_id: wallet.id,
+          transaction_type: "usage_charge",
+          status: "confirmed",
+          amount_usd: totalCost,
+          metadata: { endpoint, tokens_used: tokensUsed, compute_time_ms: computeTimeMs, source: "dashboard_chat" },
+        });
+    }
+
+    // Log usage
+    await supabase
+      .from("usage_logs")
+      .insert({
+        user_id: userId,
+        endpoint: endpoint || "/v1/model-inference",
+        tokens_used: tokensUsed,
+        compute_time_ms: computeTimeMs,
+        cost_usd: totalCost,
+      });
+
+    console.log(`Billing: user ${userId} charged $${totalCost.toFixed(6)} for ${tokensUsed} tokens`);
+  } catch (err) {
+    console.error("Billing error (non-fatal):", err);
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -23,6 +103,9 @@ serve(async (req) => {
   const startTime = Date.now();
   const apiKeyPrefix = extractApiKeyPrefix(req);
   let statusCode = 200;
+
+  // Extract user for billing (non-blocking if fails)
+  const userId = await extractUserId(req);
 
   try {
     const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
@@ -94,9 +177,18 @@ serve(async (req) => {
 
     const vsegptModel = modelMapping[model] || "openai/gpt-4o-mini";
 
-    // Helper to log and return response
-    const respond = (body: string, status: number, errorMsg?: string) => {
-      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null });
+    // Helper to log, bill, and return response
+    const respond = (body: string, status: number, errorMsg?: string, usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }) => {
+      const computeTimeMs = Date.now() - startTime;
+      logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null });
+      
+      // Process billing for authenticated users on success
+      if (status === 200 && userId) {
+        const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
+        // Fire-and-forget billing
+        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs);
+      }
+      
       return new Response(body, { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     };
 
@@ -126,7 +218,7 @@ serve(async (req) => {
 
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || "No response generated";
-      return respond(JSON.stringify({ response: content, model: vsegptModel, usage: data.usage }), 200);
+      return respond(JSON.stringify({ response: content, model: vsegptModel, usage: data.usage }), 200, undefined, data.usage);
     }
 
     // 2. Image Generation
@@ -155,7 +247,7 @@ serve(async (req) => {
       if (!imageUrl) {
         return respond(JSON.stringify({ error: "Failed to generate image (no image in response)", model: gatewayModel }), 500, "No image in response");
       }
-      return respond(JSON.stringify({ response: text ?? "🖼️ Image generated successfully!", imageUrl, model: gatewayModel }), 200);
+      return respond(JSON.stringify({ response: text ?? "🖼️ Image generated successfully!", imageUrl, model: gatewayModel }), 200, undefined, { total_tokens: 500 });
     }
 
     // 3. Image Editing
@@ -181,7 +273,7 @@ serve(async (req) => {
 
       const audioBuffer = await response.arrayBuffer();
       const base64Audio = base64Encode(audioBuffer);
-      return respond(JSON.stringify({ audio: base64Audio, audio_format: "mp3", model: vsegptModel, voice: "nova" }), 200);
+      return respond(JSON.stringify({ audio: base64Audio, audio_format: "mp3", model: vsegptModel, voice: "nova" }), 200, undefined, { total_tokens: Math.ceil(prompt.length / 4) });
     }
 
     // 5. STT/Audio
@@ -214,7 +306,7 @@ serve(async (req) => {
       return respond(JSON.stringify({
         response: `📊 Embeddings generated successfully!\n\nDimensions: ${dimensions}\nFirst 5 values: [${embedding?.slice(0, 5).map((v: number) => v.toFixed(6)).join(', ')}...]`,
         model: vsegptModel, embedding, dimensions,
-      }), 200);
+      }), 200, undefined, data.usage);
     }
 
     // 8. Document AI / OCR
