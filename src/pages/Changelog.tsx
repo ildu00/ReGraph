@@ -38,6 +38,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.7.1",
+    date: "February 13, 2026",
+    title: "API Logs Improvements & Request Body Capture",
+    type: "patch",
+    changes: [
+      { category: "feature", description: "Request body capture in model-inference edge function for full API request traceability" },
+      { category: "feature", description: "Inline timestamp display on mobile in Admin API Logs table" },
+      { category: "improvement", description: "Optimized Admin API Logs column layout with responsive visibility priorities (Request Body on lg+, API Key/IP on xl+)" },
+      { category: "improvement", description: "Graceful JSON parsing with proper error logging for malformed inference requests" },
+      { category: "fix", description: "Fixed Date & Time column not visible on desktop in Admin API Logs" },
+      { category: "fix", description: "Fixed horizontal overflow of API Logs table on narrow screens" },
+    ]
+  },
+  {
     version: "2.7.0",
     date: "February 6, 2026",
     title: "API Request Logging & Observability",
