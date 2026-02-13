@@ -306,7 +306,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div ref={containerRef} className="flex flex-col flex-1 min-h-0">
+    <div ref={containerRef} className="flex flex-col" style={{ height: 'calc(100dvh - 11rem)', maxHeight: 'calc(100dvh - 11rem)' }}>
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
