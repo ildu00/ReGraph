@@ -200,7 +200,7 @@ export const AdminApiLogs = () => {
                     <TableHead className="w-[70px] hidden sm:table-cell">Time</TableHead>
                     <TableHead className="w-[100px] hidden md:table-cell">API Key</TableHead>
                     <TableHead className="w-[110px] hidden lg:table-cell">IP</TableHead>
-                    <TableHead className="w-[160px]">Date & Time</TableHead>
+                    <TableHead className="w-[160px] hidden sm:table-cell">Date & Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -213,6 +213,9 @@ export const AdminApiLogs = () => {
                       </TableCell>
                       <TableCell className="font-mono text-xs truncate max-w-[200px]" title={log.endpoint}>
                         {log.endpoint}
+                        <div className="sm:hidden text-[10px] text-muted-foreground font-sans mt-0.5">
+                          {formatTime(log.created_at)}
+                        </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell max-w-[250px]">
                         <span className="text-xs text-muted-foreground truncate block">
@@ -233,7 +236,7 @@ export const AdminApiLogs = () => {
                       <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
                         {log.ip_address || "—"}
                       </TableCell>
-                      <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
+                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
                         {formatTime(log.created_at)}
                       </TableCell>
                     </TableRow>
