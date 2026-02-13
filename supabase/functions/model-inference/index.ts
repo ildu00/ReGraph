@@ -107,6 +107,34 @@ serve(async (req) => {
   // Extract user for billing (non-blocking if fails)
   const userId = await extractUserId(req);
 
+  // Check balance before processing request
+  if (userId) {
+    try {
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const { data: wallet } = await supabase
+        .from("wallets")
+        .select("balance_usd")
+        .eq("user_id", userId)
+        .single();
+
+      if (!wallet || parseFloat(wallet.balance_usd) <= 0) {
+        return new Response(
+          JSON.stringify({
+            error: "Insufficient balance",
+            message: "Your wallet balance is $0.00. Please top up your wallet to continue using the API.",
+            code: "INSUFFICIENT_BALANCE",
+          }),
+          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } catch (err) {
+      console.error("Balance check error (non-fatal):", err);
+    }
+  }
+
   try {
     const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
     if (!VSEGPT_API_KEY) {
