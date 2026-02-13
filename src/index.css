@@ -229,45 +229,30 @@
   .markdown-response pre {
     margin-top: 1rem;
     margin-bottom: 1rem;
-  }
-
-  .markdown-response blockquote {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    padding-left: 1rem;
-    border-left: 3px solid hsl(var(--primary) / 0.5);
-    font-style: italic;
-    color: hsl(var(--muted-foreground));
-  }
-
-  .markdown-response hr {
-    margin-top: 1.5rem;
-    margin-bottom: 1.5rem;
-    border-color: hsl(var(--border));
-  }
-
-  .markdown-response table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    font-size: 0.875rem;
-  }
-
-  .markdown-response th,
-  .markdown-response td {
+    background: hsl(0 0% 8%);
     border: 1px solid hsl(var(--border));
-    padding: 0.625rem 0.75rem;
-    text-align: left;
+    border-radius: 0.5rem;
+    padding: 1rem 1.25rem;
+    overflow-x: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
   }
 
-  .markdown-response th {
-    background: hsl(var(--muted));
-    font-weight: 600;
+  .markdown-response pre code {
+    background: transparent;
+    padding: 0;
+    border-radius: 0;
+    font-size: inherit;
+    color: hsl(210 40% 80%);
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', ui-monospace, monospace;
   }
 
-  .markdown-response tr:nth-child(even) {
-    background: hsl(var(--muted) / 0.3);
+  @media (max-width: 640px) {
+    .markdown-response pre {
+      font-size: 0.75rem;
+      padding: 0.75rem;
+      word-break: break-all;
+    }
   }
 
   .markdown-response code:not(pre code) {
@@ -275,6 +260,8 @@
     padding: 0.125rem 0.375rem;
     border-radius: 0.25rem;
     font-size: 0.875em;
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+    color: hsl(270 80% 75%);
   }
 }
 
