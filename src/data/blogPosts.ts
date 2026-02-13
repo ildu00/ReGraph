@@ -12,6 +12,7 @@ import gettingStartedImg from "@/assets/blog/getting-started.jpg";
 import platformLaunchImg from "@/assets/blog/platform-launch.jpg";
 import regraphVsGonkaImg from "@/assets/blog/regraph-vs-gonka.jpg";
 import enterpriseDeepDiveImg from "@/assets/blog/enterprise-deep-dive.jpg";
+import newModels2025Img from "@/assets/blog/new-models-2025.jpg";
 
 export interface BlogPost {
   id: string;
@@ -27,6 +28,230 @@ export interface BlogPost {
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    id: "14",
+    slug: "13-new-ai-models-february-2026",
+    title: "13 New AI Models Now Available on ReGraph: GPT-5 Family, Claude 4.5, Gemini 3 & More",
+    excerpt: "We've added 13 cutting-edge models from OpenAI, Anthropic, Google, and xAI — including GPT-5.2, Claude Opus 4.5, Gemini 3 Pro, and Grok Code Fast 1. Here's what each model brings to the table.",
+    content: `We're excited to announce that **13 new AI models** are now live on the ReGraph platform. This is our biggest model expansion yet, spanning four major providers and covering chat, reasoning, and code generation use cases. Every model is available today through our unified API.
+
+---
+
+## New Models at a Glance
+
+| Model | Provider | Category | Context Window | Price (per 1K tokens) | Latency |
+|---|---|---|---|---|---|
+| **GPT-5** | OpenAI | Chat | 256K | $0.005 | ~800ms |
+| **GPT-5 mini** | OpenAI | Chat | 128K | $0.001 | ~400ms |
+| **GPT-5.1** | OpenAI | Chat | 256K | $0.006 | ~850ms |
+| **GPT-5.2** | OpenAI | Reasoning | 256K | $0.008 | ~1200ms |
+| **GPT-4.1** | OpenAI | Chat | 128K | $0.002 | ~500ms |
+| **GPT-4o** | OpenAI | Chat | 128K | $0.0025 | ~450ms |
+| **Claude Haiku 4.5** | Anthropic | Chat | 200K | $0.0008 | ~300ms |
+| **Claude Sonnet 4** | Anthropic | Chat | 200K | $0.003 | ~600ms |
+| **Claude Sonnet 4.5** | Anthropic | Chat | 200K | $0.004 | ~650ms |
+| **Claude Opus 4.5** | Anthropic | Chat | 200K | $0.015 | ~1500ms |
+| **Gemini 3 Flash** | Google | Chat | 1M | $0.0005 | ~250ms |
+| **Gemini 3 Pro (Preview)** | Google | Chat | 1M | $0.004 | ~700ms |
+| **Grok Code Fast 1** | xAI | Code | 128K | $0.002 | ~350ms |
+
+All models are accessible via the standard \`/v1/chat/completions\` endpoint — just change the \`model\` parameter.
+
+---
+
+## OpenAI GPT-5 Family
+
+### GPT-5
+
+OpenAI's flagship model represents a generational leap in reasoning, instruction following, and multimodal understanding. With a 256K context window, GPT-5 handles massive documents, lengthy codebases, and complex multi-turn conversations with ease.
+
+**Best for**: Complex analysis, long-document processing, creative writing, and tasks where accuracy matters more than speed.
+
+### GPT-5 mini
+
+A distilled version of GPT-5 that retains most of its reasoning capabilities at a fraction of the cost. GPT-5 mini is ideal for high-volume production workloads where you need strong performance without the premium price tag.
+
+**Best for**: Customer support, content generation, summarization, and cost-sensitive production deployments.
+
+### GPT-5.1
+
+An iterative improvement over GPT-5 with enhanced instruction following and reduced hallucination rates. GPT-5.1 has been fine-tuned on a broader set of real-world tasks and shows measurable improvements in structured output generation (JSON, XML, tables).
+
+**Best for**: API-driven applications, structured data extraction, and enterprise integrations requiring high reliability.
+
+### GPT-5.2
+
+OpenAI's most advanced reasoning model. GPT-5.2 uses an extended chain-of-thought approach internally, making it exceptionally strong at mathematical proofs, scientific analysis, and multi-step logical problems.
+
+**Best for**: Research, complex reasoning chains, code debugging, and problems requiring step-by-step logical analysis.
+
+### GPT-4.1
+
+A refined version of GPT-4 Turbo with improved efficiency and lower pricing. GPT-4.1 remains an excellent choice for teams that have fine-tuned their prompts for GPT-4-class models and want better performance at lower cost.
+
+**Best for**: Migration from GPT-4 Turbo, production workloads with established prompts, and cost optimization.
+
+### GPT-4o
+
+OpenAI's optimized multimodal model with native vision, audio understanding, and fast response times. GPT-4o delivers GPT-4-level quality with significantly lower latency, making it perfect for real-time applications.
+
+**Best for**: Real-time chat, multimodal applications, voice assistants, and latency-sensitive use cases.
+
+---
+
+## Anthropic Claude 4.5 Family
+
+### Claude Haiku 4.5
+
+The fastest model in the Claude lineup. Haiku 4.5 is designed for high-throughput, low-latency scenarios where speed is critical. Despite its compact size, it handles classification, extraction, and simple reasoning tasks remarkably well.
+
+**Best for**: Real-time classification, content moderation, data extraction, and high-volume API calls where every millisecond counts.
+
+### Claude Sonnet 4
+
+The balanced workhorse of Anthropic's lineup. Sonnet 4 offers an excellent trade-off between capability and cost, with strong performance across coding, analysis, and creative tasks.
+
+**Best for**: General-purpose AI applications, coding assistance, and production workloads that need reliability without premium pricing.
+
+### Claude Sonnet 4.5
+
+An enhanced version of Sonnet 4 with improved coding capabilities and better handling of nuanced instructions. Sonnet 4.5 shows particular strength in multi-file code refactoring and complex document analysis.
+
+**Best for**: Advanced coding tasks, document analysis, and workflows requiring nuanced understanding of context.
+
+### Claude Opus 4.5
+
+Anthropic's most capable model. Opus 4.5 excels at the most demanding tasks: PhD-level scientific reasoning, complex creative writing, and multi-step analysis that requires maintaining context across thousands of tokens.
+
+**Best for**: Research, complex analysis, creative writing, and tasks where maximum intelligence is required regardless of cost.
+
+---
+
+## Google Gemini 3
+
+### Gemini 3 Flash
+
+Google's next-generation speed-optimized model with a massive **1M token context window**. Gemini 3 Flash can process entire codebases, books, or datasets in a single request while maintaining sub-300ms response times.
+
+**Best for**: Large-context analysis, codebase understanding, document QA, and any scenario where you need to process massive amounts of text quickly.
+
+### Gemini 3 Pro (Preview)
+
+The preview release of Google's flagship Gemini 3 model. Pro brings significantly improved reasoning, better factual accuracy, and enhanced multimodal capabilities compared to Gemini 2.5 Pro. Currently in preview, with general availability expected soon.
+
+**Best for**: Complex reasoning, multimodal tasks, and teams wanting early access to Google's next-generation capabilities.
+
+---
+
+## xAI Grok Code Fast 1
+
+A specialized code generation model from xAI optimized for speed and accuracy. Grok Code Fast 1 excels at code completion, generation, and refactoring with remarkably low latency. Its architecture is specifically designed for code understanding, making it competitive with larger general-purpose models on programming tasks.
+
+**Best for**: Code completion, generation, refactoring, and developer tooling where fast response times are essential.
+
+---
+
+## How to Use These Models
+
+All 13 models are available through our unified API. Simply specify the model ID in your request:
+
+\`\`\`bash
+curl -X POST https://api.regraph.tech/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "openai/gpt-5.2",
+    "messages": [
+      {"role": "user", "content": "Explain the implications of Gödel\\'s incompleteness theorems"}
+    ]
+  }'
+\`\`\`
+
+### Available Model IDs
+
+| Model | API ID |
+|---|---|
+| GPT-5 | \`openai/gpt-5\` |
+| GPT-5 mini | \`openai/gpt-5-mini\` |
+| GPT-5.1 | \`openai/gpt-5.1\` |
+| GPT-5.2 | \`openai/gpt-5.2\` |
+| GPT-4.1 | \`openai/gpt-4.1\` |
+| GPT-4o | \`openai/gpt-4o\` |
+| Claude Haiku 4.5 | \`anthropic/claude-haiku-4.5\` |
+| Claude Sonnet 4 | \`anthropic/claude-sonnet-4\` |
+| Claude Sonnet 4.5 | \`anthropic/claude-sonnet-4.5\` |
+| Claude Opus 4.5 | \`anthropic/claude-opus-4.5\` |
+| Gemini 3 Flash | \`google/gemini-3-flash\` |
+| Gemini 3 Pro (Preview) | \`google/gemini-3-pro-preview\` |
+| Grok Code Fast 1 | \`xai/grok-code-fast-1\` |
+
+### SDK Examples
+
+**Python**:
+\`\`\`python
+from regraph import ReGraph
+
+client = ReGraph(api_key="YOUR_API_KEY")
+
+response = client.chat.completions.create(
+    model="anthropic/claude-opus-4.5",
+    messages=[
+        {"role": "user", "content": "Analyze this research paper..."}
+    ]
+)
+print(response.choices[0].message.content)
+\`\`\`
+
+**JavaScript**:
+\`\`\`javascript
+import { ReGraph } from '@regraph/sdk';
+
+const client = new ReGraph({ apiKey: 'YOUR_API_KEY' });
+
+const response = await client.chat.completions.create({
+  model: 'google/gemini-3-flash',
+  messages: [
+    { role: 'user', content: 'Summarize this 500-page document...' }
+  ]
+});
+console.log(response.choices[0].message.content);
+\`\`\`
+
+---
+
+## Choosing the Right Model
+
+Here's a quick decision guide based on your use case:
+
+| Use Case | Recommended Model | Why |
+|---|---|---|
+| **High-volume production** | GPT-5 mini or Claude Haiku 4.5 | Best cost/performance ratio |
+| **Complex reasoning** | GPT-5.2 or Claude Opus 4.5 | Strongest analytical capabilities |
+| **Code generation** | Grok Code Fast 1 or Claude Sonnet 4.5 | Optimized for programming tasks |
+| **Large context processing** | Gemini 3 Flash | 1M token context at low latency |
+| **Real-time chat** | GPT-4o or Claude Haiku 4.5 | Lowest latency options |
+| **Balanced workloads** | Claude Sonnet 4 or GPT-4.1 | Strong all-rounders at fair pricing |
+| **Maximum capability** | GPT-5.2 or Claude Opus 4.5 | Best-in-class intelligence |
+
+---
+
+## What's Next
+
+We're committed to bringing the best AI models to ReGraph as soon as they're available. Coming soon:
+
+- **Llama 4** from Meta — expected Q2 2026
+- **Mistral Large 3** — in evaluation
+- **Additional Grok models** from xAI — under integration
+
+Stay tuned to our [Models page](/models) for the latest additions. All models include full API documentation and can be tested in our interactive Playground before integration.
+
+Have questions about which model is right for your use case? [Contact our team](/support) — we're happy to help you find the optimal setup.`,
+    date: "2026-02-13",
+    readTime: "12 min",
+    category: "Models",
+    image: newModels2025Img,
+    featured: true
+  },
   {
     id: "13",
     slug: "regraph-enterprise-deep-dive-pricing-performance-security",
