@@ -247,13 +247,13 @@ const Dashboard = () => {
               <BarChart3 className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Overview</span>
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <Wallet className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Wallet</span>
-            </TabsTrigger>
             <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <MessageSquare className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">AI Chat</span>
+            </TabsTrigger>
+            <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <Wallet className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">Wallet</span>
             </TabsTrigger>
             <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <Key className="h-4 w-4 lg:mr-2" />
