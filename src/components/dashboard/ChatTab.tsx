@@ -163,21 +163,38 @@ const ChatTab = () => {
     };
   }, []);
 
-  // Compensate for iOS Safari visual viewport changes when keyboard opens.
-  // Adjusts the container height so it fits within the visible area.
+  // iOS Safari: when keyboard opens, the visual viewport scrolls up and shrinks.
+  // Fixed elements stay on the layout viewport and become invisible.
+  // Solution: when keyboard is detected (viewport significantly smaller),
+  // reposition the container to fill the visual viewport entirely.
+  // When keyboard is closed, restore normal positioning below tabs.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
 
+    let prevHeight = vv.height;
+
     const onViewportChange = () => {
       const container = containerRef.current;
       if (!container) return;
-      // Get the container's top offset from the viewport
-      const rect = container.getBoundingClientRect();
-      const availableHeight = vv.height - rect.top + vv.offsetTop;
-      if (availableHeight > 0) {
-        container.style.height = `${availableHeight}px`;
+
+      const keyboardLikely = vv.height < window.innerHeight * 0.75;
+
+      if (keyboardLikely) {
+        // Keyboard open: fill the visual viewport so everything stays visible
+        container.style.top = `${vv.offsetTop}px`;
+        container.style.bottom = 'auto';
+        container.style.height = `${vv.height}px`;
+        container.style.paddingTop = '0.5rem';
+      } else {
+        // Keyboard closed: normal position below tabs
+        container.style.top = '';
+        container.style.bottom = '';
+        container.style.height = '';
+        container.style.paddingTop = '';
       }
+
+      prevHeight = vv.height;
     };
 
     vv.addEventListener('resize', onViewportChange);
@@ -187,7 +204,10 @@ const ChatTab = () => {
       vv.removeEventListener('resize', onViewportChange);
       vv.removeEventListener('scroll', onViewportChange);
       if (containerRef.current) {
+        containerRef.current.style.top = '';
+        containerRef.current.style.bottom = '';
         containerRef.current.style.height = '';
+        containerRef.current.style.paddingTop = '';
       }
     };
   }, []);
