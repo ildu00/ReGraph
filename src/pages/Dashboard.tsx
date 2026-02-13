@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useVisualViewportHeight } from "@/hooks/useVisualViewport";
+import { useVisualViewport } from "@/hooks/useVisualViewport";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -46,7 +46,7 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const isMobile = useIsMobile();
-  const vpHeight = useVisualViewportHeight();
+  const { height: vpHeight, offsetTop: vpOffsetTop } = useVisualViewport();
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -89,6 +89,9 @@ const Dashboard = () => {
   const isMobileChatMode = isChatActive && isMobile;
 
   // Root container style: on mobile chat, fixed to visual viewport height
+  // On iOS Safari, when the keyboard opens the browser scrolls the layout viewport.
+  // position:fixed stays relative to the layout viewport, so it scrolls out of view.
+  // We compensate by using transform:translateY(offsetTop) to follow the visual viewport.
   const rootStyle: React.CSSProperties = isMobileChatMode
     ? {
         position: 'fixed',
@@ -97,6 +100,9 @@ const Dashboard = () => {
         right: 0,
         height: vpHeight ? `${vpHeight}px` : '100dvh',
         overflow: 'hidden',
+        // This is the key: translate down by the amount the visual viewport has scrolled
+        transform: vpOffsetTop ? `translateY(${vpOffsetTop}px)` : undefined,
+        willChange: 'transform, height',
       }
     : {};
 

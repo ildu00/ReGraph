@@ -1,28 +1,41 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+
+interface ViewportState {
+  height: number;
+  offsetTop: number;
+}
 
 /**
- * Tracks window.visualViewport height on iOS Safari.
- * When the virtual keyboard opens, visualViewport.height shrinks
- * while the layout viewport stays the same. By applying this height
- * to a container, we keep all content within the visible area.
+ * Tracks window.visualViewport on iOS Safari.
+ * Returns both height and offsetTop so we can reposition
+ * the UI to follow the visual viewport when the keyboard opens.
  *
- * Returns `undefined` on browsers without visualViewport support,
- * indicating the caller should fall back to CSS viewport units.
+ * On iOS Safari, when the keyboard opens:
+ * - visualViewport.height shrinks
+ * - visualViewport.offsetTop increases (page scrolled up)
+ *
+ * By applying transform: translateY(offsetTop) + height to a container,
+ * we can keep it pinned to the visible area.
  */
-export function useVisualViewportHeight() {
-  const [height, setHeight] = useState<number | undefined>(
-    () => window.visualViewport?.height
-  );
+export function useVisualViewport() {
+  const [state, setState] = useState<ViewportState>(() => ({
+    height: window.visualViewport?.height ?? window.innerHeight,
+    offsetTop: window.visualViewport?.offsetTop ?? 0,
+  }));
+
+  const update = useCallback(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    setState({
+      height: vv.height,
+      offsetTop: vv.offsetTop,
+    });
+  }, []);
 
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
 
-    const update = () => {
-      setHeight(vv.height);
-    };
-
-    // Initial
     update();
 
     vv.addEventListener("resize", update);
@@ -32,7 +45,13 @@ export function useVisualViewportHeight() {
       vv.removeEventListener("resize", update);
       vv.removeEventListener("scroll", update);
     };
-  }, []);
+  }, [update]);
 
+  return state;
+}
+
+// Keep backward compat export
+export function useVisualViewportHeight() {
+  const { height } = useVisualViewport();
   return height;
 }
