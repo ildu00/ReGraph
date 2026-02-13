@@ -239,8 +239,14 @@ const Dashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`pt-20 md:ml-64 px-4 md:px-8 ${activeTab === 'chat' ? 'pb-0 overflow-hidden' : 'pb-8'}`}>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <main className={`pt-20 md:ml-64 px-4 md:px-8 ${
+        activeTab === 'chat'
+          ? 'pb-0 h-[100svh] flex flex-col overflow-hidden'
+          : 'pb-8'
+      }`}>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className={
+          activeTab === 'chat' ? 'flex-1 min-h-0 flex flex-col' : 'space-y-6'
+        }>
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
@@ -280,7 +286,7 @@ const Dashboard = () => {
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat">
+          <TabsContent value="chat" className={activeTab === 'chat' ? 'flex-1 min-h-0 flex flex-col mt-0' : ''}>
             <ChatTab />
           </TabsContent>
 
