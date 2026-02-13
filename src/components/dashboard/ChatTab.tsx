@@ -138,79 +138,13 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // Lock body scroll to prevent iOS Safari from scrolling page on keyboard open
-  // IMPORTANT: scroll to top first so TabsList stays visible (not shifted by saved scrollY)
+  // On mobile, prevent overscroll on the page (not body lock, just overflow)
   useEffect(() => {
-    const origOverflow = document.body.style.overflow;
-    const origPosition = document.body.style.position;
-    const origWidth = document.body.style.width;
-    const origHeight = document.body.style.height;
-    const origTop = document.body.style.top;
-
-    // Scroll to top before locking - otherwise body.top = -scrollY hides tabs
-    window.scrollTo(0, 0);
-
+    const orig = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
-    document.body.style.position = 'fixed';
-    document.body.style.width = '100%';
-    document.body.style.height = '100%';
-    document.body.style.top = '0px';
-
+    window.scrollTo(0, 0);
     return () => {
-      document.body.style.overflow = origOverflow;
-      document.body.style.position = origPosition;
-      document.body.style.width = origWidth;
-      document.body.style.height = origHeight;
-      document.body.style.top = origTop;
-    };
-  }, []);
-
-  // iOS Safari: when keyboard opens, the visual viewport scrolls up and shrinks.
-  // Fixed elements stay on the layout viewport and become invisible.
-  // Solution: when keyboard is detected (viewport significantly smaller),
-  // reposition the container to fill the visual viewport entirely.
-  // When keyboard is closed, restore normal positioning below tabs.
-  useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-
-    let prevHeight = vv.height;
-
-    const onViewportChange = () => {
-      const container = containerRef.current;
-      if (!container) return;
-
-      const keyboardLikely = vv.height < window.innerHeight * 0.75;
-
-      if (keyboardLikely) {
-        // Keyboard open: fill the visual viewport so everything stays visible
-        container.style.top = `${vv.offsetTop}px`;
-        container.style.bottom = 'auto';
-        container.style.height = `${vv.height}px`;
-        container.style.paddingTop = '0.5rem';
-      } else {
-        // Keyboard closed: normal position below tabs
-        container.style.top = '';
-        container.style.bottom = '';
-        container.style.height = '';
-        container.style.paddingTop = '';
-      }
-
-      prevHeight = vv.height;
-    };
-
-    vv.addEventListener('resize', onViewportChange);
-    vv.addEventListener('scroll', onViewportChange);
-
-    return () => {
-      vv.removeEventListener('resize', onViewportChange);
-      vv.removeEventListener('scroll', onViewportChange);
-      if (containerRef.current) {
-        containerRef.current.style.top = '';
-        containerRef.current.style.bottom = '';
-        containerRef.current.style.height = '';
-        containerRef.current.style.paddingTop = '';
-      }
+      document.body.style.overflow = orig;
     };
   }, []);
 
@@ -372,7 +306,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div ref={containerRef} className="fixed top-[9.5rem] md:top-[9.5rem] bottom-0 left-0 right-0 md:left-64 flex flex-col bg-background z-30 px-4 md:px-8">
+    <div ref={containerRef} className="flex flex-col flex-1 min-h-0">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
