@@ -99,12 +99,20 @@ const ProviderTab = () => {
   const [isAddDeviceOpen, setIsAddDeviceOpen] = useState(false);
   const [isAddingDevice, setIsAddingDevice] = useState(false);
 
-  // Filters
+  // Filters (pending = what user is typing, applied = what's active)
   const [searchQuery, setSearchQuery] = useState("");
   const [filterType, setFilterType] = useState<DeviceType | "all">("all");
   const [filterStatus, setFilterStatus] = useState<DeviceStatus | "all">("all");
   const [filterMinVram, setFilterMinVram] = useState("");
   const [filterMaxPrice, setFilterMaxPrice] = useState("");
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    searchQuery: "",
+    filterType: "all" as DeviceType | "all",
+    filterStatus: "all" as DeviceStatus | "all",
+    filterMinVram: "",
+    filterMaxPrice: "",
+  });
 
   // New device form
   const [newDevice, setNewDevice] = useState({
@@ -115,24 +123,38 @@ const ProviderTab = () => {
     price_per_hour: "0.10",
   });
 
-  // Filtered devices
+  const applyFilters = () => {
+    setAppliedFilters({
+      searchQuery,
+      filterType,
+      filterStatus,
+      filterMinVram,
+      filterMaxPrice,
+    });
+  };
+
+  // Filtered devices using applied filters
   const filteredDevices = devices.filter((device) => {
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
+    const { searchQuery: q, filterType: ft, filterStatus: fs, filterMinVram: fv, filterMaxPrice: fp } = appliedFilters;
+    if (q) {
+      const ql = q.toLowerCase();
       const matchesSearch =
-        device.device_name.toLowerCase().includes(q) ||
-        (device.device_model?.toLowerCase().includes(q) ?? false) ||
-        device.device_type.toLowerCase().includes(q);
+        device.device_name.toLowerCase().includes(ql) ||
+        (device.device_model?.toLowerCase().includes(ql) ?? false) ||
+        device.device_type.toLowerCase().includes(ql);
       if (!matchesSearch) return false;
     }
-    if (filterType !== "all" && device.device_type !== filterType) return false;
-    if (filterStatus !== "all" && device.status !== filterStatus) return false;
-    if (filterMinVram && device.vram_gb !== null && device.vram_gb < parseInt(filterMinVram)) return false;
-    if (filterMaxPrice && Number(device.price_per_hour) > parseFloat(filterMaxPrice)) return false;
+    if (ft !== "all" && device.device_type !== ft) return false;
+    if (fs !== "all" && device.status !== fs) return false;
+    if (fv) {
+      const minVram = parseInt(fv);
+      if (device.vram_gb === null || device.vram_gb < minVram) return false;
+    }
+    if (fp && Number(device.price_per_hour) > parseFloat(fp)) return false;
     return true;
   });
 
-  const hasActiveFilters = filterType !== "all" || filterStatus !== "all" || filterMinVram !== "" || filterMaxPrice !== "" || searchQuery !== "";
+  const hasActiveFilters = appliedFilters.filterType !== "all" || appliedFilters.filterStatus !== "all" || appliedFilters.filterMinVram !== "" || appliedFilters.filterMaxPrice !== "" || appliedFilters.searchQuery !== "";
 
   const clearFilters = () => {
     setSearchQuery("");
@@ -140,6 +162,13 @@ const ProviderTab = () => {
     setFilterStatus("all");
     setFilterMinVram("");
     setFilterMaxPrice("");
+    setAppliedFilters({
+      searchQuery: "",
+      filterType: "all",
+      filterStatus: "all",
+      filterMinVram: "",
+      filterMaxPrice: "",
+    });
   };
 
   useEffect(() => {
@@ -463,9 +492,14 @@ const ProviderTab = () => {
                 placeholder="Search devices by name, model, or type..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && applyFilters()}
                 className="pl-9 bg-secondary border-border"
               />
             </div>
+            <Button onClick={applyFilters} size="sm" className="glow-primary shrink-0">
+              <Search className="h-4 w-4 mr-2" />
+              Search
+            </Button>
             {hasActiveFilters && (
               <Button variant="ghost" size="sm" onClick={clearFilters} className="text-muted-foreground hover:text-foreground shrink-0">
                 <X className="h-4 w-4 mr-1" />
