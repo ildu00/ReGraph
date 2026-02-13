@@ -163,9 +163,8 @@ const ChatTab = () => {
     };
   }, []);
 
-  // Compensate for iOS Safari visual viewport scroll when keyboard opens
-  // iOS scrolls the visual viewport but fixed elements stay on layout viewport,
-  // causing them to appear scrolled out. We counter this with a transform.
+  // Compensate for iOS Safari visual viewport changes when keyboard opens.
+  // Adjusts the container height so it fits within the visible area.
   useEffect(() => {
     const vv = window.visualViewport;
     if (!vv) return;
@@ -173,21 +172,23 @@ const ChatTab = () => {
     const onViewportChange = () => {
       const container = containerRef.current;
       if (!container) return;
-      // offsetTop = how much the visual viewport has scrolled from layout viewport
-      const offsetTop = vv.offsetTop;
-      const height = vv.height;
-      container.style.transform = `translateY(${offsetTop}px)`;
-      container.style.height = `${height}px`;
+      // Get the container's top offset from the viewport
+      const rect = container.getBoundingClientRect();
+      const availableHeight = vv.height - rect.top + vv.offsetTop;
+      if (availableHeight > 0) {
+        container.style.height = `${availableHeight}px`;
+      }
     };
 
     vv.addEventListener('resize', onViewportChange);
     vv.addEventListener('scroll', onViewportChange);
-    // Initial call
-    onViewportChange();
 
     return () => {
       vv.removeEventListener('resize', onViewportChange);
       vv.removeEventListener('scroll', onViewportChange);
+      if (containerRef.current) {
+        containerRef.current.style.height = '';
+      }
     };
   }, []);
 
@@ -349,7 +350,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div ref={containerRef} className="fixed inset-0 pt-[7rem] md:pt-[7.5rem] md:left-64 flex flex-col bg-background z-30 px-4 md:px-8 will-change-transform">
+    <div ref={containerRef} className="fixed top-[7rem] md:top-[7.5rem] bottom-0 left-0 right-0 md:left-64 flex flex-col bg-background z-30 px-4 md:px-8">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
