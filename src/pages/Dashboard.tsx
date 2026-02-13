@@ -3,6 +3,8 @@ import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useVisualViewportHeight } from "@/hooks/useVisualViewport";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -23,7 +25,6 @@ import {
   LogOut,
   Menu,
   X,
-  Loader2,
   Server,
   Wallet,
   Shield,
@@ -44,6 +45,8 @@ const Dashboard = () => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
+  const isMobile = useIsMobile();
+  const vpHeight = useVisualViewportHeight();
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -82,22 +85,34 @@ const Dashboard = () => {
   }
 
   const isChatActive = activeTab === 'chat';
+  // On mobile + chat: use fixed container sized to visualViewport to survive iOS keyboard
+  const isMobileChatMode = isChatActive && isMobile;
 
-  // Two layout modes:
-  // Mobile + chat: flex column with h-[100dvh], header IN FLOW (not fixed) — prevents iOS keyboard from pushing header out of visual viewport
-  // Desktop + chat OR any other tab: normal layout with fixed header
+  // Root container style: on mobile chat, fixed to visual viewport height
+  const rootStyle: React.CSSProperties = isMobileChatMode
+    ? {
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: vpHeight ? `${vpHeight}px` : '100dvh',
+        overflow: 'hidden',
+      }
+    : {};
+
   return (
-    <div className={
-      isChatActive
-        ? "h-[100dvh] flex flex-col overflow-hidden md:block md:min-h-screen md:h-auto md:overflow-visible bg-background"
-        : "min-h-screen bg-background"
-    }>
-      {/* Header
-        Mobile + chat: shrink-0 (in flex flow, NOT fixed) — stays visible when keyboard opens
-        Desktop / other tabs: fixed top-0 (standard dashboard behavior) */}
+    <div
+      className={
+        isMobileChatMode
+          ? "flex flex-col bg-background"
+          : "min-h-screen bg-background"
+      }
+      style={rootStyle}
+    >
+      {/* Header - always in flow on mobile chat, fixed on desktop/other tabs */}
       <header className={`${
-        isChatActive
-          ? 'shrink-0 md:fixed md:top-0 md:left-0 md:right-0'
+        isMobileChatMode
+          ? 'shrink-0'
           : 'fixed top-0 left-0 right-0'
       } h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6`}>
         <div className="flex items-center gap-4">
@@ -175,7 +190,6 @@ const Dashboard = () => {
           })}
         </nav>
         
-        {/* Admin Link */}
         {isAdmin && (
           <div className="border-t border-border pt-4 mt-4">
             <Link
@@ -235,7 +249,6 @@ const Dashboard = () => {
                 })}
               </nav>
               
-              {/* Admin Link - Mobile */}
               {isAdmin && (
                 <div className="border-t border-border pt-4 mt-4">
                   <Link
@@ -253,17 +266,15 @@ const Dashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* Main Content
-        Mobile + chat: flex child, pt-4 (16px gap after header to match the 80px total on desktop: header 64px + 16px gap)
-        Desktop / other tabs: pt-20 with fixed header offset */}
+      {/* Main Content */}
       <main className={
-        isChatActive
-          ? 'pt-4 px-4 flex-1 min-h-0 flex flex-col overflow-hidden md:pt-20 md:ml-64 md:px-8 md:pb-8 md:block md:flex-none md:overflow-visible'
+        isMobileChatMode
+          ? 'flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-2'
           : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
       }>
         <Tabs value={activeTab} onValueChange={handleTabChange} className={
-          isChatActive
-            ? 'flex-1 min-h-0 flex flex-col space-y-2 md:block md:flex-none md:space-y-6'
+          isMobileChatMode
+            ? 'flex-1 min-h-0 flex flex-col'
             : 'space-y-6'
         }>
           <TabsList className="bg-card border border-border shrink-0">
@@ -306,8 +317,8 @@ const Dashboard = () => {
           </TabsContent>
 
           <TabsContent value="chat" className={
-            isChatActive
-              ? 'flex-1 min-h-0 flex flex-col mt-0 md:block md:flex-none'
+            isMobileChatMode
+              ? 'flex-1 min-h-0 flex flex-col mt-0'
               : ''
           }>
             <ChatTab />

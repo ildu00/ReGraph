@@ -138,19 +138,9 @@ const ChatTab = () => {
     localStorage.setItem(MODEL_STORAGE_KEY, selectedModel);
   }, [selectedModel]);
 
-  // Prevent background page scroll when chat is mounted
+  // Scroll to top when chat mounts so the fixed container starts at correct position
   useEffect(() => {
-    const html = document.documentElement;
-    const origHtmlOverflow = html.style.overflow;
-    const origBodyOverflow = document.body.style.overflow;
-    html.style.overflow = 'hidden';
-    document.body.style.overflow = 'hidden';
     window.scrollTo(0, 0);
-
-    return () => {
-      html.style.overflow = origHtmlOverflow;
-      document.body.style.overflow = origBodyOverflow;
-    };
   }, []);
 
   const scrollToBottom = useCallback(() => {
