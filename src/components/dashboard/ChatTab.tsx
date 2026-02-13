@@ -274,7 +274,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-14rem)]">
+    <div className="flex flex-col h-[calc(100dvh-12.5rem)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
