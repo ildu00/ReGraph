@@ -119,6 +119,7 @@ export type Database = {
           id: string
           ip_address: string | null
           method: string
+          request_body: string | null
           response_time_ms: number
           status_code: number
           user_agent: string | null
@@ -131,6 +132,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           method?: string
+          request_body?: string | null
           response_time_ms?: number
           status_code?: number
           user_agent?: string | null
@@ -143,6 +145,7 @@ export type Database = {
           id?: string
           ip_address?: string | null
           method?: string
+          request_body?: string | null
           response_time_ms?: number
           status_code?: number
           user_agent?: string | null

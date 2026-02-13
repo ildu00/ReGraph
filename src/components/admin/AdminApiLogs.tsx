@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +31,7 @@ interface ApiRequestLog {
   ip_address: string | null;
   api_key_prefix: string | null;
   error_message: string | null;
+  request_body: string | null;
   created_at: string;
 }
 
@@ -60,6 +62,7 @@ export const AdminApiLogs = () => {
   const [methodFilter, setMethodFilter] = useState<string>("all");
   const [endpointFilter, setEndpointFilter] = useState<string>("all");
   const [endpoints, setEndpoints] = useState<string[]>([]);
+  const [selectedLog, setSelectedLog] = useState<ApiRequestLog | null>(null);
 
   const fetchLogs = useCallback(async () => {
     setLoading(true);
@@ -192,16 +195,17 @@ export const AdminApiLogs = () => {
                   <TableRow>
                     <TableHead className="w-[70px]">Method</TableHead>
                     <TableHead>Endpoint</TableHead>
+                    <TableHead className="hidden xl:table-cell">Request</TableHead>
                     <TableHead className="w-[60px]">Status</TableHead>
                     <TableHead className="w-[70px] hidden sm:table-cell">Time</TableHead>
                     <TableHead className="w-[100px] hidden md:table-cell">API Key</TableHead>
                     <TableHead className="w-[110px] hidden lg:table-cell">IP</TableHead>
-                    <TableHead className="w-[140px]">Date</TableHead>
+                    <TableHead className="w-[160px]">Date & Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {logs.map((log) => (
-                    <TableRow key={log.id}>
+                    <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedLog(log)}>
                       <TableCell>
                         <Badge variant="outline" className={`text-xs font-mono ${methodColor(log.method)}`}>
                           {log.method}
@@ -209,6 +213,11 @@ export const AdminApiLogs = () => {
                       </TableCell>
                       <TableCell className="font-mono text-xs truncate max-w-[200px]" title={log.endpoint}>
                         {log.endpoint}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell max-w-[250px]">
+                        <span className="text-xs text-muted-foreground truncate block">
+                          {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
+                        </span>
                       </TableCell>
                       <TableCell>
                         <span className={`font-mono text-xs font-semibold ${statusColor(log.status_code)}`}>
@@ -235,6 +244,73 @@ export const AdminApiLogs = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Log Detail Dialog */}
+      <Dialog open={!!selectedLog} onOpenChange={() => setSelectedLog(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Request Details</DialogTitle>
+          </DialogHeader>
+          {selectedLog && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Method</p>
+                  <Badge variant="outline" className={`text-xs font-mono ${methodColor(selectedLog.method)}`}>
+                    {selectedLog.method}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Status</p>
+                  <span className={`font-mono text-sm font-semibold ${statusColor(selectedLog.status_code)}`}>
+                    {selectedLog.status_code}
+                  </span>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Endpoint</p>
+                  <p className="font-mono text-sm break-all">{selectedLog.endpoint}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Response Time</p>
+                  <p className="text-sm">{selectedLog.response_time_ms}ms</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Date & Time</p>
+                  <p className="text-sm">{new Date(selectedLog.created_at).toLocaleString()}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">API Key</p>
+                  <p className="font-mono text-sm">{selectedLog.api_key_prefix || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">IP Address</p>
+                  <p className="text-sm">{selectedLog.ip_address || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">User Agent</p>
+                  <p className="text-sm truncate">{selectedLog.user_agent || "—"}</p>
+                </div>
+              </div>
+              {selectedLog.request_body && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Request Body</p>
+                  <pre className="bg-muted p-3 rounded-md text-xs overflow-auto max-h-48 whitespace-pre-wrap break-all">
+                    {selectedLog.request_body}
+                  </pre>
+                </div>
+              )}
+              {selectedLog.error_message && (
+                <div>
+                  <p className="text-sm text-muted-foreground mb-1">Error</p>
+                  <pre className="bg-destructive/10 text-destructive p-3 rounded-md text-xs overflow-auto max-h-32 whitespace-pre-wrap break-all">
+                    {selectedLog.error_message}
+                  </pre>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Pagination */}
       {totalPages > 1 && (

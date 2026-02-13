@@ -167,6 +167,7 @@ export default {
           ip_address: request.headers.get("CF-Connecting-IP") || null,
           api_key_prefix: apiKeyPrefix,
           error_message: response.status >= 400 ? responseBody.substring(0, 500) : null,
+          request_body: options.body ? options.body.substring(0, 1000) : null,
         });
       }
 

@@ -12,6 +12,7 @@ export function logApiRequest(data: {
   error_message?: string | null;
   user_agent?: string | null;
   ip_address?: string | null;
+  request_body?: string | null;
 }): void {
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
   const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY");
