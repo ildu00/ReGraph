@@ -126,6 +126,7 @@ const ChatTab = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   // Persist messages to localStorage
   useEffect(() => {
@@ -159,6 +160,34 @@ const ChatTab = () => {
       document.body.style.height = origHeight;
       document.body.style.top = origTop;
       window.scrollTo(0, scrollY);
+    };
+  }, []);
+
+  // Compensate for iOS Safari visual viewport scroll when keyboard opens
+  // iOS scrolls the visual viewport but fixed elements stay on layout viewport,
+  // causing them to appear scrolled out. We counter this with a transform.
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const onViewportChange = () => {
+      const container = containerRef.current;
+      if (!container) return;
+      // offsetTop = how much the visual viewport has scrolled from layout viewport
+      const offsetTop = vv.offsetTop;
+      const height = vv.height;
+      container.style.transform = `translateY(${offsetTop}px)`;
+      container.style.height = `${height}px`;
+    };
+
+    vv.addEventListener('resize', onViewportChange);
+    vv.addEventListener('scroll', onViewportChange);
+    // Initial call
+    onViewportChange();
+
+    return () => {
+      vv.removeEventListener('resize', onViewportChange);
+      vv.removeEventListener('scroll', onViewportChange);
     };
   }, []);
 
@@ -320,7 +349,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div className="fixed inset-x-0 bottom-0 top-[7rem] md:top-[7.5rem] md:left-64 flex flex-col bg-background z-30 px-4 md:px-8">
+    <div ref={containerRef} className="fixed inset-0 pt-[7rem] md:pt-[7.5rem] md:left-64 flex flex-col bg-background z-30 px-4 md:px-8 will-change-transform">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 py-2 shrink-0">
         <div className="flex items-center gap-3 w-full sm:w-auto">
