@@ -7,15 +7,14 @@ interface ViewportState {
 
 /**
  * Tracks window.visualViewport on iOS Safari.
- * Returns both height and offsetTop so we can reposition
- * the UI to follow the visual viewport when the keyboard opens.
- *
- * On iOS Safari, when the keyboard opens:
- * - visualViewport.height shrinks
- * - visualViewport.offsetTop increases (page scrolled up)
- *
- * By applying transform: translateY(offsetTop) + height to a container,
- * we can keep it pinned to the visible area.
+ * 
+ * When the keyboard opens on iOS Safari, the browser scrolls the layout
+ * viewport, which moves `position: fixed` elements out of view.
+ * 
+ * This hook:
+ * 1. Tracks the visual viewport height (shrinks when keyboard opens)
+ * 2. Forces window.scrollTo(0,0) on every viewport change to prevent
+ *    Safari from scrolling fixed elements away
  */
 export function useVisualViewport() {
   const [state, setState] = useState<ViewportState>(() => ({
@@ -26,6 +25,13 @@ export function useVisualViewport() {
   const update = useCallback(() => {
     const vv = window.visualViewport;
     if (!vv) return;
+    
+    // Force scroll to top to prevent Safari from scrolling
+    // fixed elements out of view when keyboard opens
+    if (vv.offsetTop > 0) {
+      window.scrollTo(0, 0);
+    }
+    
     setState({
       height: vv.height,
       offsetTop: vv.offsetTop,
