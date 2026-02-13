@@ -180,6 +180,7 @@ const ChatTab = () => {
 
     setMessages((prev) => [...prev, userMsg]);
     setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = '40px';
     setAttachedFiles([]);
     setIsLoading(true);
 
@@ -532,15 +533,22 @@ const ChatTab = () => {
         <Textarea
           ref={textareaRef}
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            setInput(e.target.value);
+            // Auto-resize
+            const el = e.target;
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 128) + 'px';
+          }}
           onKeyDown={handleKeyDown}
           placeholder={
             modelInfo?.category === "image-gen"
               ? "Describe the image you want to generate..."
               : "Type your message... (Shift+Enter for new line)"
           }
-          className="min-h-[44px] max-h-32 resize-none"
+          className="min-h-[40px] max-h-32 resize-none py-2 leading-5"
           rows={1}
+          style={{ height: '40px' }}
         />
         <Button
           onClick={handleSend}
