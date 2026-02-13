@@ -219,7 +219,7 @@ const ChatTab = () => {
           resp.status === 429
             ? "Rate limit exceeded. Please wait and try again."
             : resp.status === 402
-              ? "Insufficient credits. Please top up."
+              ? (data?.message || "Insufficient balance. Please top up your wallet to continue.")
               : data?.error || "Failed to get response";
         toast.error(errMsg);
         const errAssistant: ChatMessage = {
