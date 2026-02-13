@@ -1047,7 +1047,7 @@ Generated: ${new Date().toISOString()}
                           {tx.currency && (
                             <span>{tx.amount_crypto} {tx.currency}</span>
                           )}
-                          <span>•</span>
+                          {(tx.network || tx.currency) && <span>•</span>}
                           <span>{new Date(tx.created_at).toLocaleDateString()}</span>
                         </div>
                       </div>
