@@ -272,6 +272,7 @@ const ChatTab = () => {
   };
 
   const clearChat = () => {
+    if (!window.confirm("Are you sure you want to clear the entire chat history?")) return;
     setMessages([]);
     localStorage.removeItem(STORAGE_KEY);
     toast.success("Chat cleared");
