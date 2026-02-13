@@ -67,7 +67,7 @@ const OverviewTab = () => {
       { label: "API Calls Today", value: String(apiCallsToday), icon: Zap, change: `${avgCompute}ms avg` },
       { label: "Compute Time", value: totalComputeMs > 1000 ? `${(totalComputeMs / 1000).toFixed(1)}s` : `${totalComputeMs}ms`, icon: Cpu, change: "Today" },
       { label: "Credits Used", value: `$${monthCredits.toFixed(4)}`, icon: DollarSign, change: "This month" },
-      { label: "Balance", value: `$${Number(balance).toFixed(2)}`, icon: Clock, change: "Current" },
+      { label: "Balance", value: `$${Number(balance).toFixed(4)}`, icon: Clock, change: "Current" },
     ]);
   };
 
