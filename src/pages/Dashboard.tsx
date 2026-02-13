@@ -27,6 +27,7 @@ import {
   Server,
   Wallet,
   Shield,
+  MessageSquare,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
@@ -34,6 +35,7 @@ import SettingsTab from "@/components/dashboard/SettingsTab";
 import OverviewTab from "@/components/dashboard/OverviewTab";
 import ProviderTab from "@/components/dashboard/ProviderTab";
 import WalletTab from "@/components/dashboard/WalletTab";
+import ChatTab from "@/components/dashboard/ChatTab";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -45,7 +47,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["overview", "wallet", "api-keys", "provider", "usage", "settings"].includes(tabParam)) {
+    if (tabParam && ["overview", "wallet", "api-keys", "provider", "usage", "settings", "chat"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -58,6 +60,7 @@ const Dashboard = () => {
   const navItems = useMemo(
     () => [
       { value: "overview", label: "Overview", icon: BarChart3 },
+      { value: "chat", label: "AI Chat", icon: MessageSquare },
       { value: "wallet", label: "Wallet", icon: Wallet },
       { value: "api-keys", label: "API Keys", icon: Key },
       { value: "provider", label: "Provider", icon: Server },
@@ -248,6 +251,10 @@ const Dashboard = () => {
               <Wallet className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Wallet</span>
             </TabsTrigger>
+            <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <MessageSquare className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">AI Chat</span>
+            </TabsTrigger>
             <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <Key className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">API Keys</span>
@@ -272,6 +279,10 @@ const Dashboard = () => {
 
           <TabsContent value="wallet">
             <WalletTab />
+          </TabsContent>
+
+          <TabsContent value="chat">
+            <ChatTab />
           </TabsContent>
 
           <TabsContent value="api-keys">
