@@ -82,7 +82,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className={activeTab === 'chat' ? "h-[100dvh] flex flex-col overflow-hidden bg-background" : "min-h-screen bg-background"}>
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6">
         <div className="flex items-center gap-4">
@@ -239,8 +239,13 @@ const Dashboard = () => {
       </AnimatePresence>
 
       {/* Main Content */}
-      <main className={`pt-20 md:ml-64 px-4 md:px-8 ${activeTab === 'chat' ? 'pb-0' : 'pb-8'}`}>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-6">
+      <main className={activeTab === 'chat'
+        ? 'pt-16 md:ml-64 px-4 md:px-8 flex-1 min-h-0 flex flex-col overflow-hidden'
+        : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
+      }>
+        <Tabs value={activeTab} onValueChange={handleTabChange} className={
+          activeTab === 'chat' ? 'flex-1 min-h-0 flex flex-col gap-2' : 'space-y-6'
+        }>
           <TabsList className="bg-card border border-border">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
@@ -280,7 +285,7 @@ const Dashboard = () => {
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat">
+          <TabsContent value="chat" className={activeTab === 'chat' ? 'flex-1 min-h-0 flex flex-col mt-0' : ''}>
             <ChatTab />
           </TabsContent>
 
