@@ -46,7 +46,10 @@ const Dashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const isMobile = useIsMobile();
-  const { height: vpHeight, offsetTop: vpOffsetTop } = useVisualViewport();
+  const { height: vpHeight } = useVisualViewport();
+
+  const isChatActive = activeTab === 'chat';
+  const isMobileChatMode = isChatActive && isMobile;
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -54,6 +57,17 @@ const Dashboard = () => {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
+
+  // Lock body scroll when mobile chat is active to prevent iOS Safari
+  // from scrolling fixed elements out of view when keyboard opens
+  useEffect(() => {
+    if (isMobileChatMode) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      window.scrollTo(0, 0);
+      return () => { document.body.style.overflow = prev; };
+    }
+  }, [isMobileChatMode]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -84,14 +98,11 @@ const Dashboard = () => {
     return <Navigate to="/auth" replace />;
   }
 
-  const isChatActive = activeTab === 'chat';
-  // On mobile + chat: use fixed container sized to visualViewport to survive iOS keyboard
-  const isMobileChatMode = isChatActive && isMobile;
 
-  // Root container style: on mobile chat, fixed to visual viewport height
-  // On iOS Safari, when the keyboard opens the browser scrolls the layout viewport.
-  // position:fixed stays relative to the layout viewport, so it scrolls out of view.
-  // We compensate by using transform:translateY(offsetTop) to follow the visual viewport.
+  // Root container style: on mobile chat, fixed to visual viewport height.
+  // The useVisualViewport hook forces window.scrollTo(0,0) on every viewport
+  // change, which keeps position:fixed elements at the top of the visible area.
+  // No transform needed — just set height to the visual viewport height.
   const rootStyle: React.CSSProperties = isMobileChatMode
     ? {
         position: 'fixed',
@@ -100,9 +111,6 @@ const Dashboard = () => {
         right: 0,
         height: vpHeight ? `${vpHeight}px` : '100dvh',
         overflow: 'hidden',
-        // This is the key: translate down by the amount the visual viewport has scrolled
-        transform: vpOffsetTop ? `translateY(${vpOffsetTop}px)` : undefined,
-        willChange: 'transform, height',
       }
     : {};
 
