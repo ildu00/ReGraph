@@ -274,7 +274,7 @@ const ChatTab = () => {
   const modelInfo = getModelInfo(selectedModel);
 
   return (
-    <div className="flex flex-col h-[calc(100dvh-12.5rem)]">
+    <div className="flex flex-col h-[calc(100dvh-13rem)] md:h-[calc(100dvh-11rem)]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -332,9 +332,9 @@ const ChatTab = () => {
       </div>
 
       {/* Messages Area */}
-      <Card className="flex-1 overflow-y-auto bg-card/50 border-border p-4 space-y-4 mb-4">
+      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 ${messages.length > 0 ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3">
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3 -mt-4">
             <Bot className="h-12 w-12 opacity-30" />
             <div>
               <p className="text-lg font-medium mb-1">AI Chat</p>
