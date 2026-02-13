@@ -40,9 +40,9 @@ const categoryGroups = [
   {
     label: "Text & Language",
     categories: [
-      { id: "llm", label: "Large Language Models", icon: MessageSquare, count: 6 },
-      { id: "chat", label: "Chat & Assistants", icon: Bot, count: 4 },
-      { id: "reasoning", label: "Reasoning & Analysis", icon: Brain, count: 3 },
+      { id: "llm", label: "Large Language Models", icon: MessageSquare, count: 7 },
+      { id: "chat", label: "Chat & Assistants", icon: Bot, count: 16 },
+      { id: "reasoning", label: "Reasoning & Analysis", icon: Brain, count: 4 },
     ]
   },
   {
@@ -64,7 +64,7 @@ const categoryGroups = [
   {
     label: "Specialized",
     categories: [
-      { id: "code", label: "Code Generation", icon: Code, count: 3 },
+      { id: "code", label: "Code Generation", icon: Code, count: 4 },
       { id: "embedding", label: "Embeddings", icon: Database, count: 3 },
       { id: "document", label: "Document AI", icon: FileText, count: 2 },
       { id: "ocr", label: "OCR & Extraction", icon: ScanSearch, count: 2 },
