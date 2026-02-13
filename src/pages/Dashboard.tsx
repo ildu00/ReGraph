@@ -54,7 +54,6 @@ const Dashboard = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const navItems = useMemo(
