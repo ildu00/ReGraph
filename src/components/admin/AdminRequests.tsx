@@ -316,7 +316,7 @@ export const AdminRequests = () => {
                         )}
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <Badge variant="outline" className="whitespace-normal break-words max-w-full w-fit">{request.subject || "General"}</Badge>
+                        <span className="text-sm text-muted-foreground">{request.subject || "General"}</span>
                       </TableCell>
                       <TableCell className="hidden xl:table-cell max-w-0">
                         <span className="truncate block">{request.message}</span>
