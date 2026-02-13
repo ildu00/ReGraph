@@ -1,0 +1,1 @@
+ALTER TABLE public.api_request_logs ADD COLUMN request_body text;

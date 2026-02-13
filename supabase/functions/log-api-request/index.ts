@@ -21,6 +21,7 @@ serve(async (req) => {
       ip_address,
       api_key_prefix,
       error_message,
+      request_body,
     } = await req.json();
 
     if (!endpoint) {
@@ -43,6 +44,7 @@ serve(async (req) => {
       ip_address: ip_address || null,
       api_key_prefix: api_key_prefix || null,
       error_message: error_message || null,
+      request_body: request_body || null,
     });
 
     if (error) {
