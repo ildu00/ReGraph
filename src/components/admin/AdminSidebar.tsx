@@ -12,7 +12,8 @@ import {
   AlertTriangle,
   BookOpen,
   Mail,
-  Activity
+  Activity,
+  Key
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const navItems = [
   { id: "blog", label: "Blog", icon: BookOpen },
   { id: "notifications", label: "Notifications", icon: Mail },
   { id: "api-logs", label: "API Logs", icon: Activity },
+  { id: "api-keys", label: "API Keys", icon: Key },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
