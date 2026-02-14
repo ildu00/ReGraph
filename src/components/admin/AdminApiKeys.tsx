@@ -115,19 +115,24 @@ export const AdminApiKeys = () => {
                 <TableHead>Key Prefix</TableHead>
                 <TableHead className="hidden sm:table-cell">User</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="hidden md:table-cell">Created</TableHead>
                 <TableHead className="hidden md:table-cell">Balance</TableHead>
-                <TableHead className="hidden lg:table-cell">Last Used</TableHead>
+                <TableHead className="hidden lg:table-cell">Created</TableHead>
+                <TableHead className="hidden xl:table-cell">Last Used</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {keys.map((key) => (
                 <TableRow key={key.id}>
-                  <TableCell className="font-medium">{key.name}</TableCell>
+                  <TableCell className="font-medium">
+                    <div>{key.name}</div>
+                    <div className="text-xs text-muted-foreground sm:hidden truncate max-w-[120px]">
+                      {key.user_email}
+                    </div>
+                  </TableCell>
                   <TableCell>
                     <code className="text-xs bg-muted px-1.5 py-0.5 rounded">{key.key_prefix}...</code>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[200px] truncate">
+                  <TableCell className="hidden sm:table-cell text-muted-foreground text-xs max-w-[180px] truncate">
                     {key.user_email}
                   </TableCell>
                   <TableCell>
@@ -135,13 +140,13 @@ export const AdminApiKeys = () => {
                       {key.is_active ? "Active" : "Inactive"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
-                    {format(new Date(key.created_at), "MMM d, yyyy")}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell text-xs font-medium">
+                  <TableCell className="hidden md:table-cell text-xs font-medium whitespace-nowrap">
                     {key.balance_usd != null ? `$${key.balance_usd.toFixed(4)}` : "—"}
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">
+                  <TableCell className="hidden lg:table-cell text-muted-foreground text-xs whitespace-nowrap">
+                    {format(new Date(key.created_at), "MMM d, yyyy")}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell text-muted-foreground text-xs whitespace-nowrap">
                     {key.last_used_at
                       ? format(new Date(key.last_used_at), "MMM d, yyyy HH:mm")
                       : "Never"}
