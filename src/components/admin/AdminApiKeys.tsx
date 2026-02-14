@@ -22,6 +22,7 @@ interface ApiKeyRow {
   last_used_at: string | null;
   user_id: string;
   user_email?: string;
+  balance_usd?: number;
 }
 
 export const AdminApiKeys = () => {
@@ -42,19 +43,25 @@ export const AdminApiKeys = () => {
         return;
       }
 
-      // Fetch profiles to map user_id -> email
+      // Fetch profiles and wallets to map user_id -> email & balance
       const userIds = [...new Set((data || []).map((k) => k.user_id))];
       let emailMap: Record<string, string> = {};
+      let balanceMap: Record<string, number> = {};
 
       if (userIds.length > 0) {
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, email")
-          .in("user_id", userIds);
+        const [profilesRes, walletsRes] = await Promise.all([
+          supabase.from("profiles").select("user_id, email").in("user_id", userIds),
+          supabase.from("wallets").select("user_id, balance_usd").in("user_id", userIds),
+        ]);
 
-        if (profiles) {
-          for (const p of profiles) {
+        if (profilesRes.data) {
+          for (const p of profilesRes.data) {
             if (p.email) emailMap[p.user_id] = p.email;
+          }
+        }
+        if (walletsRes.data) {
+          for (const w of walletsRes.data) {
+            balanceMap[w.user_id] = w.balance_usd;
           }
         }
       }
@@ -63,6 +70,7 @@ export const AdminApiKeys = () => {
         (data || []).map((k) => ({
           ...k,
           user_email: emailMap[k.user_id] || k.user_id,
+          balance_usd: balanceMap[k.user_id],
         }))
       );
     } finally {
@@ -108,6 +116,7 @@ export const AdminApiKeys = () => {
                 <TableHead className="hidden sm:table-cell">User</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="hidden md:table-cell">Created</TableHead>
+                <TableHead className="hidden md:table-cell">Balance</TableHead>
                 <TableHead className="hidden lg:table-cell">Last Used</TableHead>
               </TableRow>
             </TableHeader>
@@ -128,6 +137,9 @@ export const AdminApiKeys = () => {
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-muted-foreground text-xs">
                     {format(new Date(key.created_at), "MMM d, yyyy")}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell text-xs font-medium">
+                    {key.balance_usd != null ? `$${key.balance_usd.toFixed(4)}` : "—"}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-muted-foreground text-xs">
                     {key.last_used_at
