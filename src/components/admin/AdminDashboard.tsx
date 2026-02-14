@@ -119,7 +119,7 @@ export const AdminDashboard = () => {
 
   const statCards = [
     { label: "Total Users", value: stats.totalUsers, icon: Users, color: "text-blue-500", link: "/admin?tab=users" },
-    { label: "Total Devices", value: stats.totalDevices, icon: Server, color: "text-green-500", link: "/admin?tab=resources" },
+    { label: "Devices", value: stats.totalDevices, icon: Server, color: "text-green-500", link: "/admin?tab=resources" },
     { label: "Active Devices", value: stats.activeDevices, icon: Activity, color: "text-emerald-500", link: "/admin?tab=resources&status=online" },
     { label: "Total Revenue", value: formatCompactNumber(stats.totalRevenue), icon: DollarSign, color: "text-amber-500", link: "/admin?tab=revenue" },
     { label: "Total Deposits", value: formatCompactNumber(stats.totalDeposits), icon: TrendingUp, color: "text-cyan-500", link: "/admin?tab=revenue" },
