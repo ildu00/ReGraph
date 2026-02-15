@@ -308,7 +308,7 @@ export const AdminUsers = () => {
                         <span className="truncate block text-muted-foreground">{user.email || "—"}</span>
                       </TableCell>
                       <TableCell className={user.balance_usd === 0 ? "text-muted-foreground" : "text-green-600 font-medium"}>
-                        ${user.balance_usd.toFixed(2)}
+                        ${user.balance_usd.toFixed(4)}
                       </TableCell>
                       <TableCell>
                         <Badge variant={user.status === "active" ? "default" : "secondary"}>
