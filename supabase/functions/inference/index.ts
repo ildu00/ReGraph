@@ -87,9 +87,19 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     
+    // Forward X-API-Key so model-inference can log the correct user key
+    const forwardHeaders: Record<string, string> = {
+      "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+      "Content-Type": "application/json",
+    };
+    const userApiKey = req.headers.get("x-api-key");
+    if (userApiKey) {
+      forwardHeaders["X-API-Key"] = userApiKey;
+    }
+
     const inferenceResponse = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
       method: "POST",
-      headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}`, "Content-Type": "application/json" },
+      headers: forwardHeaders,
       body: JSON.stringify({ model: model || "llama-3.1-70b", prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category }),
     });
 
