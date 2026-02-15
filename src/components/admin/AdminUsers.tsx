@@ -6,9 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown } from "lucide-react";
+import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface UnifiedUser {
   id: string;
@@ -35,6 +43,8 @@ export const AdminUsers = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
+  const [editingUser, setEditingUser] = useState<UnifiedUser | null>(null);
+  const [newBalance, setNewBalance] = useState("");
 
   const fetchData = async () => {
     try {
@@ -119,6 +129,41 @@ export const AdminUsers = () => {
     } catch (error) {
       console.error("Error updating role:", error);
       toast.error("Failed to update role");
+    }
+  };
+
+  const handleBalanceEdit = (user: UnifiedUser) => {
+    setEditingUser(user);
+    setNewBalance(user.balance_usd.toFixed(4));
+  };
+
+  const handleBalanceSave = async () => {
+    if (!editingUser) return;
+    const value = parseFloat(newBalance);
+    if (isNaN(value) || value < 0) {
+      toast.error("Invalid balance value");
+      return;
+    }
+    try {
+      if (editingUser.type === "test") {
+        const { error } = await supabase
+          .from("test_users")
+          .update({ balance_usd: value })
+          .eq("id", editingUser.id);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase
+          .from("wallets")
+          .update({ balance_usd: value })
+          .eq("user_id", editingUser.id);
+        if (error) throw error;
+      }
+      toast.success(`Balance updated to $${value.toFixed(4)}`);
+      setEditingUser(null);
+      fetchData();
+    } catch (error) {
+      console.error("Error updating balance:", error);
+      toast.error("Failed to update balance");
     }
   };
 
@@ -281,6 +326,10 @@ export const AdminUsers = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleBalanceEdit(user)}>
+                              <DollarSign className="mr-2 h-4 w-4" />
+                              Edit Balance
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleRoleChange(user.id, "admin")}>
                               <Shield className="mr-2 h-4 w-4" />
                               Make Admin
@@ -330,6 +379,35 @@ export const AdminUsers = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Edit Balance Dialog */}
+      <Dialog open={!!editingUser} onOpenChange={(open) => !open && setEditingUser(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Balance</DialogTitle>
+            <DialogDescription>
+              {editingUser?.display_name || editingUser?.email} — current: ${editingUser?.balance_usd.toFixed(4)}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg font-medium">$</span>
+              <Input
+                type="number"
+                step="0.0001"
+                min="0"
+                value={newBalance}
+                onChange={(e) => setNewBalance(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleBalanceSave()}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
+            <Button onClick={handleBalanceSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
