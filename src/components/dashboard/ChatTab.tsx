@@ -92,6 +92,53 @@ const MODELS: ModelOption[] = [
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
 const STORAGE_KEY = "regraph-chat-messages";
+const API_KEY_CACHE_KEY = "regraph-chat-api-key";
+
+/** Get or auto-create an API key for the current user */
+const getOrCreateApiKey = async (userId: string): Promise<string | null> => {
+  // Check cache first
+  const cached = sessionStorage.getItem(API_KEY_CACHE_KEY);
+  if (cached) return cached;
+
+  // Fetch existing active key
+  const { data: existing } = await supabase
+    .from("api_keys")
+    .select("full_key")
+    .eq("is_active", true)
+    .order("created_at", { ascending: true })
+    .limit(1)
+    .single();
+
+  if (existing?.full_key) {
+    sessionStorage.setItem(API_KEY_CACHE_KEY, existing.full_key);
+    return existing.full_key;
+  }
+
+  // Auto-create a default key
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let newKey = "rg_";
+  for (let i = 0; i < 48; i++) newKey += chars.charAt(Math.floor(Math.random() * chars.length));
+
+  const encoder = new TextEncoder();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", encoder.encode(newKey));
+  const keyHash = Array.from(new Uint8Array(hashBuffer)).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+  const { error } = await supabase.from("api_keys").insert({
+    user_id: userId,
+    name: "Default",
+    key_prefix: newKey.substring(0, 10) + "...",
+    key_hash: keyHash,
+    full_key: newKey,
+  });
+
+  if (error) {
+    console.error("Failed to auto-create API key:", error);
+    return null;
+  }
+
+  sessionStorage.setItem(API_KEY_CACHE_KEY, newKey);
+  return newKey;
+};
 const MODEL_STORAGE_KEY = "regraph-chat-model";
 
 const loadMessages = (): ChatMessage[] => {
@@ -214,12 +261,21 @@ const ChatTab = () => {
       const { data: sessionData } = await supabase.auth.getSession();
       const authToken = sessionData?.session?.access_token || import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
+      // Get user's API key for logging attribution
+      const userId = sessionData?.session?.user?.id;
+      const userApiKey = userId ? await getOrCreateApiKey(userId) : null;
+
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${authToken}`,
+      };
+      if (userApiKey) {
+        headers["X-API-Key"] = userApiKey;
+      }
+
       const resp = await fetch(INFERENCE_URL, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers,
         body: JSON.stringify({
           model: selectedModel,
           prompt: fullPrompt,
