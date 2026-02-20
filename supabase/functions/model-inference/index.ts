@@ -17,6 +17,7 @@ interface InferenceRequest {
   messages?: Array<{ role: string; content: string }>;
   tools?: unknown[];
   tool_choice?: unknown;
+  stream?: boolean;
 }
 
 /** Extract authenticated user_id from the JWT in the Authorization header */
@@ -24,7 +25,6 @@ async function extractUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
   const token = authHeader.replace("Bearer ", "");
-  // Anon key is short and doesn't represent a user session
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
   if (token === anonKey) return null;
   try {
@@ -47,12 +47,10 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    // Calculate cost
     const tokenCost = (tokensUsed / 1000) * 0.001;
     const computeCost = (computeTimeMs / 1000) * 0.0001;
     const totalCost = Math.max(tokenCost + computeCost, 0.0001);
 
-    // Get wallet
     const { data: wallet } = await supabase
       .from("wallets")
       .select("*")
@@ -62,13 +60,11 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
     if (wallet) {
       const newBalance = Math.max(parseFloat(wallet.balance_usd) - totalCost, 0);
       
-      // Deduct balance
       await supabase
         .from("wallets")
         .update({ balance_usd: newBalance, updated_at: new Date().toISOString() })
         .eq("id", wallet.id);
 
-      // Log transaction
       await supabase
         .from("wallet_transactions")
         .insert({
@@ -81,7 +77,6 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
         });
     }
 
-    // Log usage
     await supabase
       .from("usage_logs")
       .insert({
@@ -107,7 +102,6 @@ serve(async (req) => {
   const apiKeyPrefix = extractApiKeyPrefix(req);
   let statusCode = 200;
 
-  // Extract user for billing (non-blocking if fails)
   const userId = await extractUserId(req);
 
   // Check balance before processing request
@@ -152,7 +146,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { model, prompt, temperature = 0.7, maxTokens = 256, category, messages: originalMessages, tools, tool_choice } = parsedBody;
+    const { model, prompt, temperature = 0.7, maxTokens = 256, category, messages: originalMessages, tools, tool_choice, stream = false } = parsedBody;
     const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
@@ -222,19 +216,16 @@ serve(async (req) => {
       const computeTimeMs = Date.now() - startTime;
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null, request_body: requestBodyLog });
       
-      // Process billing for authenticated users on success
       if (status === 200 && userId) {
         const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
-        // Fire-and-forget billing
         processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs);
       }
       
       return new Response(body, { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     };
 
-    // 1. Text-based models
+    // 1. Text-based models (with streaming support)
     if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
-      // Use original messages if provided, otherwise construct from prompt
       const chatMessages = originalMessages && Array.isArray(originalMessages) && originalMessages.length > 0
         ? originalMessages
         : [{ role: "user", content: prompt }];
@@ -247,6 +238,7 @@ serve(async (req) => {
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
+      if (stream) chatBody.stream = true;
 
       const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
         method: "POST",
@@ -265,6 +257,30 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), 500, errorText.substring(0, 500));
       }
 
+      // --- STREAMING MODE ---
+      if (stream && response.body) {
+        const computeTimeMs = Date.now() - startTime;
+        logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 200, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, request_body: requestBodyLog });
+
+        // Fire-and-forget billing estimate for streaming
+        if (userId) {
+          const estimatedTokens = Math.ceil(prompt.length / 4) + 200;
+          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs);
+        }
+
+        // Pipe the SSE stream straight through from VseGPT
+        return new Response(response.body, {
+          status: 200,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
+          },
+        });
+      }
+
+      // --- NON-STREAMING MODE ---
       const data = await response.json();
       const message = data.choices?.[0]?.message;
       const content = message?.content || "No response generated";
