@@ -48,10 +48,14 @@ serve(async (req) => {
       );
     }
     
-    const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice } = body;
+    const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style } = body;
+    
+    // Check if this is an /images/generations request (forwarded by Cloudflare Worker)
+    const requestUrl = new URL(req.url);
+    const isImageGenEndpoint = requestUrl.pathname.includes("images/generations") || body._endpoint === "images/generations";
     
     // Determine category from model name
-    let category = "chat";
+    let category = isImageGenEndpoint ? "image-gen" : "chat";
     const modelLower = (model || "").toLowerCase();
     
     if (modelLower.includes("tts") || modelLower.includes("eleven") || modelLower.includes("xtts") || modelLower.includes("bark")) { category = "tts"; }
@@ -111,11 +115,13 @@ serve(async (req) => {
       forwardHeaders["X-API-Key"] = userApiKey;
     }
 
-    const inferenceBody: Record<string, unknown> = { model: model || "llama-3.1-70b", prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category };
+    const inferenceBody: Record<string, unknown> = { model: model || (isImageGenEndpoint ? "dall-e-3" : "llama-3.1-70b"), prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category };
     if (messages && Array.isArray(messages)) inferenceBody.messages = messages;
     if (tools) inferenceBody.tools = tools;
     if (tool_choice) inferenceBody.tool_choice = tool_choice;
     if (stream) inferenceBody.stream = true;
+    if (n) inferenceBody.n = n;
+    if (size) inferenceBody.size = size;
 
     const inferenceResponse = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
       method: "POST",
