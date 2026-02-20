@@ -38,6 +38,32 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.8.0",
+    date: "February 20, 2026",
+    title: "SSE Streaming, Multimodal & Audio Transcriptions",
+    type: "major",
+    changes: [
+      { category: "feature", description: "Full SSE streaming support — responses stream as data: {json}\\n\\n chunks with data: [DONE] signal when stream: true" },
+      { category: "feature", description: "Function Calling (Tools) support — send tools array in requests, receive tool_calls in responses including streaming delta chunks" },
+      { category: "feature", description: "Multimodal messages — image_url content type in messages array, automatic vision model routing" },
+      { category: "feature", description: "/v1/audio/transcriptions endpoint (Whisper) — supports multipart/form-data and base64 JSON formats" },
+      { category: "feature", description: "Streaming & Function Calling documentation sections added to API Docs with cURL, Python, and JS examples" },
+      { category: "improvement", description: "Cloudflare Worker updated to properly forward multipart/form-data binary payloads" },
+      { category: "improvement", description: "Inference proxy auto-detects multimodal content and switches request category to vision" },
+      { category: "improvement", description: "Fire-and-forget billing estimation for streaming requests where final token counts are unavailable" },
+    ]
+  },
+  {
+    version: "2.7.2",
+    date: "February 15, 2026",
+    title: "iOS Safari Chat Fix & Input Focus",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed AI Chat layout on iOS Safari — navigation bar now stays fixed using Visual Viewport API" },
+      { category: "fix", description: "Improved input focus management in chat — field retains focus after sending a message" },
+    ]
+  },
+  {
     version: "2.7.1",
     date: "February 13, 2026",
     title: "API Logs Improvements & Request Body Capture",
