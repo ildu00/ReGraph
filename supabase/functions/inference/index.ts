@@ -68,13 +68,28 @@ serve(async (req) => {
     else if (modelLower.includes("coder") || modelLower.includes("starcoder") || modelLower.includes("codellama")) { category = "code"; }
     else if (modelLower.includes("vision") || modelLower.includes("llava") || modelLower.includes("cogvlm") || modelLower.includes("internvl") || modelLower.includes("phi-3-vision")) { category = "vision"; }
     
+    // Check if messages contain multimodal content (image_url)
+    const hasMultimodal = messages && Array.isArray(messages) && messages.some((m: any) =>
+      Array.isArray(m.content) && m.content.some((c: any) => c.type === "image_url")
+    );
+    if (hasMultimodal && category === "chat") {
+      category = "vision";
+    }
+
     // Extract prompt from messages array if provided (OpenAI format)
     let finalPrompt = prompt;
     if (!finalPrompt && messages && Array.isArray(messages)) {
       const userMessages = messages.filter((m: any) => m.role === "user");
       if (userMessages.length > 0) {
         const lastUserMessage = userMessages[userMessages.length - 1];
-        finalPrompt = typeof lastUserMessage.content === "string" ? lastUserMessage.content : lastUserMessage.content?.map((c: any) => c.text || "").join("\n");
+        if (typeof lastUserMessage.content === "string") {
+          finalPrompt = lastUserMessage.content;
+        } else if (Array.isArray(lastUserMessage.content)) {
+          finalPrompt = lastUserMessage.content
+            .filter((c: any) => c.type === "text")
+            .map((c: any) => c.text || "")
+            .join("\n") || "Describe this image";
+        }
       }
     }
     

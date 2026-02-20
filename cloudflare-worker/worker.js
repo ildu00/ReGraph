@@ -10,6 +10,7 @@ const ROUTES = {
   "/v1/chat/completions": "inference",
   "/v1/completions": "inference",
   "/v1/audio/speech": "audio-speech",
+  "/v1/audio/transcriptions": "audio-transcriptions",
   "/v1/models": "models",
   "/v1/models/deploy": "models-deploy",
   "/v1/batch": "batch",
@@ -98,7 +99,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/batch"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -129,7 +130,15 @@ export default {
 
     // Forward request
     const headers = new Headers();
-    headers.set("Content-Type", "application/json");
+    
+    // For multipart form-data (audio transcriptions), pass through Content-Type as-is
+    const originalContentType = request.headers.get("Content-Type") || "";
+    if (originalContentType.includes("multipart/form-data")) {
+      headers.set("Content-Type", originalContentType);
+    } else {
+      headers.set("Content-Type", "application/json");
+    }
+    headers.set("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
     headers.set("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
     
     // Pass through API key if provided
@@ -145,7 +154,13 @@ export default {
     // Forward body for non-GET requests
     if (request.method !== "GET" && request.method !== "HEAD") {
       try {
-        options.body = await request.text();
+        // For multipart, use arrayBuffer to preserve binary data
+        const ct = request.headers.get("Content-Type") || "";
+        if (ct.includes("multipart/form-data")) {
+          options.body = await request.arrayBuffer();
+        } else {
+          options.body = await request.text();
+        }
       } catch (e) {
         // No body
       }
@@ -167,7 +182,7 @@ export default {
           ip_address: request.headers.get("CF-Connecting-IP") || null,
           api_key_prefix: apiKeyPrefix,
           error_message: response.status >= 400 ? responseBody.substring(0, 500) : null,
-          request_body: options.body ? options.body.substring(0, 1000) : null,
+          request_body: (options.body && typeof options.body === "string") ? options.body.substring(0, 1000) : null,
         });
       }
 
