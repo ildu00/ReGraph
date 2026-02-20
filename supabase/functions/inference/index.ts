@@ -87,7 +87,6 @@ serve(async (req) => {
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     
-    // Forward X-API-Key so model-inference can log the correct user key
     const forwardHeaders: Record<string, string> = {
       "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
       "Content-Type": "application/json",
@@ -101,6 +100,7 @@ serve(async (req) => {
     if (messages && Array.isArray(messages)) inferenceBody.messages = messages;
     if (tools) inferenceBody.tools = tools;
     if (tool_choice) inferenceBody.tool_choice = tool_choice;
+    if (stream) inferenceBody.stream = true;
 
     const inferenceResponse = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
       method: "POST",
@@ -108,6 +108,21 @@ serve(async (req) => {
       body: JSON.stringify(inferenceBody),
     });
 
+    // --- STREAMING MODE: pipe the SSE stream directly ---
+    if (stream && inferenceResponse.headers.get("content-type")?.includes("text/event-stream")) {
+      logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+      return new Response(inferenceResponse.body, {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "text/event-stream",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive",
+        },
+      });
+    }
+
+    // --- NON-STREAMING MODE ---
     const data = await inferenceResponse.json();
     console.log("Model inference response:", JSON.stringify(data).slice(0, 500));
     
