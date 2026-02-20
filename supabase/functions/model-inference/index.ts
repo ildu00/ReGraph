@@ -14,7 +14,7 @@ interface InferenceRequest {
   temperature?: number;
   maxTokens?: number;
   category: string;
-  messages?: Array<{ role: string; content: string }>;
+  messages?: Array<{ role: string; content: string | Array<{ type: string; text?: string; image_url?: { url: string; detail?: string } }> }>;
   tools?: unknown[];
   tool_choice?: unknown;
   stream?: boolean;
@@ -226,6 +226,7 @@ serve(async (req) => {
 
     // 1. Text-based models (with streaming support)
     if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
+      // For vision/multimodal — use original messages with image_url content parts intact
       const chatMessages = originalMessages && Array.isArray(originalMessages) && originalMessages.length > 0
         ? originalMessages
         : [{ role: "user", content: prompt }];
