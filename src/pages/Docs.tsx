@@ -19,7 +19,9 @@ import {
   Database,
   PlayCircle,
   Box,
-  Monitor
+  Monitor,
+  Radio,
+  Wrench
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -128,6 +130,113 @@ volumes:
   }'`;
 
   const [activeSection, setActiveSection] = useState("getting-started");
+
+  const streamingRequestExample = `curl -X POST https://api.regraph.tech/v1/inference \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "anthropic/Claude-Sonnet-4.5",
+    "messages": [{"role": "user", "content": "Write a haiku about AI"}],
+    "max_tokens": 256,
+    "stream": true
+  }'`;
+
+  const streamingResponseExample = `data: {"id":"inf_abc123","object":"chat.completion.chunk","created":1699876543,"choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+
+data: {"id":"inf_abc123","object":"chat.completion.chunk","created":1699876543,"choices":[{"index":0,"delta":{"content":"Silicon"},"finish_reason":null}]}
+
+data: {"id":"inf_abc123","object":"chat.completion.chunk","created":1699876543,"choices":[{"index":0,"delta":{"content":" minds"},"finish_reason":null}]}
+
+data: {"id":"inf_abc123","object":"chat.completion.chunk","created":1699876543,"choices":[{"index":0,"delta":{"content":" awaken"},"finish_reason":null}]}
+
+data: {"id":"inf_abc123","object":"chat.completion.chunk","created":1699876543,"choices":[{"index":0,"delta":{"content":""},"finish_reason":"stop"}]}
+
+data: [DONE]`;
+
+  const streamingPythonExample = `from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.regraph.tech/v1",
+    api_key="rg_your_api_key_here"
+)
+
+stream = client.chat.completions.create(
+    model="anthropic/Claude-Sonnet-4.5",
+    messages=[{"role": "user", "content": "Write a haiku about AI"}],
+    stream=True
+)
+
+for chunk in stream:
+    content = chunk.choices[0].delta.content
+    if content:
+        print(content, end="", flush=True)`;
+
+  const streamingJsExample = `import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.regraph.tech/v1",
+  apiKey: "rg_your_api_key_here",
+});
+
+const stream = await client.chat.completions.create({
+  model: "anthropic/Claude-Sonnet-4.5",
+  messages: [{ role: "user", content: "Write a haiku about AI" }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  const content = chunk.choices[0]?.delta?.content;
+  if (content) process.stdout.write(content);
+}`;
+
+  const functionCallingExample = `curl -X POST https://api.regraph.tech/v1/inference \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "anthropic/Claude-Sonnet-4.5",
+    "messages": [{"role": "user", "content": "What is the weather in Paris?"}],
+    "tools": [{
+      "type": "function",
+      "function": {
+        "name": "get_weather",
+        "description": "Get the current weather for a location",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "location": {"type": "string", "description": "City name"}
+          },
+          "required": ["location"]
+        }
+      }
+    }]
+  }'`;
+
+  const functionCallingResponseExample = `{
+  "id": "inf_abc123",
+  "object": "chat.completion",
+  "created": 1699876543,
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": null,
+        "tool_calls": [
+          {
+            "id": "call_abc123",
+            "type": "function",
+            "function": {
+              "name": "get_weather",
+              "arguments": "{\\"location\\": \\"Paris\\"}"
+            }
+          }
+        ]
+      },
+      "finish_reason": "tool_calls"
+    }
+  ],
+  "usage": { "prompt_tokens": 82, "completion_tokens": 17, "total_tokens": 99 }
+}`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
@@ -520,6 +629,188 @@ volumes:
                           </tbody>
                         </table>
                       </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Streaming (SSE) */}
+                <section id="streaming" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Radio className="h-8 w-8 text-primary" />
+                    Streaming (SSE)
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Enable real-time token-by-token responses using Server-Sent Events. Add <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">"stream": true</code> to your request body. The response will use <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">Content-Type: text/event-stream</code> with the standard OpenAI SSE format.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Streaming Request</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/inference</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(streamingRequestExample, "streaming-req")}
+                        >
+                          {copiedSection === "streaming-req" ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <CodeBlock code={streamingRequestExample} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">SSE Response Format</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Each chunk is a JSON object prefixed with <code className="text-primary">data: </code> followed by two newlines. The stream ends with <code className="text-primary">data: [DONE]</code>.
+                      </p>
+                      <CodeBlock code={streamingResponseExample} language="json" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Chunk Structure</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Field</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">choices[0].delta.role</td>
+                              <td className="py-2 px-3">Present in the first chunk only ("assistant")</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">choices[0].delta.content</td>
+                              <td className="py-2 px-3">Incremental text content for this chunk</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">choices[0].delta.tool_calls</td>
+                              <td className="py-2 px-3">Incremental tool call data (when using function calling)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">choices[0].finish_reason</td>
+                              <td className="py-2 px-3">"stop", "tool_calls", or null while streaming</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">usage</td>
+                              <td className="py-2 px-3">Token usage stats (in the final chunk before [DONE])</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <Tabs defaultValue="python" className="mb-0">
+                      <TabsList className="mb-4">
+                        <TabsTrigger value="python">Python (OpenAI SDK)</TabsTrigger>
+                        <TabsTrigger value="javascript">JavaScript (OpenAI SDK)</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="python">
+                        <div className="glass-card p-6 rounded-xl">
+                          <h4 className="font-semibold mb-4">Python Example</h4>
+                          <CodeBlock code={streamingPythonExample} language="python" />
+                        </div>
+                      </TabsContent>
+                      <TabsContent value="javascript">
+                        <div className="glass-card p-6 rounded-xl">
+                          <h4 className="font-semibold mb-4">JavaScript/TypeScript Example</h4>
+                          <CodeBlock code={streamingJsExample} language="typescript" />
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+
+                    <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
+                      <h4 className="font-semibold mb-2">💡 Notes</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Streaming is supported for all text-based models (LLM, chat, reasoning, code, vision)</li>
+                        <li>• Tool calls are supported in streaming mode — <code className="text-primary">delta.tool_calls</code> accumulates across chunks</li>
+                        <li>• Compatible with the official OpenAI Python and JS SDKs — just set <code className="text-primary">base_url</code></li>
+                        <li>• Non-text endpoints (TTS, images, embeddings) do not support streaming</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Function Calling */}
+                <section id="function-calling" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Wrench className="h-8 w-8 text-primary" />
+                    Function Calling
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Let models invoke your custom functions using the OpenAI-compatible <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">tools</code> parameter. The model returns structured <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">tool_calls</code> instead of plain text when it decides a function should be used.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Request with Tools</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/inference</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => copyToClipboard(functionCallingExample, "fc-req")}
+                        >
+                          {copiedSection === "fc-req" ? (
+                            <Check className="h-4 w-4 text-green-500" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </div>
+                      <CodeBlock code={functionCallingExample} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Response with tool_calls</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        When the model decides to call a function, <code className="text-primary">finish_reason</code> is <code className="text-primary">"tool_calls"</code> and the message contains a <code className="text-primary">tool_calls</code> array.
+                      </p>
+                      <CodeBlock code={functionCallingResponseExample} language="json" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Parameters</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Parameter</th>
+                              <th className="text-left py-2 px-3">Type</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">tools</td>
+                              <td className="py-2 px-3">array</td>
+                              <td className="py-2 px-3">Array of tool definitions (type: "function")</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">tool_choice</td>
+                              <td className="py-2 px-3">string | object</td>
+                              <td className="py-2 px-3">"auto" (default), "none", "required", or specific function</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
+                      <h4 className="font-semibold mb-2">💡 Tips</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Function calling works with both streaming and non-streaming modes</li>
+                        <li>• In streaming mode, <code className="text-primary">delta.tool_calls</code> arrives incrementally</li>
+                        <li>• Use <code className="text-primary">tool_choice: "required"</code> to force the model to call a tool</li>
+                        <li>• Compatible with OpenAI SDK's automatic tool parsing</li>
+                      </ul>
                     </div>
                   </div>
                 </section>

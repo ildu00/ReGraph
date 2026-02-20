@@ -8,7 +8,9 @@ import {
   Shield,
   Webhook,
   Database,
-  PlayCircle
+  PlayCircle,
+  Radio,
+  Wrench
 } from "lucide-react";
 import {
   Sidebar,
@@ -41,6 +43,8 @@ const apiItems = [
 
 const endpointItems = [
   { id: "inference", label: "Inference API", icon: Zap },
+  { id: "streaming", label: "Streaming (SSE)", icon: Radio },
+  { id: "function-calling", label: "Function Calling", icon: Wrench },
   { id: "training", label: "Training API", icon: Cpu },
   { id: "batch", label: "Batch Processing", icon: Database },
 ];
