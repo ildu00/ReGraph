@@ -14,6 +14,9 @@ interface InferenceRequest {
   temperature?: number;
   maxTokens?: number;
   category: string;
+  messages?: Array<{ role: string; content: string }>;
+  tools?: unknown[];
+  tool_choice?: unknown;
 }
 
 /** Extract authenticated user_id from the JWT in the Authorization header */
@@ -149,7 +152,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { model, prompt, temperature = 0.7, maxTokens = 256, category } = parsedBody;
+    const { model, prompt, temperature = 0.7, maxTokens = 256, category, messages: originalMessages, tools, tool_choice } = parsedBody;
     const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
@@ -231,18 +234,27 @@ serve(async (req) => {
 
     // 1. Text-based models
     if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
+      // Use original messages if provided, otherwise construct from prompt
+      const chatMessages = originalMessages && Array.isArray(originalMessages) && originalMessages.length > 0
+        ? originalMessages
+        : [{ role: "user", content: prompt }];
+
+      const chatBody: Record<string, unknown> = {
+        model: vsegptModel,
+        messages: chatMessages,
+        temperature,
+        max_tokens: maxTokens,
+      };
+      if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
+      if (tool_choice) chatBody.tool_choice = tool_choice;
+
       const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${VSEGPT_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model: vsegptModel,
-          messages: [{ role: "user", content: prompt }],
-          temperature,
-          max_tokens: maxTokens,
-        }),
+        body: JSON.stringify(chatBody),
       });
 
       if (!response.ok) {
@@ -254,8 +266,14 @@ serve(async (req) => {
       }
 
       const data = await response.json();
-      const content = data.choices?.[0]?.message?.content || "No response generated";
-      return respond(JSON.stringify({ response: content, model: vsegptModel, usage: data.usage }), 200, undefined, data.usage);
+      const message = data.choices?.[0]?.message;
+      const content = message?.content || "No response generated";
+      const toolCalls = message?.tool_calls;
+      const responsePayload: Record<string, unknown> = { response: content, model: vsegptModel, usage: data.usage };
+      if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
+        responsePayload.tool_calls = toolCalls;
+      }
+      return respond(JSON.stringify(responsePayload), 200, undefined, data.usage);
     }
 
     // 2. Image Generation
