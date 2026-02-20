@@ -48,7 +48,7 @@ serve(async (req) => {
       );
     }
     
-    const { model, messages, prompt, max_tokens, temperature, stream } = body;
+    const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice } = body;
     
     // Determine category from model name
     let category = "chat";
@@ -97,10 +97,15 @@ serve(async (req) => {
       forwardHeaders["X-API-Key"] = userApiKey;
     }
 
+    const inferenceBody: Record<string, unknown> = { model: model || "llama-3.1-70b", prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category };
+    if (messages && Array.isArray(messages)) inferenceBody.messages = messages;
+    if (tools) inferenceBody.tools = tools;
+    if (tool_choice) inferenceBody.tool_choice = tool_choice;
+
     const inferenceResponse = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
       method: "POST",
       headers: forwardHeaders,
-      body: JSON.stringify({ model: model || "llama-3.1-70b", prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category }),
+      body: JSON.stringify(inferenceBody),
     });
 
     const data = await inferenceResponse.json();
@@ -136,9 +141,16 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Build message object — include tool_calls if present
+    const assistantMessage: Record<string, unknown> = { role: "assistant", content: data.response || "" };
+    if (data.tool_calls) {
+      assistantMessage.tool_calls = data.tool_calls;
+      assistantMessage.content = data.response || null;
+    }
+
     const openAIResponse = {
       id: "inf_" + crypto.randomUUID().slice(0, 8), object: "chat.completion", created: Math.floor(Date.now() / 1000),
-      choices: [{ index: 0, message: { role: "assistant", content: data.response || "" }, finish_reason: "stop" }],
+      choices: [{ index: 0, message: assistantMessage, finish_reason: data.tool_calls ? "tool_calls" : "stop" }],
       usage: data.usage || {
         prompt_tokens: Math.ceil(finalPrompt.length / 4),
         completion_tokens: Math.ceil((data.response?.length || 0) / 4),
