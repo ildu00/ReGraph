@@ -18,8 +18,7 @@ const ROUTES = {
   "/v1/devices": "devices",
   "/v1/status": "status",
   "/v1/usage": "usage",
-  "/v1/provider/register": "provider",
-  "/v1/provider/earnings": "provider",
+  "/v1/provider": "provider",
   "/v1/hardware/rent": "hardware-rent",
   "/v1/images/generations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
@@ -70,7 +69,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Invalid endpoint",
-          message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/register, /v1/provider/earnings, /v1/hardware/rent, /v1/models/deploy",
+          message: "Please use a valid API endpoint. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/register, /v1/provider/earnings, /v1/provider/devices/:id/heartbeat, /v1/provider/devices/:id/task, /v1/hardware/rent, /v1/models/deploy",
           documentation: "https://regraph.tech/docs"
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -92,7 +91,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Endpoint not found",
-          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/register, /v1/provider/earnings, /v1/hardware/rent, /v1/models/deploy`,
+          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/*, /v1/hardware/rent, /v1/models/deploy`,
           documentation: "https://regraph.tech/docs"
         }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -126,8 +125,9 @@ export default {
       }
     }
 
-    // Build target URL
-    const targetUrl = `${SUPABASE_URL}/functions/v1/${functionName}${path.replace(/^\/v1\/[^/]+/, "")}${url.search}`;
+    // Build target URL — pass sub-path after the matched route prefix to the edge function
+    const subPath = path.substring(matchedPath.length);
+    const targetUrl = `${SUPABASE_URL}/functions/v1/${functionName}${subPath}${url.search}`;
 
     // Forward request
     const headers = new Headers();
