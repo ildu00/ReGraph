@@ -7,6 +7,7 @@ const corsHeaders = {
 };
 
 const MODEL_MAP: Record<string, string> = {
+  "gpt-4o-mini": "openai/gpt-5-nano",
   "gpt-4o": "openai/gpt-5-mini",
   "gpt-5": "openai/gpt-5",
   "claude-3.5-sonnet": "google/gemini-2.5-flash",
