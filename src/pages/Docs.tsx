@@ -25,7 +25,9 @@ import {
   Wrench,
   Image,
   Mic,
-  Volume2
+  Volume2,
+  Smartphone,
+  Share
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -358,6 +360,10 @@ for await (const chunk of stream) {
                         <Monitor className="h-4 w-4" />
                         <span className="hidden sm:inline">Windows</span>
                       </TabsTrigger>
+                      <TabsTrigger value="smartphones" className="gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        <span className="hidden sm:inline">Smartphones</span>
+                      </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="docker">
@@ -417,6 +423,106 @@ for await (const chunk of stream) {
                         <p className="text-sm text-muted-foreground">
                           Run PowerShell as Administrator. The script will install CUDA drivers if needed.
                         </p>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="smartphones">
+                      <div className="glass-card p-6 rounded-xl space-y-6">
+                        <div>
+                          <h4 className="font-semibold mb-2">Smartphone Mining via PWA</h4>
+                          <p className="text-sm text-muted-foreground">
+                            Turn any smartphone or tablet into a compute node by installing ReGraph as a Progressive Web App (PWA). No app store required — works directly from the browser.
+                          </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="bg-secondary/50 rounded-lg p-5 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Smartphone className="h-5 w-5 text-primary" />
+                              <p className="font-medium text-sm">iPhone / iPad (Safari)</p>
+                            </div>
+                            <ol className="text-sm text-muted-foreground space-y-2 list-none">
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">1.</span>
+                                Open <code className="text-primary">regraph.tech</code> in Safari
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">2.</span>
+                                <span>Tap the <Share className="inline h-3.5 w-3.5 text-primary -mt-0.5" /> Share button</span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">3.</span>
+                                <span>Tap <strong>"Add to Home Screen"</strong></span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">4.</span>
+                                Open the installed app
+                              </li>
+                            </ol>
+                          </div>
+
+                          <div className="bg-secondary/50 rounded-lg p-5 space-y-3">
+                            <div className="flex items-center gap-2">
+                              <Monitor className="h-5 w-5 text-primary" />
+                              <p className="font-medium text-sm">Android / Desktop (Chrome)</p>
+                            </div>
+                            <ol className="text-sm text-muted-foreground space-y-2 list-none">
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">1.</span>
+                                Open <code className="text-primary">regraph.tech</code> in Chrome
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">2.</span>
+                                Tap the <strong>⋮ menu</strong> (top right)
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">3.</span>
+                                <span>Tap <strong>"Install app"</strong> or <strong>"Add to Home Screen"</strong></span>
+                              </li>
+                              <li className="flex items-start gap-2">
+                                <span className="font-bold text-foreground shrink-0">4.</span>
+                                Open the installed app
+                              </li>
+                            </ol>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="font-semibold mb-3">AI Mining Dashboard</h4>
+                          <p className="text-sm text-muted-foreground mb-4">
+                            Once installed, navigate to <strong>Dashboard → AI Mining</strong> to manage your compute contribution:
+                          </p>
+                          <ul className="text-sm text-muted-foreground space-y-2">
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Connection Key:</strong> Paste the key from the Provider tab to link your device</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Start / Stop Mining:</strong> One-tap control to begin or pause task processing</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Live Stats:</strong> Completed tasks, failures, average time, and earnings in real time</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Task History:</strong> Scrollable log with status, duration, and timestamps</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Background Polling:</strong> Tasks polled every 5 s, heartbeats every 30 s — works across dashboard tabs</span>
+                            </li>
+                            <li className="flex items-start gap-2">
+                              <span className="text-primary">•</span>
+                              <span><strong>Earnings:</strong> ~$0.0012 per task, synced to your provider profile</span>
+                            </li>
+                          </ul>
+                        </div>
+
+                        <div className="bg-secondary/50 rounded-lg p-4 text-sm text-muted-foreground">
+                          <strong className="text-foreground">Tip:</strong> The PWA runs in the background and survives browser tab closure — ideal for continuous, low-power mining on idle devices.
+                        </div>
                       </div>
                     </TabsContent>
                   </Tabs>
