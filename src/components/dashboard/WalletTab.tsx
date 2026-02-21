@@ -969,20 +969,20 @@ Generated: ${new Date().toISOString()}
                 return (
                   <div 
                     key={addr.id} 
-                    className="flex items-center justify-between p-3 bg-muted/50 rounded-lg gap-2"
+                    className="flex items-center p-3 bg-muted/50 rounded-lg gap-2 overflow-hidden"
                   >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <div className={`w-8 h-8 flex-shrink-0 rounded-full ${config.color} flex items-center justify-center text-white text-sm font-bold`}>
+                    <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
+                      <div className={`w-8 h-8 shrink-0 rounded-full ${config.color} flex items-center justify-center text-white text-sm font-bold`}>
                         {config.icon}
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
+                      <div className="min-w-0 flex-1 overflow-hidden">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-medium text-sm">{config.name}</p>
                           {addr.key_exported && (
                             <Badge variant="secondary" className="text-[10px]">Key exported</Badge>
                           )}
                         </div>
-                        <code className="text-xs text-muted-foreground truncate block">
+                        <code className="text-xs text-muted-foreground truncate block max-w-full">
                           {addr.address}
                         </code>
                       </div>
@@ -990,7 +990,7 @@ Generated: ${new Date().toISOString()}
                     <Button 
                       variant="ghost" 
                       size="sm"
-                      className="flex-shrink-0"
+                      className="shrink-0"
                       onClick={() => copyToClipboard(addr.address)}
                     >
                       <Copy className="h-4 w-4" />
