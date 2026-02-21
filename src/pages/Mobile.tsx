@@ -32,8 +32,8 @@ const fadeUp = {
 const whyMobile = [
   {
     icon: Globe,
-    title: "7 Billion Untapped Devices",
-    desc: "There are more smartphones than GPUs by orders of magnitude. ReGraph unlocks this dormant compute for AI training and inference.",
+    title: "Massive Untapped Compute",
+    desc: "There are far more smartphones than GPUs. ReGraph unlocks this dormant compute for AI training and inference at scale.",
   },
   {
     icon: Network,
@@ -163,8 +163,8 @@ const Mobile = () => {
               </h1>
 
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-                7 billion smartphones. Trillions of idle FLOPS. ReGraph turns every phone into a node
-                in the world's largest decentralized AI network — and pays you for it.
+                Millions of smartphones sit idle every day. ReGraph turns every phone into a node
+                in a decentralized AI network — and pays you for it.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -335,7 +335,7 @@ const Mobile = () => {
                   </div>
                 </div>
                 {[
-                  ["Availability", "7B+ devices globally", "~50M dedicated units"],
+                  ["Availability", "Ubiquitous — billions worldwide", "~50M dedicated units"],
                   ["Setup Cost", "$0 — use existing phone", "$2K — $40K+ per card"],
                   ["Best For", "Training shards, embeddings, light inference", "Heavy training, large-batch inference"],
                   ["Earnings", "Lower per-device, massive scale", "Higher per-device, limited supply"],
