@@ -6,16 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const MODEL_MAP: Record<string, string> = {
-  "gpt-4o-mini": "openai/gpt-5-nano",
-  "gpt-4o": "openai/gpt-5-mini",
-  "gpt-5": "openai/gpt-5",
-  "claude-3.5-sonnet": "google/gemini-2.5-flash",
-  "llama-3-70b": "google/gemini-2.5-flash-lite",
+// Models that go through VseGPT (real external models)
+const VSEGPT_MODELS: Record<string, string> = {
+  "gpt-4o-mini": "openai/gpt-4o-mini",
+  "gpt-4o": "openai/gpt-4o",
+  "claude-3.5-sonnet": "anthropic/claude-3.5-sonnet",
+  "llama-3-70b": "meta-llama/llama-3-70b-instruct",
   "gemini-2.5-pro": "google/gemini-2.5-pro",
 };
 
 const REGRAPH_MODEL = "google/gemini-3-flash-preview";
+const LOVABLE_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const VSEGPT_GATEWAY = "https://api.vsegpt.ru/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -33,12 +35,13 @@ serve(async (req) => {
     }
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-    if (!LOVABLE_API_KEY) {
-      throw new Error("LOVABLE_API_KEY is not configured");
-    }
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const gatewayModel = MODEL_MAP[compareModel];
-    if (!gatewayModel) {
+    const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
+    if (!VSEGPT_API_KEY) throw new Error("VSEGPT_API_KEY is not configured");
+
+    const vsegptModel = VSEGPT_MODELS[compareModel];
+    if (!vsegptModel) {
       return new Response(
         JSON.stringify({ error: `Unknown model: ${compareModel}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -46,54 +49,78 @@ serve(async (req) => {
     }
 
     const numberedList = prompts.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n");
-
     const userMessage = `Answer each question below briefly (2-3 sentences max per answer). Number your answers to match.\n\n${numberedList}`;
-
     const systemBase = "Answer concisely. Use markdown. Number each answer. Respond in the same language as each question.";
 
-    const makeRequest = async (model: string, systemPrompt: string) => {
+    // ReGraph LLM via Lovable AI Gateway
+    const makeRegraphRequest = async () => {
       const start = Date.now();
-      const body: Record<string, unknown> = {
-        model,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-      };
-
-      if (model.startsWith("openai/")) {
-        body.max_completion_tokens = 4096;
-      } else {
-        body.max_tokens = 4096;
-      }
-
-      const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      const resp = await fetch(LOVABLE_GATEWAY, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify({
+          model: REGRAPH_MODEL,
+          messages: [
+            { role: "system", content: `You are ReGraph LLM. ${systemBase}` },
+            { role: "user", content: userMessage },
+          ],
+          max_tokens: 4096,
+        }),
       });
 
       if (!resp.ok) {
-        if (resp.status === 429) return { error: "Rate limited. Try again later.", latency: 0 };
-        if (resp.status === 402) return { error: "Usage limit reached.", latency: 0 };
         const text = await resp.text();
-        console.error(`Model ${model} error:`, resp.status, text);
+        console.error("ReGraph error:", resp.status, text);
+        return { error: `ReGraph error (${resp.status})`, latency: 0 };
+      }
+
+      const data = await resp.json();
+      return {
+        content: data.choices?.[0]?.message?.content || "",
+        latency: Date.now() - start,
+        tokens: data.usage?.total_tokens || 0,
+      };
+    };
+
+    // Competitor model via VseGPT
+    const makeVsegptRequest = async () => {
+      const start = Date.now();
+      const resp = await fetch(VSEGPT_GATEWAY, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${VSEGPT_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model: vsegptModel,
+          messages: [
+            { role: "system", content: `You are a helpful AI assistant. ${systemBase}` },
+            { role: "user", content: userMessage },
+          ],
+          max_tokens: 4096,
+        }),
+      });
+
+      if (!resp.ok) {
+        const text = await resp.text();
+        console.error(`VseGPT ${vsegptModel} error:`, resp.status, text);
         return { error: `Model error (${resp.status})`, latency: 0 };
       }
 
       const data = await resp.json();
-      const latency = Date.now() - start;
-      const content = data.choices?.[0]?.message?.content || "";
-      const tokens = data.usage?.total_tokens || 0;
-      return { content, latency, tokens };
+      return {
+        content: data.choices?.[0]?.message?.content || "",
+        latency: Date.now() - start,
+        tokens: data.usage?.total_tokens || 0,
+      };
     };
 
     const [regraphResult, compareResult] = await Promise.all([
-      makeRequest(REGRAPH_MODEL, `You are ReGraph LLM. ${systemBase}`),
-      makeRequest(gatewayModel, `You are a helpful AI assistant. ${systemBase}`),
+      makeRegraphRequest(),
+      makeVsegptRequest(),
     ]);
 
     return new Response(
