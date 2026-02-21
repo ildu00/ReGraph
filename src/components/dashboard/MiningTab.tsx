@@ -19,6 +19,10 @@ import {
   DollarSign,
   Eye,
   EyeOff,
+  Download,
+  Share,
+  Smartphone,
+  Monitor,
 } from "lucide-react";
 import { useMining, EARNING_PER_TASK, POLL_INTERVAL } from "@/hooks/useMining";
 
@@ -299,6 +303,75 @@ const MiningTab = () => {
           </div>
         </div>
       )}
+
+      {/* Install as App */}
+      <div className="bg-card border border-border rounded-xl p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <Download className="h-5 w-5 text-primary" />
+          <h3 className="font-semibold">Install as App</h3>
+        </div>
+        <p className="text-sm text-muted-foreground mb-5">
+          Install ReGraph on your device for background mining. Works on any phone or computer — no app store needed.
+        </p>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {/* iOS */}
+          <div className="bg-secondary/50 rounded-lg p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-primary" />
+              <p className="font-medium text-sm">iPhone / iPad</p>
+            </div>
+            <ol className="text-xs text-muted-foreground space-y-2 list-none">
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">1.</span>
+                Open this page in <span className="font-medium text-foreground">Safari</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">2.</span>
+                <span>Tap the <Share className="inline h-3.5 w-3.5 text-primary -mt-0.5" /> <span className="font-medium text-foreground">Share</span> button</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">3.</span>
+                Scroll down and tap <span className="font-medium text-foreground">"Add to Home Screen"</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">4.</span>
+                Open the app, go to AI Mining, paste your key and start
+              </li>
+            </ol>
+          </div>
+
+          {/* Android */}
+          <div className="bg-secondary/50 rounded-lg p-5 space-y-3">
+            <div className="flex items-center gap-2">
+              <Monitor className="h-5 w-5 text-primary" />
+              <p className="font-medium text-sm">Android / Desktop</p>
+            </div>
+            <ol className="text-xs text-muted-foreground space-y-2 list-none">
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">1.</span>
+                Open this page in <span className="font-medium text-foreground">Chrome</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">2.</span>
+                Tap the <span className="font-medium text-foreground">⋮ menu</span> (top right)
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">3.</span>
+                Tap <span className="font-medium text-foreground">"Install app"</span> or <span className="font-medium text-foreground">"Add to Home Screen"</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="font-bold text-foreground shrink-0">4.</span>
+                Open the app, go to AI Mining, paste your key and start
+              </li>
+            </ol>
+          </div>
+        </div>
+
+        <p className="text-xs text-muted-foreground mt-4 text-center">
+          The installed app works offline and runs in the background — perfect for continuous mining.
+        </p>
+      </div>
     </div>
   );
 };
