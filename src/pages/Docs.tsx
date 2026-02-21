@@ -1,6 +1,7 @@
 import { useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SidebarProvider } from "@/components/ui/sidebar";
@@ -269,6 +270,12 @@ for await (const chunk of stream) {
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
+      <Helmet>
+        <title>API Documentation — ReGraph | Endpoints, SDKs & Examples</title>
+        <meta name="description" content="Complete API reference for ReGraph. Learn to integrate 50+ AI models with OpenAI-compatible endpoints. Code examples in cURL, Python, JavaScript, and Go." />
+        <meta name="keywords" content="ReGraph API docs, AI API documentation, LLM API reference, GPU compute API, inference API, REST API" />
+        <link rel="canonical" href="https://regraph.tech/docs" />
+      </Helmet>
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">

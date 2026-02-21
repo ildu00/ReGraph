@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from "react";
 import { Navigate, Link, useSearchParams } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
@@ -123,6 +124,10 @@ const Dashboard = () => {
       }
       style={rootStyle}
     >
+      <Helmet>
+        <title>Dashboard — ReGraph</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       {/* Header - always in flow on mobile chat, fixed on desktop/other tabs */}
       <header className={`${
         isMobileChatMode

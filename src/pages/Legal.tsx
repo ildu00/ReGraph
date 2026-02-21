@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CompanyInfo from "@/components/CompanyInfo";
@@ -88,6 +89,12 @@ const Legal = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Legal — ReGraph | Terms, Privacy & Compliance</title>
+        <meta name="description" content="Legal information for ReGraph including terms of service, privacy policy, cookie policy, and compliance documentation." />
+        <meta name="keywords" content="ReGraph legal, terms of service, privacy policy, compliance, data protection" />
+        <link rel="canonical" href="https://regraph.tech/legal" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

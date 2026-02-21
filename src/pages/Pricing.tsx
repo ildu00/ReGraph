@@ -67,11 +67,13 @@ const Pricing = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Helmet>
-        <title>Pricing — ReGraph</title>
+        <title>Pricing — ReGraph | GPU Compute & Model Inference Rates</title>
         <meta
           name="description"
           content="Transparent, pay-as-you-go pricing for GPU compute and AI model inference. Up to 80% cheaper than major cloud providers."
         />
+        <meta name="keywords" content="ReGraph pricing, GPU rental cost, AI inference pricing, cheap AI compute, model token pricing" />
+        <link rel="canonical" href="https://regraph.tech/pricing" />
       </Helmet>
       <Navbar />
 

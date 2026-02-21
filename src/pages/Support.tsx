@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -257,6 +258,12 @@ const Support = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Support Center — ReGraph | Help, FAQ & AI Assistant</title>
+        <meta name="description" content="Get help with ReGraph. Browse FAQs, chat with our AI assistant, or submit a support ticket. We're here to help you build with AI." />
+        <meta name="keywords" content="ReGraph support, help center, FAQ, AI assistant, customer support, technical help" />
+        <link rel="canonical" href="https://regraph.tech/support" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

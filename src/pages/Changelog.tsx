@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
@@ -527,6 +528,12 @@ const Changelog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Changelog — ReGraph Platform Updates & Release Notes</title>
+        <meta name="description" content="Track every update, feature, and improvement to the ReGraph platform. Full version history with detailed release notes." />
+        <meta name="keywords" content="ReGraph changelog, release notes, platform updates, new features, version history" />
+        <link rel="canonical" href="https://regraph.tech/changelog" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

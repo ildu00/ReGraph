@@ -10,6 +10,7 @@ import { Loader2, Send, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CompanyInfo from "@/components/CompanyInfo";
@@ -70,6 +71,12 @@ const PrivacyPolicy = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Privacy Policy — ReGraph</title>
+        <meta name="description" content="ReGraph's privacy policy explains how we collect, use, and protect your personal data. Learn about your rights and our data practices." />
+        <meta name="keywords" content="ReGraph privacy, data protection, GDPR, personal data, privacy policy" />
+        <link rel="canonical" href="https://regraph.tech/privacy" />
+      </Helmet>
       <Navbar />
       
       <main className="container px-4 pt-24 pb-16">

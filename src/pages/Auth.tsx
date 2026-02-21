@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -57,6 +58,11 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 relative overflow-hidden">
+      <Helmet>
+        <title>Sign In / Sign Up — ReGraph</title>
+        <meta name="description" content="Create a free ReGraph account or sign in to access decentralized AI compute, manage API keys, and start building with 50+ AI models." />
+        <meta name="keywords" content="ReGraph login, sign up, AI API account, GPU compute access" />
+      </Helmet>
       {/* Background effects */}
       <div className="absolute inset-0 bg-grid opacity-30" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />

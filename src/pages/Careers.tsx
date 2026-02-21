@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { 
@@ -448,6 +449,12 @@ const Careers = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Careers at ReGraph — Join the Decentralized AI Revolution</title>
+        <meta name="description" content="Explore open positions at ReGraph. Help build the world's largest decentralized AI compute network. Remote-friendly roles in engineering, product, and more." />
+        <meta name="keywords" content="ReGraph jobs, AI careers, decentralized computing jobs, remote AI jobs, GPU engineering" />
+        <link rel="canonical" href="https://regraph.tech/careers" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">
