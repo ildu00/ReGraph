@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { motion } from "framer-motion";
-import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap } from "lucide-react";
+import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap, Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -53,6 +53,9 @@ interface CompareResult {
 
 const ModelCompare = () => {
   const [prompts, setPrompts] = useState(DEFAULT_PROMPTS);
+  const [enabledPrompts, setEnabledPrompts] = useState<boolean[]>(
+    () => DEFAULT_PROMPTS.map((_, i) => i < 3)
+  );
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [compareModel, setCompareModel] = useState("gpt-4o-mini");
@@ -61,13 +64,23 @@ const ModelCompare = () => {
   const [showAllPrompts, setShowAllPrompts] = useState(false);
   const resultRef = useRef<HTMLDivElement>(null);
 
+  const togglePrompt = (idx: number) => {
+    setEnabledPrompts((prev) => prev.map((v, i) => (i === idx ? !v : v)));
+  };
+
+  const activePrompts = prompts.filter((_, i) => enabledPrompts[i]);
+
   const handleRun = async () => {
+    if (activePrompts.length === 0) {
+      toast.error("Enable at least one prompt");
+      return;
+    }
     setLoading(true);
     setResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("model-compare", {
-        body: { prompts, compareModel },
+        body: { prompts: activePrompts, compareModel },
       });
 
       if (error) {
@@ -101,6 +114,7 @@ const ModelCompare = () => {
 
   const resetPrompts = () => {
     setPrompts(DEFAULT_PROMPTS);
+    setEnabledPrompts(DEFAULT_PROMPTS.map((_, i) => i < 3));
     setResult(null);
     toast.success("Prompts reset to defaults");
   };
@@ -155,7 +169,7 @@ const ModelCompare = () => {
       <div className="rounded-xl border border-border bg-card/30 mb-6">
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-sm font-mono text-muted-foreground">
-            Prompts ({prompts.length}) — pencil to edit
+            Prompts ({activePrompts.length}/{prompts.length} enabled) — eye to toggle, pencil to edit
           </span>
           <Button
             variant="ghost"
@@ -171,7 +185,7 @@ const ModelCompare = () => {
           {visiblePrompts.map((prompt, idx) => (
             <div
               key={idx}
-              className="flex items-start gap-2 p-3 transition-colors hover:bg-primary/5"
+              className={`flex items-start gap-2 p-3 transition-colors hover:bg-primary/5 ${!enabledPrompts[idx] ? "opacity-40" : ""}`}
             >
               <span className="text-xs font-mono text-muted-foreground w-6 shrink-0 pt-0.5 text-right">
                 {idx + 1}.
@@ -198,6 +212,18 @@ const ModelCompare = () => {
                     className="h-6 w-6 shrink-0 opacity-40 hover:opacity-100"
                     onClick={(e) => {
                       e.stopPropagation();
+                      togglePrompt(idx);
+                    }}
+                    disabled={loading}
+                  >
+                    {enabledPrompts[idx] ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 shrink-0 opacity-40 hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
                       startEdit(idx);
                     }}
                     disabled={loading}
@@ -213,7 +239,7 @@ const ModelCompare = () => {
 
       {/* Info */}
       <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-        <p className="text-xs font-mono text-primary mb-1">All {prompts.length} prompts in one request</p>
+        <p className="text-xs font-mono text-primary mb-1">{activePrompts.length} prompts in one request</p>
         <p className="text-sm text-muted-foreground">Both models answer briefly (2–3 sentences each). Results displayed side-by-side.</p>
       </div>
 
