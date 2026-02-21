@@ -1,5 +1,6 @@
 import { useState, useMemo, type CSSProperties } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { Input } from "@/components/ui/input";
 import { Search, Filter, ArrowUpDown, X } from "lucide-react";
@@ -293,6 +294,12 @@ const Models = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col overflow-x-hidden">
+      <Helmet>
+        <title>AI Models — ReGraph | 50+ LLMs, Vision & Audio Models</title>
+        <meta name="description" content="Browse 50+ AI models on ReGraph including GPT-5, Claude 4.5, Llama, Mistral, and more. Compare capabilities, pricing, and context windows." />
+        <meta name="keywords" content="AI models, LLM catalog, GPT-5, Claude, Llama, Mistral, AI model comparison, inference pricing" />
+        <link rel="canonical" href="https://regraph.tech/models" />
+      </Helmet>
       <Navbar />
       
       <div className="pt-16 flex-1 flex flex-col">

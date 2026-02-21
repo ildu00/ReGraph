@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import Footer from "@/components/Footer";
@@ -25,6 +26,12 @@ const SectionPlaceholder = () => (
 const Index = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
+      <Helmet>
+        <title>ReGraph — Decentralized AI Compute Marketplace | 80% Cheaper</title>
+        <meta name="description" content="Access 50+ AI models at up to 80% lower cost than AWS, Google Cloud & OpenAI. Decentralized GPU network for inference and training with an OpenAI-compatible API." />
+        <meta name="keywords" content="AI compute, decentralized AI, GPU marketplace, AI inference, machine learning, LLM API, cheap AI, distributed computing, GPU rental" />
+        <link rel="canonical" href="https://regraph.tech/" />
+      </Helmet>
       <Navbar />
       <main>
         <HeroSection />

@@ -10,6 +10,7 @@ import { Loader2, Send, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CompanyInfo from "@/components/CompanyInfo";
@@ -70,6 +71,12 @@ const TermsOfService = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Terms of Service — ReGraph</title>
+        <meta name="description" content="Read ReGraph's terms of service governing the use of our decentralized AI compute platform, API, and related services." />
+        <meta name="keywords" content="ReGraph terms, terms of service, user agreement, API terms, legal" />
+        <link rel="canonical" href="https://regraph.tech/terms" />
+      </Helmet>
       <Navbar />
       
       <main className="container px-4 pt-24 pb-16">

@@ -10,6 +10,7 @@ import { Loader2, Send, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CompanyInfo from "@/components/CompanyInfo";
@@ -70,6 +71,12 @@ const CookiePolicy = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Cookie Policy — ReGraph</title>
+        <meta name="description" content="Learn how ReGraph uses cookies and similar technologies to improve your experience. Details on cookie types, purposes, and your choices." />
+        <meta name="keywords" content="ReGraph cookies, cookie policy, privacy, tracking" />
+        <link rel="canonical" href="https://regraph.tech/cookies" />
+      </Helmet>
       <Navbar />
       
       <main className="container px-4 pt-24 pb-16">

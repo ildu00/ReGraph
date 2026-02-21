@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Brain, TrendingUp, Database, Clock, BarChart3, Zap, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,12 @@ const stats = [
 const TrainingStats = () => {
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <Helmet>
+        <title>ReGraph LLM Training Stats — Live Metrics & Milestones</title>
+        <meta name="description" content="Real-time training metrics for ReGraph LLM. Track tokens ingested, benchmark scores, context window progress, and daily training milestones." />
+        <meta name="keywords" content="ReGraph LLM, AI training stats, model training, MMLU benchmark, LLM metrics" />
+        <link rel="canonical" href="https://regraph.tech/training-stats" />
+      </Helmet>
       <Navbar />
       <main className="pt-24 pb-16">
         <div className="container px-4 max-w-5xl">

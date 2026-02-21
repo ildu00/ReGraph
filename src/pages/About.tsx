@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import CompanyInfo from "@/components/CompanyInfo";
 import Footer from "@/components/Footer";
@@ -234,6 +235,12 @@ const About = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>About ReGraph — Our Mission, Team & Vision</title>
+        <meta name="description" content="Learn about ReGraph's mission to democratize AI compute. Meet the team building a decentralized GPU network that makes AI accessible and affordable for everyone." />
+        <meta name="keywords" content="ReGraph team, about ReGraph, decentralized AI company, AI compute mission, GPU network team" />
+        <link rel="canonical" href="https://regraph.tech/about" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">

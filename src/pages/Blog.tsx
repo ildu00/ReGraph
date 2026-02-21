@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,6 +20,12 @@ const Blog = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>Blog — ReGraph | AI, Decentralized Computing & ML Infrastructure</title>
+        <meta name="description" content="Insights on AI models, decentralized computing, GPU infrastructure, and machine learning best practices from the ReGraph team." />
+        <meta name="keywords" content="AI blog, decentralized AI, GPU computing, machine learning, LLM news, AI infrastructure" />
+        <link rel="canonical" href="https://regraph.tech/blog" />
+      </Helmet>
       <Navbar />
       
       <main className="container mx-auto px-4 py-24">

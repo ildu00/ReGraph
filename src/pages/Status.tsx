@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -272,6 +273,12 @@ const Status = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>System Status — ReGraph | Uptime & Incident Reports</title>
+        <meta name="description" content="Real-time status of ReGraph services including API, inference, and GPU network. View uptime history, active incidents, and platform statistics." />
+        <meta name="keywords" content="ReGraph status, API uptime, service health, incident reports, system status" />
+        <link rel="canonical" href="https://regraph.tech/status" />
+      </Helmet>
       <Navbar />
       
       <main className="pt-24 pb-16">
