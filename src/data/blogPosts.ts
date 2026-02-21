@@ -13,6 +13,7 @@ import platformLaunchImg from "@/assets/blog/platform-launch.jpg";
 import regraphVsGonkaImg from "@/assets/blog/regraph-vs-gonka.jpg";
 import enterpriseDeepDiveImg from "@/assets/blog/enterprise-deep-dive.jpg";
 import newModels2025Img from "@/assets/blog/new-models-2025.jpg";
+import platformUpdatesQ1Img from "@/assets/blog/platform-updates-q1-2026.jpg";
 
 export interface BlogPost {
   id: string;
@@ -28,6 +29,133 @@ export interface BlogPost {
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    id: "15",
+    slug: "platform-updates-february-2026-streaming-pricing-multimodal",
+    title: "Platform Updates — February 2026: Streaming, Dynamic Pricing, Multimodal & More",
+    excerpt: "A roundup of the biggest platform changes this month — SSE streaming, function calling, dynamic pricing, image generation API, redesigned docs, and critical mobile fixes.",
+    content: `February 2026 has been our most feature-packed month yet. From real-time streaming and multimodal inference to a fully dynamic pricing engine, here's everything that shipped across **versions 2.7.1 through 2.9.0**.
+
+---
+
+## SSE Streaming & Function Calling (v2.8.0)
+
+Real-time streaming is now fully supported across the platform. When you set \`stream: true\` in your request, responses arrive as **Server-Sent Events** — each chunk a valid JSON object, terminated with \`data: [DONE]\`.
+
+\`\`\`bash
+curl -X POST https://api.regraph.tech/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "openai/gpt-5",
+    "stream": true,
+    "messages": [
+      {"role": "user", "content": "Explain quantum entanglement"}
+    ]
+  }'
+\`\`\`
+
+Alongside streaming, we've shipped **Function Calling (Tools)** support. Send a \`tools\` array in your request and receive structured \`tool_calls\` in responses — including streaming delta chunks for progressive function argument delivery.
+
+---
+
+## Multimodal Messages & Vision Routing
+
+The inference proxy now automatically detects \`image_url\` content in your messages and routes the request to vision-capable models. No configuration changes needed — just include images in the standard OpenAI-compatible format:
+
+\`\`\`python
+from regraph import ReGraph
+
+client = ReGraph(api_key="YOUR_API_KEY")
+
+response = client.chat.completions.create(
+    model="openai/gpt-5",
+    messages=[
+        {
+            "role": "user",
+            "content": [
+                {"type": "text", "text": "What's in this image?"},
+                {"type": "image_url", "image_url": {"url": "https://example.com/photo.jpg"}}
+            ]
+        }
+    ]
+)
+\`\`\`
+
+---
+
+## Image Generation API (v2.8.1)
+
+A new \`/v1/images/generations\` endpoint brings OpenAI-compatible image generation to the platform. Generate images with DALL-E 3, SDXL, and other models through the same unified API:
+
+\`\`\`bash
+curl -X POST https://api.regraph.tech/v1/images/generations \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "dall-e-3",
+    "prompt": "A futuristic cityscape at sunset",
+    "size": "1024x1024"
+  }'
+\`\`\`
+
+We've also improved **API key flexibility** — \`rg_\` prefixed keys are now accepted in any custom header, not just \`Authorization\`.
+
+---
+
+## Audio Transcription Fix & Docs Redesign (v2.8.2)
+
+A critical bug in the audio transcription endpoint was resolved. Model names are now correctly mapped with the \`stt-openai/\` prefix, eliminating the 500 errors some users were experiencing.
+
+The **API Documentation** received a full redesign:
+
+- **Task-based navigation**: Endpoints grouped by purpose — Text, Images & Audio, Advanced
+- **Quick Reference table**: All endpoints at a glance, organized by task category
+- **New sections**: Dedicated guides for Image Generation, Text-to-Speech, and Audio Transcription with ready-to-use curl examples
+
+---
+
+## Dynamic Pricing Engine (v2.9.0)
+
+Pricing is no longer hardcoded. The entire pricing system is now **database-driven** and managed through the admin panel:
+
+| Feature | Details |
+|---|---|
+| **Public pricing page** | Dedicated \`/pricing\` with Free & Pro plans, GPU rates, and per-model token costs |
+| **Admin management** | Full CRUD for GPU hourly rates and model token pricing with active/inactive toggles |
+| **Live integration** | Homepage comparison table, Models page, and \`/v1/models\` API all pull real-time pricing |
+| **Graceful fallbacks** | Pricing sections render sensible defaults when the database is temporarily unavailable |
+
+---
+
+## API Observability (v2.7.0 – v2.7.1)
+
+Every API request is now logged with method, endpoint, status code, response time, and error messages. Logs are captured directly in backend functions with a shared fire-and-forget utility — zero latency impact on your requests.
+
+The admin panel surfaces these logs with:
+- **Request body capture** for full traceability
+- **Responsive table layout** with smart column priorities on mobile
+- **Inline timestamps** on smaller screens
+
+---
+
+## Mobile & Safari Fixes (v2.7.2)
+
+The AI Chat interface on **iOS Safari** received critical layout fixes. The navigation bar now uses the Visual Viewport API to stay properly fixed when the virtual keyboard appears — a long-standing pain point for mobile users.
+
+---
+
+## What's Next
+
+We're continuing to expand model support (Llama 4 and Mistral Large 3 are in evaluation), improving real-time monitoring, and working on dedicated capacity options for enterprise customers. Check our [Changelog](/changelog) for the full version history, or visit the [Models page](/models) to explore all available models.
+
+Questions or feedback? Reach out through our [Support Center](/support) — we'd love to hear from you.`,
+    date: "2026-02-21",
+    readTime: "6 min",
+    category: "Platform",
+    image: platformUpdatesQ1Img,
+    featured: true
+  },
   {
     id: "14",
     slug: "13-new-ai-models-february-2026",
@@ -1122,4 +1250,4 @@ Thank you to everyone who believed in our vision. This is just the beginning.`,
   }
 ];
 
-export const categories = ["All", "Company News", "Models", "Industry Insights", "Development", "Education", "Product Updates"];
+export const categories = ["All", "Platform", "Company News", "Models", "Industry Insights", "Development", "Education", "Product Updates"];

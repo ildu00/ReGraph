@@ -16,7 +16,7 @@ const Blog = () => {
     ? blogPosts 
     : blogPosts.filter(post => post.category === selectedCategory);
 
-  const featuredPost = blogPosts.find(post => post.featured && post.id === "1");
+  const featuredPost = blogPosts.find(post => post.featured && post.id === "15");
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +84,7 @@ const Blog = () => {
 
         {/* Posts Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredPosts.filter(post => !(post.featured && post.id === "1" && selectedCategory === "All")).map(post => (
+          {filteredPosts.filter(post => !(post.featured && post.id === "15" && selectedCategory === "All")).map(post => (
             <Link key={post.id} to={`/blog/${post.slug}`}>
               <Card className="cursor-pointer hover:border-primary/50 transition-colors group overflow-hidden h-full">
                 <div className="aspect-[16/10] overflow-hidden">
