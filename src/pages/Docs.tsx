@@ -350,7 +350,7 @@ for await (const chunk of stream) {
                     <TabsList className="mb-4">
                       <TabsTrigger value="docker" className="gap-2">
                         <Box className="h-4 w-4" />
-                        <span className="hidden sm:inline">Docker (Recommended)</span>
+                        <span className="hidden sm:inline">Docker</span>
                       </TabsTrigger>
                       <TabsTrigger value="linux" className="gap-2">
                         <Terminal className="h-4 w-4" />
