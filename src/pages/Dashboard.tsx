@@ -316,40 +316,32 @@ const DashboardInner = () => {
             : 'space-y-6'
         }>
           <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <BarChart3 className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Overview</span>
+            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2">
+              <BarChart3 className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <MessageSquare className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">AI Chat</span>
+            <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2">
+              <MessageSquare className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <Wallet className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Wallet</span>
+            <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2">
+              <Wallet className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <Key className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">API Keys</span>
+            <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2">
+              <Key className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="provider" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <Server className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Provider</span>
+            <TabsTrigger value="provider" className="data-[state=active]:bg-secondary px-2">
+              <Server className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 lg:px-3 relative">
-              <Pickaxe className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">AI Mining</span>
+            <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 relative">
+              <Pickaxe className="h-4 w-4" />
               {miningStatus === "mining" && (
                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
               )}
             </TabsTrigger>
-            <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <BarChart3 className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Usage</span>
+            <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2">
+              <BarChart3 className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="settings" className="data-[state=active]:bg-secondary px-2 lg:px-3">
-              <Settings className="h-4 w-4 lg:mr-2" />
-              <span className="hidden lg:inline">Settings</span>
+            <TabsTrigger value="settings" className="data-[state=active]:bg-secondary px-2">
+              <Settings className="h-4 w-4" />
             </TabsTrigger>
           </TabsList>
 
