@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAdmin } from "@/hooks/useAdmin";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useVisualViewport } from "@/hooks/useVisualViewport";
+import { MiningProvider, useMining } from "@/hooks/useMining";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -42,8 +43,17 @@ import ChatTab from "@/components/dashboard/ChatTab";
 import MiningTab from "@/components/dashboard/MiningTab";
 
 const Dashboard = () => {
+  return (
+    <MiningProvider>
+      <DashboardInner />
+    </MiningProvider>
+  );
+};
+
+const DashboardInner = () => {
   const { user, loading, signOut } = useAuth();
   const { isAdmin } = useAdmin();
+  const { status: miningStatus } = useMining();
   const [searchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
@@ -207,6 +217,9 @@ const Dashboard = () => {
               >
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
+                {item.value === "mining" && miningStatus === "mining" && (
+                  <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                )}
               </button>
             );
           })}
@@ -266,6 +279,9 @@ const Dashboard = () => {
                     >
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
+                      {item.value === "mining" && miningStatus === "mining" && (
+                        <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                      )}
                     </button>
                   );
                 })}
@@ -320,9 +336,12 @@ const Dashboard = () => {
               <Server className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Provider</span>
             </TabsTrigger>
-            <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+            <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 lg:px-3 relative">
               <Pickaxe className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">AI Mining</span>
+              {miningStatus === "mining" && (
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+              )}
             </TabsTrigger>
             <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
