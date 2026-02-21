@@ -19,7 +19,8 @@ param(
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$REGRAPH_API = "https://releases.regraph.tech"
+$REGRAPH_REPO = "regraph-tech/agent"
+$REGRAPH_API = "https://github.com/$REGRAPH_REPO/releases/download"
 $REGRAPH_DIR = "$env:LOCALAPPDATA\ReGraph"
 $REGRAPH_BIN = "$REGRAPH_DIR\bin"
 $REGRAPH_CONFIG = "$REGRAPH_DIR\config.yaml"
