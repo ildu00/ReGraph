@@ -46,20 +46,28 @@ serve(async (req) => {
 
     const makeRequest = async (model: string, systemPrompt: string) => {
       const start = Date.now();
+      const body: Record<string, unknown> = {
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+      };
+
+      // OpenAI models require max_completion_tokens, others use max_tokens
+      if (model.startsWith("openai/")) {
+        body.max_completion_tokens = 1024;
+      } else {
+        body.max_tokens = 1024;
+      }
+
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${LOVABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          max_tokens: 1024,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!resp.ok) {
