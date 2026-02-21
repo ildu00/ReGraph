@@ -378,13 +378,17 @@ export type Database = {
       }
       provider_devices: {
         Row: {
+          agent_version: string | null
           connection_key: string | null
           created_at: string
           device_model: string | null
           device_name: string
           device_type: Database["public"]["Enums"]["device_type"]
+          hardware_info: Json | null
           id: string
+          last_heartbeat_at: string | null
           last_seen_at: string | null
+          metrics: Json | null
           price_per_hour: number
           status: Database["public"]["Enums"]["device_status"]
           total_compute_hours: number
@@ -394,13 +398,17 @@ export type Database = {
           vram_gb: number | null
         }
         Insert: {
+          agent_version?: string | null
           connection_key?: string | null
           created_at?: string
           device_model?: string | null
           device_name: string
           device_type: Database["public"]["Enums"]["device_type"]
+          hardware_info?: Json | null
           id?: string
+          last_heartbeat_at?: string | null
           last_seen_at?: string | null
+          metrics?: Json | null
           price_per_hour?: number
           status?: Database["public"]["Enums"]["device_status"]
           total_compute_hours?: number
@@ -410,13 +418,17 @@ export type Database = {
           vram_gb?: number | null
         }
         Update: {
+          agent_version?: string | null
           connection_key?: string | null
           created_at?: string
           device_model?: string | null
           device_name?: string
           device_type?: Database["public"]["Enums"]["device_type"]
+          hardware_info?: Json | null
           id?: string
+          last_heartbeat_at?: string | null
           last_seen_at?: string | null
+          metrics?: Json | null
           price_per_hour?: number
           status?: Database["public"]["Enums"]["device_status"]
           total_compute_hours?: number
@@ -459,6 +471,62 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      provider_tasks: {
+        Row: {
+          assigned_at: string | null
+          completed_at: string | null
+          created_at: string
+          device_id: string | null
+          error_message: string | null
+          id: string
+          payload: Json
+          result: Json | null
+          started_at: string | null
+          status: Database["public"]["Enums"]["provider_task_status"]
+          task_type: Database["public"]["Enums"]["provider_task_type"]
+          timeout_sec: number
+          updated_at: string
+        }
+        Insert: {
+          assigned_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["provider_task_status"]
+          task_type?: Database["public"]["Enums"]["provider_task_type"]
+          timeout_sec?: number
+          updated_at?: string
+        }
+        Update: {
+          assigned_at?: string | null
+          completed_at?: string | null
+          created_at?: string
+          device_id?: string | null
+          error_message?: string | null
+          id?: string
+          payload?: Json
+          result?: Json | null
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["provider_task_status"]
+          task_type?: Database["public"]["Enums"]["provider_task_type"]
+          timeout_sec?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "provider_tasks_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "provider_devices"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_requests: {
         Row: {
@@ -780,6 +848,18 @@ export type Database = {
         | "identified"
         | "monitoring"
         | "resolved"
+      provider_task_status:
+        | "pending"
+        | "assigned"
+        | "running"
+        | "completed"
+        | "failed"
+        | "cancelled"
+      provider_task_type:
+        | "inference"
+        | "training_shard"
+        | "embedding"
+        | "health_check"
       wallet_transaction_status:
         | "pending"
         | "confirmed"
@@ -948,6 +1028,20 @@ export const Constants = {
         "identified",
         "monitoring",
         "resolved",
+      ],
+      provider_task_status: [
+        "pending",
+        "assigned",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
+      provider_task_type: [
+        "inference",
+        "training_shard",
+        "embedding",
+        "health_check",
       ],
       wallet_transaction_status: [
         "pending",
