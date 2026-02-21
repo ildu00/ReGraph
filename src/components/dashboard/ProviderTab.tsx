@@ -207,6 +207,7 @@ const ProviderTab = () => {
     const { data: deviceData } = await supabase
       .from("provider_devices")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     setDevices((deviceData as Device[]) || []);

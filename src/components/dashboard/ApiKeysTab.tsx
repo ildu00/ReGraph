@@ -57,6 +57,7 @@ const ApiKeysTab = () => {
     const { data, error } = await supabase
       .from("api_keys")
       .select("*")
+      .eq("user_id", user.id)
       .order("created_at", { ascending: false });
 
     if (error) {
