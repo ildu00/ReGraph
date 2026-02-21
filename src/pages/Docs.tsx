@@ -457,9 +457,9 @@ for await (const chunk of stream) {
                   </p>
 
                   {/* Text Generation */}
-                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Zap className="h-5 w-5 text-primary" />
-                    Генерация текста
+                    Text Generation
                   </h3>
                   <div className="overflow-x-auto mb-6">
                     <table className="w-full text-sm">
@@ -474,12 +474,12 @@ for await (const chunk of stream) {
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/inference</td>
-                          <td className="py-3 px-4 text-muted-foreground">Chat/completion (поддержка streaming, function calling)</td>
+                          <td className="py-3 px-4 text-muted-foreground">Chat/completion (supports streaming, function calling)</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/chat/completions</td>
-                          <td className="py-3 px-4 text-muted-foreground">OpenAI-совместимый endpoint (алиас /inference)</td>
+                          <td className="py-3 px-4 text-muted-foreground">OpenAI-compatible endpoint (alias for /inference)</td>
                         </tr>
                       </tbody>
                     </table>
@@ -488,7 +488,7 @@ for await (const chunk of stream) {
                   {/* Images */}
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Image className="h-5 w-5 text-primary" />
-                    Изображения
+                    Images
                   </h3>
                   <div className="overflow-x-auto mb-6">
                     <table className="w-full text-sm">
@@ -503,7 +503,7 @@ for await (const chunk of stream) {
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/images/generations</td>
-                          <td className="py-3 px-4 text-muted-foreground">Генерация изображений (DALL-E 3, SDXL и др.)</td>
+                          <td className="py-3 px-4 text-muted-foreground">Image generation (DALL-E 3, SDXL, etc.)</td>
                         </tr>
                       </tbody>
                     </table>
@@ -512,7 +512,7 @@ for await (const chunk of stream) {
                   {/* Audio */}
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Volume2 className="h-5 w-5 text-primary" />
-                    Аудио
+                    Audio
                   </h3>
                   <div className="overflow-x-auto mb-6">
                     <table className="w-full text-sm">
@@ -541,7 +541,7 @@ for await (const chunk of stream) {
                   {/* Training & Batch */}
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Cpu className="h-5 w-5 text-primary" />
-                    Обучение и пакетная обработка
+                    Training & Batch
                   </h3>
                   <div className="overflow-x-auto mb-6">
                     <table className="w-full text-sm">
@@ -556,12 +556,56 @@ for await (const chunk of stream) {
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
-                          <td className="py-3 px-4 text-muted-foreground">Создать задачу fine-tuning</td>
+                          <td className="py-3 px-4 text-muted-foreground">Submit a fine-tuning job</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/batch</td>
-                          <td className="py-3 px-4 text-muted-foreground">Пакетный инференс</td>
+                          <td className="py-3 px-4 text-muted-foreground">Batch inference</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/tasks/:id</td>
+                          <td className="py-3 px-4 text-muted-foreground">Poll async task status</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Provider */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Server className="h-5 w-5 text-primary" />
+                    Provider
+                  </h3>
+                  <div className="overflow-x-auto mb-6">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4">Method</th>
+                          <th className="text-left py-3 px-4">Endpoint</th>
+                          <th className="text-left py-3 px-4">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/provider/register</td>
+                          <td className="py-3 px-4 text-muted-foreground">Register a device as compute provider</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/provider/devices/:id/heartbeat</td>
+                          <td className="py-3 px-4 text-muted-foreground">Send device telemetry</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/provider/devices/:id/task</td>
+                          <td className="py-3 px-4 text-muted-foreground">Poll for pending task</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/provider/devices/:id/tasks/:taskId/result</td>
+                          <td className="py-3 px-4 text-muted-foreground">Submit task result</td>
                         </tr>
                       </tbody>
                     </table>
@@ -570,7 +614,7 @@ for await (const chunk of stream) {
                   {/* Platform */}
                   <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <Database className="h-5 w-5 text-primary" />
-                    Платформа
+                    Platform
                   </h3>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
@@ -585,22 +629,22 @@ for await (const chunk of stream) {
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/models</td>
-                          <td className="py-3 px-4 text-muted-foreground">Список доступных моделей</td>
+                          <td className="py-3 px-4 text-muted-foreground">List available models</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/usage</td>
-                          <td className="py-3 px-4 text-muted-foreground">Статистика использования</td>
+                          <td className="py-3 px-4 text-muted-foreground">Usage statistics</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/status</td>
-                          <td className="py-3 px-4 text-muted-foreground">Статус платформы</td>
+                          <td className="py-3 px-4 text-muted-foreground">Platform status</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/devices</td>
-                          <td className="py-3 px-4 text-muted-foreground">Устройства сети</td>
+                          <td className="py-3 px-4 text-muted-foreground">Network devices</td>
                         </tr>
                       </tbody>
                     </table>
@@ -911,8 +955,8 @@ for await (const chunk of stream) {
                     <Image className="h-8 w-8 text-primary" />
                     Image Generation
                   </h2>
-                  <p className="text-muted-foreground mb-6">
-                    Генерация изображений через OpenAI-совместимый endpoint. Поддерживаются модели DALL-E 3, SDXL и другие.
+                   <p className="text-muted-foreground mb-6">
+                    Generate images via an OpenAI-compatible endpoint. Supports DALL-E 3, SDXL, and more.
                   </p>
 
                   <div className="space-y-6">
@@ -944,25 +988,25 @@ for await (const chunk of stream) {
                               <td className="py-2 px-3 font-mono text-primary">prompt</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">Yes</td>
-                              <td className="py-2 px-3">Описание изображения</td>
+                              <td className="py-2 px-3">Image description</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">model</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Модель (default: dall-e-3)</td>
+                              <td className="py-2 px-3">Model (default: dall-e-3)</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">n</td>
                               <td className="py-2 px-3">integer</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Количество изображений (default: 1)</td>
+                              <td className="py-2 px-3">Number of images (default: 1)</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">size</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Размер: 256x256, 512x512, 1024x1024</td>
+                              <td className="py-2 px-3">Size: 256x256, 512x512, 1024x1024</td>
                             </tr>
                           </tbody>
                         </table>
@@ -977,8 +1021,8 @@ for await (const chunk of stream) {
                     <Volume2 className="h-8 w-8 text-primary" />
                     Text-to-Speech
                   </h2>
-                  <p className="text-muted-foreground mb-6">
-                    Синтез речи из текста. Возвращает base64-кодированный аудиофайл.
+                   <p className="text-muted-foreground mb-6">
+                    Synthesize speech from text. Returns a base64-encoded audio file.
                   </p>
 
                   <div className="space-y-6">
@@ -1010,25 +1054,25 @@ for await (const chunk of stream) {
                               <td className="py-2 px-3 font-mono text-primary">input</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">Yes</td>
-                              <td className="py-2 px-3">Текст для озвучки</td>
+                              <td className="py-2 px-3">Text to synthesize</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">model</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Модель (default: tts-1)</td>
+                              <td className="py-2 px-3">Model (default: tts-1)</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">voice</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Голос: alloy, echo, fable, onyx, nova, shimmer</td>
+                              <td className="py-2 px-3">Voice: alloy, echo, fable, onyx, nova, shimmer</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">response_format</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">Формат: mp3, opus, aac, flac (default: mp3)</td>
+                              <td className="py-2 px-3">Format: mp3, opus, aac, flac (default: mp3)</td>
                             </tr>
                           </tbody>
                         </table>
@@ -1043,8 +1087,8 @@ for await (const chunk of stream) {
                     <Mic className="h-8 w-8 text-primary" />
                     Audio Transcription
                   </h2>
-                  <p className="text-muted-foreground mb-6">
-                    Транскрипция аудиофайлов в текст. Поддерживает Whisper и GPT-4o Transcribe.
+                   <p className="text-muted-foreground mb-6">
+                    Transcribe audio files to text. Supports Whisper and GPT-4o Transcribe.
                   </p>
 
                   <div className="space-y-6">
@@ -1076,7 +1120,7 @@ for await (const chunk of stream) {
                               <td className="py-2 px-3 font-mono text-primary">file</td>
                               <td className="py-2 px-3">file</td>
                               <td className="py-2 px-3">Yes</td>
-                              <td className="py-2 px-3">Аудиофайл (mp3, wav, m4a, webm и др.)</td>
+                              <td className="py-2 px-3">Audio file (mp3, wav, m4a, webm, etc.)</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">model</td>
@@ -1088,7 +1132,7 @@ for await (const chunk of stream) {
                               <td className="py-2 px-3 font-mono text-primary">language</td>
                               <td className="py-2 px-3">string</td>
                               <td className="py-2 px-3">No</td>
-                              <td className="py-2 px-3">ISO-639-1 код языка (en, ru, de и др.)</td>
+                              <td className="py-2 px-3">ISO-639-1 language code (en, ru, de, etc.)</td>
                             </tr>
                             <tr>
                               <td className="py-2 px-3 font-mono text-primary">response_format</td>
@@ -1102,12 +1146,12 @@ for await (const chunk of stream) {
                     </div>
 
                     <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
-                      <h4 className="font-semibold mb-2">💡 Доступные модели STT</h4>
+                      <h4 className="font-semibold mb-2">💡 Available STT Models</h4>
                       <ul className="text-sm text-muted-foreground space-y-1">
-                        <li>• <code className="text-primary">whisper-1</code> — OpenAI Whisper v3 (0.90₽/мин)</li>
-                        <li>• <code className="text-primary">whisper-v3-turbo</code> — Whisper v3 Turbo, быстрее (0.72₽/мин)</li>
-                        <li>• <code className="text-primary">gpt-4o-transcribe</code> — Профессиональный (1.92₽/мин)</li>
-                        <li>• <code className="text-primary">gpt-4o-mini-transcribe</code> — Баланс цена/качество (0.96₽/мин)</li>
+                        <li>• <code className="text-primary">whisper-1</code> — OpenAI Whisper v3</li>
+                        <li>• <code className="text-primary">whisper-v3-turbo</code> — Whisper v3 Turbo, faster</li>
+                        <li>• <code className="text-primary">gpt-4o-transcribe</code> — Professional grade</li>
+                        <li>• <code className="text-primary">gpt-4o-mini-transcribe</code> — Balanced cost/quality</li>
                       </ul>
                     </div>
                   </div>
@@ -1231,6 +1275,273 @@ for await (const chunk of stream) {
                         <li>• Data classification at scale</li>
                         <li>• Content generation workflows</li>
                         <li>• Nightly data enrichment jobs</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Async Tasks */}
+                <section id="async-tasks" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Radio className="h-8 w-8 text-primary" />
+                    Async Tasks
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Route inference requests to decentralized compute agents and track them asynchronously.
+                    Add <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">"agents": true</code> to
+                    offload processing to the provider network, and <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">"async": true</code> to
+                    get a task ID immediately instead of waiting for a result.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Synchronous Agent Request</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        By default, <code className="text-primary">agents: true</code> uses a synchronous polling loop (up to 60s) and returns the result inline.
+                      </p>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/inference \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "meta-llama/Llama-3-70B",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "agents": true
+  }'`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Async Agent Request</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Add <code className="text-primary">async: true</code> to return a <code className="text-primary">202 Accepted</code> response immediately with a task ID and poll URL.
+                      </p>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/inference \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "meta-llama/Llama-3-70B",
+    "messages": [{"role": "user", "content": "Hello"}],
+    "agents": true,
+    "async": true
+  }'`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Async Response (202 Accepted)</h4>
+                      <CodeBlock code={`{
+  "id": "a1b2c3d4-...",
+  "object": "agent.task",
+  "status": "pending",
+  "poll_url": "/v1/tasks/a1b2c3d4-...",
+  "message": "Task queued. Poll the poll_url to check status."
+}`} language="json" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Poll Task Status</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">GET /v1/tasks/:id</span>
+                      </div>
+                      <CodeBlock code={`curl https://api.regraph.tech/v1/tasks/a1b2c3d4-... \\
+  -H "Authorization: Bearer rg_your_api_key_here"`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Task Response (Completed)</h4>
+                      <CodeBlock code={`{
+  "id": "a1b2c3d4-...",
+  "object": "agent.task",
+  "status": "completed",
+  "task_type": "inference",
+  "model": "meta-llama/Llama-3-70B",
+  "created_at": "2026-02-21T10:00:00Z",
+  "completed_at": "2026-02-21T10:00:05Z",
+  "output": {
+    "id": "inf_a1b2c3d4",
+    "object": "chat.completion",
+    "choices": [{
+      "index": 0,
+      "message": {"role": "assistant", "content": "Hello! How can I help?"},
+      "finish_reason": "stop"
+    }],
+    "usage": {"prompt_tokens": 5, "completion_tokens": 8, "total_tokens": 13}
+  }
+}`} language="json" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Request Parameters</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Parameter</th>
+                              <th className="text-left py-2 px-3">Type</th>
+                              <th className="text-left py-2 px-3">Default</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">agents</td>
+                              <td className="py-2 px-3">boolean</td>
+                              <td className="py-2 px-3">false</td>
+                              <td className="py-2 px-3">Route the request to decentralized provider agents</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">async</td>
+                              <td className="py-2 px-3">boolean</td>
+                              <td className="py-2 px-3">false</td>
+                              <td className="py-2 px-3">Return task ID immediately (requires agents: true)</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Task Statuses</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Status</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">pending</td>
+                              <td className="py-2 px-3">Task is queued, waiting for an agent to pick it up</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">assigned</td>
+                              <td className="py-2 px-3">An agent has claimed the task</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">running</td>
+                              <td className="py-2 px-3">Task is being processed by the agent</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">completed</td>
+                              <td className="py-2 px-3">Result is available in the output field</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">failed</td>
+                              <td className="py-2 px-3">Execution failed — error field contains details</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">cancelled</td>
+                              <td className="py-2 px-3">Task was cancelled before completion</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
+                      <h4 className="font-semibold mb-2">💡 Tips</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• Without <code className="text-primary">agents: true</code>, requests use the standard centralized pipeline (default)</li>
+                        <li>• Sync agent mode polls for up to 60 seconds before returning a timeout</li>
+                        <li>• Async mode is recommended for long-running tasks or when you want fire-and-forget</li>
+                        <li>• Tasks have a 120-second timeout — agents must complete within this window</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Provider API */}
+                <section id="provider-api" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Server className="h-8 w-8 text-primary" />
+                    Provider API
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Endpoints for compute provider agents to register devices, report telemetry, poll for tasks, and submit results.
+                    All endpoints are authenticated via <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">connection_key</code> header
+                    or <code className="text-primary bg-primary/10 px-1.5 py-0.5 rounded">x-api-key</code>.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Register Device</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/provider/register</span>
+                      </div>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/provider/register \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "device_name": "my-gpu-server",
+    "device_type": "gpu",
+    "device_model": "NVIDIA RTX 4090",
+    "vram_gb": 24,
+    "hardware_info": {"cpu": "AMD Ryzen 9", "ram_gb": 64}
+  }'`} language="bash" />
+                      <p className="text-sm text-muted-foreground mt-3">
+                        Returns a <code className="text-primary">connection_key</code> (prefixed <code className="text-primary">rgc_</code>) used for all subsequent agent calls.
+                      </p>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Heartbeat</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/provider/devices/:id/heartbeat</span>
+                      </div>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/provider/devices/DEVICE_ID/heartbeat \\
+  -H "connection_key: rgc_your_connection_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "status": "online",
+    "metrics": {"gpu_utilization": 45, "vram_used_gb": 8.2, "temperature_c": 62}
+  }'`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Poll for Task</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">GET /v1/provider/devices/:id/task</span>
+                      </div>
+                      <CodeBlock code={`curl https://api.regraph.tech/v1/provider/devices/DEVICE_ID/task \\
+  -H "connection_key: rgc_your_connection_key"`} language="bash" />
+                      <p className="text-sm text-muted-foreground mt-3">
+                        Returns a pending task or <code className="text-primary">204 No Content</code> if the queue is empty.
+                      </p>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Submit Result</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/provider/devices/:id/tasks/:taskId/result</span>
+                      </div>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/provider/devices/DEVICE_ID/tasks/TASK_ID/result \\
+  -H "connection_key: rgc_your_connection_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "response": "Hello! How can I help you today?",
+    "usage": {"prompt_tokens": 5, "completion_tokens": 12, "total_tokens": 17}
+  }'`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Report Failure</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/provider/devices/:id/tasks/:taskId/failure</span>
+                      </div>
+                      <CodeBlock code={`curl -X POST https://api.regraph.tech/v1/provider/devices/DEVICE_ID/tasks/TASK_ID/failure \\
+  -H "connection_key: rgc_your_connection_key" \\
+  -H "Content-Type: application/json" \\
+  -d '{"error": "Out of memory"}'`} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
+                      <h4 className="font-semibold mb-2">💡 Agent Lifecycle</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>1. Register device → receive <code className="text-primary">connection_key</code></li>
+                        <li>2. Send heartbeat every 30 seconds with status and metrics</li>
+                        <li>3. Poll for tasks — the API assigns a pending task if available</li>
+                        <li>4. Execute the task locally and submit the result (or report failure)</li>
+                        <li>5. Earnings are calculated at a base rate of $0.10/hour of compute</li>
                       </ul>
                     </div>
                   </div>
