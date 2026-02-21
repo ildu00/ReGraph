@@ -39,6 +39,22 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.1",
+    date: "February 21, 2026",
+    title: "Smartphone Mining & PWA Improvements",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "New Smartphones tab in Provider Setup docs with step-by-step PWA installation guides for iOS (Safari) and Android (Chrome)" },
+      { category: "feature", description: "AI Mining Dashboard documentation — connection key setup, start/stop controls, live stats, task history, and earnings overview" },
+      { category: "feature", description: "Native PWA install button in AI Mining tab — triggers browser install prompt via beforeinstallprompt API on supported devices" },
+      { category: "feature", description: "Install as App section in AI Mining with platform-specific instructions for iPhone/iPad and Android/Desktop" },
+      { category: "feature", description: "Connection key visibility toggle (eye icon) in AI Mining input field" },
+      { category: "improvement", description: "Provider Setup tabs display as icon-only on tablet screens for better space efficiency" },
+      { category: "improvement", description: "PWA install cards (iOS/Android) switch to single-column layout on tablets and smaller screens" },
+      { category: "fix", description: "Fixed text wrapping issues for 'Install app' and 'Add to Home Screen' labels on mobile devices" },
+    ]
+  },
+  {
     version: "2.9.0",
     date: "February 21, 2026",
     title: "Dynamic Pricing & Public Pricing Page",
