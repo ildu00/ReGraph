@@ -35,6 +35,7 @@ const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
 const Examples = lazyWithRetry(() => import("./pages/Examples"));
 const TrainingStats = lazyWithRetry(() => import("./pages/TrainingStats"));
 const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
+const Mobile = lazyWithRetry(() => import("./pages/Mobile"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -86,6 +87,7 @@ const AppCore = () => {
                     <Route path="/examples" element={<Examples />} />
                     <Route path="/training-stats" element={<TrainingStats />} />
                     <Route path="/pricing" element={<Pricing />} />
+                    <Route path="/mobile" element={<Mobile />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
