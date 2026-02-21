@@ -350,19 +350,19 @@ for await (const chunk of stream) {
                     <TabsList className="mb-4">
                       <TabsTrigger value="docker" className="gap-2">
                         <Box className="h-4 w-4" />
-                        <span className="hidden sm:inline">Docker</span>
+                        <span className="hidden lg:inline">Docker</span>
                       </TabsTrigger>
                       <TabsTrigger value="linux" className="gap-2">
                         <Terminal className="h-4 w-4" />
-                        <span className="hidden sm:inline">Linux/macOS</span>
+                        <span className="hidden lg:inline">Linux/macOS</span>
                       </TabsTrigger>
                       <TabsTrigger value="windows" className="gap-2">
                         <Monitor className="h-4 w-4" />
-                        <span className="hidden sm:inline">Windows</span>
+                        <span className="hidden lg:inline">Windows</span>
                       </TabsTrigger>
                       <TabsTrigger value="smartphones" className="gap-2">
                         <Smartphone className="h-4 w-4" />
-                        <span className="hidden sm:inline">Smartphones</span>
+                        <span className="hidden lg:inline">Smartphones</span>
                       </TabsTrigger>
                     </TabsList>
 
