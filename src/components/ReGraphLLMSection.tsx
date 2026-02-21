@@ -55,7 +55,7 @@ const ReGraphLLMSection = () => {
           </p>
         </motion.div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12 min-w-0">
           {advantages.map((item, i) => (
             <motion.div
               key={item.title}
@@ -79,11 +79,11 @@ const ReGraphLLMSection = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.5 }}
-            className="p-6 rounded-xl bg-card/80 border border-primary/20 flex flex-col justify-between"
+            className="p-6 rounded-xl bg-card/80 border border-primary/20 flex flex-col justify-between min-w-0"
           >
-            <div>
+            <div className="min-w-0">
               <h3 className="text-lg font-semibold mb-3">Try it now</h3>
-              <pre className="text-xs font-mono bg-background/80 rounded-lg p-4 overflow-x-auto text-muted-foreground leading-relaxed">
+              <pre className="text-xs font-mono bg-background/80 rounded-lg p-3 sm:p-4 overflow-x-auto text-muted-foreground leading-relaxed max-w-full [overflow-wrap:anywhere]">
 {`curl https://api.regraph.ai/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_KEY" \\
   -d '{
