@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,11 @@ import {
 } from "lucide-react";
 import { useMining, EARNING_PER_TASK, POLL_INTERVAL } from "@/hooks/useMining";
 
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
 const MiningTab = () => {
   const {
     connectionKey,
@@ -41,6 +46,30 @@ const MiningTab = () => {
 
   const [showKey, setShowKey] = useState(false);
   const isMining = status === "mining";
+
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
+  const [canInstall, setCanInstall] = useState(false);
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e as BeforeInstallPromptEvent;
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstall = async () => {
+    const prompt = deferredPrompt.current;
+    if (!prompt) return;
+    prompt.prompt();
+    const result = await prompt.userChoice;
+    if (result.outcome === "accepted") {
+      setCanInstall(false);
+      deferredPrompt.current = null;
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -313,6 +342,13 @@ const MiningTab = () => {
         <p className="text-sm text-muted-foreground mb-5">
           Install ReGraph on your device for background mining. Works on any phone or computer — no app store needed.
         </p>
+
+        {canInstall && (
+          <Button onClick={handleInstall} className="glow-primary w-full mb-5">
+            <Download className="h-4 w-4 mr-2" />
+            Install App
+          </Button>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* iOS */}
