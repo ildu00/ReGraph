@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,7 @@ const ModelCompare = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompareResult | null>(null);
   const [showAllPrompts, setShowAllPrompts] = useState(false);
+  const resultRef = useRef<HTMLDivElement>(null);
 
   const handleRun = async () => {
     setLoading(true);
@@ -75,6 +76,9 @@ const ModelCompare = () => {
       }
 
       setResult(data);
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } catch (e) {
       toast.error("Network error");
       console.error(e);
@@ -215,6 +219,7 @@ const ModelCompare = () => {
       {/* Results */}
       {result && (
         <motion.div
+          ref={resultRef}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           className="grid md:grid-cols-2 gap-4"
