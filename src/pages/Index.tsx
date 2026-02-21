@@ -7,6 +7,7 @@ import lazyWithRetry from "@/lib/lazyWithRetry";
 
 const ComparisonSection = lazyWithRetry(() => import("@/components/ComparisonSection"));
 const ReGraphLLMSection = lazyWithRetry(() => import("@/components/ReGraphLLMSection"));
+const MobileAISection = lazyWithRetry(() => import("@/components/MobileAISection"));
 const HowItWorksSection = lazyWithRetry(() => import("@/components/HowItWorksSection"));
 const FeaturesSection = lazyWithRetry(() => import("@/components/FeaturesSection"));
 const APISection = lazyWithRetry(() => import("@/components/APISection"));
@@ -41,6 +42,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <ReGraphLLMSection />
+        </Suspense>
+        <Suspense fallback={<SectionPlaceholder />}>
+          <MobileAISection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <HowItWorksSection />
