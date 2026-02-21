@@ -188,6 +188,33 @@ export type Database = {
         }
         Relationships: []
       }
+      gpu_pricing: {
+        Row: {
+          created_at: string
+          gpu_type: string
+          id: string
+          is_active: boolean
+          price_per_hour: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gpu_type: string
+          id?: string
+          is_active?: boolean
+          price_per_hour?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gpu_type?: string
+          id?: string
+          is_active?: boolean
+          price_per_hour?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       incident_updates: {
         Row: {
           created_at: string
@@ -255,6 +282,42 @@ export type Database = {
           started_at?: string
           status?: Database["public"]["Enums"]["incident_status"]
           title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      model_pricing: {
+        Row: {
+          category: string
+          created_at: string
+          display_name: string
+          id: string
+          is_active: boolean
+          model_id: string
+          price_per_1k_input_tokens: number
+          price_per_1k_output_tokens: number
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          display_name: string
+          id?: string
+          is_active?: boolean
+          model_id: string
+          price_per_1k_input_tokens?: number
+          price_per_1k_output_tokens?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          display_name?: string
+          id?: string
+          is_active?: boolean
+          model_id?: string
+          price_per_1k_input_tokens?: number
+          price_per_1k_output_tokens?: number
           updated_at?: string
         }
         Relationships: []
