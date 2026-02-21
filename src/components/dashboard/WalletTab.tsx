@@ -1054,7 +1054,7 @@ Generated: ${new Date().toISOString()}
                     </div>
                     <div className="text-right">
                       <p className={`font-medium ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
-                        {isIncome ? '+' : '-'}${tx.amount_usd.toFixed(2)}
+                        {isIncome ? '+' : '-'}${tx.amount_usd.toFixed(4)}
                       </p>
                       <div className={`flex items-center gap-1 text-xs ${statusInfo.color}`}>
                         <StatusIcon className="h-3 w-3" />
