@@ -44,16 +44,19 @@ serve(async (req) => {
         formData.set("model", "whisper-1");
       }
 
-      // Map model names
+      // Map model names to VseGPT STT model IDs (require stt-openai/ prefix)
       const model = formData.get("model") as string;
       const modelMapping: Record<string, string> = {
-        "whisper-large-v3": "whisper-1",
-        "whisper-large-v2": "whisper-1",
-        "whisper-1": "whisper-1",
-        "seamless-m4t": "whisper-1",
-        "canary-1b": "whisper-1",
+        "whisper-large-v3": "stt-openai/whisper-v3",
+        "whisper-large-v2": "stt-openai/whisper-1",
+        "whisper-1": "stt-openai/whisper-1",
+        "whisper-v3": "stt-openai/whisper-v3",
+        "whisper-v3-turbo": "stt-openai/whisper-v3-turbo",
+        "gpt-4o-transcribe": "stt-openai/gpt-4o-transcribe",
+        "gpt-4o-mini-transcribe": "stt-openai/gpt-4o-mini-transcribe",
       };
-      formData.set("model", modelMapping[model] || "whisper-1");
+      const mapped = model.startsWith("stt-openai/") ? model : (modelMapping[model] || "stt-openai/whisper-1");
+      formData.set("model", mapped);
 
       vsegptBody = formData;
       // Don't set Content-Type — fetch will set multipart boundary automatically
@@ -73,7 +76,17 @@ serve(async (req) => {
 
       const formData = new FormData();
       formData.append("file", new Blob([bytes], { type: "audio/mpeg" }), "audio.mp3");
-      formData.append("model", model === "whisper-large-v3" ? "whisper-1" : (model || "whisper-1"));
+      const jsonModelMapping: Record<string, string> = {
+        "whisper-large-v3": "stt-openai/whisper-v3",
+        "whisper-large-v2": "stt-openai/whisper-1",
+        "whisper-1": "stt-openai/whisper-1",
+        "whisper-v3": "stt-openai/whisper-v3",
+        "whisper-v3-turbo": "stt-openai/whisper-v3-turbo",
+        "gpt-4o-transcribe": "stt-openai/gpt-4o-transcribe",
+        "gpt-4o-mini-transcribe": "stt-openai/gpt-4o-mini-transcribe",
+      };
+      const mappedModel = (model || "whisper-1").startsWith("stt-openai/") ? model : (jsonModelMapping[model] || "stt-openai/whisper-1");
+      formData.append("model", mappedModel);
       if (language) formData.append("language", language);
       if (prompt) formData.append("prompt", prompt);
       if (response_format) formData.append("response_format", response_format);
