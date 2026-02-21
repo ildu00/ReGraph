@@ -4,32 +4,29 @@
 # Usage:
 #   irm https://regraph.tech/scripts/install.ps1 | iex
 #   .\install.ps1 -Key "YOUR_CONNECTION_KEY"
-#   .\install.ps1 -Key "YOUR_KEY" -GpuMode nvidia -Version "1.2.0"
 
 param(
   [string]$Key = "",
   [ValidateSet("auto", "nvidia", "disabled")]
   [string]$GpuMode = "auto",
-  [string]$Version = "1.2.0",
-  [switch]$NoService,
   [switch]$CpuOnly,
+  [switch]$NoService,
   [switch]$Help
 )
 
 $ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$REGRAPH_REPO = "regraph-tech/agent"
-$REGRAPH_API = "https://github.com/$REGRAPH_REPO/releases/download"
+$REGRAPH_VERSION = "1.2.0"
+$REGRAPH_REPO = "https://github.com/regraph-tech/agent.git"
 $REGRAPH_DIR = "$env:LOCALAPPDATA\ReGraph"
-$REGRAPH_BIN = "$REGRAPH_DIR\bin"
+$REGRAPH_VENV = "$REGRAPH_DIR\venv"
+$REGRAPH_SRC = "$REGRAPH_DIR\src"
 $REGRAPH_CONFIG = "$REGRAPH_DIR\config.yaml"
 $REGRAPH_LOG = "$REGRAPH_DIR\logs"
-$AGENT_EXE = "$REGRAPH_BIN\regraph-agent.exe"
 
 if ($CpuOnly) { $GpuMode = "disabled" }
 
-# ─── Help ─────────────────────────────────────────────────
 if ($Help) {
   Write-Host @"
 
@@ -37,92 +34,108 @@ if ($Help) {
 
   PARAMETERS:
     -Key <STRING>       Connection key from your ReGraph dashboard
-    -GpuMode <STRING>   GPU mode: auto | nvidia | disabled (default: auto)
-    -Version <STRING>   Agent version to install (default: $Version)
-    -CpuOnly            Disable GPU, use CPU only
-    -NoService          Skip Windows Task Scheduler setup
+    -GpuMode <STRING>   auto | nvidia | disabled (default: auto)
+    -CpuOnly            Disable GPU
+    -NoService          Skip Task Scheduler setup
     -Help               Show this message
 
   EXAMPLES:
     irm https://regraph.tech/scripts/install.ps1 | iex
     .\install.ps1 -Key "rg_conn_abc123"
-    .\install.ps1 -Key "rg_conn_abc123" -GpuMode nvidia
 
 "@
   exit 0
 }
 
-# ─── Banner ───────────────────────────────────────────────
-function Print-Banner {
-  Write-Host ""
-  Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
-  Write-Host "║       ReGraph Provider Agent Installer          ║" -ForegroundColor Cyan
-  Write-Host "║              Version $Version                     ║" -ForegroundColor Cyan
-  Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Cyan
-  Write-Host ""
-}
-
+# ─── Helpers ──────────────────────────────────────────────
 function Log-Info  { param([string]$msg) Write-Host "  → $msg" -ForegroundColor Gray }
 function Log-Ok    { param([string]$msg) Write-Host "  ✓ $msg" -ForegroundColor Green }
 function Log-Warn  { param([string]$msg) Write-Host "  ⚠ $msg" -ForegroundColor Yellow }
 function Log-Error { param([string]$msg) Write-Host "  ✗ $msg" -ForegroundColor Red }
 
-# ─── Detect platform ─────────────────────────────────────
-function Detect-Platform {
-  $script:Arch = if ([Environment]::Is64BitOperatingSystem) { "amd64" } else { "386" }
-  $osVer = [System.Environment]::OSVersion.Version
-  Log-Info "Platform: Windows $($osVer.Major).$($osVer.Minor) ($script:Arch)"
+function Print-Banner {
+  Write-Host ""
+  Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Cyan
+  Write-Host "║       ReGraph Provider Agent Installer          ║" -ForegroundColor Cyan
+  Write-Host "║              Version $REGRAPH_VERSION                     ║" -ForegroundColor Cyan
+  Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Cyan
+  Write-Host ""
+}
 
-  if ($osVer.Major -lt 10) {
-    Log-Warn "Windows 10+ recommended. Older versions may have limited support."
+# ─── Check Python ─────────────────────────────────────────
+function Check-Python {
+  $script:PythonCmd = $null
+
+  foreach ($cmd in @("python3", "python", "py")) {
+    $found = Get-Command $cmd -ErrorAction SilentlyContinue
+    if ($found) {
+      try {
+        $ver = & $cmd -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
+        $parts = $ver.Split(".")
+        if ([int]$parts[0] -ge 3 -and [int]$parts[1] -ge 10) {
+          $script:PythonCmd = $cmd
+          break
+        }
+      } catch {}
+    }
   }
+
+  if (-not $script:PythonCmd) {
+    Log-Error "Python 3.10+ is required but not found."
+    Write-Host ""
+    Write-Host "  Download Python from: https://www.python.org/downloads/" -ForegroundColor Cyan
+    Write-Host "  Make sure to check 'Add Python to PATH' during installation." -ForegroundColor Yellow
+    Write-Host ""
+    exit 1
+  }
+
+  $fullVer = & $script:PythonCmd --version 2>&1
+  Log-Ok "Python found: $fullVer"
+}
+
+# ─── Check Git ────────────────────────────────────────────
+function Check-Git {
+  if (-not (Get-Command "git" -ErrorAction SilentlyContinue)) {
+    Log-Error "Git is required but not found."
+    Write-Host ""
+    Write-Host "  Download Git from: https://git-scm.com/download/win" -ForegroundColor Cyan
+    Write-Host ""
+    exit 1
+  }
+  $gitVer = & git --version 2>&1
+  Log-Ok "Git found: $gitVer"
 }
 
 # ─── Detect GPU ───────────────────────────────────────────
 function Detect-GPU {
   if ($GpuMode -eq "disabled") {
-    Log-Info "GPU: disabled (--CpuOnly)"
+    Log-Info "GPU: disabled (-CpuOnly)"
     return
   }
 
   $gpuFound = $false
 
   # NVIDIA
-  $nvidiaSmi = Get-Command "nvidia-smi" -ErrorAction SilentlyContinue
-  if ($nvidiaSmi) {
+  if (Get-Command "nvidia-smi" -ErrorAction SilentlyContinue) {
     $gpuFound = $true
     try {
       $gpuName = & nvidia-smi --query-gpu=name --format=csv,noheader,nounits 2>$null | Select-Object -First 1
       $gpuMem = & nvidia-smi --query-gpu=memory.total --format=csv,noheader,nounits 2>$null | Select-Object -First 1
-      $driverVer = & nvidia-smi --query-gpu=driver_version --format=csv,noheader 2>$null | Select-Object -First 1
       $gpuCount = (& nvidia-smi --query-gpu=name --format=csv,noheader 2>$null | Measure-Object).Count
-
-      Log-Ok "GPU detected: NVIDIA $($gpuName.Trim()) ($($gpuMem.Trim()) MiB VRAM) x $gpuCount — Driver $($driverVer.Trim())"
-      $script:GpuMode = "nvidia"
+      Log-Ok "GPU: NVIDIA $($gpuName.Trim()) ($($gpuMem.Trim()) MiB) x $gpuCount"
     } catch {
-      Log-Ok "NVIDIA GPU detected (details unavailable)"
-      $script:GpuMode = "nvidia"
+      Log-Ok "NVIDIA GPU detected"
     }
-
-    # Check CUDA
-    $nvcc = Get-Command "nvcc" -ErrorAction SilentlyContinue
-    if ($nvcc) {
-      try {
-        $cudaVer = & nvcc --version 2>$null | Select-String "release" | ForEach-Object { $_ -replace '.*release\s+', '' -replace ',.*', '' }
-        Log-Info "CUDA $cudaVer available"
-      } catch {}
-    }
+    $script:GpuMode = "nvidia"
   }
 
-  # DirectML / Generic GPU check
   if (-not $gpuFound) {
     try {
       $gpuDevices = Get-CimInstance -ClassName Win32_VideoController -ErrorAction SilentlyContinue
       foreach ($gpu in $gpuDevices) {
         if ($gpu.Name -notmatch "Microsoft|Basic|Remote") {
           $gpuFound = $true
-          Log-Ok "GPU detected: $($gpu.Name) (DirectML compatible)"
-          $script:GpuMode = "directml"
+          Log-Ok "GPU: $($gpu.Name)"
           break
         }
       }
@@ -131,102 +144,75 @@ function Detect-GPU {
 
   if (-not $gpuFound) {
     $script:GpuMode = "disabled"
-    Log-Warn "No GPU detected — running in CPU-only mode"
+    Log-Warn "No GPU detected — CPU-only mode"
   }
 }
 
-# ─── Download & install ──────────────────────────────────
-function Install-Agent {
-  Log-Info "Creating directories..."
-  New-Item -ItemType Directory -Force -Path $REGRAPH_BIN | Out-Null
+# ─── Clone source ─────────────────────────────────────────
+function Install-Source {
+  New-Item -ItemType Directory -Force -Path $REGRAPH_DIR | Out-Null
   New-Item -ItemType Directory -Force -Path $REGRAPH_LOG | Out-Null
 
-  $archive = "regraph-agent-windows-$script:Arch.zip"
-  $url = "$REGRAPH_API/agent/v$Version/$archive"
-  $checksumUrl = "$url.sha256"
-  $tmpDir = Join-Path $env:TEMP "regraph-install-$(Get-Random)"
-  New-Item -ItemType Directory -Force -Path $tmpDir | Out-Null
+  if (Test-Path "$REGRAPH_SRC\.git") {
+    Log-Info "Updating agent source..."
+    Push-Location $REGRAPH_SRC
+    & git fetch --quiet origin 2>$null
+    & git reset --hard origin/main --quiet 2>$null
+    Pop-Location
+    Log-Ok "Agent source updated"
+  } else {
+    Log-Info "Cloning agent from GitHub..."
+    if (Test-Path $REGRAPH_SRC) { Remove-Item -Recurse -Force $REGRAPH_SRC }
+    & git clone --depth 1 $REGRAPH_REPO $REGRAPH_SRC 2>$null
+    Log-Ok "Agent source cloned"
+  }
+}
 
-  Log-Info "Downloading ReGraph agent v$Version..."
-  Log-Info $url
-
-  try {
-    Invoke-WebRequest -Uri $url -OutFile "$tmpDir\$archive" -UseBasicParsing
-  } catch {
-    Log-Error "Download failed: $($_.Exception.Message)"
-    Log-Info "Check your internet connection or verify version $Version exists."
-    Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
-    exit 1
+# ─── Create venv & install ───────────────────────────────
+function Install-Agent {
+  if (-not (Test-Path $REGRAPH_VENV)) {
+    Log-Info "Creating Python virtual environment..."
+    & $script:PythonCmd -m venv $REGRAPH_VENV
+    Log-Ok "Virtual environment created"
   }
 
-  # Verify checksum
-  Log-Info "Verifying integrity..."
-  try {
-    Invoke-WebRequest -Uri $checksumUrl -OutFile "$tmpDir\$archive.sha256" -UseBasicParsing
-    $expected = (Get-Content "$tmpDir\$archive.sha256" -Raw).Trim().Split(" ")[0]
-    $actual = (Get-FileHash "$tmpDir\$archive" -Algorithm SHA256).Hash.ToLower()
+  $pip = "$REGRAPH_VENV\Scripts\pip.exe"
+  $agentBin = "$REGRAPH_VENV\Scripts\regraph-agent.exe"
 
-    if ($actual -ne $expected) {
-      Log-Error "Checksum verification failed!"
-      Log-Error "Expected: $expected"
-      Log-Error "Actual:   $actual"
-      Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
-      exit 1
+  Log-Info "Installing agent and dependencies..."
+  & $pip install --upgrade pip setuptools wheel --quiet 2>$null
+  & $pip install -e $REGRAPH_SRC --quiet 2>$null
+
+  if ($GpuMode -eq "nvidia") {
+    Log-Info "Installing NVIDIA GPU support..."
+    & $pip install GPUtil --quiet 2>$null
+    try {
+      & $pip install llama-cpp-python --extra-index-url https://abetlen.github.io/llama-cpp-python/whl/cu121 --quiet 2>$null
+    } catch {
+      Log-Warn "llama-cpp-python CUDA install failed — will use CPU fallback"
     }
-    Log-Ok "Checksum verified"
-  } catch {
-    Log-Warn "Checksum file not available — skipping verification"
   }
 
-  # Extract
-  Log-Info "Extracting..."
   try {
-    Expand-Archive -Path "$tmpDir\$archive" -DestinationPath $tmpDir -Force
+    $agentVer = & $agentBin --version 2>$null
+    Log-Ok "Agent installed: $agentVer"
   } catch {
-    Log-Error "Failed to extract archive: $($_.Exception.Message)"
-    Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
-    exit 1
+    Log-Ok "Agent installed to $agentBin"
   }
-
-  # Find and move binary
-  $agentBin = Get-ChildItem -Path $tmpDir -Filter "regraph-agent.exe" -Recurse | Select-Object -First 1
-  if (-not $agentBin) {
-    $agentBin = Get-ChildItem -Path $tmpDir -Filter "regraph-agent*" -Recurse | Where-Object { $_.Extension -eq ".exe" } | Select-Object -First 1
-  }
-
-  if (-not $agentBin) {
-    Log-Error "Agent binary not found in archive"
-    Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
-    exit 1
-  }
-
-  # Stop existing agent if running
-  $existingProcess = Get-Process -Name "regraph-agent" -ErrorAction SilentlyContinue
-  if ($existingProcess) {
-    Log-Info "Stopping existing agent process..."
-    Stop-Process -Name "regraph-agent" -Force -ErrorAction SilentlyContinue
-    Start-Sleep -Seconds 2
-  }
-
-  Copy-Item -Path $agentBin.FullName -Destination $AGENT_EXE -Force
-  Remove-Item -Recurse -Force $tmpDir -ErrorAction SilentlyContinue
-
-  Log-Ok "Agent installed to $AGENT_EXE"
 }
 
 # ─── Write config ─────────────────────────────────────────
 function Write-AgentConfig {
   if (Test-Path $REGRAPH_CONFIG) {
-    Log-Warn "Config already exists at $REGRAPH_CONFIG — preserving"
+    Log-Warn "Config exists at $REGRAPH_CONFIG — preserving"
     return
   }
 
+  $logDir = $REGRAPH_LOG -replace '\\', '/'
+
   $config = @"
 # ReGraph Provider Agent Configuration
-# Documentation: https://regraph.tech/docs
-
-agent:
-  version: "$Version"
+# https://regraph.tech/docs
 
 network:
   api_url: "https://api.regraph.tech"
@@ -240,9 +226,8 @@ compute:
 
 logging:
   level: "info"
-  directory: "$($REGRAPH_LOG -replace '\\', '/')"
+  directory: "$logDir"
   max_size_mb: 100
-  rotate: true
 
 provider:
   auto_update: true
@@ -256,33 +241,34 @@ provider:
 
 # ─── Add to PATH ──────────────────────────────────────────
 function Configure-Path {
+  $venvBin = "$REGRAPH_VENV\Scripts"
   $userPath = [Environment]::GetEnvironmentVariable("Path", "User")
-  if ($userPath -notlike "*$REGRAPH_BIN*") {
-    [Environment]::SetEnvironmentVariable("Path", "$userPath;$REGRAPH_BIN", "User")
-    $env:Path = "$env:Path;$REGRAPH_BIN"
+  if ($userPath -notlike "*$venvBin*") {
+    [Environment]::SetEnvironmentVariable("Path", "$userPath;$venvBin", "User")
+    $env:Path = "$env:Path;$venvBin"
     Log-Ok "Added to user PATH"
   } else {
     Log-Info "PATH already configured"
   }
 }
 
-# ─── Install scheduled task ──────────────────────────────
-function Install-ScheduledTask {
+# ─── Scheduled task ───────────────────────────────────────
+function Install-ScheduledTask-Agent {
   if ($NoService) {
-    Log-Info "Scheduled task installation skipped (-NoService)"
+    Log-Info "Scheduled task skipped (-NoService)"
     return
   }
 
   $taskName = "ReGraphAgent"
+  $agentBin = "$REGRAPH_VENV\Scripts\regraph-agent.exe"
 
-  # Remove existing task
   $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
   if ($existing) {
     Unregister-ScheduledTask -TaskName $taskName -Confirm:$false -ErrorAction SilentlyContinue
   }
 
   try {
-    $action = New-ScheduledTaskAction -Execute $AGENT_EXE -Argument "--config `"$REGRAPH_CONFIG`"" -WorkingDirectory $REGRAPH_DIR
+    $action = New-ScheduledTaskAction -Execute $agentBin -Argument "run --config `"$REGRAPH_CONFIG`"" -WorkingDirectory $REGRAPH_DIR
     $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
     $settings = New-ScheduledTaskSettingsSet `
       -AllowStartIfOnBatteries `
@@ -292,29 +278,12 @@ function Install-ScheduledTask {
       -RestartInterval (New-TimeSpan -Minutes 1) `
       -ExecutionTimeLimit (New-TimeSpan -Days 365)
 
-    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "ReGraph Provider Agent — Decentralized AI Compute" | Out-Null
+    Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Description "ReGraph Provider Agent" | Out-Null
 
-    Log-Ok "Scheduled task '$taskName' created (starts at login)"
-    Log-Info "Start now:   schtasks /run /tn $taskName"
-    Log-Info "Stop:        schtasks /end /tn $taskName"
+    Log-Ok "Scheduled task created (starts at login)"
+    Log-Info "Start now: schtasks /run /tn $taskName"
   } catch {
     Log-Warn "Failed to create scheduled task: $($_.Exception.Message)"
-    Log-Info "You can start the agent manually: regraph-agent --config `"$REGRAPH_CONFIG`""
-  }
-}
-
-# ─── Verify ───────────────────────────────────────────────
-function Verify-Install {
-  if (-not (Test-Path $AGENT_EXE)) {
-    Log-Error "Installation verification failed — binary not found"
-    exit 1
-  }
-
-  try {
-    $agentVersion = & $AGENT_EXE --version 2>$null
-    Log-Ok "Agent binary verified: $agentVersion"
-  } catch {
-    Log-Ok "Agent binary exists at $AGENT_EXE"
   }
 }
 
@@ -325,7 +294,8 @@ function Print-Summary {
   Write-Host "  Installation complete!" -ForegroundColor Green
   Write-Host "════════════════════════════════════════════════════" -ForegroundColor Green
   Write-Host ""
-  Write-Host "  Agent:   $AGENT_EXE"
+  Write-Host "  Agent:   $REGRAPH_VENV\Scripts\regraph-agent.exe"
+  Write-Host "  Source:  $REGRAPH_SRC"
   Write-Host "  Config:  $REGRAPH_CONFIG"
   Write-Host "  Logs:    $REGRAPH_LOG"
   Write-Host "  GPU:     $GpuMode"
@@ -333,34 +303,34 @@ function Print-Summary {
 
   if ([string]::IsNullOrEmpty($Key)) {
     Write-Host "  ⚠ No connection key provided." -ForegroundColor Yellow
-    Write-Host "  Get your key from: " -NoNewline
-    Write-Host "https://regraph.tech/dashboard" -ForegroundColor Cyan
+    Write-Host "  Get your key: " -NoNewline; Write-Host "https://regraph.tech/dashboard" -ForegroundColor Cyan
     Write-Host ""
-    Write-Host "  Then start the agent:"
-    Write-Host "    regraph-agent --key YOUR_CONNECTION_KEY" -ForegroundColor White
+    Write-Host "  Then run:"
+    Write-Host "    regraph-agent start --key YOUR_CONNECTION_KEY" -ForegroundColor White
   } else {
     Write-Host "  Start the agent:"
     if (-not $NoService) {
       Write-Host "    schtasks /run /tn ReGraphAgent" -ForegroundColor White
     } else {
-      Write-Host "    regraph-agent --config `"$REGRAPH_CONFIG`"" -ForegroundColor White
+      Write-Host "    regraph-agent start --key $Key" -ForegroundColor White
     }
   }
 
   Write-Host ""
-  Write-Host "  Documentation:  " -NoNewline; Write-Host "https://regraph.tech/docs" -ForegroundColor Cyan
-  Write-Host "  Dashboard:      " -NoNewline; Write-Host "https://regraph.tech/dashboard" -ForegroundColor Cyan
-  Write-Host "  Support:        " -NoNewline; Write-Host "https://regraph.tech/support" -ForegroundColor Cyan
+  Write-Host "  Docs:      " -NoNewline; Write-Host "https://regraph.tech/docs" -ForegroundColor Cyan
+  Write-Host "  Dashboard: " -NoNewline; Write-Host "https://regraph.tech/dashboard" -ForegroundColor Cyan
+  Write-Host "  Support:   " -NoNewline; Write-Host "https://regraph.tech/support" -ForegroundColor Cyan
   Write-Host ""
 }
 
 # ─── Main ─────────────────────────────────────────────────
 Print-Banner
-Detect-Platform
+Check-Python
+Check-Git
 Detect-GPU
+Install-Source
 Install-Agent
 Write-AgentConfig
 Configure-Path
-Install-ScheduledTask
-Verify-Install
+Install-ScheduledTask-Agent
 Print-Summary
