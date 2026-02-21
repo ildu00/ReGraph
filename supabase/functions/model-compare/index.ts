@@ -62,9 +62,10 @@ serve(async (req) => {
       };
 
       if (model.startsWith("openai/")) {
-        body.max_completion_tokens = 4096;
+        body.max_completion_tokens = 16384;
       } else {
-        body.max_tokens = 4096;
+        body.max_tokens = 16384;
+      }
       }
 
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -91,7 +92,12 @@ serve(async (req) => {
       const data = await resp.json();
       const latency = Date.now() - start;
       const content = data.choices?.[0]?.message?.content || "";
+      const finishReason = data.choices?.[0]?.finish_reason || "unknown";
       const tokens = data.usage?.total_tokens || 0;
+      console.log(`Model ${model}: finish_reason=${finishReason}, content_length=${content.length}, tokens=${tokens}`);
+      if (!content && finishReason !== "stop") {
+        return { error: `Model returned empty response (finish_reason: ${finishReason})`, latency };
+      }
       return { content, latency, tokens };
     };
 
