@@ -45,7 +45,7 @@ const whyMobile = [
   {
     icon: Coins,
     title: "Earn Passively",
-    desc: "Rent your phone's idle compute to the network. Earn RGT tokens 24/7 — especially overnight while charging.",
+    desc: "Rent your phone's idle compute to the network. Earn USD 24/7 — especially overnight while charging.",
   },
   {
     icon: Shield,
@@ -77,7 +77,7 @@ const howItWorks = [
     step: "04",
     title: "Get Paid",
     description:
-      "Earn RGT tokens for every completed job. Withdraw anytime. The more compute you contribute, the more you earn — same economics as GPU providers.",
+      "Earn USD for every completed job. Withdraw anytime. The more compute you contribute, the more you earn — same economics as GPU providers.",
   },
 ];
 
@@ -128,7 +128,7 @@ const specs = [
   { label: "Platforms", value: "Android 12+, iOS 17+" },
   { label: "Min RAM", value: "4 GB" },
   { label: "Background Mode", value: "Yes — works while charging" },
-  { label: "Earnings", value: "RGT tokens, same payout system as GPU providers" },
+  { label: "Earnings", value: "USD, same payout system as GPU providers" },
 ];
 
 const Mobile = () => {
@@ -138,7 +138,7 @@ const Mobile = () => {
         <title>Mobile Compute Network — ReGraph | Earn with Your Smartphone</title>
         <meta
           name="description"
-          content="Turn your smartphone into a decentralized AI compute node. Earn RGT tokens by contributing your phone's idle GPU, NPU, and CPU power to the ReGraph network."
+          content="Turn your smartphone into a decentralized AI compute node. Earn USD by contributing your phone's idle GPU, NPU, and CPU power to the ReGraph network."
         />
         <link rel="canonical" href="https://regraph.tech/mobile" />
       </Helmet>
