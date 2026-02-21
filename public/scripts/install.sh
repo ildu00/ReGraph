@@ -9,7 +9,8 @@
 set -euo pipefail
 
 REGRAPH_VERSION="1.2.0"
-REGRAPH_API="https://releases.regraph.tech"
+REGRAPH_REPO="regraph-tech/agent"
+REGRAPH_API="https://github.com/$REGRAPH_REPO/releases/download"
 REGRAPH_DIR="$HOME/.regraph"
 REGRAPH_BIN="$REGRAPH_DIR/bin"
 REGRAPH_CONFIG="$REGRAPH_DIR/config.yaml"
