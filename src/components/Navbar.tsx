@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
+import { Menu, X, Zap, LayoutDashboard, Pickaxe } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -247,6 +247,16 @@ const Navbar = () => {
                 </a>
               )
             )}
+            <Link
+              to="/mobile"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className={`text-lg py-3 border-b border-border flex items-center gap-2 ${
+                location.pathname === "/mobile" ? "text-primary font-medium" : "text-foreground"
+              }`}
+            >
+              <Pickaxe className="h-5 w-5" />
+              AI Mining
+            </Link>
             <div className="flex flex-col gap-3 mt-4">
               {!loading && user ? (
                 <Button size="lg" className="glow-primary" asChild>
