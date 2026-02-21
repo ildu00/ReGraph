@@ -38,6 +38,22 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.0",
+    date: "February 21, 2026",
+    title: "Dynamic Pricing & Public Pricing Page",
+    type: "major",
+    changes: [
+      { category: "feature", description: "Dedicated /pricing page with Free & Pro plan cards, GPU hourly rates, and per-model token pricing — all pulled live from the database" },
+      { category: "feature", description: "Admin Pricing Management panel — full CRUD for GPU hourly rates and model token costs with active/inactive toggles" },
+      { category: "feature", description: "Homepage comparison table now displays real-time cheapest GPU and inference prices from admin-configured data" },
+      { category: "feature", description: "Models page (/models) reflects dynamic per-token pricing set in the admin panel" },
+      { category: "feature", description: "/v1/models API endpoint enriched with live pricing from the model_pricing table" },
+      { category: "improvement", description: "Navbar Pricing link now routes to the dedicated /pricing page instead of an anchor scroll" },
+      { category: "improvement", description: "Footer pricing link updated to point to /pricing" },
+      { category: "improvement", description: "Fallback defaults ensure pricing sections render gracefully when database is unavailable" },
+    ]
+  },
+  {
     version: "2.8.2",
     date: "February 21, 2026",
     title: "Documentation Redesign & STT Model Fix",
