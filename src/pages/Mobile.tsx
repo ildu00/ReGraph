@@ -4,6 +4,7 @@ import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import {
   Smartphone,
   Zap,
@@ -131,6 +132,21 @@ const specs = [
   { label: "Earnings", value: "USD, same payout system as GPU providers" },
 ];
 
+const StartEarningButton = () => {
+  const { user } = useAuth();
+  const to = user
+    ? "/dashboard?tab=mining"
+    : "/auth?redirect=mining";
+  return (
+    <Link to={to}>
+      <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold">
+        Start Earning
+        <Coins className="ml-2 h-5 w-5" />
+      </Button>
+    </Link>
+  );
+};
+
 const Mobile = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -170,12 +186,7 @@ const Mobile = () => {
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/auth">
-                  <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold">
-                    Start Earning
-                    <Coins className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+                <StartEarningButton />
                 <Link to="/docs">
                   <Button
                     variant="outline"
