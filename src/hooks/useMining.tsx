@@ -50,10 +50,12 @@ export const MiningProvider = ({ children }: { children: ReactNode }) => {
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const currentTaskRef = useRef<string | null>(null);
   const connectionKeyRef = useRef(connectionKey);
+  const deviceIdRef = useRef<string | null>(null);
 
   // Keep ref in sync
   useEffect(() => { connectionKeyRef.current = connectionKey; }, [connectionKey]);
   useEffect(() => { currentTaskRef.current = currentTask; }, [currentTask]);
+  useEffect(() => { deviceIdRef.current = deviceId; }, [deviceId]);
 
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
@@ -75,15 +77,27 @@ export const MiningProvider = ({ children }: { children: ReactNode }) => {
     });
   }, [supabaseUrl, anonKey]);
 
-  const stopMining = useCallback(() => {
+  const stopMining = useCallback(async () => {
     if (pollRef.current) clearInterval(pollRef.current);
     if (heartbeatRef.current) clearInterval(heartbeatRef.current);
     pollRef.current = null;
     heartbeatRef.current = null;
+
+    // Notify server that device is going offline
+    const devId = deviceIdRef.current;
+    if (devId) {
+      try {
+        await apiCall(`devices/${devId}/heartbeat`, {
+          method: "POST",
+          body: JSON.stringify({ status: "offline", metrics: {} }),
+        });
+      } catch { /* silent */ }
+    }
+
     setStatus("idle");
     setCurrentTask(null);
     setDeviceId(null);
-  }, []);
+  }, [apiCall]);
 
   const sendHeartbeat = useCallback(async (devId: string) => {
     try {
