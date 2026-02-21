@@ -103,7 +103,7 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "No prompt or messages provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // --- AGENT MODE: queue task in provider_tasks and poll for result ---
+    // --- AGENT MODE: queue task in provider_tasks ---
     if (useAgents) {
       const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
       const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -132,8 +132,23 @@ serve(async (req) => {
         return new Response(JSON.stringify({ error: "Failed to queue agent task", details: insertErr?.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
 
-      // Poll for completion (max ~60s)
       const taskId = task.id;
+      const useAsync = body.async === true;
+
+      // --- ASYNC MODE: return task_id immediately ---
+      if (useAsync) {
+        logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 202, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+        return new Response(JSON.stringify({
+          id: taskId,
+          object: "agent.task",
+          status: "pending",
+          created: Math.floor(Date.now() / 1000),
+          poll_url: `/v1/tasks/${taskId}`,
+          message: "Task queued. Poll the poll_url to check status.",
+        }), { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // --- SYNC MODE: poll for completion (max ~60s) ---
       const pollStart = Date.now();
       const POLL_TIMEOUT = 60_000;
       const POLL_INTERVAL = 1_000;
