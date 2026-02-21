@@ -22,11 +22,11 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, compareModel } = await req.json();
+    const { prompts, compareModel } = await req.json();
 
-    if (!prompt || !compareModel) {
+    if (!prompts || !Array.isArray(prompts) || prompts.length === 0 || !compareModel) {
       return new Response(
-        JSON.stringify({ error: "prompt and compareModel are required" }),
+        JSON.stringify({ error: "prompts (array) and compareModel are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,21 +44,27 @@ serve(async (req) => {
       );
     }
 
+    // Build a single combined prompt with all items numbered
+    const numberedPrompts = prompts
+      .map((p: string, i: number) => `${i + 1}. ${p}`)
+      .join("\n");
+
+    const userMessage = `Answer each of the following ${prompts.length} questions/tasks. For each one, start your answer with the exact header "## ${prompts.length > 1 ? '{number}' : '1'}. {original question}" and provide a thorough response below it. Separate each answer clearly.\n\n${numberedPrompts}`;
+
     const makeRequest = async (model: string, systemPrompt: string) => {
       const start = Date.now();
       const body: Record<string, unknown> = {
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: userMessage },
         ],
       };
 
-      // OpenAI models require max_completion_tokens, others use max_tokens
       if (model.startsWith("openai/")) {
-        body.max_completion_tokens = 1024;
+        body.max_completion_tokens = 4096;
       } else {
-        body.max_tokens = 1024;
+        body.max_tokens = 4096;
       }
 
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -89,15 +95,14 @@ serve(async (req) => {
       return { content, latency, tokens };
     };
 
-    // Run both in parallel
     const [regraphResult, compareResult] = await Promise.all([
       makeRequest(
         REGRAPH_MODEL,
-        "You are ReGraph LLM, a state-of-the-art AI model trained on 4.2T tokens with continuous daily updates. You are highly knowledgeable, accurate, concise, and helpful. Respond in the same language as the user's prompt."
+        "You are ReGraph LLM, a state-of-the-art AI model trained on 4.2T tokens with continuous daily updates. You are highly knowledgeable, accurate, concise, and helpful. Respond in the same language as the user's prompt. Use markdown formatting."
       ),
       makeRequest(
         gatewayModel,
-        "You are a helpful AI assistant. Respond in the same language as the user's prompt."
+        "You are a helpful AI assistant. Respond in the same language as the user's prompt. Use markdown formatting."
       ),
     ]);
 

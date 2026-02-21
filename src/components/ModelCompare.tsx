@@ -52,7 +52,6 @@ interface CompareResult {
 
 const ModelCompare = () => {
   const [prompts, setPrompts] = useState(DEFAULT_PROMPTS);
-  const [selectedPromptIdx, setSelectedPromptIdx] = useState(0);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
   const [compareModel, setCompareModel] = useState("gpt-4o");
@@ -61,13 +60,12 @@ const ModelCompare = () => {
   const [showAllPrompts, setShowAllPrompts] = useState(false);
 
   const handleRun = async () => {
-    const prompt = prompts[selectedPromptIdx];
     setLoading(true);
     setResult(null);
 
     try {
       const { data, error } = await supabase.functions.invoke("model-compare", {
-        body: { prompt, compareModel },
+        body: { prompts, compareModel },
       });
 
       if (error) {
@@ -98,7 +96,6 @@ const ModelCompare = () => {
 
   const resetPrompts = () => {
     setPrompts(DEFAULT_PROMPTS);
-    setSelectedPromptIdx(0);
     setResult(null);
     toast.success("Prompts reset to defaults");
   };
@@ -169,10 +166,7 @@ const ModelCompare = () => {
           {visiblePrompts.map((prompt, idx) => (
             <div
               key={idx}
-              className={`flex items-start gap-2 p-3 cursor-pointer transition-colors hover:bg-primary/5 ${
-                selectedPromptIdx === idx ? "bg-primary/10 border-l-2 border-l-primary" : ""
-              }`}
-              onClick={() => setSelectedPromptIdx(idx)}
+              className="flex items-start gap-2 p-3 transition-colors hover:bg-primary/5"
             >
               <span className="text-xs font-mono text-muted-foreground w-6 shrink-0 pt-0.5 text-right">
                 {idx + 1}.
@@ -211,10 +205,10 @@ const ModelCompare = () => {
         </div>
       </div>
 
-      {/* Active prompt preview */}
+      {/* Info */}
       <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-        <p className="text-xs font-mono text-primary mb-1">Active prompt #{selectedPromptIdx + 1}</p>
-        <p className="text-sm">{prompts[selectedPromptIdx]}</p>
+        <p className="text-xs font-mono text-primary mb-1">All {prompts.length} prompts will be sent in a single request</p>
+        <p className="text-sm text-muted-foreground">Both models will answer each prompt. Results are displayed side-by-side for comparison.</p>
       </div>
 
       {/* Results */}
