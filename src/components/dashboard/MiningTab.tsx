@@ -368,7 +368,7 @@ const MiningTab = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-foreground shrink-0">3.</span>
-                Scroll down and tap <span className="font-medium text-foreground">"Add to Home Screen"</span>
+                Scroll down and tap <span className="font-medium text-foreground whitespace-nowrap">"Add to Home Screen"</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-foreground shrink-0">4.</span>
@@ -394,7 +394,7 @@ const MiningTab = () => {
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-foreground shrink-0">3.</span>
-                Tap <span className="font-medium text-foreground">"Install app"</span> or <span className="font-medium text-foreground">"Add to Home Screen"</span>
+                Tap <span className="font-medium text-foreground whitespace-nowrap">"Install app"</span> or <span className="font-medium text-foreground whitespace-nowrap">"Add to Home Screen"</span>
               </li>
               <li className="flex items-start gap-2">
                 <span className="font-bold text-foreground shrink-0">4.</span>
