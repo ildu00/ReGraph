@@ -51,10 +51,12 @@ const mediaItems = [
 const advancedItems = [
   { id: "training", label: "Fine-Tuning", icon: Cpu },
   { id: "batch", label: "Batch Processing", icon: Database },
+  { id: "async-tasks", label: "Async Tasks", icon: Radio },
 ];
 
 const resourceItems = [
   { id: "provider-setup", label: "Provider Setup", icon: Server },
+  { id: "provider-api", label: "Provider API", icon: Webhook },
   { id: "api-playground", label: "API Playground", icon: PlayCircle },
   { id: "security", label: "Security", icon: Shield },
 ];
