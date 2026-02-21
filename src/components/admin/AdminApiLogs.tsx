@@ -189,18 +189,18 @@ export const AdminApiLogs = () => {
               <p className="text-sm mt-1">Requests to api.regraph.tech will appear here</p>
             </div>
           ) : (
-            <div className="overflow-hidden">
-              <Table>
+            <div className="overflow-x-auto">
+              <Table className="table-fixed w-full">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[70px]">Method</TableHead>
-                    <TableHead>Endpoint</TableHead>
-                    <TableHead className="hidden lg:table-cell">Request Body</TableHead>
-                    <TableHead className="w-[60px]">Status</TableHead>
-                    <TableHead className="w-[60px] hidden md:table-cell">Time</TableHead>
-                    <TableHead className="w-[90px] hidden xl:table-cell">API Key</TableHead>
-                    <TableHead className="w-[100px] hidden xl:table-cell">IP</TableHead>
-                    <TableHead className="w-[150px] hidden sm:table-cell">Date & Time</TableHead>
+                    <TableHead className="w-[72px]">Method</TableHead>
+                    <TableHead className="w-auto min-w-0">Endpoint</TableHead>
+                    <TableHead className="hidden lg:table-cell w-[200px] min-w-0">Request Body</TableHead>
+                    <TableHead className="w-[56px]">Status</TableHead>
+                    <TableHead className="w-[64px] hidden md:table-cell">Time</TableHead>
+                    <TableHead className="w-[80px] hidden xl:table-cell">API Key</TableHead>
+                    <TableHead className="w-[96px] hidden xl:table-cell">IP</TableHead>
+                    <TableHead className="w-[140px] hidden sm:table-cell">Date & Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -211,13 +211,13 @@ export const AdminApiLogs = () => {
                           {log.method}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-mono text-xs truncate max-w-[200px]" title={log.endpoint}>
+                      <TableCell className="font-mono text-xs truncate" title={log.endpoint}>
                         {log.endpoint}
                         <div className="sm:hidden text-[10px] text-muted-foreground font-sans mt-0.5">
                           {formatTime(log.created_at)}
                         </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell max-w-[250px]">
+                      <TableCell className="hidden lg:table-cell">
                         <span className="text-xs text-muted-foreground truncate block">
                           {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
                         </span>
@@ -230,7 +230,7 @@ export const AdminApiLogs = () => {
                       <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                         {log.response_time_ms}ms
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell text-xs font-mono text-muted-foreground truncate max-w-[90px]">
+                      <TableCell className="hidden xl:table-cell text-xs font-mono text-muted-foreground truncate">
                         {log.api_key_prefix || "—"}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
