@@ -26,12 +26,6 @@ export function useVisualViewport() {
     const vv = window.visualViewport;
     if (!vv) return;
     
-    // Force scroll to top to prevent Safari from scrolling
-    // fixed elements out of view when keyboard opens
-    if (vv.offsetTop > 0) {
-      window.scrollTo(0, 0);
-    }
-    
     setState({
       height: vv.height,
       offsetTop: vv.offsetTop,
