@@ -198,13 +198,15 @@ Deno.serve(async (req) => {
         return err(404, "Not found", "Device not found or access denied");
       }
 
-      let metrics: any = {};
-      try { metrics = (await req.json())?.metrics || {}; } catch { /* empty body ok */ }
+      let body: any = {};
+      try { body = await req.json(); } catch { /* empty body ok */ }
+      const metrics = body.metrics || {};
+      const deviceStatus = body.status === "offline" ? "offline" : "online";
 
       await supabase
         .from("provider_devices")
         .update({
-          status: "online",
+          status: deviceStatus,
           last_seen_at: new Date().toISOString(),
           last_heartbeat_at: new Date().toISOString(),
           metrics,
