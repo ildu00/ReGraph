@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, LayoutDashboard, Pickaxe } from "lucide-react";
+import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
@@ -10,6 +10,10 @@ const navItems = [
   { label: "Features", href: "#features", isRoute: false },
   { label: "API", href: "#api", isRoute: false },
   { label: "Docs", href: "/docs", isRoute: true },
+];
+
+const mobileOnlyItems = [
+  { label: "AI Mining", href: "/mobile", afterItem: "Features" },
 ];
 
 const Navbar = () => {
@@ -219,8 +223,8 @@ const Navbar = () => {
           aria-modal="true"
         >
           <div className="flex flex-col gap-4">
-            {navItems.map((item) =>
-              item.isRoute ? (
+            {navItems.flatMap((item) => {
+              const rendered = item.isRoute ? (
                 <Link
                   key={item.label}
                   to={item.href}
@@ -245,18 +249,23 @@ const Navbar = () => {
                 >
                   {item.label}
                 </a>
-              )
-            )}
-            <Link
-              to="/mobile"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className={`text-lg py-3 border-b border-border flex items-center gap-2 ${
-                location.pathname === "/mobile" ? "text-primary font-medium" : "text-foreground"
-              }`}
-            >
-              <Pickaxe className="h-5 w-5" />
-              AI Mining
-            </Link>
+              );
+              const extras = mobileOnlyItems
+                .filter((m) => m.afterItem === item.label)
+                .map((m) => (
+                  <Link
+                    key={m.label}
+                    to={m.href}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`text-lg py-3 border-b border-border ${
+                      location.pathname === m.href ? "text-primary font-medium" : "text-foreground"
+                    }`}
+                  >
+                    {m.label}
+                  </Link>
+                ));
+              return [rendered, ...extras];
+            })}
             <div className="flex flex-col gap-3 mt-4">
               {!loading && user ? (
                 <Button size="lg" className="glow-primary" asChild>
