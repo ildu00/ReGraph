@@ -181,7 +181,7 @@ const ModelCompare = () => {
             {showAllPrompts ? "Show less" : `Show all ${prompts.length}`}
           </Button>
         </div>
-        <div className="divide-y divide-border max-h-[400px] overflow-y-auto">
+        <div className={`divide-y divide-border overflow-y-auto ${showAllPrompts ? "max-h-none" : "max-h-[400px]"}`}>
           {visiblePrompts.map((prompt, idx) => (
             <div
               key={idx}
