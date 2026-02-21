@@ -6,9 +6,9 @@ import { Link } from "react-router-dom";
 const highlights = [
   {
     icon: Network,
-    title: "Billions of Devices, One Network",
+    title: "Massive Untapped Compute",
     description:
-      "There are 7 billion smartphones on the planet. ReGraph turns idle mobile compute into a massive decentralized AI supercluster.",
+      "Millions of smartphones sit idle every day. ReGraph turns that dormant mobile compute into a decentralized AI supercluster.",
   },
   {
     icon: Coins,
@@ -41,10 +41,10 @@ const MobileAISection = () => {
             <span className="text-sm font-mono text-accent">Mobile Compute Network</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            7 Billion Phones. <span className="text-gradient-primary">One Network.</span>
+            Every Phone Is a <span className="text-gradient-primary">Compute Node</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Smartphones are the most abundant compute devices on Earth. ReGraph lets anyone contribute their phone's idle power to a decentralized AI network — and get paid for it.
+            Smartphones are the most widespread compute devices on the planet. ReGraph lets anyone contribute their phone's idle power to a decentralized AI network — and get paid for it.
           </p>
         </motion.div>
 
