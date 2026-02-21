@@ -21,6 +21,8 @@ import {
   Server,
   Layers,
   Lock,
+  Share,
+  Monitor,
 } from "lucide-react";
 
 const fadeUp = {
@@ -55,9 +57,9 @@ const whyMobile = [
 const howItWorks = [
   {
     step: "01",
-    title: "Install the ReGraph App",
+    title: "Install the ReGraph PWA",
     description:
-      "Download the lightweight ReGraph provider app on Android or iOS. Under 20 MB. No root or jailbreak needed.",
+      "Open regraph.tech in your browser and install it as a Progressive Web App — no app store needed. Works on any phone or computer.",
   },
   {
     step: "02",
@@ -249,6 +251,82 @@ const Mobile = () => {
                 </motion.div>
               ))}
             </div>
+          </div>
+        </section>
+
+        {/* Install the App */}
+        <section className="py-20">
+          <div className="container px-4">
+            <motion.div {...fadeUp} className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Install the <span className="text-gradient-primary">App</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                ReGraph is a Progressive Web App — install it directly from your browser in seconds. No app store, no downloads, no waiting.
+              </p>
+            </motion.div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-4xl mx-auto">
+              {/* iOS */}
+              <motion.div {...fadeUp} className="p-6 rounded-xl bg-card/50 border border-border">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <Smartphone className="h-5 w-5 text-accent" />
+                  </div>
+                  <h3 className="font-semibold text-lg">iPhone / iPad</h3>
+                </div>
+                <ol className="space-y-3 text-sm text-muted-foreground list-none">
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">1</span>
+                    Open <code className="text-primary mx-1">regraph.tech</code> in <strong className="text-foreground">Safari</strong>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">2</span>
+                    <span>Tap the <Share className="inline h-4 w-4 text-primary -mt-0.5" /> <strong className="text-foreground">Share</strong> button</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">3</span>
+                    <span>Scroll down and tap <strong className="text-foreground whitespace-nowrap">"Add to Home Screen"</strong></span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">4</span>
+                    Open the app → Dashboard → AI Mining → paste your key and start
+                  </li>
+                </ol>
+              </motion.div>
+
+              {/* Android / Desktop */}
+              <motion.div {...fadeUp} transition={{ delay: 0.1 }} className="p-6 rounded-xl bg-card/50 border border-border">
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center">
+                    <Monitor className="h-5 w-5 text-accent" />
+                  </div>
+                  <h3 className="font-semibold text-lg">Android / Desktop</h3>
+                </div>
+                <ol className="space-y-3 text-sm text-muted-foreground list-none">
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">1</span>
+                    Open <code className="text-primary mx-1">regraph.tech</code> in <strong className="text-foreground">Chrome</strong>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">2</span>
+                    Tap the <strong className="text-foreground">⋮ menu</strong> (top right)
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">3</span>
+                    <span>Tap <strong className="text-foreground whitespace-nowrap">"Install app"</strong> or <strong className="text-foreground whitespace-nowrap">"Add to Home Screen"</strong></span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <span className="flex items-center justify-center w-6 h-6 rounded-full bg-primary/20 text-primary text-xs font-bold shrink-0">4</span>
+                    Open the app → Dashboard → AI Mining → paste your key and start
+                  </li>
+                </ol>
+              </motion.div>
+            </div>
+
+            <motion.p {...fadeUp} className="text-center text-sm text-muted-foreground mt-8 max-w-xl mx-auto">
+              The installed PWA runs in the background and survives tab closure — perfect for continuous mining while your device charges overnight.
+            </motion.p>
           </div>
         </section>
 
