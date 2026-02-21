@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
 
 const corsHeaders = {
@@ -6,7 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Comprehensive model catalog
+// Comprehensive model catalog (base data)
 const modelCatalog = [
   { id: "regraph/ReGraph-LLM", category: "llm", provider: "ReGraph", context_length: 256000, price_per_1k_tokens: 0.0003, latency_ms: 500 },
   { id: "meta-llama/Llama-3-70B", category: "llm", provider: "Meta", context_length: 8192, price_per_1k_tokens: 0.0002, latency_ms: 450 },
@@ -75,6 +76,46 @@ const modelCatalog = [
   { id: "google/Gemma-7B-FT", category: "fine-tune", provider: "Google", context_length: 8192, price_per_1k_tokens: 0.00003, training_price_per_1k_tokens: 0.00025, latency_ms: 140 },
 ];
 
+// Fetch dynamic pricing from model_pricing table and merge with catalog
+async function getModelsWithDynamicPricing() {
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: pricingData } = await supabase
+      .from("model_pricing")
+      .select("model_id, price_per_1k_input_tokens, price_per_1k_output_tokens, is_active")
+      .eq("is_active", true);
+
+    if (!pricingData || pricingData.length === 0) return modelCatalog;
+
+    // Build a map: lowercase model_id -> pricing
+    const pricingMap = new Map<string, { input: number; output: number }>();
+    for (const p of pricingData) {
+      pricingMap.set(p.model_id.toLowerCase(), {
+        input: Number(p.price_per_1k_input_tokens),
+        output: Number(p.price_per_1k_output_tokens),
+      });
+    }
+
+    return modelCatalog.map((model) => {
+      const dbPricing = pricingMap.get(model.id.toLowerCase());
+      if (dbPricing && "price_per_1k_tokens" in model) {
+        return {
+          ...model,
+          price_per_1k_tokens: dbPricing.input,
+          price_per_1k_output_tokens: dbPricing.output,
+        };
+      }
+      return model;
+    });
+  } catch (err) {
+    console.error("Failed to fetch dynamic pricing, using defaults:", err);
+    return modelCatalog;
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -92,7 +133,9 @@ serve(async (req) => {
     const page = parseInt(url.searchParams.get("page") || "1");
     const limit = parseInt(url.searchParams.get("limit") || "50");
 
-    let filteredModels = [...modelCatalog];
+    // Fetch models with dynamic pricing from DB
+    const catalog = await getModelsWithDynamicPricing();
+    let filteredModels = [...catalog];
 
     if (category) {
       filteredModels = filteredModels.filter(m => m.category === category);
@@ -112,12 +155,12 @@ serve(async (req) => {
     const total = filteredModels.length;
     const start = (page - 1) * limit;
     const paginatedModels = filteredModels.slice(start, start + limit);
-    const categories = [...new Set(modelCatalog.map(m => m.category))];
-    const providers = [...new Set(modelCatalog.map(m => m.provider))];
+    const categories = [...new Set(catalog.map(m => m.category))];
+    const providers = [...new Set(catalog.map(m => m.provider))];
 
     const responseBody = JSON.stringify({
       models: paginatedModels, total, page, limit, total_pages: Math.ceil(total / limit),
-      meta: { categories, providers, total_models: modelCatalog.length },
+      meta: { categories, providers, total_models: catalog.length },
     });
 
     logApiRequest({ method: req.method, endpoint: "/v1/models", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });

@@ -1,22 +1,28 @@
 import { motion } from "framer-motion";
 import { Check, X, Minus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const competitors = [
-  {
-    name: "ReGraph",
-    highlight: true,
-    gpuHour: "$0.15",
-    inference: "$0.0001",
-    minCommit: "None",
-    setupFee: "Free",
-    features: {
-      smartphones: true,
-      customHardware: true,
-      payAsYouGo: true,
-      noVendorLock: true,
-      openApi: true,
+const useReGraphPricing = () => {
+  return useQuery({
+    queryKey: ["regraph-comparison-pricing"],
+    queryFn: async () => {
+      const [gpuRes, modelRes] = await Promise.all([
+        supabase.from("gpu_pricing").select("price_per_hour").eq("is_active", true).order("price_per_hour", { ascending: true }).limit(1),
+        supabase.from("model_pricing").select("price_per_1k_input_tokens").eq("is_active", true).order("price_per_1k_input_tokens", { ascending: true }).limit(1),
+      ]);
+      const cheapestGpu = gpuRes.data?.[0]?.price_per_hour ?? 0.15;
+      const cheapestModel = modelRes.data?.[0]?.price_per_1k_input_tokens ?? 0.0001;
+      return {
+        gpuHour: `$${Number(cheapestGpu).toFixed(2)}`,
+        inference: `$${Number(cheapestModel).toFixed(4)}`,
+      };
     },
-  },
+    staleTime: 5 * 60 * 1000,
+  });
+};
+
+const staticCompetitors = [
   {
     name: "AWS SageMaker",
     gpuHour: "$3.06",
@@ -26,7 +32,7 @@ const competitors = [
     features: {
       smartphones: false,
       customHardware: false,
-      payAsYouGo: "partial",
+      payAsYouGo: "partial" as const,
       noVendorLock: false,
       openApi: true,
     },
@@ -54,7 +60,7 @@ const competitors = [
     features: {
       smartphones: false,
       customHardware: false,
-      payAsYouGo: "partial",
+      payAsYouGo: "partial" as const,
       noVendorLock: true,
       openApi: true,
     },
@@ -90,6 +96,26 @@ const FeatureIcon = ({ value }: { value: boolean | string }) => {
 };
 
 const ComparisonSection = () => {
+  const { data: pricing } = useReGraphPricing();
+
+  const regraph = {
+    name: "ReGraph",
+    highlight: true,
+    gpuHour: pricing?.gpuHour ?? "$0.15",
+    inference: pricing?.inference ?? "$0.0001",
+    minCommit: "None",
+    setupFee: "Free",
+    features: {
+      smartphones: true,
+      customHardware: true,
+      payAsYouGo: true as boolean | string,
+      noVendorLock: true,
+      openApi: true,
+    },
+  };
+
+  const competitors = [regraph, ...staticCompetitors.map(c => ({ ...c, highlight: false }))];
+
   return (
     <section className="relative py-16 overflow-hidden" id="pricing">
       <div className="absolute inset-0 bg-gradient-to-b from-background via-card/50 to-background" />
@@ -140,7 +166,6 @@ const ComparisonSection = () => {
               </tr>
             </thead>
             <tbody>
-              {/* Pricing rows */}
               <tr className="border-b border-border hover:bg-card/50 transition-colors">
                 <td className="py-4 px-4 font-mono text-sm text-muted-foreground">GPU/hour</td>
                 {competitors.map((comp) => (
@@ -173,7 +198,6 @@ const ComparisonSection = () => {
                   </td>
                 ))}
               </tr>
-              {/* Feature rows */}
               {(Object.keys(featureLabels) as Array<keyof typeof featureLabels>).map((key) => (
                 <tr key={key} className="border-b border-border hover:bg-card/50 transition-colors">
                   <td className="py-4 px-4 font-mono text-sm text-muted-foreground">{featureLabels[key]}</td>

@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ModelsSidebar from "@/components/models/ModelsSidebar";
@@ -173,6 +175,19 @@ const categoryDescriptions: Record<string, string> = {
   "fine-tune": "Base models optimized for custom fine-tuning.",
 };
 
+// Map from model_pricing.model_id to the modelsData id for matching
+const modelIdMapping: Record<string, string[]> = {
+  "regraph/ReGraph-LLM": ["regraph-llm"],
+  "openai/gpt-5": ["gpt-5"],
+  "openai/gpt-5-mini": ["gpt-5-mini"],
+  "openai/gpt-5.1": ["gpt-5.1"],
+  "openai/gpt-5.2": ["gpt-5.2"],
+  "anthropic/claude-4.5-sonnet": ["claude-sonnet-4.5"],
+  "anthropic/claude-4.5-opus": ["claude-opus-4.5"],
+  "google/gemini-2.5-flash": ["gemini-3-flash"],
+  "google/gemini-2.5-pro": ["gemini-3-pro-preview"],
+};
+
 const Models = () => {
   const sidebarFixedLeft = "max(1rem, calc((100vw - 1400px) / 2 + 1rem))";
   const [activeCategory, setActiveCategory] = useState("llm");
@@ -181,15 +196,54 @@ const Models = () => {
   const [selectedProvider, setSelectedProvider] = useState<string>("all");
   const [sortOption, setSortOption] = useState<SortOption>("default");
 
+  // Fetch dynamic pricing from DB
+  const { data: dbPricing } = useQuery({
+    queryKey: ["model-pricing-for-models-page"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("model_pricing")
+        .select("model_id, price_per_1k_input_tokens, is_active")
+        .eq("is_active", true);
+      return data ?? [];
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Merge dynamic pricing into static models data
+  const enrichedModels = useMemo(() => {
+    if (!dbPricing || dbPricing.length === 0) return modelsData;
+
+    // Build reverse map: frontend model id -> price
+    const priceMap = new Map<string, number>();
+    for (const p of dbPricing) {
+      const frontendIds = modelIdMapping[p.model_id];
+      if (frontendIds) {
+        for (const fid of frontendIds) {
+          priceMap.set(fid, Number(p.price_per_1k_input_tokens));
+        }
+      }
+    }
+
+    if (priceMap.size === 0) return modelsData;
+
+    return modelsData.map((model) => {
+      const dbPrice = priceMap.get(model.id);
+      if (dbPrice !== undefined) {
+        return { ...model, pricing: `$${dbPrice}/1K` };
+      }
+      return model;
+    });
+  }, [dbPricing]);
+
   // Get unique providers for current category
   const availableProviders = useMemo(() => {
-    const categoryModels = modelsData.filter(m => m.category === activeCategory);
+    const categoryModels = enrichedModels.filter(m => m.category === activeCategory);
     const providers = [...new Set(categoryModels.map(m => m.provider))];
     return providers.sort();
-  }, [activeCategory]);
+  }, [activeCategory, enrichedModels]);
 
   const filteredModels = useMemo(() => {
-    let models = modelsData
+    let models = enrichedModels
       .filter(model => model.category === activeCategory)
       .filter(model => 
         searchQuery === "" ||
@@ -219,7 +273,7 @@ const Models = () => {
     }
 
     return models;
-  }, [activeCategory, searchQuery, selectedProvider, sortOption]);
+  }, [activeCategory, searchQuery, selectedProvider, sortOption, enrichedModels]);
 
   const handleCategoryChange = (categoryId: string) => {
     setActiveCategory(categoryId);
