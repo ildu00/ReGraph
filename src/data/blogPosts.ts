@@ -14,6 +14,7 @@ import regraphVsGonkaImg from "@/assets/blog/regraph-vs-gonka.jpg";
 import enterpriseDeepDiveImg from "@/assets/blog/enterprise-deep-dive.jpg";
 import newModels2025Img from "@/assets/blog/new-models-2025.jpg";
 import platformUpdatesQ1Img from "@/assets/blog/platform-updates-q1-2026.jpg";
+import smartphoneAiMiningImg from "@/assets/blog/smartphone-ai-mining.jpg";
 
 export interface BlogPost {
   id: string;
@@ -29,6 +30,214 @@ export interface BlogPost {
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    id: "16",
+    slug: "smartphone-ai-mining-turn-your-phone-into-compute-node",
+    title: "Smartphone AI Mining: Turn Your Phone Into a Decentralized Compute Node",
+    excerpt: "Your phone has more processing power than you think. Learn how ReGraph's AI Mining lets you earn USD by contributing your smartphone's idle GPU, NPU, and CPU to a global inference network.",
+    featured: true,
+    content: `Every modern smartphone ships with powerful AI accelerators — Apple's Neural Engine, Qualcomm's Hexagon HTP, Google's Tensor TPU, MediaTek's APU. These chips sit idle for **~20 hours a day**. ReGraph's AI Mining changes that.
+
+---
+
+## The Opportunity: Billions of Idle Compute Cycles
+
+There are over **6.8 billion smartphones** worldwide. Even a conservative estimate suggests that the collective idle compute of these devices dwarfs the capacity of most commercial GPU clusters. ReGraph taps into this untapped resource by connecting smartphones to a decentralized AI inference and training network.
+
+### What Makes Smartphones Viable?
+
+| Component | Capability | Example Chips |
+|-----------|-----------|---------------|
+| **NPU** | Dedicated neural inference at 15–45 TOPS | Apple ANE (A17+), Snapdragon X Elite HTP, Google Tensor G4 |
+| **GPU** | Parallel compute for matrix operations | Adreno 750, Mali-G720, Apple GPU (6-core) |
+| **CPU** | General-purpose fallback for small models | Cortex-X4, Apple Firestorm cores |
+| **RAM** | Model loading and KV cache | 6–16 GB LPDDR5x on flagship devices |
+
+Modern flagships can run **quantized 3B–7B parameter models** locally with sub-second latency. That's more than enough for classification, embedding generation, summarization, and lightweight inference tasks.
+
+---
+
+## How AI Mining Works
+
+### 1. Install the ReGraph PWA
+
+ReGraph runs as a **Progressive Web App** — no app store needed. Open \`regraph.tech/mobile\` in your browser and add it to your home screen:
+
+- **iOS Safari**: Tap Share → "Add to Home Screen"
+- **Android Chrome**: Tap ⋮ → "Install app"
+
+The PWA runs in the background and survives browser tab closure on supported devices.
+
+### 2. Register as a Provider
+
+Create a ReGraph account and navigate to the **AI Mining** tab in your dashboard. Your device is automatically detected with its hardware profile — chip model, available RAM, NPU capabilities.
+
+### 3. Start Mining
+
+Hit **Start Mining** and your device begins polling the ReGraph task queue. The system assigns workloads matched to your hardware:
+
+- **NPU-optimized tasks**: Embedding generation, text classification, sentiment analysis
+- **GPU tasks**: Image preprocessing, feature extraction, small model inference
+- **CPU fallback**: Tokenization, data preprocessing, health checks
+
+### 4. Earn USD
+
+Every completed task earns you USD, credited directly to your ReGraph wallet. The payout is calculated based on:
+
+- **Task complexity**: More compute-intensive tasks pay more
+- **Latency**: Faster completions earn a slight bonus
+- **Reliability**: Consistent uptime improves your device's priority score
+
+---
+
+## Technical Architecture
+
+### Task Distribution
+
+ReGraph uses a **priority-weighted task queue** with hardware-aware routing:
+
+\`\`\`
+Client Request → API Gateway → Task Router → Device Pool
+                                    ↓
+                            Hardware Matching
+                            (NPU > GPU > CPU)
+                                    ↓
+                            Task Assignment
+                            (lowest latency first)
+\`\`\`
+
+The router considers:
+- **Device capabilities**: NPU TOPS, GPU cores, available RAM
+- **Current load**: Battery level, thermal state, active tasks
+- **Network quality**: Latency to nearest edge node
+- **Historical reliability**: Completion rate, average response time
+
+### Supported Workloads
+
+| Workload Type | Typical Size | Avg. Completion | Payout Range |
+|--------------|-------------|-----------------|-------------|
+| Text embedding | 512 tokens | 50–200ms | $0.0001–0.0005 |
+| Classification | Single input | 30–100ms | $0.0001–0.0003 |
+| Summarization (3B) | 1K tokens | 500ms–2s | $0.001–0.005 |
+| Image embedding | 224×224 | 100–300ms | $0.0002–0.001 |
+| Health check | — | <50ms | $0.00001 |
+
+### Background Execution
+
+The mining agent runs in a **Web Worker** with two persistent loops:
+
+- **Task polling** (every 5 seconds): Checks for available work
+- **Heartbeat** (every 30 seconds): Reports device status, battery level, and thermal metrics
+
+On iOS, background execution is limited but the PWA maintains activity while the screen is on or the device is charging. Android devices support true background execution via the PWA service worker.
+
+---
+
+## Earnings Breakdown
+
+### How Much Can You Earn?
+
+Earnings depend on your device, uptime, and network demand. Here's a realistic breakdown:
+
+| Device Tier | Daily Uptime | Est. Daily Earnings | Monthly |
+|------------|-------------|-------------------|---------|
+| **Flagship** (iPhone 16 Pro, S25 Ultra) | 8+ hours | $0.15–0.40 | $4.50–12.00 |
+| **Mid-range** (Pixel 8a, A55) | 6 hours | $0.05–0.15 | $1.50–4.50 |
+| **Budget / Older** | 4 hours | $0.02–0.05 | $0.60–1.50 |
+
+> **Pro tip**: Leave your phone charging overnight with the ReGraph PWA open. Nighttime hours often have higher task availability due to lower global supply.
+
+### Payout System
+
+- Earnings accumulate in your **ReGraph wallet** in real-time
+- Minimum withdrawal: **$1.00**
+- Supported withdrawal networks: Ethereum, Polygon, BSC, Arbitrum, Solana, Bitcoin, Tron
+- Withdrawal processing: Within 24 hours
+
+---
+
+## Device Requirements
+
+| Requirement | Minimum | Recommended |
+|------------|---------|-------------|
+| **OS** | iOS 16+ / Android 12+ | iOS 17+ / Android 14+ |
+| **RAM** | 4 GB | 6+ GB |
+| **Storage** | 500 MB free | 2+ GB free |
+| **Browser** | Safari 16+ / Chrome 110+ | Latest version |
+| **Network** | Wi-Fi or stable 4G | Wi-Fi preferred |
+
+### Battery & Thermal Safety
+
+ReGraph's mining agent includes built-in safeguards:
+
+- **Battery threshold**: Mining pauses below 20% battery (configurable)
+- **Thermal throttling**: Workload intensity decreases if device temperature exceeds safe limits
+- **CPU cap**: Never uses more than 60% of available compute to keep the phone responsive
+
+---
+
+## Privacy & Security
+
+- **No personal data leaves your device** — only inference results
+- **All communication is encrypted** via TLS 1.3
+- **Connection keys** are unique per device and can be revoked anytime
+- **No root/jailbreak required** — runs entirely in the browser sandbox
+- **Open-source agent** — audit the code yourself on GitHub
+
+---
+
+## Comparison: Phone vs. Desktop vs. GPU
+
+| Metric | Smartphone | Desktop CPU | GPU (RTX 4090) |
+|--------|-----------|-------------|----------------|
+| Setup cost | $0 | $0 | $1,600+ |
+| Power consumption | 2–5W | 65–125W | 450W |
+| Earnings/day | $0.05–0.40 | $0.20–1.00 | $2.00–8.00 |
+| Noise | Silent | Fan noise | Significant |
+| Portability | ✅ Always with you | ❌ | ❌ |
+| Passive potential | ✅ Overnight charging | ⚠️ Must leave on | ⚠️ Must leave on |
+
+The key advantage of smartphone mining isn't raw earnings — it's **zero additional cost**. You're monetizing hardware you already own and electricity you're already paying for.
+
+---
+
+## Getting Started in 3 Minutes
+
+1. **Open** [regraph.tech/mobile](/mobile) on your phone
+2. **Install** the PWA (Add to Home Screen)
+3. **Sign up** or log in to your ReGraph account
+4. **Navigate** to Dashboard → AI Mining
+5. **Tap "Start Mining"** and watch your earnings grow
+
+That's it. No configuration, no downloads, no technical knowledge required.
+
+---
+
+## FAQ
+
+**Q: Will mining drain my battery?**
+A: Mining uses 2–5W, comparable to light browsing. We recommend mining while charging for the best experience.
+
+**Q: Can I use my phone normally while mining?**
+A: Yes. The agent is capped at 60% compute and runs at low priority. You won't notice it during normal use.
+
+**Q: Is this crypto mining?**
+A: No. This is AI compute — your phone processes real machine learning tasks (embeddings, classifications, inference). There's no blockchain proof-of-work involved.
+
+**Q: What happens if I lose internet?**
+A: The agent pauses gracefully and resumes when connectivity returns. No penalties for disconnection.
+
+**Q: How do withdrawals work?**
+A: Earnings accumulate in USD in your ReGraph wallet. Withdraw to any supported blockchain network — Ethereum, Polygon, Solana, Bitcoin, and more.
+
+---
+
+*Ready to turn your phone into a compute node? [Start mining now →](/mobile)*`,
+    date: "2026-02-21",
+    readTime: "12 min read",
+    category: "Mobile",
+    image: smartphoneAiMiningImg,
+  },
   {
     id: "15",
     slug: "platform-updates-february-2026-streaming-pricing-multimodal",
