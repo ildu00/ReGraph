@@ -65,3 +65,6 @@ verify_jwt = false
 
 [functions.audio-transcriptions]
 verify_jwt = false
+
+[functions.model-compare]
+verify_jwt = false

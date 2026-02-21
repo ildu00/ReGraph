@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
+import ModelCompare from "@/components/ModelCompare";
 
 const milestones = [
   { date: "Feb 21, 2026", event: "v3.4 checkpoint — 4.2T tokens ingested, MMLU 87.3%" },
@@ -144,6 +145,9 @@ const TrainingStats = () => {
               ))}
             </div>
           </motion.div>
+
+          {/* Live Model Comparison */}
+          <ModelCompare />
         </div>
       </main>
       <Footer />
