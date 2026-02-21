@@ -38,6 +38,7 @@ const DEFAULT_PROMPTS = [
 ];
 
 const COMPARE_MODELS = [
+  { id: "gpt-4o-mini", name: "GPT-4o Mini" },
   { id: "gpt-4o", name: "GPT-4o" },
   { id: "gpt-5", name: "GPT-5" },
   { id: "claude-3.5-sonnet", name: "Claude 3.5 Sonnet" },
@@ -54,7 +55,7 @@ const ModelCompare = () => {
   const [prompts, setPrompts] = useState(DEFAULT_PROMPTS);
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editValue, setEditValue] = useState("");
-  const [compareModel, setCompareModel] = useState("gpt-4o");
+  const [compareModel, setCompareModel] = useState("gpt-4o-mini");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<CompareResult | null>(null);
   const [showAllPrompts, setShowAllPrompts] = useState(false);
