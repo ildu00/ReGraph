@@ -38,6 +38,33 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.8.2",
+    date: "February 21, 2026",
+    title: "Documentation Redesign & STT Model Fix",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Redesigned API Docs with task-based grouping: Text, Images & Audio, Advanced — easier to find the right endpoint" },
+      { category: "feature", description: "Quick Reference table with all endpoints grouped by task (Text Generation, Images, Audio, Training, Platform)" },
+      { category: "feature", description: "New documentation sections for Image Generation, Text-to-Speech, and Audio Transcription with curl examples" },
+      { category: "fix", description: "Fixed audio transcription 500 errors — model names now correctly mapped with stt-openai/ prefix for VseGPT provider" },
+      { category: "improvement", description: "Added support for all VseGPT STT models: whisper-1, whisper-v3, whisper-v3-turbo, gpt-4o-transcribe, gpt-4o-mini-transcribe" },
+      { category: "improvement", description: "Enhanced error reporting for transcription endpoint — upstream_status now included in error responses" },
+      { category: "improvement", description: "Sidebar navigation reorganized into logical groups: Getting Started, Text, Images & Audio, Advanced, Resources" },
+    ]
+  },
+  {
+    version: "2.8.1",
+    date: "February 20, 2026",
+    title: "Image Generation API & API Key Flexibility",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "OpenAI-compatible /v1/images/generations endpoint for image generation (DALL-E 3, SDXL)" },
+      { category: "feature", description: "Flexible API key detection — rg_ keys accepted in any custom header, not just Authorization" },
+      { category: "improvement", description: "Inference proxy injects _endpoint hint for /v1/images/generations routing" },
+      { category: "improvement", description: "Cloudflare Worker route table updated with images/generations endpoint" },
+    ]
+  },
+  {
     version: "2.8.0",
     date: "February 20, 2026",
     title: "SSE Streaming, Multimodal & Audio Transcriptions",
