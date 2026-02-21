@@ -32,24 +32,30 @@ interface DocsSidebarProps {
 
 const gettingStartedItems = [
   { id: "getting-started", label: "Getting Started", icon: Book },
-  { id: "provider-setup", label: "Provider Setup", icon: Server },
-];
-
-const apiItems = [
-  { id: "api-playground", label: "API Playground", icon: PlayCircle },
-  { id: "api-reference", label: "API Reference", icon: Webhook },
+  { id: "quick-reference", label: "Quick Reference", icon: Webhook },
   { id: "authentication", label: "Authentication", icon: Key },
 ];
 
-const endpointItems = [
-  { id: "inference", label: "Inference API", icon: Zap },
+const textItems = [
+  { id: "inference", label: "Text Generation", icon: Zap },
   { id: "streaming", label: "Streaming (SSE)", icon: Radio },
   { id: "function-calling", label: "Function Calling", icon: Wrench },
-  { id: "training", label: "Training API", icon: Cpu },
+];
+
+const mediaItems = [
+  { id: "images", label: "Image Generation", icon: PlayCircle },
+  { id: "audio-tts", label: "Text-to-Speech", icon: Radio },
+  { id: "audio-stt", label: "Audio Transcription", icon: Database },
+];
+
+const advancedItems = [
+  { id: "training", label: "Fine-Tuning", icon: Cpu },
   { id: "batch", label: "Batch Processing", icon: Database },
 ];
 
-const securityItems = [
+const resourceItems = [
+  { id: "provider-setup", label: "Provider Setup", icon: Server },
+  { id: "api-playground", label: "API Playground", icon: PlayCircle },
   { id: "security", label: "Security", icon: Shield },
 ];
 
@@ -130,7 +136,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
         <SidebarGroup>
           {!isCollapsed && (
             <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-              Introduction
+              Getting Started
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -141,22 +147,33 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
         <SidebarGroup>
           {!isCollapsed && (
             <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-              API
+              Text
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
-            {renderMenuItems(apiItems)}
+            {renderMenuItems(textItems)}
           </SidebarGroupContent>
         </SidebarGroup>
 
         <SidebarGroup>
           {!isCollapsed && (
             <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
-              Endpoints
+              Images & Audio
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
-            {renderMenuItems(endpointItems)}
+            {renderMenuItems(mediaItems)}
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+              Advanced
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            {renderMenuItems(advancedItems)}
           </SidebarGroupContent>
         </SidebarGroup>
 
@@ -167,7 +184,7 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
-            {renderMenuItems(securityItems)}
+            {renderMenuItems(resourceItems)}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

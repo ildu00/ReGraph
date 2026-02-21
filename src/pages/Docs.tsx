@@ -21,7 +21,10 @@ import {
   Box,
   Monitor,
   Radio,
-  Wrench
+  Wrench,
+  Image,
+  Mic,
+  Volume2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -128,6 +131,32 @@ volumes:
     ],
     "webhook_url": "https://your-app.com/webhook"
   }'`;
+
+  const imageGenExample = `curl -X POST https://api.regraph.tech/v1/images/generations \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "prompt": "A beautiful sunset over mountains",
+    "model": "dall-e-3",
+    "n": 1,
+    "size": "1024x1024"
+  }'`;
+
+  const ttsExample = `curl -X POST https://api.regraph.tech/v1/audio/speech \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "input": "Hello, welcome to ReGraph!",
+    "model": "tts-1",
+    "voice": "alloy",
+    "response_format": "mp3"
+  }'`;
+
+  const sttExample = `curl -X POST https://api.regraph.tech/v1/audio/transcriptions \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -F file=@audio.mp3 \\
+  -F model=whisper-1 \\
+  -F language=en`;
 
   const [activeSection, setActiveSection] = useState("getting-started");
 
@@ -410,24 +439,22 @@ for await (const chunk of stream) {
                   <ApiPlayground />
                 </section>
 
-                {/* API Reference */}
-                <section id="api-reference" className="mb-16">
+                {/* Quick Reference */}
+                <section id="quick-reference" className="mb-16">
                   <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
                     <Webhook className="h-8 w-8 text-primary" />
-                    API Reference
+                    Quick Reference
                   </h2>
                   <p className="text-muted-foreground mb-6">
-                    The ReGraph API provides programmatic access to distributed AI compute resources.
+                    All endpoints use base URL <code className="text-primary bg-primary/10 px-2 py-0.5 rounded">https://api.regraph.tech/v1</code>
                   </p>
 
-                  <div className="glass-card p-6 rounded-xl mb-6">
-                    <h4 className="font-semibold mb-4">Base URL</h4>
-                    <code className="text-primary bg-primary/10 px-3 py-1 rounded">
-                      https://api.regraph.tech/v1
-                    </code>
-                  </div>
-
-                  <div className="overflow-x-auto">
+                  {/* Text Generation */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Zap className="h-5 w-5 text-primary" />
+                    Генерация текста
+                  </h3>
+                  <div className="overflow-x-auto mb-6">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="border-b border-border">
@@ -440,77 +467,133 @@ for await (const chunk of stream) {
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/inference</td>
-                          <td className="py-3 px-4 text-muted-foreground">Run model inference (LLM, TTS, Image Gen, Embeddings)</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/audio/speech</td>
-                          <td className="py-3 px-4 text-muted-foreground">Text-to-Speech (returns binary audio)</td>
+                          <td className="py-3 px-4 text-muted-foreground">Chat/completion (поддержка streaming, function calling)</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/chat/completions</td>
-                          <td className="py-3 px-4 text-muted-foreground">OpenAI-compatible chat endpoint</td>
+                          <td className="py-3 px-4 text-muted-foreground">OpenAI-совместимый endpoint (алиас /inference)</td>
                         </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Images */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Image className="h-5 w-5 text-primary" />
+                    Изображения
+                  </h3>
+                  <div className="overflow-x-auto mb-6">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4">Method</th>
+                          <th className="text-left py-3 px-4">Endpoint</th>
+                          <th className="text-left py-3 px-4">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/images/generations</td>
+                          <td className="py-3 px-4 text-muted-foreground">Генерация изображений (DALL-E 3, SDXL и др.)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Audio */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Volume2 className="h-5 w-5 text-primary" />
+                    Аудио
+                  </h3>
+                  <div className="overflow-x-auto mb-6">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4">Method</th>
+                          <th className="text-left py-3 px-4">Endpoint</th>
+                          <th className="text-left py-3 px-4">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/audio/speech</td>
+                          <td className="py-3 px-4 text-muted-foreground">Text-to-Speech (TTS)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/audio/transcriptions</td>
+                          <td className="py-3 px-4 text-muted-foreground">Speech-to-Text (Whisper, GPT-4o Transcribe)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Training & Batch */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Cpu className="h-5 w-5 text-primary" />
+                    Обучение и пакетная обработка
+                  </h3>
+                  <div className="overflow-x-auto mb-6">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4">Method</th>
+                          <th className="text-left py-3 px-4">Endpoint</th>
+                          <th className="text-left py-3 px-4">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
+                          <td className="py-3 px-4 text-muted-foreground">Создать задачу fine-tuning</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/batch</td>
+                          <td className="py-3 px-4 text-muted-foreground">Пакетный инференс</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Platform */}
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
+                    <Database className="h-5 w-5 text-primary" />
+                    Платформа
+                  </h3>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-border">
+                          <th className="text-left py-3 px-4">Method</th>
+                          <th className="text-left py-3 px-4">Endpoint</th>
+                          <th className="text-left py-3 px-4">Description</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/models</td>
-                          <td className="py-3 px-4 text-muted-foreground">List available models (51 models)</td>
+                          <td className="py-3 px-4 text-muted-foreground">Список доступных моделей</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/devices</td>
-                          <td className="py-3 px-4 text-muted-foreground">List network devices with filtering</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/devices/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Get specific device details</td>
+                          <td className="py-3 px-4 font-mono text-xs">/usage</td>
+                          <td className="py-3 px-4 text-muted-foreground">Статистика использования</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
                           <td className="py-3 px-4 font-mono text-xs">/status</td>
-                          <td className="py-3 px-4 text-muted-foreground">Platform status and health</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
-                          <td className="py-3 px-4 text-muted-foreground">Create a training job</td>
+                          <td className="py-3 px-4 text-muted-foreground">Статус платформы</td>
                         </tr>
                         <tr>
                           <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/training/jobs</td>
-                          <td className="py-3 px-4 text-muted-foreground">List training jobs</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/training/jobs/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Get training job status</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-red-500 font-mono">DELETE</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/training/jobs/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Cancel training job</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/batch</td>
-                          <td className="py-3 px-4 text-muted-foreground">Submit batch inference job</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/batch</td>
-                          <td className="py-3 px-4 text-muted-foreground">List batch jobs</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-blue-500 font-mono">GET</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/batch/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Get batch job status</td>
-                        </tr>
-                        <tr>
-                          <td className="py-3 px-4"><span className="text-red-500 font-mono">DELETE</span></td>
-                          <td className="py-3 px-4 font-mono text-xs">/batch/:id</td>
-                          <td className="py-3 px-4 text-muted-foreground">Cancel batch job</td>
+                          <td className="py-3 px-4 font-mono text-xs">/devices</td>
+                          <td className="py-3 px-4 text-muted-foreground">Устройства сети</td>
                         </tr>
                       </tbody>
                     </table>
@@ -810,6 +893,214 @@ for await (const chunk of stream) {
                         <li>• In streaming mode, <code className="text-primary">delta.tool_calls</code> arrives incrementally</li>
                         <li>• Use <code className="text-primary">tool_choice: "required"</code> to force the model to call a tool</li>
                         <li>• Compatible with OpenAI SDK's automatic tool parsing</li>
+                      </ul>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Image Generation */}
+                <section id="images" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Image className="h-8 w-8 text-primary" />
+                    Image Generation
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Генерация изображений через OpenAI-совместимый endpoint. Поддерживаются модели DALL-E 3, SDXL и другие.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">curl Example</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/images/generations</span>
+                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(imageGenExample, "image-gen")}>
+                          {copiedSection === "image-gen" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <CodeBlock code={imageGenExample} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Parameters</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Parameter</th>
+                              <th className="text-left py-2 px-3">Type</th>
+                              <th className="text-left py-2 px-3">Required</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">prompt</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">Yes</td>
+                              <td className="py-2 px-3">Описание изображения</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">model</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Модель (default: dall-e-3)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">n</td>
+                              <td className="py-2 px-3">integer</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Количество изображений (default: 1)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">size</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Размер: 256x256, 512x512, 1024x1024</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Text-to-Speech */}
+                <section id="audio-tts" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Volume2 className="h-8 w-8 text-primary" />
+                    Text-to-Speech
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Синтез речи из текста. Возвращает base64-кодированный аудиофайл.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">curl Example</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/audio/speech</span>
+                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(ttsExample, "tts")}>
+                          {copiedSection === "tts" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <CodeBlock code={ttsExample} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Parameters</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Parameter</th>
+                              <th className="text-left py-2 px-3">Type</th>
+                              <th className="text-left py-2 px-3">Required</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">input</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">Yes</td>
+                              <td className="py-2 px-3">Текст для озвучки</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">model</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Модель (default: tts-1)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">voice</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Голос: alloy, echo, fable, onyx, nova, shimmer</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">response_format</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">Формат: mp3, opus, aac, flac (default: mp3)</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
+                {/* Audio Transcription */}
+                <section id="audio-stt" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Mic className="h-8 w-8 text-primary" />
+                    Audio Transcription
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Транскрипция аудиофайлов в текст. Поддерживает Whisper и GPT-4o Transcribe.
+                  </p>
+
+                  <div className="space-y-6">
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">curl Example (multipart/form-data)</h4>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs text-muted-foreground font-mono">POST /v1/audio/transcriptions</span>
+                        <Button variant="ghost" size="sm" onClick={() => copyToClipboard(sttExample, "stt")}>
+                          {copiedSection === "stt" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                        </Button>
+                      </div>
+                      <CodeBlock code={sttExample} language="bash" />
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl">
+                      <h4 className="font-semibold mb-4">Parameters</h4>
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-sm">
+                          <thead>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3">Parameter</th>
+                              <th className="text-left py-2 px-3">Type</th>
+                              <th className="text-left py-2 px-3">Required</th>
+                              <th className="text-left py-2 px-3">Description</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border text-muted-foreground">
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">file</td>
+                              <td className="py-2 px-3">file</td>
+                              <td className="py-2 px-3">Yes</td>
+                              <td className="py-2 px-3">Аудиофайл (mp3, wav, m4a, webm и др.)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">model</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">whisper-1, whisper-v3-turbo, gpt-4o-transcribe, gpt-4o-mini-transcribe</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">language</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">ISO-639-1 код языка (en, ru, de и др.)</td>
+                            </tr>
+                            <tr>
+                              <td className="py-2 px-3 font-mono text-primary">response_format</td>
+                              <td className="py-2 px-3">string</td>
+                              <td className="py-2 px-3">No</td>
+                              <td className="py-2 px-3">json, text, srt, verbose_json, vtt</td>
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-6 rounded-xl border-l-4 border-l-yellow-500">
+                      <h4 className="font-semibold mb-2">💡 Доступные модели STT</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        <li>• <code className="text-primary">whisper-1</code> — OpenAI Whisper v3 (0.90₽/мин)</li>
+                        <li>• <code className="text-primary">whisper-v3-turbo</code> — Whisper v3 Turbo, быстрее (0.72₽/мин)</li>
+                        <li>• <code className="text-primary">gpt-4o-transcribe</code> — Профессиональный (1.92₽/мин)</li>
+                        <li>• <code className="text-primary">gpt-4o-mini-transcribe</code> — Баланс цена/качество (0.96₽/мин)</li>
                       </ul>
                     </div>
                   </div>
