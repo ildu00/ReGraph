@@ -16,6 +16,7 @@ import {
   Wifi,
   WifiOff,
   BarChart3,
+  DollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -31,6 +32,7 @@ interface TaskLog {
 
 const POLL_INTERVAL = 5000;
 const HEARTBEAT_INTERVAL = 30000;
+const EARNING_PER_TASK = 0.0012; // ~$0.10/hr at 5s poll
 
 const MiningTab = () => {
   const [connectionKey, setConnectionKey] = useState(() =>
@@ -40,7 +42,7 @@ const MiningTab = () => {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const [taskLogs, setTaskLogs] = useState<TaskLog[]>([]);
   const [currentTask, setCurrentTask] = useState<string | null>(null);
-  const [stats, setStats] = useState({ completed: 0, failed: 0, totalMs: 0 });
+  const [stats, setStats] = useState({ completed: 0, failed: 0, totalMs: 0, earnings: 0 });
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const heartbeatRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -125,7 +127,7 @@ const MiningTab = () => {
         { id: task.id, type: task.type, status: "completed", durationMs: duration, timestamp: new Date() },
         ...prev.slice(0, 49),
       ]);
-      setStats((s) => ({ ...s, completed: s.completed + 1, totalMs: s.totalMs + duration }));
+      setStats((s) => ({ ...s, completed: s.completed + 1, totalMs: s.totalMs + duration, earnings: s.earnings + EARNING_PER_TASK }));
     } catch (e) {
       const duration = Date.now() - start;
       try {
@@ -298,7 +300,7 @@ const MiningTab = () => {
       </motion.div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -336,6 +338,23 @@ const MiningTab = () => {
             {stats.completed > 0
               ? `${(stats.totalMs / stats.completed / 1000).toFixed(1)}s`
               : "—"}
+          </p>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          className="bg-card border border-border rounded-xl p-5"
+        >
+          <div className="flex items-center gap-3 mb-2">
+            <DollarSign className="h-5 w-5 text-green-500" />
+            <p className="text-sm text-muted-foreground">Earnings</p>
+          </div>
+          <p className="text-3xl font-bold text-green-500">
+            ${stats.earnings.toFixed(4)}
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            ~${(EARNING_PER_TASK * 1000).toFixed(2)} per 1k tasks
           </p>
         </motion.div>
       </div>
