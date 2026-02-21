@@ -13,7 +13,8 @@ import {
   BookOpen,
   Mail,
   Activity,
-  Key
+  Key,
+  DollarSign as PricingIcon
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ const navItems = [
   { id: "notifications", label: "Notifications", icon: Mail },
   { id: "api-logs", label: "API Logs", icon: Activity },
   { id: "api-keys", label: "API Keys", icon: Key },
+  { id: "pricing", label: "Pricing", icon: PricingIcon },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
