@@ -33,6 +33,7 @@ const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
 const Admin = lazyWithRetry(() => import("./pages/Admin"));
 const DebugBoot = lazyWithRetry(() => import("./pages/DebugBoot"));
 const Examples = lazyWithRetry(() => import("./pages/Examples"));
+const TrainingStats = lazyWithRetry(() => import("./pages/TrainingStats"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -82,6 +83,7 @@ const AppCore = () => {
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/debug/boot" element={<DebugBoot />} />
                     <Route path="/examples" element={<Examples />} />
+                    <Route path="/training-stats" element={<TrainingStats />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
