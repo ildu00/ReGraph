@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
 
 const corsHeaders = {
@@ -48,8 +49,8 @@ serve(async (req) => {
       );
     }
     
-    const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style } = body;
-    
+    const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents } = body;
+    const useAgents = agents === true;
     // Check if this is an /images/generations request (forwarded by Cloudflare Worker)
     const requestUrl = new URL(req.url);
     const isImageGenEndpoint = requestUrl.pathname.includes("images/generations") || body._endpoint === "images/generations";
@@ -102,7 +103,78 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "No prompt or messages provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Forward to model-inference
+    // --- AGENT MODE: queue task in provider_tasks and poll for result ---
+    if (useAgents) {
+      const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+      const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const sb = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+      const taskType = category === "embedding" ? "embedding" : "inference";
+      const payload = {
+        model: model || "llama-3.1-70b",
+        prompt: finalPrompt,
+        messages: messages || undefined,
+        temperature: temperature ?? 0.7,
+        max_tokens: max_tokens ?? 256,
+        category,
+        tools: tools || undefined,
+        tool_choice: tool_choice || undefined,
+      };
+
+      const { data: task, error: insertErr } = await sb
+        .from("provider_tasks")
+        .insert({ task_type: taskType, payload, status: "pending", timeout_sec: 120 })
+        .select("id")
+        .single();
+
+      if (insertErr || !task) {
+        logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 500, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Failed to queue agent task" });
+        return new Response(JSON.stringify({ error: "Failed to queue agent task", details: insertErr?.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+
+      // Poll for completion (max ~60s)
+      const taskId = task.id;
+      const pollStart = Date.now();
+      const POLL_TIMEOUT = 60_000;
+      const POLL_INTERVAL = 1_000;
+
+      while (Date.now() - pollStart < POLL_TIMEOUT) {
+        await new Promise(r => setTimeout(r, POLL_INTERVAL));
+        const { data: t } = await sb.from("provider_tasks").select("status, result, error_message").eq("id", taskId).single();
+        if (!t) continue;
+
+        if (t.status === "completed" && t.result) {
+          const r = t.result as Record<string, unknown>;
+          const assistantMessage: Record<string, unknown> = { role: "assistant", content: r.response || "" };
+          if (r.tool_calls) { assistantMessage.tool_calls = r.tool_calls; assistantMessage.content = r.response || null; }
+
+          const openAIResponse = {
+            id: "inf_" + crypto.randomUUID().slice(0, 8), object: "chat.completion", created: Math.floor(Date.now() / 1000),
+            choices: [{ index: 0, message: assistantMessage, finish_reason: r.tool_calls ? "tool_calls" : "stop" }],
+            usage: r.usage || { prompt_tokens: Math.ceil(finalPrompt.length / 4), completion_tokens: Math.ceil(((r.response as string)?.length || 0) / 4), total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil(((r.response as string)?.length || 0) / 4) },
+            _agent: true, _task_id: taskId,
+          };
+          logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+          return new Response(JSON.stringify(openAIResponse), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (t.status === "failed") {
+          logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 502, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: t.error_message || "Agent task failed" });
+          return new Response(JSON.stringify({ error: "Agent task failed", details: t.error_message, _task_id: taskId }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+
+        if (t.status === "cancelled") {
+          logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 410, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Task cancelled" });
+          return new Response(JSON.stringify({ error: "Agent task cancelled", _task_id: taskId }), { status: 410, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+        }
+      }
+
+      // Timeout
+      logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 504, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Agent task timeout" });
+      return new Response(JSON.stringify({ error: "Agent task timed out", _task_id: taskId, message: "No agent picked up the task within 60s. Check that agents are online." }), { status: 504, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // --- DEFAULT MODE: Forward to model-inference ---
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
     
@@ -134,12 +206,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
       return new Response(inferenceResponse.body, {
         status: 200,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "text/event-stream",
-          "Cache-Control": "no-cache",
-          "Connection": "keep-alive",
-        },
+        headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
       });
     }
 
@@ -152,13 +219,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: data.error, details: data.details || data.upstream_body }), { status: inferenceResponse.status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Special handling for TTS
     if (category === "tts" && data.audio) {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
       return new Response(JSON.stringify({ audio: data.audio, audio_format: data.audio_format || "mp3", voice: data.voice || "nova" }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Special handling for Image Generation
     if (category === "image-gen" && data.imageUrl) {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
       return new Response(JSON.stringify({
@@ -167,7 +232,6 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Special handling for Embeddings
     if (category === "embedding" && data.embedding) {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
       return new Response(JSON.stringify({
@@ -177,21 +241,13 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Build message object — include tool_calls if present
     const assistantMessage: Record<string, unknown> = { role: "assistant", content: data.response || "" };
-    if (data.tool_calls) {
-      assistantMessage.tool_calls = data.tool_calls;
-      assistantMessage.content = data.response || null;
-    }
+    if (data.tool_calls) { assistantMessage.tool_calls = data.tool_calls; assistantMessage.content = data.response || null; }
 
     const openAIResponse = {
       id: "inf_" + crypto.randomUUID().slice(0, 8), object: "chat.completion", created: Math.floor(Date.now() / 1000),
       choices: [{ index: 0, message: assistantMessage, finish_reason: data.tool_calls ? "tool_calls" : "stop" }],
-      usage: data.usage || {
-        prompt_tokens: Math.ceil(finalPrompt.length / 4),
-        completion_tokens: Math.ceil((data.response?.length || 0) / 4),
-        total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil((data.response?.length || 0) / 4),
-      },
+      usage: data.usage || { prompt_tokens: Math.ceil(finalPrompt.length / 4), completion_tokens: Math.ceil((data.response?.length || 0) / 4), total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil((data.response?.length || 0) / 4) },
     };
 
     logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
