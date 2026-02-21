@@ -350,7 +350,7 @@ const MiningTab = () => {
           </Button>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* iOS */}
           <div className="bg-secondary/50 rounded-lg p-5 space-y-3">
             <div className="flex items-center gap-2">
