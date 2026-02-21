@@ -95,11 +95,18 @@ const ReGraphLLMSection = () => {
   }'`}
               </pre>
             </div>
-            <Link to="/docs">
-              <Button variant="outline" className="mt-4 w-full border-primary/30 hover:bg-primary/10">
-                Read the Docs →
-              </Button>
-            </Link>
+            <div className="flex flex-col gap-2 mt-4">
+              <Link to="/docs">
+                <Button variant="outline" className="w-full border-primary/30 hover:bg-primary/10">
+                  Read the Docs →
+                </Button>
+              </Link>
+              <Link to="/training-stats">
+                <Button variant="outline" className="w-full border-primary/30 hover:bg-primary/10">
+                  Training Stats →
+                </Button>
+              </Link>
+            </div>
           </motion.div>
         </div>
       </div>
