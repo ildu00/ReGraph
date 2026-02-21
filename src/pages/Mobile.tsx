@@ -7,7 +7,6 @@ import { Link } from "react-router-dom";
 import {
   Smartphone,
   Zap,
-  WifiOff,
   Shield,
   Battery,
   Cpu,
@@ -15,10 +14,13 @@ import {
   ArrowRight,
   Brain,
   Globe,
-  Lock,
-  Gauge,
-  Server,
+  Network,
+  Coins,
+  Users,
   ChevronRight,
+  Server,
+  Layers,
+  Lock,
 } from "lucide-react";
 
 const fadeUp = {
@@ -27,91 +29,114 @@ const fadeUp = {
   viewport: { once: true },
 };
 
-const useCases = [
-  {
-    icon: Shield,
-    title: "Healthcare & Medical Devices",
-    description:
-      "Run diagnostic AI models directly on tablets in hospitals and clinics. Patient data stays on-device, meeting HIPAA and GDPR requirements without cloud round-trips.",
-  },
+const whyMobile = [
   {
     icon: Globe,
-    title: "Field Operations & Remote Work",
+    title: "7 Billion Untapped Devices",
+    desc: "There are more smartphones than GPUs by orders of magnitude. ReGraph unlocks this dormant compute for AI training and inference.",
+  },
+  {
+    icon: Network,
+    title: "True Decentralization",
+    desc: "No single point of failure. Thousands of mobile nodes process shards in parallel, making the network resilient and censorship-resistant.",
+  },
+  {
+    icon: Coins,
+    title: "Earn Passively",
+    desc: "Rent your phone's idle compute to the network. Earn RGT tokens 24/7 — especially overnight while charging.",
+  },
+  {
+    icon: Shield,
+    title: "Privacy by Design",
+    desc: "Federated training means raw data never leaves the device. Only encrypted gradients are shared with the network.",
+  },
+];
+
+const howItWorks = [
+  {
+    step: "01",
+    title: "Install the ReGraph App",
     description:
-      "Deploy AI assistants to engineers, inspectors, and field agents working in areas with limited or no connectivity. Models work fully offline.",
+      "Download the lightweight ReGraph provider app on Android or iOS. Under 20 MB. No root or jailbreak needed.",
+  },
+  {
+    step: "02",
+    title: "Register as a Provider",
+    description:
+      "Sign up, connect your wallet, and register your device — just like GPU providers do. Your phone becomes a node in the decentralized network.",
+  },
+  {
+    step: "03",
+    title: "Contribute Compute",
+    description:
+      "The network assigns training shards and inference tasks to your device based on its capabilities. Work is distributed across thousands of phones in parallel.",
+  },
+  {
+    step: "04",
+    title: "Get Paid",
+    description:
+      "Earn RGT tokens for every completed job. Withdraw anytime. The more compute you contribute, the more you earn — same economics as GPU providers.",
+  },
+];
+
+const useCases = [
+  {
+    icon: Layers,
+    title: "Federated Model Training",
+    description:
+      "Split training across thousands of smartphones. Each device trains on a shard and sends only encrypted weight updates — no raw data ever leaves the phone.",
+  },
+  {
+    icon: Zap,
+    title: "Edge Inference at Scale",
+    description:
+      "Run inference tasks on nearby mobile devices instead of distant data centers. Lower latency, lower cost, better geographic distribution.",
   },
   {
     icon: Lock,
-    title: "Defense & Classified Environments",
+    title: "Privacy-Critical Workloads",
     description:
-      "Air-gapped inference for military and intelligence applications. No network access required — models are embedded directly into secure devices.",
-  },
-  {
-    icon: Gauge,
-    title: "Real-Time Edge Analytics",
-    description:
-      "Process sensor data, camera feeds, and IoT telemetry locally on mobile devices with sub-50ms latency for instant decision-making.",
+      "Healthcare, finance, and government clients can leverage on-device compute where data residency regulations prohibit cloud processing.",
   },
   {
     icon: Battery,
-    title: "Consumer Apps & Assistants",
+    title: "Idle-Time Monetization",
     description:
-      "Power offline voice assistants, on-device translation, smart keyboard predictions, and photo enhancement — all without sending data to the cloud.",
+      "Most phones sit idle 80% of the day. ReGraph turns that dead time into productive compute and passive income for device owners.",
+  },
+  {
+    icon: Users,
+    title: "Community-Powered AI",
+    description:
+      "Open-source models can be trained by the community itself — no corporate data center needed. Democratizing AI at the infrastructure level.",
   },
   {
     icon: Server,
-    title: "Federated Training",
+    title: "Burst Capacity for the Network",
     description:
-      "Contribute to the ReGraph network by training model shards on idle smartphone compute. Earn RGT tokens while keeping your personal data private.",
+      "When GPU demand spikes, the mobile fleet provides elastic overflow capacity. Smartphones absorb load that would otherwise queue on traditional hardware.",
   },
 ];
 
 const specs = [
-  { label: "Supported Models", value: "1B — 7B parameters" },
+  { label: "Supported Tasks", value: "Training shards, inference, embeddings" },
+  { label: "Model Support", value: "1B — 7B parameters (quantized)" },
   { label: "Quantization", value: "INT4, INT8, FP16" },
-  { label: "Inference Speed", value: "30–60 tok/s (NPU)" },
-  { label: "First Token Latency", value: "< 50ms" },
-  { label: "Min RAM", value: "4 GB" },
-  { label: "Platforms", value: "Android 12+, iOS 17+" },
   { label: "NPU Support", value: "Qualcomm HTP, Apple ANE, MediaTek APU, Samsung NPU" },
-  { label: "Offline Mode", value: "Full — no network required" },
-];
-
-const steps = [
-  {
-    step: "01",
-    title: "Install the SDK",
-    description:
-      "Add the ReGraph Mobile SDK to your app via Gradle (Android) or Swift Package Manager (iOS). Under 5 MB footprint.",
-  },
-  {
-    step: "02",
-    title: "Download a Model",
-    description:
-      "Choose from our catalog of quantized models optimized for mobile. Models are cached locally and auto-updated when connectivity is available.",
-  },
-  {
-    step: "03",
-    title: "Run Inference",
-    description:
-      "Call the same OpenAI-compatible API you already use — but it runs entirely on-device. Zero latency, zero cost, zero data leaks.",
-  },
-  {
-    step: "04",
-    title: "Optional: Join the Network",
-    description:
-      "Enable background training mode to contribute idle compute to the ReGraph network. Earn rewards while your phone charges overnight.",
-  },
+  { label: "Platforms", value: "Android 12+, iOS 17+" },
+  { label: "Min RAM", value: "4 GB" },
+  { label: "Background Mode", value: "Yes — works while charging" },
+  { label: "Earnings", value: "RGT tokens, same payout system as GPU providers" },
 ];
 
 const Mobile = () => {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <Helmet>
-        <title>On-Device AI — ReGraph | Train & Run Models on Smartphones</title>
+        <title>Mobile Compute Network — ReGraph | Earn with Your Smartphone</title>
         <meta
           name="description"
-          content="Run AI inference and training directly on smartphones. Offline-capable, privacy-first, sub-50ms latency. Supports 1B–7B parameter models on Android & iOS."
+          content="Turn your smartphone into a decentralized AI compute node. Earn RGT tokens by contributing your phone's idle GPU, NPU, and CPU power to the ReGraph network."
         />
         <link rel="canonical" href="https://regraph.tech/mobile" />
       </Helmet>
@@ -128,34 +153,34 @@ const Mobile = () => {
             <motion.div {...fadeUp} className="text-center max-w-4xl mx-auto">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-accent/30 bg-accent/5 mb-8">
                 <Smartphone className="h-4 w-4 text-accent" />
-                <span className="text-sm font-mono text-accent">On-Device AI</span>
+                <span className="text-sm font-mono text-accent">Mobile Compute Network</span>
               </div>
 
               <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-6">
-                AI That Lives on
+                Your Phone Is a
                 <br />
-                <span className="text-gradient-primary">Your Device</span>
+                <span className="text-gradient-primary">Compute Node</span>
               </h1>
 
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto mb-10 leading-relaxed">
-                Train, fine-tune, and run AI models directly on smartphones and tablets.
-                No cloud. No latency. No data leaves your device — ever.
+                7 billion smartphones. Trillions of idle FLOPS. ReGraph turns every phone into a node
+                in the world's largest decentralized AI network — and pays you for it.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/docs">
+                <Link to="/auth">
                   <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold">
-                    Get the SDK
-                    <Download className="ml-2 h-5 w-5" />
+                    Start Earning
+                    <Coins className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/auth">
+                <Link to="/docs">
                   <Button
                     variant="outline"
                     size="lg"
                     className="text-lg px-8 py-6 border-border hover:border-accent/50 hover:bg-accent/5"
                   >
-                    Start Building Free
+                    Read the Docs
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
@@ -164,25 +189,21 @@ const Mobile = () => {
           </div>
         </section>
 
-        {/* Why On-Device */}
+        {/* Why Mobile Compute */}
         <section className="py-20">
           <div className="container px-4">
             <motion.div {...fadeUp} className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Why <span className="text-gradient-primary">On-Device</span>?
+                Why <span className="text-gradient-primary">Smartphones</span>?
               </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Cloud AI is powerful — but it's not always the right answer. When privacy, latency, cost, or connectivity matter, on-device wins.
+                GPUs are powerful but scarce and expensive. Smartphones are everywhere — and modern mobile chips
+                are more capable than you think.
               </p>
             </motion.div>
 
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-5xl mx-auto">
-              {[
-                { icon: WifiOff, title: "Works Offline", desc: "No internet? No problem. Models run entirely on local hardware." },
-                { icon: Zap, title: "Zero Latency", desc: "Sub-50ms response. No round-trip to a data center thousands of miles away." },
-                { icon: Shield, title: "Total Privacy", desc: "Data never leaves the device. No logging, no telemetry, no third-party access." },
-                { icon: Battery, title: "Cost = $0", desc: "Your device, your compute. No per-token charges, no API bills, no surprises." },
-              ].map((item, i) => (
+              {whyMobile.map((item, i) => (
                 <motion.div
                   key={item.title}
                   {...fadeUp}
@@ -200,13 +221,44 @@ const Mobile = () => {
           </div>
         </section>
 
-        {/* Technical Specs */}
+        {/* How It Works */}
         <section className="py-20 bg-card/30">
+          <div className="container px-4">
+            <motion.div {...fadeUp} className="text-center mb-14">
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Same provider flow as GPU and TPU. Install, register, earn.
+              </p>
+            </motion.div>
+
+            <div className="max-w-3xl mx-auto space-y-6">
+              {howItWorks.map((item, i) => (
+                <motion.div
+                  key={item.step}
+                  {...fadeUp}
+                  transition={{ delay: i * 0.12 }}
+                  className="flex gap-6 p-6 rounded-xl bg-card/50 border border-border hover:border-primary/20 transition-colors"
+                >
+                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <span className="text-lg font-bold font-mono text-primary">{item.step}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Technical Specs */}
+        <section className="py-20">
           <div className="container px-4">
             <motion.div {...fadeUp} className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Technical Specifications</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Built for modern mobile silicon. Optimized for every major NPU and mobile GPU architecture.
+                Smartphones join the network as first-class compute nodes — same architecture, same payout rails.
               </p>
             </motion.div>
 
@@ -228,44 +280,13 @@ const Mobile = () => {
           </div>
         </section>
 
-        {/* How It Works */}
-        <section className="py-20">
-          <div className="container px-4">
-            <motion.div {...fadeUp} className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                From SDK install to on-device inference in under 10 minutes.
-              </p>
-            </motion.div>
-
-            <div className="max-w-3xl mx-auto space-y-6">
-              {steps.map((item, i) => (
-                <motion.div
-                  key={item.step}
-                  {...fadeUp}
-                  transition={{ delay: i * 0.12 }}
-                  className="flex gap-6 p-6 rounded-xl bg-card/50 border border-border hover:border-primary/20 transition-colors"
-                >
-                  <div className="flex-shrink-0 w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <span className="text-lg font-bold font-mono text-primary">{item.step}</span>
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-lg mb-1">{item.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{item.description}</p>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-        </section>
-
         {/* Use Cases */}
         <section className="py-20 bg-card/30">
           <div className="container px-4">
             <motion.div {...fadeUp} className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Use Cases</h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                On-device AI unlocks scenarios that cloud inference simply can't serve.
+                Mobile compute unlocks scenarios that traditional infrastructure can't economically serve.
               </p>
             </motion.div>
 
@@ -288,76 +309,49 @@ const Mobile = () => {
           </div>
         </section>
 
-        {/* Supported Models */}
+        {/* Comparison: Phones vs GPUs */}
         <section className="py-20">
           <div className="container px-4">
             <motion.div {...fadeUp} className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Supported Models</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Phones vs. GPUs — <span className="text-gradient-primary">Complementary, Not Competing</span>
+              </h2>
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Pre-quantized and optimized for mobile. Download once, run forever.
+                Smartphones don't replace GPUs — they extend the network. Different strengths, same decentralized infrastructure.
               </p>
             </motion.div>
 
             <motion.div {...fadeUp} className="max-w-4xl mx-auto">
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-border overflow-hidden">
+                <div className="grid grid-cols-3 bg-card/80 border-b border-border">
+                  <div className="px-6 py-4 text-sm font-semibold text-muted-foreground" />
+                  <div className="px-6 py-4 text-sm font-semibold text-center">
+                    <Smartphone className="h-5 w-5 mx-auto mb-1 text-accent" />
+                    Smartphones
+                  </div>
+                  <div className="px-6 py-4 text-sm font-semibold text-center">
+                    <Cpu className="h-5 w-5 mx-auto mb-1 text-primary" />
+                    GPUs / TPUs
+                  </div>
+                </div>
                 {[
-                  { name: "regraph-llm-3b", size: "1.8 GB", speed: "52 tok/s", type: "General" },
-                  { name: "regraph-llm-7b", size: "4.2 GB", speed: "31 tok/s", type: "General" },
-                  { name: "regraph-code-3b", size: "1.9 GB", speed: "48 tok/s", type: "Code" },
-                  { name: "regraph-vision-1b", size: "0.8 GB", speed: "60 tok/s", type: "Vision" },
-                  { name: "regraph-embed-500m", size: "0.3 GB", speed: "120 tok/s", type: "Embeddings" },
-                  { name: "regraph-whisper-sm", size: "0.5 GB", speed: "Real-time", type: "Speech" },
-                ].map((model) => (
+                  ["Availability", "7B+ devices globally", "~50M dedicated units"],
+                  ["Setup Cost", "$0 — use existing phone", "$2K — $40K+ per card"],
+                  ["Best For", "Training shards, embeddings, light inference", "Heavy training, large-batch inference"],
+                  ["Earnings", "Lower per-device, massive scale", "Higher per-device, limited supply"],
+                  ["Power Draw", "2–5W", "150–700W"],
+                  ["Barrier to Entry", "Anyone with a phone", "Requires hardware investment"],
+                ].map(([label, phone, gpu], i) => (
                   <div
-                    key={model.name}
-                    className="p-4 rounded-lg border border-border bg-card/50 hover:border-primary/30 transition-colors"
+                    key={label}
+                    className={`grid grid-cols-3 ${i % 2 === 0 ? "bg-card/50" : "bg-background/50"} border-b border-border last:border-b-0`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="font-mono text-sm font-semibold">{model.name}</span>
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary">{model.type}</span>
-                    </div>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span>{model.size}</span>
-                      <span>•</span>
-                      <span>{model.speed}</span>
-                    </div>
+                    <div className="px-6 py-4 text-sm font-medium text-foreground">{label}</div>
+                    <div className="px-6 py-4 text-sm text-muted-foreground text-center">{phone}</div>
+                    <div className="px-6 py-4 text-sm text-muted-foreground text-center">{gpu}</div>
                   </div>
                 ))}
               </div>
-            </motion.div>
-          </div>
-        </section>
-
-        {/* Code Example */}
-        <section className="py-20 bg-card/30">
-          <div className="container px-4">
-            <motion.div {...fadeUp} className="text-center mb-14">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Same API, No Cloud</h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                If you've used the OpenAI SDK, you already know how to use ReGraph Mobile. One line change — everything runs locally.
-              </p>
-            </motion.div>
-
-            <motion.div {...fadeUp} className="max-w-3xl mx-auto">
-              <pre className="rounded-xl border border-border bg-background/80 p-6 overflow-x-auto text-sm font-mono leading-relaxed text-muted-foreground">
-{`import { ReGraphMobile } from '@regraph/mobile-sdk';
-
-const client = new ReGraphMobile({
-  model: 'regraph-llm-3b',   // auto-downloads & caches
-  quantization: 'int4',       // optimal for mobile
-});
-
-const response = await client.chat.completions.create({
-  messages: [
-    { role: 'user', content: 'Summarize this document' }
-  ],
-  stream: true,  // streaming works the same way
-});
-
-for await (const chunk of response) {
-  process.stdout.write(chunk.choices[0]?.delta?.content || '');
-}`}
-              </pre>
             </motion.div>
           </div>
         </section>
@@ -368,16 +362,16 @@ for await (const chunk of response) {
             <motion.div {...fadeUp} className="text-center max-w-3xl mx-auto">
               <Brain className="h-12 w-12 text-primary mx-auto mb-6" />
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Ready to Put AI in Every Pocket?
+                Turn Every Phone Into a Revenue Stream
               </h2>
               <p className="text-lg text-muted-foreground mb-8">
-                Get started with the ReGraph Mobile SDK today. Free for personal use, enterprise plans for fleet deployments.
+                Join the ReGraph network as a mobile provider. Same payouts, same dashboard, same infrastructure — just a different device.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/docs">
+                <Link to="/auth">
                   <Button size="lg" className="glow-primary text-lg px-8 py-6 font-semibold">
-                    Get the SDK
-                    <Download className="ml-2 h-5 w-5" />
+                    Become a Provider
+                    <Coins className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/pricing">

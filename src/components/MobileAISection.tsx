@@ -1,23 +1,26 @@
 import { motion } from "framer-motion";
-import { Smartphone, Zap, Wifi, WifiOff, Shield, Battery, ArrowRight } from "lucide-react";
+import { Smartphone, Zap, Users, Coins, Network, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 
 const highlights = [
   {
-    icon: WifiOff,
-    title: "Offline Inference",
-    description: "Run models directly on-device — no internet required. Perfect for field operations and privacy-sensitive workloads.",
+    icon: Network,
+    title: "Billions of Devices, One Network",
+    description:
+      "There are 7 billion smartphones on the planet. ReGraph turns idle mobile compute into a massive decentralized AI supercluster.",
   },
   {
-    icon: Battery,
-    title: "Power Efficient",
-    description: "Optimized for mobile NPUs and GPUs. Get hours of continuous inference on a single charge.",
+    icon: Coins,
+    title: "Earn While You Sleep",
+    description:
+      "Rent out your phone's GPU, NPU, and CPU to the network. Earn RGT tokens for every training shard and inference job your device completes.",
   },
   {
-    icon: Shield,
-    title: "Data Never Leaves Device",
-    description: "Zero data exfiltration risk. All computation happens locally — ideal for healthcare, finance, and defense.",
+    icon: Users,
+    title: "Anyone Can Be a Provider",
+    description:
+      "No data center needed. Plug your smartphone into the ReGraph network and start earning — just like GPU and TPU providers already do.",
   },
 ];
 
@@ -35,13 +38,13 @@ const MobileAISection = () => {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/20 mb-6">
             <Smartphone className="h-4 w-4 text-accent" />
-            <span className="text-sm font-mono text-accent">On-Device AI</span>
+            <span className="text-sm font-mono text-accent">Mobile Compute Network</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            AI That Runs in Your <span className="text-gradient-primary">Pocket</span>
+            7 Billion Phones. <span className="text-gradient-primary">One Network.</span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            Train and run AI models directly on smartphones. No cloud dependency, no latency, no data leaks — just raw on-device intelligence powered by the ReGraph network.
+            Smartphones are the most abundant compute devices on Earth. ReGraph lets anyone contribute their phone's idle power to a decentralized AI network — and get paid for it.
           </p>
         </motion.div>
 
@@ -58,22 +61,22 @@ const MobileAISection = () => {
             <div className="absolute bottom-0 left-0 w-48 h-48 bg-accent/5 rounded-full blur-3xl" />
 
             <div className="relative grid md:grid-cols-2 gap-8 items-center">
-              {/* Left: phone illustration */}
+              {/* Left: phone as network node */}
               <div className="flex justify-center">
                 <div className="relative w-48 h-80 rounded-[2rem] border-2 border-primary/30 bg-background/80 shadow-lg shadow-primary/10 flex flex-col items-center justify-center gap-4 p-6">
                   <div className="w-16 h-1 rounded-full bg-muted absolute top-3" />
                   <Smartphone className="h-10 w-10 text-primary mb-2" />
                   <div className="text-center">
-                    <div className="text-xs font-mono text-primary mb-1">regraph-llm-3b</div>
-                    <div className="text-[10px] text-muted-foreground">running locally</div>
+                    <div className="text-xs font-mono text-primary mb-1">Node Active</div>
+                    <div className="text-[10px] text-muted-foreground">training shard #4,291</div>
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <Zap className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-mono text-primary">42 tok/s</span>
+                    <span className="text-xs font-mono text-primary">+0.42 RGT/hr</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <Wifi className="h-3 w-3 text-muted-foreground" />
-                    <span className="text-xs font-mono text-muted-foreground line-through">cloud</span>
+                    <Network className="h-3 w-3 text-accent" />
+                    <span className="text-xs font-mono text-accent">12,847 peers</span>
                   </div>
                 </div>
               </div>
@@ -81,16 +84,16 @@ const MobileAISection = () => {
               {/* Right: stats */}
               <div className="space-y-6">
                 <div>
-                  <div className="text-3xl font-bold font-mono text-primary">3B–7B</div>
-                  <div className="text-sm text-muted-foreground">parameter models on-device</div>
+                  <div className="text-3xl font-bold font-mono text-primary">GPU · NPU · CPU</div>
+                  <div className="text-sm text-muted-foreground">smartphones as compute nodes — same as any other device</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold font-mono text-primary">&lt;50ms</div>
-                  <div className="text-sm text-muted-foreground">first-token latency</div>
+                  <div className="text-3xl font-bold font-mono text-primary">24/7</div>
+                  <div className="text-sm text-muted-foreground">earn passively while your phone charges overnight</div>
                 </div>
                 <div>
-                  <div className="text-3xl font-bold font-mono text-primary">0¢</div>
-                  <div className="text-sm text-muted-foreground">per inference — your hardware, your cost</div>
+                  <div className="text-3xl font-bold font-mono text-primary">$0 setup</div>
+                  <div className="text-sm text-muted-foreground">install the app, join the network, start earning</div>
                 </div>
               </div>
             </div>
