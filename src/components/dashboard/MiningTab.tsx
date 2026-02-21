@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +17,8 @@ import {
   WifiOff,
   BarChart3,
   DollarSign,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useMining, EARNING_PER_TASK, POLL_INTERVAL } from "@/hooks/useMining";
 
@@ -32,6 +35,7 @@ const MiningTab = () => {
     stopMining,
   } = useMining();
 
+  const [showKey, setShowKey] = useState(false);
   const isMining = status === "mining";
 
   return (
@@ -78,16 +82,26 @@ const MiningTab = () => {
               <Key className="h-4 w-4" />
               Connection Key
             </Label>
-            <Input
-              id="connectionKey"
-              type="password"
-              placeholder="rgc_..."
-              value={connectionKey}
-              onChange={(e) => setConnectionKey(e.target.value)}
-              disabled={isMining}
-              className="bg-secondary border-border font-mono"
-              onKeyDown={(e) => e.key === "Enter" && !isMining && startMining()}
-            />
+            <div className="relative">
+              <Input
+                id="connectionKey"
+                type={showKey ? "text" : "password"}
+                placeholder="rgc_..."
+                value={connectionKey}
+                onChange={(e) => setConnectionKey(e.target.value)}
+                disabled={isMining}
+                className="bg-secondary border-border font-mono pr-10"
+                onKeyDown={(e) => e.key === "Enter" && !isMining && startMining()}
+              />
+              <button
+                type="button"
+                onClick={() => setShowKey(!showKey)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                aria-label={showKey ? "Hide key" : "Show key"}
+              >
+                {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             <p className="text-xs text-muted-foreground">
               Find your connection key in the Provider tab after adding a device.
             </p>
