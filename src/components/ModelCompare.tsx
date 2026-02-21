@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -239,7 +241,9 @@ const ModelCompare = () => {
               {result.regraph.error ? (
                 <p className="text-sm text-destructive">{result.regraph.error}</p>
               ) : (
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{result.regraph.content}</p>
+                <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.regraph.content || ""}</ReactMarkdown>
+                </div>
               )}
             </div>
           </div>
@@ -263,7 +267,9 @@ const ModelCompare = () => {
               {result.compare.error ? (
                 <p className="text-sm text-destructive">{result.compare.error}</p>
               ) : (
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{result.compare.content}</p>
+                <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.compare.content || ""}</ReactMarkdown>
+                </div>
               )}
             </div>
           </div>
