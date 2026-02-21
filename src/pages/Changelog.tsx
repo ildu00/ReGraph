@@ -46,8 +46,8 @@ const changelog: ChangelogEntry[] = [
       { category: "feature", description: "Redesigned API Docs with task-based grouping: Text, Images & Audio, Advanced — easier to find the right endpoint" },
       { category: "feature", description: "Quick Reference table with all endpoints grouped by task (Text Generation, Images, Audio, Training, Platform)" },
       { category: "feature", description: "New documentation sections for Image Generation, Text-to-Speech, and Audio Transcription with curl examples" },
-      { category: "fix", description: "Fixed audio transcription 500 errors — model names now correctly mapped with stt-openai/ prefix for VseGPT provider" },
-      { category: "improvement", description: "Added support for all VseGPT STT models: whisper-1, whisper-v3, whisper-v3-turbo, gpt-4o-transcribe, gpt-4o-mini-transcribe" },
+      { category: "fix", description: "Fixed audio transcription 500 errors — model names now correctly mapped with stt-openai/ prefix for upstream provider" },
+      { category: "improvement", description: "Added support for all STT models: whisper-1, whisper-v3, whisper-v3-turbo, gpt-4o-transcribe, gpt-4o-mini-transcribe" },
       { category: "improvement", description: "Enhanced error reporting for transcription endpoint — upstream_status now included in error responses" },
       { category: "improvement", description: "Sidebar navigation reorganized into logical groups: Getting Started, Text, Images & Audio, Advanced, Resources" },
     ]
