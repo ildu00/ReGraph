@@ -30,6 +30,7 @@ import {
   Wallet,
   Shield,
   MessageSquare,
+  Pickaxe,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
@@ -38,6 +39,7 @@ import OverviewTab from "@/components/dashboard/OverviewTab";
 import ProviderTab from "@/components/dashboard/ProviderTab";
 import WalletTab from "@/components/dashboard/WalletTab";
 import ChatTab from "@/components/dashboard/ChatTab";
+import MiningTab from "@/components/dashboard/MiningTab";
 
 const Dashboard = () => {
   const { user, loading, signOut } = useAuth();
@@ -54,7 +56,7 @@ const Dashboard = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["overview", "wallet", "api-keys", "provider", "usage", "settings", "chat"].includes(tabParam)) {
+    if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
   }, [searchParams]);
@@ -81,6 +83,7 @@ const Dashboard = () => {
       { value: "wallet", label: "Wallet", icon: Wallet },
       { value: "api-keys", label: "API Keys", icon: Key },
       { value: "provider", label: "Provider", icon: Server },
+      { value: "mining", label: "AI Mining", icon: Pickaxe },
       { value: "usage", label: "Usage", icon: BarChart3 },
       { value: "settings", label: "Settings", icon: Settings },
     ],
@@ -317,6 +320,10 @@ const Dashboard = () => {
               <Server className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Provider</span>
             </TabsTrigger>
+            <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 lg:px-3">
+              <Pickaxe className="h-4 w-4 lg:mr-2" />
+              <span className="hidden lg:inline">AI Mining</span>
+            </TabsTrigger>
             <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2 lg:px-3">
               <BarChart3 className="h-4 w-4 lg:mr-2" />
               <span className="hidden lg:inline">Usage</span>
@@ -349,6 +356,10 @@ const Dashboard = () => {
 
           <TabsContent value="provider">
             <ProviderTab />
+          </TabsContent>
+
+          <TabsContent value="mining">
+            <MiningTab />
           </TabsContent>
 
           <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : ""}>
