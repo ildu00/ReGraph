@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Check, X, Minus } from "lucide-react";
+import { Check, X, Minus, ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -214,15 +214,24 @@ const ComparisonSection = () => {
           </table>
         </motion.div>
 
-        <motion.p
+        <motion.div
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ delay: 0.6 }}
-          className="text-center text-sm text-muted-foreground mt-8"
+          className="text-center mt-8 space-y-4"
         >
-          * Prices as of January 2026. Actual prices may vary based on region and usage.
-        </motion.p>
+          <p className="text-sm text-muted-foreground">
+            * Prices as of January 2026. Actual prices may vary based on region and usage.
+          </p>
+          <a
+            href="/pricing"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          >
+            View full pricing details
+            <ArrowRight className="h-4 w-4" />
+          </a>
+        </motion.div>
       </div>
     </section>
   );

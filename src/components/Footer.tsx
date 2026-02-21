@@ -78,7 +78,7 @@ const Footer = ({ insetLeft }: FooterProps) => {
   const links = {
     Product: [
       { label: "Features", href: "/#features" },
-      { label: "Pricing", href: "/#pricing" },
+      { label: "Pricing", href: "/pricing" },
       { label: "Models", href: "/models" },
       { label: "Changelog", href: "/changelog" },
     ],

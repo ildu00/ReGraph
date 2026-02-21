@@ -5,7 +5,7 @@ import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 
 const navItems = [
-  { label: "Pricing", href: "#pricing", isRoute: false },
+  { label: "Pricing", href: "/pricing", isRoute: true },
   { label: "How It Works", href: "#how-it-works", isRoute: false },
   { label: "Features", href: "#features", isRoute: false },
   { label: "API", href: "#api", isRoute: false },
