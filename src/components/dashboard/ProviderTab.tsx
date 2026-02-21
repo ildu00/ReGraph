@@ -46,6 +46,8 @@ import {
   Search,
   Filter,
   X,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import CodeBlock from "@/components/CodeBlock";
@@ -153,6 +155,20 @@ const ProviderTab = () => {
     if (fp && Number(device.price_per_hour) > parseFloat(fp)) return false;
     return true;
   });
+
+  // Pagination
+  const DEVICES_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filteredDevices.length / DEVICES_PER_PAGE));
+  const paginatedDevices = filteredDevices.slice(
+    (currentPage - 1) * DEVICES_PER_PAGE,
+    currentPage * DEVICES_PER_PAGE
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [appliedFilters]);
 
   const hasActiveFilters = appliedFilters.filterType !== "all" || appliedFilters.filterStatus !== "all" || appliedFilters.filterMinVram !== "" || appliedFilters.filterMaxPrice !== "" || appliedFilters.searchQuery !== "";
 
@@ -582,8 +598,8 @@ const ProviderTab = () => {
               {filteredDevices.length} of {devices.length} devices
             </span>
           </div>
-          <AnimatePresence>
-            {filteredDevices.map((device) => {
+          <AnimatePresence mode="popLayout">
+            {paginatedDevices.map((device) => {
               const Icon = deviceTypeIcons[device.device_type];
               return (
                 <motion.div
@@ -692,6 +708,35 @@ const ProviderTab = () => {
               );
             })}
           </AnimatePresence>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-sm text-muted-foreground">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setCurrentPage((p) => p - 1)}
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setCurrentPage((p) => p + 1)}
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
