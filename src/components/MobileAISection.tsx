@@ -14,7 +14,7 @@ const highlights = [
     icon: Coins,
     title: "Earn While You Sleep",
     description:
-      "Rent out your phone's GPU, NPU, and CPU to the network. Earn RGT tokens for every training shard and inference job your device completes.",
+      "Rent out your phone's GPU, NPU, and CPU to the network. Earn USD for every training shard and inference job your device completes.",
   },
   {
     icon: Users,
@@ -72,7 +72,7 @@ const MobileAISection = () => {
                   </div>
                   <div className="flex items-center gap-2 mt-2">
                     <Zap className="h-3 w-3 text-primary" />
-                    <span className="text-xs font-mono text-primary">+0.42 RGT/hr</span>
+                    <span className="text-xs font-mono text-primary">+$0.42/hr</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Network className="h-3 w-3 text-accent" />
