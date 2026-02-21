@@ -607,103 +607,146 @@ const ProviderTab = () => {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="bg-card border border-border rounded-xl p-6"
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center">
-                        <Icon className="h-6 w-6 text-primary" />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold">{device.device_name}</h3>
-                        <p className="text-sm text-muted-foreground">
-                          {device.device_model || device.device_type.toUpperCase()}
-                          {device.vram_gb && ` • ${device.vram_gb}GB VRAM`}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`flex items-center gap-1 text-sm ${statusColors[device.status]}`}>
-                        {device.status === "online" ? (
-                          <CheckCircle2 className="h-4 w-4" />
-                        ) : device.status === "pending" ? (
-                          <Clock className="h-4 w-4" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <button className="w-full text-left bg-card border border-border rounded-xl p-4 sm:p-5 hover:border-primary/50 transition-colors cursor-pointer">
+                        <div className="flex items-center gap-4">
+                          <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center shrink-0">
+                            <Icon className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold truncate">{device.device_name}</h3>
+                            <p className="text-sm text-muted-foreground truncate">
+                              {device.device_model || device.device_type.toUpperCase()}
+                              {device.vram_gb && ` • ${device.vram_gb}GB`}
+                            </p>
+                          </div>
+                          <div className="hidden sm:flex items-center gap-4 text-sm text-muted-foreground">
+                            <span>${Number(device.price_per_hour).toFixed(2)}/hr</span>
+                            <span>${Number(device.total_earnings).toFixed(2)}</span>
+                          </div>
+                          <span className={`flex items-center gap-1 text-sm shrink-0 ${statusColors[device.status]}`}>
+                            {device.status === "online" ? (
+                              <CheckCircle2 className="h-4 w-4" />
+                            ) : device.status === "pending" ? (
+                              <Clock className="h-4 w-4" />
+                            ) : (
+                              <XCircle className="h-4 w-4" />
+                            )}
+                            <span className="hidden sm:inline">
+                              {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
+                            </span>
+                          </span>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                        </div>
+                      </button>
+                    </DialogTrigger>
+                    <DialogContent className="bg-card border-border max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-secondary rounded-lg flex items-center justify-center">
+                            <Icon className="h-5 w-5 text-primary" />
+                          </div>
+                          {device.device_name}
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-5">
+                        {/* Status */}
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-muted-foreground">Status</span>
+                          <span className={`flex items-center gap-1.5 text-sm font-medium ${statusColors[device.status]}`}>
+                            {device.status === "online" ? <CheckCircle2 className="h-4 w-4" /> : device.status === "pending" ? <Clock className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                            {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
+                          </span>
+                        </div>
+
+                        {/* Details grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Type</p>
+                            <p className="font-medium">{device.device_type.toUpperCase()}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Model</p>
+                            <p className="font-medium truncate">{device.device_model || "—"}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">VRAM</p>
+                            <p className="font-medium">{device.vram_gb ? `${device.vram_gb} GB` : "—"}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Price/Hour</p>
+                            <p className="font-medium">${Number(device.price_per_hour).toFixed(2)}</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Compute Hours</p>
+                            <p className="font-medium">{Number(device.total_compute_hours).toFixed(1)}h</p>
+                          </div>
+                          <div className="bg-secondary/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Earnings</p>
+                            <p className="font-medium">${Number(device.total_earnings).toFixed(2)}</p>
+                          </div>
+                        </div>
+
+                        <div className="bg-secondary/50 rounded-lg p-3">
+                          <p className="text-xs text-muted-foreground mb-1">Added</p>
+                          <p className="font-medium">{new Date(device.created_at).toLocaleDateString()}</p>
+                        </div>
+
+                        {/* Connection Key */}
+                        {device.connection_key && (
+                          <div className="p-4 bg-secondary/50 rounded-lg border border-border">
+                            <p className="text-xs text-muted-foreground mb-2">
+                              Connection Key
+                            </p>
+                            <div className="flex items-center gap-2">
+                              <code className="flex-1 text-sm font-mono bg-background px-3 py-2 rounded border border-border truncate">
+                                {device.connection_key}
+                              </code>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => copyToClipboard(device.connection_key!)}
+                              >
+                                <Copy className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
                         )}
-                        {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
-                      </span>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Device</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Are you sure you want to delete "{device.device_name}"? This action cannot be undone and the device will be removed from the network.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction
-                              onClick={() => deleteDevice(device.id)}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+
+                        {/* Delete */}
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="w-full text-destructive border-destructive/30 hover:bg-destructive/10"
                             >
-                              Delete
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <p className="text-xs text-muted-foreground">Price/Hour</p>
-                      <p className="font-medium">${Number(device.price_per_hour).toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Compute Hours</p>
-                      <p className="font-medium">{Number(device.total_compute_hours).toFixed(1)}h</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Earnings</p>
-                      <p className="font-medium">${Number(device.total_earnings).toFixed(2)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground">Added</p>
-                      <p className="font-medium">
-                        {new Date(device.created_at).toLocaleDateString()}
-                      </p>
-                    </div>
-                  </div>
-
-                  {device.connection_key && (
-                    <div className="p-4 bg-secondary/50 rounded-lg">
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Connection Key (use this to connect your device)
-                      </p>
-                      <div className="flex items-center gap-2">
-                        <code className="flex-1 text-sm font-mono bg-background px-3 py-2 rounded border border-border truncate">
-                          {device.connection_key}
-                        </code>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => copyToClipboard(device.connection_key!)}
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete Device
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Delete Device</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                Are you sure you want to delete "{device.device_name}"? This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction
+                                onClick={() => deleteDevice(device.id)}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                              >
+                                Delete
+                              </AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                       </div>
-                    </div>
-                  )}
+                    </DialogContent>
+                  </Dialog>
                 </motion.div>
               );
             })}
