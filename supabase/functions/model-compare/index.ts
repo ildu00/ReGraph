@@ -22,11 +22,11 @@ serve(async (req) => {
   }
 
   try {
-    const { prompts, compareModel } = await req.json();
+    const { prompt, compareModel } = await req.json();
 
-    if (!prompts || !Array.isArray(prompts) || prompts.length === 0 || !compareModel) {
+    if (!prompt || !compareModel) {
       return new Response(
-        JSON.stringify({ error: "prompts (array) and compareModel are required" }),
+        JSON.stringify({ error: "prompt and compareModel are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,28 +44,20 @@ serve(async (req) => {
       );
     }
 
-    // Build a single combined prompt with all items numbered
-    const numberedPrompts = prompts
-      .map((p: string, i: number) => `${i + 1}. ${p}`)
-      .join("\n");
-
-    const userMessage = `Answer each of the following ${prompts.length} questions/tasks. For each one, start your answer with the exact header "## ${prompts.length > 1 ? '{number}' : '1'}. {original question}" and provide a thorough response below it. Separate each answer clearly.\n\n${numberedPrompts}`;
-
     const makeRequest = async (model: string, systemPrompt: string) => {
       const start = Date.now();
       const body: Record<string, unknown> = {
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
+          { role: "user", content: prompt },
         ],
       };
 
       if (model.startsWith("openai/")) {
-        body.max_completion_tokens = 16384;
+        body.max_completion_tokens = 2048;
       } else {
-        body.max_tokens = 16384;
-      }
+        body.max_tokens = 2048;
       }
 
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -92,12 +84,7 @@ serve(async (req) => {
       const data = await resp.json();
       const latency = Date.now() - start;
       const content = data.choices?.[0]?.message?.content || "";
-      const finishReason = data.choices?.[0]?.finish_reason || "unknown";
       const tokens = data.usage?.total_tokens || 0;
-      console.log(`Model ${model}: finish_reason=${finishReason}, content_length=${content.length}, tokens=${tokens}`);
-      if (!content && finishReason !== "stop") {
-        return { error: `Model returned empty response (finish_reason: ${finishReason})`, latency };
-      }
       return { content, latency, tokens };
     };
 
@@ -113,10 +100,7 @@ serve(async (req) => {
     ]);
 
     return new Response(
-      JSON.stringify({
-        regraph: regraphResult,
-        compare: compareResult,
-      }),
+      JSON.stringify({ regraph: regraphResult, compare: compareResult }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (e) {

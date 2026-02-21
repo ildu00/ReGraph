@@ -1,13 +1,14 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap } from "lucide-react";
+import { useState, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Play, Loader2, Edit3, RotateCcw, ChevronDown, ChevronUp, Clock, Zap, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const DEFAULT_PROMPTS = [
   "Explain quantum entanglement in simple terms.",
@@ -45,7 +46,8 @@ const COMPARE_MODELS = [
   { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
 ];
 
-interface CompareResult {
+interface PromptResult {
+  prompt: string;
   regraph: { content?: string; error?: string; latency: number; tokens?: number };
   compare: { content?: string; error?: string; latency: number; tokens?: number };
 }
@@ -56,32 +58,51 @@ const ModelCompare = () => {
   const [editValue, setEditValue] = useState("");
   const [compareModel, setCompareModel] = useState("gpt-4o");
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<CompareResult | null>(null);
+  const [results, setResults] = useState<PromptResult[]>([]);
+  const [progress, setProgress] = useState(0);
   const [showAllPrompts, setShowAllPrompts] = useState(false);
 
-  const handleRun = async () => {
+  const handleRun = useCallback(async () => {
     setLoading(true);
-    setResult(null);
+    setResults([]);
+    setProgress(0);
 
-    try {
-      const { data, error } = await supabase.functions.invoke("model-compare", {
-        body: { prompts, compareModel },
-      });
+    const total = prompts.length;
 
-      if (error) {
-        toast.error("Failed to run comparison");
-        console.error(error);
-        return;
+    for (let i = 0; i < total; i++) {
+      try {
+        const { data, error } = await supabase.functions.invoke("model-compare", {
+          body: { prompt: prompts[i], compareModel },
+        });
+
+        const result: PromptResult = {
+          prompt: prompts[i],
+          regraph: error
+            ? { error: "Request failed", latency: 0 }
+            : data.regraph,
+          compare: error
+            ? { error: "Request failed", latency: 0 }
+            : data.compare,
+        };
+
+        setResults((prev) => [...prev, result]);
+      } catch (e) {
+        setResults((prev) => [
+          ...prev,
+          {
+            prompt: prompts[i],
+            regraph: { error: "Network error", latency: 0 },
+            compare: { error: "Network error", latency: 0 },
+          },
+        ]);
       }
 
-      setResult(data);
-    } catch (e) {
-      toast.error("Network error");
-      console.error(e);
-    } finally {
-      setLoading(false);
+      setProgress(Math.round(((i + 1) / total) * 100));
     }
-  };
+
+    setLoading(false);
+    toast.success(`Comparison complete — ${total} prompts processed`);
+  }, [prompts, compareModel]);
 
   const startEdit = (idx: number) => {
     setEditingIdx(idx);
@@ -96,11 +117,17 @@ const ModelCompare = () => {
 
   const resetPrompts = () => {
     setPrompts(DEFAULT_PROMPTS);
-    setResult(null);
+    setResults([]);
+    setProgress(0);
     toast.success("Prompts reset to defaults");
   };
 
   const visiblePrompts = showAllPrompts ? prompts : prompts.slice(0, 10);
+
+  const totalRegraphLatency = results.reduce((s, r) => s + (r.regraph.latency || 0), 0);
+  const totalCompareLatency = results.reduce((s, r) => s + (r.compare.latency || 0), 0);
+  const totalRegraphTokens = results.reduce((s, r) => s + (r.regraph.tokens || 0), 0);
+  const totalCompareTokens = results.reduce((s, r) => s + (r.compare.tokens || 0), 0);
 
   return (
     <motion.div
@@ -120,7 +147,7 @@ const ModelCompare = () => {
       </div>
 
       <p className="text-sm text-muted-foreground mb-6">
-        Select a prompt and a competing model. Both ReGraph LLM and the selected model will generate a response for side-by-side quality comparison.
+        Each prompt is sent individually to both ReGraph LLM and the selected model. Results appear in real-time as they complete.
       </p>
 
       {/* Model selector */}
@@ -141,16 +168,26 @@ const ModelCompare = () => {
         <div className="flex items-end">
           <Button onClick={handleRun} disabled={loading} className="w-full sm:w-auto">
             {loading ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Play className="h-4 w-4 mr-1" />}
-            {loading ? "Generating…" : "Run Comparison"}
+            {loading ? `Processing ${results.length}/${prompts.length}…` : "Run Comparison"}
           </Button>
         </div>
       </div>
+
+      {/* Progress bar */}
+      {loading && (
+        <div className="mb-6">
+          <Progress value={progress} className="h-2" />
+          <p className="text-xs text-muted-foreground mt-1 text-center">
+            {results.length} of {prompts.length} prompts completed
+          </p>
+        </div>
+      )}
 
       {/* Prompt list */}
       <div className="rounded-xl border border-border bg-card/30 mb-6">
         <div className="p-3 border-b border-border flex items-center justify-between">
           <span className="text-sm font-mono text-muted-foreground">
-            Prompts ({prompts.length}) — click to select, pencil to edit
+            Prompts ({prompts.length}) — pencil to edit
           </span>
           <Button
             variant="ghost"
@@ -187,6 +224,7 @@ const ModelCompare = () => {
               ) : (
                 <>
                   <span className="flex-1 text-sm">{prompt}</span>
+                  {results[idx] && <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0 mt-0.5" />}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -195,6 +233,7 @@ const ModelCompare = () => {
                       e.stopPropagation();
                       startEdit(idx);
                     }}
+                    disabled={loading}
                   >
                     <Edit3 className="h-3 w-3" />
                   </Button>
@@ -205,70 +244,89 @@ const ModelCompare = () => {
         </div>
       </div>
 
-      {/* Info */}
-      <div className="p-4 rounded-xl bg-primary/5 border border-primary/20 mb-6">
-        <p className="text-xs font-mono text-primary mb-1">All {prompts.length} prompts will be sent in a single request</p>
-        <p className="text-sm text-muted-foreground">Both models will answer each prompt. Results are displayed side-by-side for comparison.</p>
-      </div>
-
-      {/* Results */}
-      {result && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="grid md:grid-cols-2 gap-4"
-        >
-          {/* ReGraph LLM */}
-          <div className="rounded-xl border border-primary/30 bg-card/50 overflow-hidden">
-            <div className="p-3 border-b border-primary/20 bg-primary/5 flex items-center justify-between">
-              <span className="font-mono text-sm font-bold text-primary">ReGraph LLM</span>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                {result.regraph.latency > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {result.regraph.latency}ms
-                  </span>
-                )}
-                {result.regraph.tokens && <span>{result.regraph.tokens} tokens</span>}
-              </div>
-            </div>
-            <div className="p-4">
-              {result.regraph.error ? (
-                <p className="text-sm text-destructive">{result.regraph.error}</p>
-              ) : (
-                <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.regraph.content || ""}</ReactMarkdown>
-                </div>
-              )}
-            </div>
+      {/* Summary stats */}
+      {results.length > 0 && !loading && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="p-4 rounded-xl border border-primary/30 bg-primary/5">
+            <p className="text-xs font-mono text-primary mb-1">ReGraph LLM — Totals</p>
+            <p className="text-sm">⏱ {(totalRegraphLatency / 1000).toFixed(1)}s total · {totalRegraphTokens} tokens</p>
+            <p className="text-xs text-muted-foreground">Avg {(totalRegraphLatency / results.length / 1000).toFixed(1)}s per prompt</p>
           </div>
-
-          {/* Comparison model */}
-          <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
-            <div className="p-3 border-b border-border bg-card/30 flex items-center justify-between">
-              <span className="font-mono text-sm font-bold">
-                {COMPARE_MODELS.find((m) => m.id === compareModel)?.name}
-              </span>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                {result.compare.latency > 0 && (
-                  <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> {result.compare.latency}ms
-                  </span>
-                )}
-                {result.compare.tokens && <span>{result.compare.tokens} tokens</span>}
-              </div>
-            </div>
-            <div className="p-4">
-              {result.compare.error ? (
-                <p className="text-sm text-destructive">{result.compare.error}</p>
-              ) : (
-                <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.compare.content || ""}</ReactMarkdown>
-                </div>
-              )}
-            </div>
+          <div className="p-4 rounded-xl border border-border bg-card/50">
+            <p className="text-xs font-mono text-muted-foreground mb-1">{COMPARE_MODELS.find((m) => m.id === compareModel)?.name} — Totals</p>
+            <p className="text-sm">⏱ {(totalCompareLatency / 1000).toFixed(1)}s total · {totalCompareTokens} tokens</p>
+            <p className="text-xs text-muted-foreground">Avg {(totalCompareLatency / results.length / 1000).toFixed(1)}s per prompt</p>
           </div>
-        </motion.div>
+        </div>
       )}
+
+      {/* Results per prompt */}
+      <AnimatePresence>
+        {results.map((r, idx) => (
+          <motion.div
+            key={idx}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6"
+          >
+            <div className="p-3 rounded-t-xl bg-muted/50 border border-border border-b-0">
+              <p className="text-sm font-mono font-bold">
+                <span className="text-primary">#{idx + 1}</span> {r.prompt}
+              </p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-0 border border-border rounded-b-xl overflow-hidden">
+              {/* ReGraph */}
+              <div className="border-r border-border">
+                <div className="p-2 border-b border-primary/20 bg-primary/5 flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold text-primary">ReGraph LLM</span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {r.regraph.latency > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {(r.regraph.latency / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                    {r.regraph.tokens && <span>{r.regraph.tokens}t</span>}
+                  </div>
+                </div>
+                <div className="p-4">
+                  {r.regraph.error ? (
+                    <p className="text-sm text-destructive">{r.regraph.error}</p>
+                  ) : (
+                    <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.regraph.content || ""}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {/* Compare */}
+              <div>
+                <div className="p-2 border-b border-border bg-card/30 flex items-center justify-between">
+                  <span className="font-mono text-xs font-bold">
+                    {COMPARE_MODELS.find((m) => m.id === compareModel)?.name}
+                  </span>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    {r.compare.latency > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {(r.compare.latency / 1000).toFixed(1)}s
+                      </span>
+                    )}
+                    {r.compare.tokens && <span>{r.compare.tokens}t</span>}
+                  </div>
+                </div>
+                <div className="p-4">
+                  {r.compare.error ? (
+                    <p className="text-sm text-destructive">{r.compare.error}</p>
+                  ) : (
+                    <div className="text-sm leading-relaxed markdown-response prose prose-sm prose-invert max-w-none">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{r.compare.content || ""}</ReactMarkdown>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        ))}
+      </AnimatePresence>
     </motion.div>
   );
 };
