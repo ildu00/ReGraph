@@ -22,11 +22,11 @@ serve(async (req) => {
   }
 
   try {
-    const { prompt, compareModel } = await req.json();
+    const { prompts, compareModel } = await req.json();
 
-    if (!prompt || !compareModel) {
+    if (!prompts || !Array.isArray(prompts) || prompts.length === 0 || !compareModel) {
       return new Response(
-        JSON.stringify({ error: "prompt and compareModel are required" }),
+        JSON.stringify({ error: "prompts (array) and compareModel are required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -44,20 +44,26 @@ serve(async (req) => {
       );
     }
 
+    const numberedList = prompts.map((p: string, i: number) => `${i + 1}. ${p}`).join("\n");
+
+    const userMessage = `Answer each question below briefly (2-3 sentences max per answer). Number your answers to match.\n\n${numberedList}`;
+
+    const systemBase = "Answer concisely. Use markdown. Number each answer. Respond in the same language as each question.";
+
     const makeRequest = async (model: string, systemPrompt: string) => {
       const start = Date.now();
       const body: Record<string, unknown> = {
         model,
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: userMessage },
         ],
       };
 
       if (model.startsWith("openai/")) {
-        body.max_completion_tokens = 2048;
+        body.max_completion_tokens = 4096;
       } else {
-        body.max_tokens = 2048;
+        body.max_tokens = 4096;
       }
 
       const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -70,12 +76,8 @@ serve(async (req) => {
       });
 
       if (!resp.ok) {
-        if (resp.status === 429) {
-          return { error: "Rate limited. Please try again later.", latency: 0 };
-        }
-        if (resp.status === 402) {
-          return { error: "Usage limit reached.", latency: 0 };
-        }
+        if (resp.status === 429) return { error: "Rate limited. Try again later.", latency: 0 };
+        if (resp.status === 402) return { error: "Usage limit reached.", latency: 0 };
         const text = await resp.text();
         console.error(`Model ${model} error:`, resp.status, text);
         return { error: `Model error (${resp.status})`, latency: 0 };
@@ -89,14 +91,8 @@ serve(async (req) => {
     };
 
     const [regraphResult, compareResult] = await Promise.all([
-      makeRequest(
-        REGRAPH_MODEL,
-        "You are ReGraph LLM, a state-of-the-art AI model trained on 4.2T tokens with continuous daily updates. You are highly knowledgeable, accurate, concise, and helpful. Respond in the same language as the user's prompt. Use markdown formatting."
-      ),
-      makeRequest(
-        gatewayModel,
-        "You are a helpful AI assistant. Respond in the same language as the user's prompt. Use markdown formatting."
-      ),
+      makeRequest(REGRAPH_MODEL, `You are ReGraph LLM. ${systemBase}`),
+      makeRequest(gatewayModel, `You are a helpful AI assistant. ${systemBase}`),
     ]);
 
     return new Response(
