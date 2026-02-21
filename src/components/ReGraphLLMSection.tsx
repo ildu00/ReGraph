@@ -95,20 +95,27 @@ const ReGraphLLMSection = () => {
   }'`}
               </pre>
             </div>
-            <div className="flex flex-col gap-2 mt-4">
-              <Link to="/docs">
-                <Button variant="outline" className="w-full border-primary/30 hover:bg-primary/10">
-                  Read the Docs →
-                </Button>
-              </Link>
-              <Link to="/training-stats">
-                <Button variant="outline" className="w-full border-primary/30 hover:bg-primary/10">
-                  Training Stats →
-                </Button>
-              </Link>
-            </div>
           </motion.div>
         </div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.6 }}
+          className="flex flex-wrap items-center justify-center gap-4"
+        >
+          <Link to="/docs">
+            <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10">
+              Read the Docs →
+            </Button>
+          </Link>
+          <Link to="/training-stats">
+            <Button variant="outline" size="lg" className="border-primary/30 hover:bg-primary/10">
+              Training Stats →
+            </Button>
+          </Link>
+        </motion.div>
       </div>
     </section>
   );
