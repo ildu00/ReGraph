@@ -110,7 +110,7 @@ const MiningTab = () => {
       const payload = task.payload || {};
       const simulatedResponse = `[Browser agent] Processed task ${task.id} for model ${payload.model || "unknown"}`;
 
-      await apiCall(`devices/${devId}/tasks/${task.id}/result`, {
+      const resultRes = await apiCall(`devices/${devId}/tasks/${task.id}/result`, {
         method: "POST",
         body: JSON.stringify({
           response: simulatedResponse,
@@ -123,11 +123,24 @@ const MiningTab = () => {
       });
 
       const duration = Date.now() - start;
+      let serverTotal: number | null = null;
+      try {
+        const resultData = await resultRes.json();
+        if (resultData.total_earnings != null) {
+          serverTotal = Number(resultData.total_earnings);
+        }
+      } catch { /* ignore */ }
+
       setTaskLogs((prev) => [
         { id: task.id, type: task.type, status: "completed", durationMs: duration, timestamp: new Date() },
         ...prev.slice(0, 49),
       ]);
-      setStats((s) => ({ ...s, completed: s.completed + 1, totalMs: s.totalMs + duration, earnings: s.earnings + EARNING_PER_TASK }));
+      setStats((s) => ({
+        ...s,
+        completed: s.completed + 1,
+        totalMs: s.totalMs + duration,
+        earnings: serverTotal != null ? serverTotal : s.earnings + EARNING_PER_TASK,
+      }));
     } catch (e) {
       const duration = Date.now() - start;
       try {
@@ -196,6 +209,12 @@ const MiningTab = () => {
       const devId = data.device_id;
       setDeviceId(devId);
       setStatus("mining");
+
+      // Load persisted earnings from DB
+      if (data.total_earnings) {
+        setStats((s) => ({ ...s, earnings: Number(data.total_earnings) }));
+      }
+
       toast.success("Connected! Mining started.");
 
       // Start heartbeat

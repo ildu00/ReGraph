@@ -163,10 +163,19 @@ Deno.serve(async (req) => {
         regDeviceId = newDev.id;
       }
 
+      // Fetch current earnings so the client can display persisted totals
+      const { data: regDev } = await supabase
+        .from("provider_devices")
+        .select("total_earnings, total_compute_hours")
+        .eq("id", regDeviceId)
+        .single();
+
       return json({
         device_id: regDeviceId,
         provider_id: providerId,
         status: "online",
+        total_earnings: Number(regDev?.total_earnings || 0),
+        total_compute_hours: Number(regDev?.total_compute_hours || 0),
         message: "Device registered successfully",
       }, 201);
     }
@@ -302,37 +311,40 @@ Deno.serve(async (req) => {
       const computeMs = Date.now() - new Date(task.created_at).getTime();
       const earningsUsd = Math.max(0.0001, computeMs / 3600000 * 0.10); // $0.10/hr base rate
 
-      // Update device stats
-      await supabase.rpc("provider_record_completion", {
-        p_device_id: resDeviceId,
-        p_compute_ms: computeMs,
-        p_earnings_usd: earningsUsd,
-      }).catch(() => {
-        // If RPC doesn't exist, update directly
-        return supabase
-          .from("provider_devices")
-          .update({
-            total_compute_hours: supabase.rpc ? undefined : 0, // handled below
-            total_earnings: supabase.rpc ? undefined : 0,
-          })
-          .eq("id", resDeviceId);
-      });
-
-      // Direct update as fallback
+      // Read current device stats, then atomically increment
       const { data: currentDev } = await supabase
         .from("provider_devices")
-        .select("total_compute_hours, total_earnings")
+        .select("total_compute_hours, total_earnings, user_id")
         .eq("id", resDeviceId)
         .single();
 
-      if (currentDev) {
-        await supabase
-          .from("provider_devices")
-          .update({
-            total_compute_hours: Number(currentDev.total_compute_hours) + computeMs / 3600000,
-            total_earnings: Number(currentDev.total_earnings) + earningsUsd,
-          })
-          .eq("id", resDeviceId);
+      const newEarnings = Number(currentDev?.total_earnings || 0) + earningsUsd;
+      const newHours = Number(currentDev?.total_compute_hours || 0) + computeMs / 3600000;
+
+      await supabase
+        .from("provider_devices")
+        .update({
+          total_compute_hours: newHours,
+          total_earnings: newEarnings,
+        })
+        .eq("id", resDeviceId);
+
+      // Also update provider_profiles total_earnings
+      if (currentDev?.user_id) {
+        const { data: profile } = await supabase
+          .from("provider_profiles")
+          .select("id, total_earnings")
+          .eq("user_id", currentDev.user_id)
+          .single();
+
+        if (profile) {
+          await supabase
+            .from("provider_profiles")
+            .update({
+              total_earnings: Number(profile.total_earnings) + earningsUsd,
+            })
+            .eq("id", profile.id);
+        }
       }
 
       return json({
@@ -340,6 +352,7 @@ Deno.serve(async (req) => {
         task_id: taskId,
         compute_ms: computeMs,
         earnings_usd: Math.round(earningsUsd * 10000) / 10000,
+        total_earnings: Math.round(newEarnings * 10000) / 10000,
       });
     }
 
