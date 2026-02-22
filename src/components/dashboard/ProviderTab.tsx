@@ -77,6 +77,15 @@ interface Device {
   created_at: string;
 }
 
+// Price ranges per device type (min, max, default, step)
+const deviceTypePricing: Record<DeviceType, { min: number; max: number; default: number; step: number }> = {
+  gpu: { min: 0.10, max: 5.00, default: 0.50, step: 0.01 },
+  tpu: { min: 1.00, max: 8.00, default: 3.00, step: 0.10 },
+  npu: { min: 0.20, max: 2.00, default: 0.50, step: 0.01 },
+  cpu: { min: 0.02, max: 0.50, default: 0.10, step: 0.01 },
+  smartphone: { min: 0.00001, max: 0.0001, default: 0.00005, step: 0.00001 },
+};
+
 const deviceTypeIcons: Record<DeviceType, React.ElementType> = {
   gpu: Zap,
   tpu: Cpu,
@@ -122,8 +131,17 @@ const ProviderTab = () => {
     device_type: "gpu" as DeviceType,
     device_model: "",
     vram_gb: "",
-    price_per_hour: "0.10",
+    price_per_hour: String(deviceTypePricing.gpu.default),
   });
+
+  const handleDeviceTypeChange = (value: DeviceType) => {
+    const pricing = deviceTypePricing[value];
+    setNewDevice((prev) => ({
+      ...prev,
+      device_type: value,
+      price_per_hour: String(pricing.default),
+    }));
+  };
 
   const applyFilters = () => {
     setAppliedFilters({
@@ -265,7 +283,7 @@ const ProviderTab = () => {
         device_type: "gpu",
         device_model: "",
         vram_gb: "",
-        price_per_hour: "0.10",
+        price_per_hour: String(deviceTypePricing.gpu.default),
       });
       setIsAddDeviceOpen(false);
       fetchProviderData();
@@ -393,9 +411,7 @@ const ProviderTab = () => {
                 <Label>Device Type</Label>
                 <Select
                   value={newDevice.device_type}
-                  onValueChange={(value: DeviceType) =>
-                    setNewDevice({ ...newDevice, device_type: value })
-                  }
+                  onValueChange={(value: DeviceType) => handleDeviceTypeChange(value)}
                 >
                   <SelectTrigger className="bg-secondary border-border">
                     <SelectValue />
@@ -438,17 +454,33 @@ const ProviderTab = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="price">Price/Hour ($)</Label>
-                  <Input
-                    id="price"
-                    type="number"
-                    step="0.01"
-                    value={newDevice.price_per_hour}
-                    onChange={(e) =>
-                      setNewDevice({ ...newDevice, price_per_hour: e.target.value })
-                    }
-                    className="bg-secondary border-border"
-                  />
+                  <Label>Price/Hour ($)</Label>
+                  {(() => {
+                    const p = deviceTypePricing[newDevice.device_type];
+                    const decimals = newDevice.device_type === "smartphone" ? 5 : 2;
+                    return (
+                      <>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                          <span>${p.min.toFixed(decimals)}</span>
+                          <span className="font-medium text-sm text-foreground">
+                            ${Number(newDevice.price_per_hour).toFixed(decimals)}
+                          </span>
+                          <span>${p.max.toFixed(decimals)}</span>
+                        </div>
+                        <input
+                          type="range"
+                          min={p.min}
+                          max={p.max}
+                          step={p.step}
+                          value={newDevice.price_per_hour}
+                          onChange={(e) =>
+                            setNewDevice({ ...newDevice, price_per_hour: e.target.value })
+                          }
+                          className="w-full accent-primary h-2 rounded-lg cursor-pointer"
+                        />
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
