@@ -110,8 +110,11 @@ const WalletTab = () => {
   const [loading, setLoading] = useState(true);
   const [generatingAddress, setGeneratingAddress] = useState<BlockchainNetwork | null>(null);
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
-  const [wertDialogOpen, setWertDialogOpen] = useState(false);
+  const [cardDialogOpen, setCardDialogOpen] = useState(false);
+  const [cardProvider, setCardProvider] = useState<'wert' | 'stripe' | null>(null);
   const [wertLoading, setWertLoading] = useState(false);
+  const [stripeLoading, setStripeLoading] = useState(false);
+  const [stripeAmount, setStripeAmount] = useState('25');
   
   // Withdrawal state
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
@@ -251,57 +254,72 @@ const WalletTab = () => {
       
       const { session_id, partner_id, click_id } = response.data;
 
-      // Use Wert SDK to open the widget
       const { default: WertWidget } = await import('@wert-io/widget-initializer');
       const wertWidget = new WertWidget({
         partner_id,
         session_id,
         click_id,
         listeners: {
-          loaded: () => {
-            console.log('Wert widget loaded');
-          },
-          'payment-status': (data: { status: string; payment_id?: string; order_id?: string; tx_id?: string }) => {
-            console.log('Wert payment status:', data);
+          loaded: () => console.log('Wert widget loaded'),
+          'payment-status': (data: { status: string }) => {
             switch (data.status) {
-              case 'pending':
-                toast.info('Payment is being processed...');
-                break;
+              case 'pending': toast.info('Payment is being processed...'); break;
               case 'success':
                 toast.success('Payment successful! Your balance will update shortly.');
                 fetchWalletData();
                 break;
-              case 'failed':
-                toast.error('Payment failed. Please try again.');
-                break;
-              case 'canceled':
-                toast.info('Payment was cancelled.');
-                break;
-              case 'failover':
-                toast.info('Payment is being retried with an alternative method...');
-                break;
+              case 'failed': toast.error('Payment failed. Please try again.'); break;
+              case 'canceled': toast.info('Payment was cancelled.'); break;
             }
           },
-          position: (data: { step: string }) => {
-            console.log('Wert widget step:', data.step);
-          },
-          close: () => {
-            console.log('Wert widget closed');
-          },
+          close: () => console.log('Wert widget closed'),
           error: (data: { name: string; message: string }) => {
-            console.error('Wert widget error:', data);
             toast.error(`Widget error: ${data.message}`);
           },
         },
       });
       
       wertWidget.open();
-      setWertDialogOpen(false);
+      setCardDialogOpen(false);
+      setCardProvider(null);
     } catch (error: any) {
       console.error('Error opening Wert widget:', error);
       toast.error(error.message || 'Failed to open Wert.io widget');
     } finally {
       setWertLoading(false);
+    }
+  };
+
+  const openStripeCheckout = async () => {
+    if (!user || !wallet) return;
+    
+    const amount = parseFloat(stripeAmount);
+    if (isNaN(amount) || amount < 5 || amount > 10000) {
+      toast.error('Amount must be between $5 and $10,000');
+      return;
+    }
+
+    setStripeLoading(true);
+    try {
+      const response = await supabase.functions.invoke('stripe-checkout', {
+        body: { amount_usd: amount }
+      });
+
+      if (response.error) throw response.error;
+      if (response.data?.error) throw new Error(response.data.error);
+
+      const { url } = response.data;
+      if (url) {
+        window.open(url, '_blank');
+        setCardDialogOpen(false);
+        setCardProvider(null);
+        toast.info('Stripe checkout opened in a new tab');
+      }
+    } catch (error: any) {
+      console.error('Stripe checkout error:', error);
+      toast.error(error.message || 'Failed to open Stripe checkout');
+    } finally {
+      setStripeLoading(false);
     }
   };
 
@@ -596,7 +614,7 @@ Generated: ${new Date().toISOString()}
                 </DialogContent>
               </Dialog>
 
-              <Dialog open={wertDialogOpen} onOpenChange={setWertDialogOpen}>
+              <Dialog open={cardDialogOpen} onOpenChange={(open) => { setCardDialogOpen(open); if (!open) setCardProvider(null); }}>
                 <DialogTrigger asChild>
                   <Button variant="outline" className="aspect-square p-0 lg:aspect-auto lg:px-4 lg:py-2 lg:gap-2">
                     <CreditCard className="h-4 w-4" />
@@ -605,45 +623,123 @@ Generated: ${new Date().toISOString()}
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Buy Crypto with Card</DialogTitle>
+                    <DialogTitle>Top Up with Card</DialogTitle>
                     <DialogDescription>
-                      Purchase cryptocurrency instantly using your credit or debit card via Wert.io
+                      Add funds to your balance using a credit or debit card
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 mt-4">
-                    <div className="bg-muted/50 p-4 rounded-lg space-y-2">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Instant purchase with Visa/Mastercard</span>
+                    {!cardProvider ? (
+                      <div className="grid gap-3">
+                        <button
+                          onClick={() => setCardProvider('stripe')}
+                          className="flex items-center gap-4 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-colors text-left"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shrink-0">
+                            <CreditCard className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Stripe</p>
+                            <p className="text-sm text-muted-foreground">Pay with Visa, Mastercard, Apple Pay, Google Pay</p>
+                          </div>
+                        </button>
+                        <button
+                          onClick={() => setCardProvider('wert')}
+                          className="flex items-center gap-4 p-4 rounded-lg border border-border hover:border-primary/50 hover:bg-secondary/50 transition-colors text-left"
+                        >
+                          <div className="w-10 h-10 rounded-lg bg-[hsl(var(--primary)/0.1)] flex items-center justify-center shrink-0">
+                            <Wallet className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="font-medium">Wert.io</p>
+                            <p className="text-sm text-muted-foreground">Buy crypto directly with your card</p>
+                          </div>
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">No crypto wallet needed</span>
+                    ) : cardProvider === 'stripe' ? (
+                      <div className="space-y-4">
+                        <Button variant="ghost" size="sm" onClick={() => setCardProvider(null)} className="mb-2">
+                          ← Back
+                        </Button>
+                        <div className="space-y-2">
+                          <Label>Amount (USD)</Label>
+                          <div className="flex gap-2">
+                            {['10', '25', '50', '100'].map((val) => (
+                              <Button
+                                key={val}
+                                variant={stripeAmount === val ? 'default' : 'outline'}
+                                size="sm"
+                                onClick={() => setStripeAmount(val)}
+                              >
+                                ${val}
+                              </Button>
+                            ))}
+                          </div>
+                          <Input
+                            type="number"
+                            min="5"
+                            max="10000"
+                            value={stripeAmount}
+                            onChange={(e) => setStripeAmount(e.target.value)}
+                            placeholder="Custom amount"
+                          />
+                        </div>
+                        <Button
+                          className="w-full gap-2"
+                          onClick={openStripeCheckout}
+                          disabled={stripeLoading}
+                        >
+                          {stripeLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4" />
+                              Pay ${stripeAmount || '0'} with Stripe
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Secure payment powered by Stripe
+                        </p>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">Funds credited directly to your balance</span>
+                    ) : (
+                      <div className="space-y-4">
+                        <Button variant="ghost" size="sm" onClick={() => setCardProvider(null)} className="mb-2">
+                          ← Back
+                        </Button>
+                        <div className="bg-muted/50 p-4 rounded-lg space-y-2">
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">Instant purchase with Visa/Mastercard</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">No crypto wallet needed</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <CheckCircle2 className="h-4 w-4 text-green-500" />
+                            <span className="text-sm">Funds credited directly to your balance</span>
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full gap-2"
+                          onClick={openWertWidget}
+                          disabled={wertLoading}
+                        >
+                          {wertLoading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <ExternalLink className="h-4 w-4" />
+                              Open Wert.io Widget
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center">
+                          Powered by Wert.io • Secure payment processing
+                        </p>
                       </div>
-                    </div>
-                    
-                    <Button 
-                      className="w-full gap-2" 
-                      onClick={openWertWidget}
-                      disabled={wertLoading}
-                    >
-                      {wertLoading ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <>
-                          <ExternalLink className="h-4 w-4" />
-                          Open Wert.io Widget
-                        </>
-                      )}
-                    </Button>
-                    
-                    <p className="text-xs text-muted-foreground text-center">
-                      Powered by Wert.io • Secure payment processing
-                    </p>
+                    )}
                   </div>
                 </DialogContent>
               </Dialog>
