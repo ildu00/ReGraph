@@ -39,6 +39,21 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.2",
+    date: "February 22, 2026",
+    title: "Stripe Payments & Webhook Integration",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Stripe Checkout integration for wallet top-ups — users can now fund their balance with a bank card via Stripe alongside Wert.io" },
+      { category: "feature", description: "Stripe webhook endpoint for automated payment confirmation — wallet balance is credited only after verified checkout.session.completed event" },
+      { category: "feature", description: "Payment method selector in Buy with Card dialog — choose between Stripe and Wert.io" },
+      { category: "feature", description: "Predefined amount buttons ($10, $25, $50, $100) and custom amount input for Stripe top-ups" },
+      { category: "security", description: "Webhook signature verification using STRIPE_WEBHOOK_SECRET to prevent fraudulent payment events" },
+      { category: "security", description: "Idempotent transaction processing — duplicate Stripe events are safely ignored via session ID deduplication" },
+      { category: "improvement", description: "Post-checkout redirect handling with success/cancelled status toasts on the Wallet tab" },
+    ]
+  },
+  {
     version: "2.9.1",
     date: "February 21, 2026",
     title: "Smartphone Mining & PWA Improvements",
