@@ -69,6 +69,12 @@ const DashboardInner = () => {
     if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
+    const stripeStatus = searchParams.get("stripe");
+    if (stripeStatus === "success") {
+      import("sonner").then(({ toast }) => toast.success("Payment successful! Your balance will update shortly."));
+    } else if (stripeStatus === "cancelled") {
+      import("sonner").then(({ toast }) => toast.info("Payment was cancelled."));
+    }
   }, [searchParams]);
 
   // Lock body scroll when mobile chat is active to prevent iOS Safari
