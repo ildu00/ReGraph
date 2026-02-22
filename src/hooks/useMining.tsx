@@ -34,7 +34,7 @@ const MiningContext = createContext<MiningContextValue | null>(null);
 
 const POLL_INTERVAL = 5000;
 const HEARTBEAT_INTERVAL = 30000;
-const EARNING_PER_TASK = 0.0012;
+const EARNING_PER_TASK = 0.00012;
 
 export const MiningProvider = ({ children }: { children: ReactNode }) => {
   const [connectionKey, setConnectionKeyState] = useState(() =>
