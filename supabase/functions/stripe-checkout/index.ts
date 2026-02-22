@@ -34,7 +34,6 @@ serve(async (req) => {
       apiVersion: "2025-08-27.basil",
     });
 
-    // Find or reference existing customer
     const customers = await stripe.customers.list({ email: user.email, limit: 1 });
     let customerId: string | undefined;
     if (customers.data.length > 0) {
@@ -65,32 +64,6 @@ serve(async (req) => {
         amount_usd: amount_usd.toString(),
       },
     });
-
-    // Credit wallet immediately (optimistic — in production use webhooks)
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { persistSession: false } }
-    );
-
-    // Get user's wallet
-    const { data: wallet } = await supabaseAdmin
-      .from("wallets")
-      .select("id, balance_usd")
-      .eq("user_id", user.id)
-      .single();
-
-    if (wallet) {
-      // Create pending transaction
-      await supabaseAdmin.from("wallet_transactions").insert({
-        user_id: user.id,
-        wallet_id: wallet.id,
-        transaction_type: "deposit",
-        status: "pending",
-        amount_usd: amount_usd,
-        metadata: { source: "stripe", session_id: session.id },
-      });
-    }
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
