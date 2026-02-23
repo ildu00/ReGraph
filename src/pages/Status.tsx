@@ -534,6 +534,9 @@ const Status = () => {
             </div>
           </motion.div>
 
+          {/* Network Devices List */}
+          <NetworkDevices />
+
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Connected Hardware */}
             <motion.div
