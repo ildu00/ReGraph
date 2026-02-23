@@ -30,6 +30,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import NetworkDevices from "@/components/NetworkDevices";
 
 interface DeviceStats {
   total: number;
@@ -532,6 +533,9 @@ const Status = () => {
               </ResponsiveContainer>
             </div>
           </motion.div>
+
+          {/* Network Devices List */}
+          <NetworkDevices />
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Connected Hardware */}
