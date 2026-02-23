@@ -30,6 +30,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import NetworkDevices from "@/components/NetworkDevices";
 
 interface DeviceStats {
   total: number;
