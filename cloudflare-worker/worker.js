@@ -174,11 +174,15 @@ export default {
     }
 
     // For special endpoints, inject hint so inference knows the intent
-    if ((matchedPath === "/v1/images/generations" || matchedPath === "/v1/embeddings") && options.body && typeof options.body === "string") {
+    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations"];
+    if (injectEndpoints.includes(matchedPath) && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
         if (matchedPath === "/v1/images/generations") parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/images/edits") { parsed._endpoint = "images/edits"; parsed.category = "image-edit"; }
+        if (matchedPath === "/v1/images/variations") { parsed._endpoint = "images/variations"; parsed.category = "image-gen"; }
         if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
+        if (matchedPath === "/v1/moderations") { parsed._endpoint = "moderations"; parsed.category = "moderation"; }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
