@@ -88,6 +88,9 @@ serve(async (req) => {
         "whisper-v3-turbo": "stt-openai/whisper-v3-turbo",
         "gpt-4o-transcribe": "stt-openai/gpt-4o-transcribe",
         "gpt-4o-mini-transcribe": "stt-openai/gpt-4o-mini-transcribe",
+        "openai/Whisper-Large-v3": "stt-openai/whisper-v3", "openai/whisper-large-v3": "stt-openai/whisper-v3",
+        "meta/SeamlessM4T": "stt-openai/whisper-v3", "meta/seamlessm4t": "stt-openai/whisper-v3",
+        "nvidia/Canary-1B": "stt-openai/whisper-v3", "nvidia/canary-1b": "stt-openai/whisper-v3",
       };
       const mappedModel = (model || "whisper-1").startsWith("stt-openai/") ? model : (jsonModelMapping[model] || "stt-openai/whisper-1");
       formData.append("model", mappedModel);
