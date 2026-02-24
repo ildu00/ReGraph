@@ -39,6 +39,21 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.5",
+    date: "February 24, 2026",
+    title: "Framework Integrations & Embedding Models",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Official LangChain integration — drop-in ChatOpenAI and OpenAIEmbeddings configuration with ReGraph as the OpenAI-compatible backend" },
+      { category: "feature", description: "Microsoft Semantic Kernel integration — Python and .NET examples for using ReGraph as a custom AI service provider" },
+      { category: "feature", description: "Haystack integration — OpenAIChatGenerator and OpenAITextEmbedder configurations for RAG and search pipelines" },
+      { category: "feature", description: "Vespa integration — external LLM provider config for retrieval-augmented generation in Vespa search applications" },
+      { category: "feature", description: "Added embedding models to catalog: text-embedding-3-small (1536d), text-embedding-3-large (3072d), and Qwen3 Embedding 8B (8192d)" },
+      { category: "improvement", description: "Full integration documentation with Quick Start guides, code examples, and model references for each framework" },
+      { category: "fix", description: "Fixed /v1/embeddings endpoint compatibility — OpenAI standard 'input' field and model name normalization now work correctly" },
+    ]
+  },
+  {
     version: "2.9.4",
     date: "February 24, 2026",
     title: "Bifrost AI Gateway Integration",
