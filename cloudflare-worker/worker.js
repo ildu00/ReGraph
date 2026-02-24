@@ -101,7 +101,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch", "/v1/images/generations"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch", "/v1/images/generations", "/v1/embeddings"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
