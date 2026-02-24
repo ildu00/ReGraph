@@ -51,12 +51,14 @@ serve(async (req) => {
     
     const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents } = body;
     const useAgents = agents === true;
-    // Check if this is an /images/generations request (forwarded by Cloudflare Worker)
+    // Check if this is a special endpoint (forwarded by Cloudflare Worker)
     const requestUrl = new URL(req.url);
     const isImageGenEndpoint = requestUrl.pathname.includes("images/generations") || body._endpoint === "images/generations";
+    const isImageEditEndpoint = body._endpoint === "images/edits";
+    const isModerationEndpoint = body._endpoint === "moderations";
     
-    // Determine category from model name
-    let category = isImageGenEndpoint ? "image-gen" : "chat";
+    // Use explicit category from worker if provided, otherwise determine from model
+    let category = body.category || (isImageGenEndpoint ? "image-gen" : isImageEditEndpoint ? "image-edit" : isModerationEndpoint ? "moderation" : "chat");
     const modelLower = (model || "").toLowerCase();
     
     if (modelLower.includes("tts") || modelLower.includes("eleven") || modelLower.includes("xtts") || modelLower.includes("bark")) { category = "tts"; }
@@ -65,7 +67,7 @@ serve(async (req) => {
     else if (modelLower.includes("instruct-pix") || modelLower.includes("controlnet")) { category = "image-edit"; }
     else if (modelLower.includes("stable-video") || modelLower.includes("animatediff")) { category = "video"; }
     else if (modelLower.includes("bge") || modelLower.includes("e5-") || modelLower.includes("nomic") || modelLower.includes("embed")) { category = "embedding"; }
-    else if (modelLower.includes("layoutlm") || modelLower.includes("donut") || modelLower.includes("trocr") || modelLower.includes("surya") || modelLower.includes("ocr")) { category = "document"; }
+    else if (modelLower.includes("layoutlm") || modelLower.includes("donut") || modelLower.includes("trocr") || modelLower.includes("surya") || modelLower.includes("ocr") || modelLower.includes("azure-d") || modelLower.includes("mathpix")) { category = "document"; }
     else if (modelLower.includes("llama") || modelLower.includes("mistral") || modelLower.includes("qwen") || modelLower.includes("gemma")) { category = "llm"; }
     else if (modelLower.includes("grok") && modelLower.includes("code")) { category = "code"; }
     else if (modelLower.includes("claude") || modelLower.includes("gpt") || modelLower.includes("gemini") || modelLower.includes("command") || modelLower.includes("grok")) { category = "chat"; }
@@ -253,6 +255,23 @@ serve(async (req) => {
         object: "list",
         data: [{ object: "embedding", index: 0, embedding: data.embedding }],
         usage: { prompt_tokens: Math.ceil(finalPrompt.length / 4), total_tokens: Math.ceil(finalPrompt.length / 4) },
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    // Moderation response (OpenAI-compatible format)
+    if (category === "moderation") {
+      const content = data.response || "";
+      const flagged = /unsafe|harmful|violation|flagged/i.test(content);
+      logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+      return new Response(JSON.stringify({
+        id: "modr-" + crypto.randomUUID().slice(0, 8),
+        model: model || "text-moderation-latest",
+        results: [{
+          flagged,
+          categories: { sexual: false, hate: false, harassment: false, "self-harm": false, violence: false, "sexual/minors": false, "hate/threatening": false, "violence/graphic": false },
+          category_scores: { sexual: 0, hate: 0, harassment: 0, "self-harm": 0, violence: 0, "sexual/minors": 0, "hate/threatening": 0, "violence/graphic": 0 },
+          _raw_analysis: content,
+        }],
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 

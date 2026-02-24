@@ -201,6 +201,11 @@ serve(async (req) => {
       "donut": "utils/extract-text-1.0",
       "trocr-large": "utils/pdf-ocr-1.0",
       "surya-ocr": "utils/pdf-ocr-1.0",
+      "azure-document-intelligence": "utils/pdf-ocr-1.0",
+      "azure-doc-intelligence": "utils/pdf-ocr-1.0",
+      "azure-di": "utils/pdf-ocr-1.0",
+      "mathpix": "utils/extract-text-1.0",
+      "mathpix-ocr": "utils/extract-text-1.0",
       "autogpt": "openai/gpt-5-mini",
       "open-interpreter": "openai/gpt-5-mini",
       "llama-3.1-8b-ft": "meta-llama/llama-3.1-8b-instruct",
@@ -384,6 +389,33 @@ serve(async (req) => {
     // 8. Document AI / OCR
     if (category === "document" || category === "ocr") {
       return respond(JSON.stringify({ response: `📄 Document Processing with ${model}.\n\nThis feature requires file upload capability.`, model: vsegptModel, note: "Document processing requires file upload." }), 200);
+    }
+
+    // 9. Moderation
+    if (category === "moderation") {
+      const moderationModel = "openai/gpt-4o-mini";
+      const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: moderationModel,
+          messages: [
+            { role: "system", content: "You are a content moderation system. Analyze the following text and respond with a JSON object containing: flagged (boolean), categories (object with keys: sexual, hate, harassment, self-harm, violence), and category_scores (object with same keys, values 0-1). Be strict about harmful content." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0,
+          max_tokens: 512,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return respond(JSON.stringify({ error: "Moderation check failed" }), 500, errorText.substring(0, 500));
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      return respond(JSON.stringify({ response: content, model: moderationModel }), 200, undefined, data.usage);
     }
 
     // Default fallback

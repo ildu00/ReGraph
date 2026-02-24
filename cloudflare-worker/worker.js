@@ -23,6 +23,10 @@ const ROUTES = {
   "/v1/hardware/rent": "hardware-rent",
   "/v1/embeddings": "inference",
   "/v1/images/generations": "inference",
+  "/v1/images/edits": "inference",
+  "/v1/images/variations": "inference",
+  "/v1/audio/translations": "audio-transcriptions",
+  "/v1/moderations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
@@ -101,7 +105,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch", "/v1/images/generations", "/v1/embeddings"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/batch", "/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -170,11 +174,15 @@ export default {
     }
 
     // For special endpoints, inject hint so inference knows the intent
-    if ((matchedPath === "/v1/images/generations" || matchedPath === "/v1/embeddings") && options.body && typeof options.body === "string") {
+    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations"];
+    if (injectEndpoints.includes(matchedPath) && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
         if (matchedPath === "/v1/images/generations") parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/images/edits") { parsed._endpoint = "images/edits"; parsed.category = "image-edit"; }
+        if (matchedPath === "/v1/images/variations") { parsed._endpoint = "images/variations"; parsed.category = "image-gen"; }
         if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
+        if (matchedPath === "/v1/moderations") { parsed._endpoint = "moderations"; parsed.category = "moderation"; }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
