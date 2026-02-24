@@ -258,6 +258,23 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
+    // Moderation response (OpenAI-compatible format)
+    if (category === "moderation") {
+      const content = data.response || "";
+      const flagged = /unsafe|harmful|violation|flagged/i.test(content);
+      logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+      return new Response(JSON.stringify({
+        id: "modr-" + crypto.randomUUID().slice(0, 8),
+        model: model || "text-moderation-latest",
+        results: [{
+          flagged,
+          categories: { sexual: false, hate: false, harassment: false, "self-harm": false, violence: false, "sexual/minors": false, "hate/threatening": false, "violence/graphic": false },
+          category_scores: { sexual: 0, hate: 0, harassment: 0, "self-harm": 0, violence: 0, "sexual/minors": 0, "hate/threatening": 0, "violence/graphic": 0 },
+          _raw_analysis: content,
+        }],
+      }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
     const assistantMessage: Record<string, unknown> = { role: "assistant", content: data.response || "" };
     if (data.tool_calls) { assistantMessage.tool_calls = data.tool_calls; assistantMessage.content = data.response || null; }
 
