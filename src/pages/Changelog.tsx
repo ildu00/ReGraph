@@ -39,6 +39,17 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.8",
+    date: "February 24, 2026",
+    title: "TTS & ASR Model Routing Fix",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed routing for catalog TTS models — coqui/XTTS-v2, suno/Bark, and elevenlabs/Eleven-Multilingual now correctly map to upstream text-to-speech providers" },
+      { category: "fix", description: "Fixed routing for catalog ASR models — openai/Whisper-Large-v3, meta/SeamlessM4T, and nvidia/Canary-1B now correctly resolve in the transcription pipeline" },
+      { category: "improvement", description: "Case-insensitive model name matching added for all TTS and ASR catalog entries to prevent misrouting from display-name casing variations" },
+    ]
+  },
+  {
     version: "2.9.7",
     date: "February 24, 2026",
     title: "Embedding Model Name Mapping Fix",
