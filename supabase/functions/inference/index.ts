@@ -59,6 +59,8 @@ serve(async (req) => {
     
     // Use explicit category from worker if provided, otherwise determine from model
     let category = body.category || (isImageGenEndpoint ? "image-gen" : isImageEditEndpoint ? "image-edit" : isModerationEndpoint ? "moderation" : "chat");
+    // Normalize: OpenAI uses "embeddings" but internal uses "embedding"
+    if (category === "embeddings") category = "embedding";
     const modelLower = (model || "").toLowerCase();
     
     if (modelLower.includes("tts") || modelLower.includes("eleven") || modelLower.includes("xtts") || modelLower.includes("bark")) { category = "tts"; }
