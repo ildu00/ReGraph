@@ -23,6 +23,10 @@ const ROUTES = {
   "/v1/hardware/rent": "hardware-rent",
   "/v1/embeddings": "inference",
   "/v1/images/generations": "inference",
+  "/v1/images/edits": "inference",
+  "/v1/images/variations": "inference",
+  "/v1/audio/translations": "audio-transcriptions",
+  "/v1/moderations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
