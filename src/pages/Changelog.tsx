@@ -39,6 +39,17 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.7",
+    date: "February 24, 2026",
+    title: "Embedding Model Name Mapping Fix",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed routing for prefixed embedding model names — emb-openai/text-embedding-3-small, emb-openai/text-embedding-3-large, and emb-qwen/qwen3-embedding-8b now correctly resolve in the inference pipeline" },
+      { category: "fix", description: "Added openai/ prefix support — openai/text-embedding-3-small and openai/text-embedding-3-large are now valid model identifiers" },
+      { category: "improvement", description: "Model name normalization is now more resilient — supports bare names, provider-prefixed names, and internal prefixed names for all embedding models" },
+    ]
+  },
+  {
     version: "2.9.6",
     date: "February 24, 2026",
     title: "Embedding Models & /v1/embeddings Endpoint",
