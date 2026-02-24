@@ -391,6 +391,33 @@ serve(async (req) => {
       return respond(JSON.stringify({ response: `📄 Document Processing with ${model}.\n\nThis feature requires file upload capability.`, model: vsegptModel, note: "Document processing requires file upload." }), 200);
     }
 
+    // 9. Moderation
+    if (category === "moderation") {
+      const moderationModel = "openai/gpt-4o-mini";
+      const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: moderationModel,
+          messages: [
+            { role: "system", content: "You are a content moderation system. Analyze the following text and respond with a JSON object containing: flagged (boolean), categories (object with keys: sexual, hate, harassment, self-harm, violence), and category_scores (object with same keys, values 0-1). Be strict about harmful content." },
+            { role: "user", content: prompt },
+          ],
+          temperature: 0,
+          max_tokens: 512,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        return respond(JSON.stringify({ error: "Moderation check failed" }), 500, errorText.substring(0, 500));
+      }
+
+      const data = await response.json();
+      const content = data.choices?.[0]?.message?.content || "";
+      return respond(JSON.stringify({ response: content, model: moderationModel }), 200, undefined, data.usage);
+    }
+
     // Default fallback
     return respond(JSON.stringify({ response: `Demonstration for ${category} models.\nModel: ${model}`, model: vsegptModel }), 200);
 
