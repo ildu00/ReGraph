@@ -39,6 +39,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.9",
+    date: "February 24, 2026",
+    title: "Rerank API & Model Catalog",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "New /v1/rerank endpoint — Cohere-compatible reranking API for improving search relevance and RAG pipeline quality" },
+      { category: "feature", description: "Added 4 rerank models to the catalog: Cohere Rerank v3.5, Cohere Rerank Multilingual v3.0, Jina Reranker v2, and BAAI BGE Reranker v2 M3" },
+      { category: "feature", description: "New 'Reranking' category in the models page with dedicated sidebar navigation" },
+      { category: "improvement", description: "Case-insensitive model name resolution with support for bare names and provider-prefixed identifiers (e.g. cohere/rerank-v3.5)" },
+    ]
+  },
+  {
     version: "2.9.8",
     date: "February 24, 2026",
     title: "TTS & ASR Model Routing Fix",
