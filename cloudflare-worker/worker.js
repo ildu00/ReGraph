@@ -22,6 +22,7 @@ const ROUTES = {
   "/v1/tasks": "tasks",
   "/v1/hardware/rent": "hardware-rent",
   "/v1/embeddings": "inference",
+  "/v1/rerank": "rerank",
   "/v1/images/generations": "inference",
   "/v1/images/edits": "inference",
   "/v1/images/variations": "inference",
