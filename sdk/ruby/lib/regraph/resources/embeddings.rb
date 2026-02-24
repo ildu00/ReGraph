@@ -13,11 +13,10 @@ module ReGraph
       def create(model:, input:, **options)
         body = {
           model: model,
-          input: input,
-          category: 'embeddings'
+          input: input
         }.merge(options.compact)
 
-        post('/inference', body: body)
+        post('/embeddings', body: body)
       end
     end
   end
