@@ -39,6 +39,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.4",
+    date: "February 24, 2026",
+    title: "Bifrost AI Gateway Integration",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Official ReGraph provider for Maxim Bifrost — drop-in config to use ReGraph as a custom OpenAI-compatible provider in the open-source AI gateway" },
+      { category: "feature", description: "Full Bifrost capability support: chat completions, streaming SSE, embeddings, model listing, function calling, and vision" },
+      { category: "improvement", description: "Multi-provider fallback examples — combine ReGraph with OpenAI or other providers for automatic failover and cost optimization" },
+      { category: "improvement", description: "Integration documentation with Quick Start, cURL / Python / JavaScript examples, and available model reference" },
+    ]
+  },
+  {
     version: "2.9.3",
     date: "February 24, 2026",
     title: "OCR Models, OpenAI SDK Compatibility & New Endpoints",
