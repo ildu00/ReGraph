@@ -169,11 +169,12 @@ export default {
       }
     }
 
-    // For /v1/images/generations, inject endpoint hint so inference knows the intent
-    if (matchedPath === "/v1/images/generations" && options.body && typeof options.body === "string") {
+    // For special endpoints, inject hint so inference knows the intent
+    if ((matchedPath === "/v1/images/generations" || matchedPath === "/v1/embeddings") && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
-        parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/images/generations") parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
