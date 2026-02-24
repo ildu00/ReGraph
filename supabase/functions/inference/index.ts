@@ -85,6 +85,20 @@ serve(async (req) => {
 
     // Extract prompt from messages array if provided (OpenAI format)
     let finalPrompt = prompt;
+
+    // Handle OpenAI-standard `input` field for embeddings endpoint
+    if (!finalPrompt && input) {
+      if (typeof input === "string") {
+        finalPrompt = input;
+      } else if (Array.isArray(input)) {
+        finalPrompt = input.join("\n");
+      }
+      // Force embedding category when `input` field is used
+      if (category === "chat") {
+        category = "embedding";
+      }
+    }
+
     if (!finalPrompt && messages && Array.isArray(messages)) {
       const userMessages = messages.filter((m: any) => m.role === "user");
       if (userMessages.length > 0) {
@@ -102,7 +116,7 @@ serve(async (req) => {
     
     if (!finalPrompt) {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "No prompt or messages provided" });
-      return new Response(JSON.stringify({ error: "No prompt or messages provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "No prompt, messages, or input provided" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     // --- AGENT MODE: queue task in provider_tasks ---
