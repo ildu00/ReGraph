@@ -117,6 +117,12 @@ const modelsData: Model[] = [
   { id: "e5-mistral-7b", name: "E5 Mistral 7B", provider: "Microsoft", category: "embedding", description: "LLM-based embeddings with superior semantic understanding.", pricing: "$0.0003/1K", latency: "~100ms", tags: ["Semantic", "4096-dim", "Multilingual"] },
   { id: "nomic-embed-v1.5", name: "Nomic Embed v1.5", provider: "Nomic AI", category: "embedding", description: "Open-source embeddings with Matryoshka representation learning.", pricing: "$0.0001/1K", latency: "~40ms", tags: ["Open Source", "768-dim", "Flexible"] },
 
+  // Rerank
+  { id: "rerank-v3.5", name: "Rerank v3.5", provider: "Cohere", category: "rerank", description: "State-of-the-art reranking model for improving search relevance and RAG pipelines.", pricing: "$0.002/1K", latency: "~100ms", tags: ["Search", "RAG", "English"], isPopular: true },
+  { id: "rerank-multilingual-v3.0", name: "Rerank Multilingual v3.0", provider: "Cohere", category: "rerank", description: "Multilingual reranking model supporting 100+ languages for cross-lingual search.", pricing: "$0.002/1K", latency: "~120ms", tags: ["Multilingual", "100+ Languages", "Search"] },
+  { id: "jina-reranker-v2", name: "Jina Reranker v2", provider: "Jina AI", category: "rerank", description: "Fast and accurate reranker optimized for semantic search and retrieval tasks.", pricing: "$0.001/1K", latency: "~80ms", tags: ["Fast", "Semantic", "Multilingual"] },
+  { id: "bge-reranker-v2-m3", name: "BGE Reranker v2 M3", provider: "BAAI", category: "rerank", description: "Open-source multilingual reranker with strong zero-shot cross-lingual transfer.", pricing: "$0.0005/1K", latency: "~60ms", tags: ["Open Source", "Zero-shot", "Multilingual"] },
+
   // Document AI
   { id: "layoutlm-v3", name: "LayoutLM v3", provider: "Microsoft", category: "document", description: "Document understanding with layout-aware language modeling.", contextLength: 512, pricing: "$0.002/page", latency: "~500ms", tags: ["Forms", "Tables", "Layout"], isPopular: true },
   { id: "donut", name: "Donut", provider: "Naver", category: "document", description: "OCR-free document understanding transformer.", contextLength: 2560, pricing: "$0.001/page", latency: "~300ms", tags: ["OCR-Free", "Receipts", "Fast"] },
