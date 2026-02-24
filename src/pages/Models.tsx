@@ -110,7 +110,10 @@ const modelsData: Model[] = [
   { id: "starcoder2-15b", name: "StarCoder2 15B", provider: "BigCode", category: "code", description: "Efficient code model trained on The Stack v2 dataset.", contextLength: 16384, pricing: "$0.0003/1K", latency: "~300ms", tags: ["619 Languages", "Efficient", "Open"] },
   
   // Embeddings
-  { id: "bge-large-en", name: "BGE Large EN", provider: "BAAI", category: "embedding", description: "High-performance English text embeddings for semantic search.", pricing: "$0.0001/1K", latency: "~50ms", tags: ["Search", "1024-dim", "English"], isPopular: true },
+  { id: "text-embedding-3-small", name: "Text Embedding 3 Small", provider: "OpenAI", category: "embedding", description: "Fast and affordable embedding model for search, clustering, and classification tasks.", pricing: "$0.006/1M", latency: "~50ms", tags: ["1536-dim", "Fast", "Affordable"], isPopular: true },
+  { id: "text-embedding-3-large", name: "Text Embedding 3 Large", provider: "OpenAI", category: "embedding", description: "High-performance embedding model with configurable dimensions up to 3072.", pricing: "$0.035/1M", latency: "~80ms", tags: ["3072-dim", "High Quality", "Flexible"] },
+  { id: "qwen3-embedding-8b", name: "Qwen3 Embedding 8B", provider: "Alibaba", category: "embedding", description: "Open-source multilingual embedding model with excellent performance across benchmarks.", pricing: "$0.009/1M", latency: "~100ms", tags: ["Multilingual", "Open Source", "8192-dim"] },
+  { id: "bge-large-en", name: "BGE Large EN", provider: "BAAI", category: "embedding", description: "High-performance English text embeddings for semantic search.", pricing: "$0.0001/1K", latency: "~50ms", tags: ["Search", "1024-dim", "English"] },
   { id: "e5-mistral-7b", name: "E5 Mistral 7B", provider: "Microsoft", category: "embedding", description: "LLM-based embeddings with superior semantic understanding.", pricing: "$0.0003/1K", latency: "~100ms", tags: ["Semantic", "4096-dim", "Multilingual"] },
   { id: "nomic-embed-v1.5", name: "Nomic Embed v1.5", provider: "Nomic AI", category: "embedding", description: "Open-source embeddings with Matryoshka representation learning.", pricing: "$0.0001/1K", latency: "~40ms", tags: ["Open Source", "768-dim", "Flexible"] },
 
