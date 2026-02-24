@@ -65,7 +65,8 @@ const categoryGroups = [
     label: "Specialized",
     categories: [
       { id: "code", label: "Code Generation", icon: Code, count: 4 },
-      { id: "embedding", label: "Embeddings", icon: Database, count: 3 },
+      { id: "embedding", label: "Embeddings", icon: Database, count: 6 },
+      { id: "rerank", label: "Reranking", icon: FileCode2, count: 4 },
       { id: "document", label: "Document AI", icon: FileText, count: 2 },
       { id: "ocr", label: "OCR & Extraction", icon: ScanSearch, count: 2 },
     ]

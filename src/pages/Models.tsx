@@ -179,6 +179,7 @@ const categoryDescriptions: Record<string, string> = {
   video: "Create video content from text or image prompts.",
   code: "Specialized models for code generation and completion.",
   embedding: "Convert text to vectors for semantic search and similarity.",
+  rerank: "Reorder search results by relevance for improved RAG and retrieval.",
   document: "Extract and understand information from documents.",
   ocr: "Optical character recognition for text extraction from images.",
   multimodal: "Models that process multiple modalities (text, image, audio).",
