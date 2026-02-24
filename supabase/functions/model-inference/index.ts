@@ -202,6 +202,8 @@ serve(async (req) => {
       "text-embedding-ada-002": "text-embedding-ada-002",
       "text-embedding-3-small": "text-embedding-3-small",
       "text-embedding-3-large": "text-embedding-3-large",
+      "qwen/qwen3-embedding-8b": "emb-qwen/qwen3-embedding-8b",
+      "qwen3-embedding-8b": "emb-qwen/qwen3-embedding-8b",
       "layoutlm-v3": "utils/pdf-ocr-1.0",
       "donut": "utils/extract-text-1.0",
       "trocr-large": "utils/pdf-ocr-1.0",
