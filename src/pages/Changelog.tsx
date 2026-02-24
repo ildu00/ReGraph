@@ -39,6 +39,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.3",
+    date: "February 24, 2026",
+    title: "OCR Models, OpenAI SDK Compatibility & New Endpoints",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Added OCR models — Azure Document Intelligence and Mathpix — routed through upstream provider for structured text extraction from PDFs and images" },
+      { category: "feature", description: "New /v1/moderations endpoint — OpenAI-compatible content moderation with category scores and flagging" },
+      { category: "feature", description: "New /v1/images/edits and /v1/images/variations endpoints for image manipulation" },
+      { category: "feature", description: "New /v1/audio/translations endpoint for audio-to-English translation" },
+      { category: "fix", description: "Fixed 403 blocking of OpenAI Python SDK — User-Agent 'OpenAI/Python' no longer triggers bot protection, restoring compatibility with LangChain, LlamaIndex, AutoGen, and other frameworks" },
+      { category: "improvement", description: "Expanded OpenAI-compatible endpoint coverage — apps using the official OpenAI SDK now work with ReGraph out of the box" },
+    ]
+  },
+  {
     version: "2.9.2",
     date: "February 22, 2026",
     title: "Stripe Payments & Webhook Integration",
