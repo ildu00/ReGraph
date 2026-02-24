@@ -6,25 +6,7 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-api-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const VSEGPT_GATEWAY = "https://api.vsegpt.ru/v1/rerank";
-
-// Map catalog model names to VseGPT-compatible identifiers
-const modelMapping: Record<string, string> = {
-  // Cohere
-  "cohere/rerank-v3.5": "rerank-cohere/rerank-english-v3.0",
-  "cohere/rerank-english-v3.0": "rerank-cohere/rerank-english-v3.0",
-  "cohere/rerank-multilingual-v3.0": "rerank-cohere/rerank-multilingual-v3.0",
-  "rerank-english-v3.0": "rerank-cohere/rerank-english-v3.0",
-  "rerank-multilingual-v3.0": "rerank-cohere/rerank-multilingual-v3.0",
-  "rerank-v3.5": "rerank-cohere/rerank-english-v3.0",
-  // Jina
-  "jina/jina-reranker-v2": "rerank-jina/jina-reranker-v2-base-multilingual",
-  "jina-reranker-v2": "rerank-jina/jina-reranker-v2-base-multilingual",
-  "jina/jina-reranker-v2-base-multilingual": "rerank-jina/jina-reranker-v2-base-multilingual",
-  // BAAI BGE
-  "baai/bge-reranker-v2-m3": "rerank-cohere/rerank-english-v3.0",
-  "bge-reranker-v2-m3": "rerank-cohere/rerank-english-v3.0",
-};
+const LOVABLE_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -58,56 +40,98 @@ serve(async (req) => {
       );
     }
 
-    const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
-    if (!VSEGPT_API_KEY) throw new Error("VSEGPT_API_KEY is not configured");
+    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    // Resolve model name (case-insensitive)
-    const modelInput = model || "cohere/rerank-v3.5";
-    const modelLower = modelInput.toLowerCase();
-    let resolvedModel: string | undefined;
-    for (const [key, value] of Object.entries(modelMapping)) {
-      if (key.toLowerCase() === modelLower) {
-        resolvedModel = value;
-        break;
-      }
-    }
-    if (!resolvedModel) {
-      // Default fallback
-      resolvedModel = "rerank-cohere/rerank-english-v3.0";
-    }
+    const n = top_n ?? documents.length;
 
-    const upstreamBody: Record<string, unknown> = {
-      model: resolvedModel,
-      query,
-      documents,
-    };
-    if (top_n !== undefined) upstreamBody.top_n = top_n;
-    if (return_documents !== undefined) upstreamBody.return_documents = return_documents;
+    // Build prompt for LLM-based reranking
+    const docsBlock = documents.map((d: string, i: number) => `[${i}] ${d}`).join("\n");
+    const systemPrompt = `You are a document relevance scorer. Given a query and a list of documents, return a JSON array of objects sorted by relevance (most relevant first). Each object must have: "index" (original 0-based document index) and "relevance_score" (float 0-1, where 1 is most relevant). Return only the top ${n} results. Output ONLY valid JSON, no explanation.`;
+    const userPrompt = `Query: ${query}\n\nDocuments:\n${docsBlock}`;
 
-    const resp = await fetch(VSEGPT_GATEWAY, {
+    const resp = await fetch(LOVABLE_GATEWAY, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${VSEGPT_API_KEY}`,
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(upstreamBody),
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash-lite",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        max_tokens: 2048,
+        temperature: 0,
+      }),
     });
 
     if (!resp.ok) {
       const text = await resp.text();
-      console.error("Rerank upstream error:", resp.status, text);
+      console.error("Rerank LLM error:", resp.status, text);
+
+      if (resp.status === 429) {
+        return new Response(JSON.stringify({ error: "Rate limit exceeded, please try again later." }), {
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (resp.status === 402) {
+        return new Response(JSON.stringify({ error: "Payment required, please add credits." }), {
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       return new Response(
-        JSON.stringify({ error: `Upstream rerank error (${resp.status})`, details: text }),
-        { status: resp.status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ error: `Rerank error (${resp.status})` }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const data = await resp.json();
+    const rawContent = data.choices?.[0]?.message?.content || "[]";
 
-    // Return Cohere-compatible response format
-    return new Response(JSON.stringify(data), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    // Extract JSON from response (handle markdown code blocks)
+    let jsonStr = rawContent.trim();
+    if (jsonStr.startsWith("```")) {
+      jsonStr = jsonStr.replace(/^```(?:json)?\n?/, "").replace(/\n?```$/, "");
+    }
+
+    let results: { index: number; relevance_score: number }[];
+    try {
+      results = JSON.parse(jsonStr);
+    } catch {
+      console.error("Failed to parse rerank response:", rawContent);
+      // Fallback: return documents in original order with decreasing scores
+      results = documents.slice(0, n).map((_: string, i: number) => ({
+        index: i,
+        relevance_score: 1 - i * (1 / documents.length),
+      }));
+    }
+
+    // Build Cohere-compatible response
+    const responseResults = results.slice(0, n).map((r: { index: number; relevance_score: number }) => {
+      const item: Record<string, unknown> = {
+        index: r.index,
+        relevance_score: r.relevance_score,
+      };
+      if (return_documents !== false && documents[r.index] !== undefined) {
+        item.document = { text: documents[r.index] };
+      }
+      return item;
     });
+
+    return new Response(
+      JSON.stringify({
+        id: "rerank-" + crypto.randomUUID().slice(0, 8),
+        results: responseResults,
+        meta: {
+          api_version: { version: "1" },
+          billed_units: { search_units: 1 },
+        },
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   } catch (e) {
     console.error("rerank error:", e);
     return new Response(
