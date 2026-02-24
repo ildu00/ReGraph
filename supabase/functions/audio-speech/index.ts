@@ -38,6 +38,10 @@ serve(async (req) => {
       "tts-1": "tts-openai/tts-1", "tts-1-hd": "tts-openai/tts-1-hd",
       "eleven-multilingual": "tts-openai/tts-1-hd", "eleven-multilangual": "tts-openai/tts-1-hd",
       "xtts-v2": "tts-openai/tts-1", "bark": "tts-openai/tts-1",
+      // Catalog display names → VseGPT TTS models
+      "coqui/XTTS-v2": "tts-openai/tts-1", "coqui/xtts-v2": "tts-openai/tts-1",
+      "suno/Bark": "tts-openai/tts-1", "suno/bark": "tts-openai/tts-1",
+      "elevenlabs/Eleven-Multilingual": "tts-openai/tts-1-hd", "elevenlabs/eleven-multilingual": "tts-openai/tts-1-hd",
     };
     const vsegptModel = modelMapping[model] || model;
 
