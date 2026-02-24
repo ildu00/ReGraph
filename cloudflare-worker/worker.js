@@ -21,6 +21,7 @@ const ROUTES = {
   "/v1/provider": "provider",
   "/v1/tasks": "tasks",
   "/v1/hardware/rent": "hardware-rent",
+  "/v1/embeddings": "inference",
   "/v1/images/generations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
