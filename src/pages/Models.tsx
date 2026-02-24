@@ -159,6 +159,7 @@ const categoryTitles: Record<string, string> = {
   video: "Video Generation",
   code: "Code Generation",
   embedding: "Embeddings",
+  rerank: "Reranking",
   document: "Document AI",
   ocr: "OCR & Extraction",
   multimodal: "Multimodal Models",
