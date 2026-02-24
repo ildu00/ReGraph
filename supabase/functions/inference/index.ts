@@ -51,12 +51,14 @@ serve(async (req) => {
     
     const { model, messages, prompt, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents } = body;
     const useAgents = agents === true;
-    // Check if this is an /images/generations request (forwarded by Cloudflare Worker)
+    // Check if this is a special endpoint (forwarded by Cloudflare Worker)
     const requestUrl = new URL(req.url);
     const isImageGenEndpoint = requestUrl.pathname.includes("images/generations") || body._endpoint === "images/generations";
+    const isImageEditEndpoint = body._endpoint === "images/edits";
+    const isModerationEndpoint = body._endpoint === "moderations";
     
-    // Determine category from model name
-    let category = isImageGenEndpoint ? "image-gen" : "chat";
+    // Use explicit category from worker if provided, otherwise determine from model
+    let category = body.category || (isImageGenEndpoint ? "image-gen" : isImageEditEndpoint ? "image-edit" : isModerationEndpoint ? "moderation" : "chat");
     const modelLower = (model || "").toLowerCase();
     
     if (modelLower.includes("tts") || modelLower.includes("eleven") || modelLower.includes("xtts") || modelLower.includes("bark")) { category = "tts"; }
