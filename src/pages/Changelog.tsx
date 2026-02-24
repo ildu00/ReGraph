@@ -39,6 +39,21 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "2.9.6",
+    date: "February 24, 2026",
+    title: "Embedding Models & /v1/embeddings Endpoint",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Full /v1/embeddings endpoint — OpenAI-compatible embedding generation with support for both string and array inputs" },
+      { category: "feature", description: "Added text-embedding-3-small (1536 dimensions) and text-embedding-3-large (3072 dimensions) from OpenAI" },
+      { category: "feature", description: "Added Qwen3 Embedding 8B model (8192 dimensions) — high-dimensional embeddings from Alibaba's Qwen family" },
+      { category: "feature", description: "Embedding models listed in /models catalog and /v1/models API with pricing and metadata" },
+      { category: "fix", description: "Fixed category normalization — 'embeddings' (plural) now correctly routes to the embedding inference pipeline" },
+      { category: "fix", description: "Fixed model name mapping for embedding models to match upstream provider naming conventions" },
+      { category: "improvement", description: "Batch embedding support — pass an array of strings in the 'input' field to generate multiple embeddings in a single request" },
+    ]
+  },
+  {
     version: "2.9.5",
     date: "February 24, 2026",
     title: "Framework Integrations & Embedding Models",
