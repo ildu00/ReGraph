@@ -219,6 +219,9 @@ serve(async (req) => {
     }
 
     const inferenceBody: Record<string, unknown> = { model: model || (isImageGenEndpoint ? "dall-e-3" : "llama-3.1-70b"), prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category };
+    if (encoding_format) inferenceBody.encoding_format = encoding_format;
+    if (dimensions) inferenceBody.dimensions = dimensions;
+    if (input) inferenceBody.input = input;
     if (messages && Array.isArray(messages)) inferenceBody.messages = messages;
     if (tools) inferenceBody.tools = tools;
     if (tool_choice) inferenceBody.tool_choice = tool_choice;
