@@ -21,6 +21,7 @@ const ROUTES = {
   "/v1/provider": "provider",
   "/v1/tasks": "tasks",
   "/v1/hardware/rent": "hardware-rent",
+  "/v1/embeddings": "inference",
   "/v1/images/generations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
@@ -100,7 +101,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch", "/v1/images/generations"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/batch", "/v1/images/generations", "/v1/embeddings"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -168,11 +169,12 @@ export default {
       }
     }
 
-    // For /v1/images/generations, inject endpoint hint so inference knows the intent
-    if (matchedPath === "/v1/images/generations" && options.body && typeof options.body === "string") {
+    // For special endpoints, inject hint so inference knows the intent
+    if ((matchedPath === "/v1/images/generations" || matchedPath === "/v1/embeddings") && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
-        parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/images/generations") parsed._endpoint = "images/generations";
+        if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
