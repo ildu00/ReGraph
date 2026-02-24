@@ -210,10 +210,7 @@ class EmbeddingsNamespace {
    * Create embeddings for text.
    */
   async create(request: EmbeddingRequest): Promise<EmbeddingResponse> {
-    return this.client.request<EmbeddingResponse>('POST', '/inference', {
-      ...request,
-      category: 'embeddings',
-    });
+    return this.client.request<EmbeddingResponse>('POST', '/embeddings', request as unknown as Record<string, unknown>);
   }
 }
 
