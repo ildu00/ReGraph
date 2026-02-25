@@ -39,6 +39,29 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.0.1",
+    date: "February 25, 2026",
+    title: "API Key Last Used Tracking",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed API key Last Used timestamp not updating after successful requests — now correctly updated on every inference call" },
+      { category: "fix", description: "Extended Last Used tracking to dashboard AI Chat (model-inference endpoint), previously only tracked for external API calls" },
+      { category: "improvement", description: "API key usage tracking uses prefix-based LIKE matching for robust key identification across all endpoints" },
+    ]
+  },
+  {
+    version: "3.0.0",
+    date: "February 25, 2026",
+    title: "Usage Stats & Accurate Counters",
+    type: "major",
+    changes: [
+      { category: "fix", description: "Fixed Total API Calls counter being capped at 1000 — now uses exact row count query, bypassing the default query limit" },
+      { category: "fix", description: "Fixed API Calls Today counter on Overview tab also subject to the 1000-row cap for heavy users" },
+      { category: "improvement", description: "Usage queries refactored: total count uses HEAD + count:exact, aggregates use higher limit for accurate token/cost calculations" },
+      { category: "improvement", description: "API calls over time chart now correctly scoped to the authenticated user's own data only" },
+    ]
+  },
+  {
     version: "2.9.9",
     date: "February 24, 2026",
     title: "Rerank API & Model Catalog",
