@@ -7,11 +7,16 @@ export function touchApiKeyLastUsed(apiKeyPrefix: string | null): void {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   if (!supabaseUrl || !serviceRoleKey) return;
 
-  // Extract raw prefix (remove trailing "...")
-  const rawPrefix = apiKeyPrefix.replace(/\.\.\.$/,"").substring(0, 8);
-  if (rawPrefix.length < 4) return;
+  // The stored key_prefix includes "..." suffix e.g. "rg_WPEhSNt..."
+  // apiKeyPrefix from extractApiKeyPrefix is already in format "rg_WPEhSN..."
+  // We need to match against the stored prefix which may have more chars before "..."
+  // Try matching by the first 8 chars of the clean key
+  const clean = apiKeyPrefix.replace(/\.\.\.$/,"");
+  if (clean.length < 4) return;
+  // Match stored prefixes that start with our clean prefix (stored as "rg_WPEhSNt..." vs our "rg_WPEhSN")
+  const likePattern = clean.substring(0, 8);
 
-  fetch(`${supabaseUrl}/rest/v1/api_keys?key_prefix=eq.${rawPrefix}&is_active=eq.true`, {
+  fetch(`${supabaseUrl}/rest/v1/api_keys?key_prefix=like.${encodeURIComponent(likePattern + '%')}&is_active=eq.true`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
