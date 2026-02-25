@@ -1,4 +1,28 @@
 /**
+ * Fire-and-forget update of api_key last_used_at by prefix.
+ */
+export function touchApiKeyLastUsed(apiKeyPrefix: string | null): void {
+  if (!apiKeyPrefix) return;
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+  if (!supabaseUrl || !serviceRoleKey) return;
+
+  // Extract raw prefix (remove trailing "...")
+  const rawPrefix = apiKeyPrefix.replace(/\.\.\.$/,"").substring(0, 8);
+  if (rawPrefix.length < 4) return;
+
+  fetch(`${supabaseUrl}/rest/v1/api_keys?key_prefix=eq.${rawPrefix}&is_active=eq.true`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      "apikey": serviceRoleKey,
+      "Authorization": `Bearer ${serviceRoleKey}`,
+    },
+    body: JSON.stringify({ last_used_at: new Date().toISOString() }),
+  }).catch(() => {});
+}
+
+/**
  * Fire-and-forget API request logger.
  * Sends log data to the log-api-request edge function.
  * Does not throw — errors are silently caught.
