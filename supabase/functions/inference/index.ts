@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
+import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -155,6 +155,7 @@ serve(async (req) => {
 
       // --- ASYNC MODE: return task_id immediately ---
       if (useAsync) {
+        touchApiKeyLastUsed(apiKeyPrefix);
         logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 202, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
         return new Response(JSON.stringify({
           id: taskId,
@@ -187,6 +188,7 @@ serve(async (req) => {
             usage: r.usage || { prompt_tokens: Math.ceil(finalPrompt.length / 4), completion_tokens: Math.ceil(((r.response as string)?.length || 0) / 4), total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil(((r.response as string)?.length || 0) / 4) },
             _agent: true, _task_id: taskId,
           };
+          touchApiKeyLastUsed(apiKeyPrefix);
           logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
           return new Response(JSON.stringify(openAIResponse), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
         }
@@ -303,6 +305,7 @@ serve(async (req) => {
       usage: data.usage || { prompt_tokens: Math.ceil(finalPrompt.length / 4), completion_tokens: Math.ceil((data.response?.length || 0) / 4), total_tokens: Math.ceil(finalPrompt.length / 4) + Math.ceil((data.response?.length || 0) / 4) },
     };
 
+    touchApiKeyLastUsed(apiKeyPrefix);
     logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
     return new Response(JSON.stringify(openAIResponse), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
