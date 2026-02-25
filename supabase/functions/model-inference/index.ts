@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
+import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -232,6 +232,7 @@ serve(async (req) => {
     const respond = (body: string, status: number, errorMsg?: string, usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }) => {
       const computeTimeMs = Date.now() - startTime;
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null, request_body: requestBodyLog });
+      if (status === 200) touchApiKeyLastUsed(apiKeyPrefix);
       
       if (status === 200 && userId) {
         const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
