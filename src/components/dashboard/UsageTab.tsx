@@ -25,6 +25,9 @@ interface UsageLog {
 const UsageTab = () => {
   const { user } = useAuth();
   const [usageLogs, setUsageLogs] = useState<UsageLog[]>([]);
+  const [totalCalls, setTotalCalls] = useState(0);
+  const [totalTokens, setTotalTokens] = useState(0);
+  const [totalCost, setTotalCost] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -33,22 +36,40 @@ const UsageTab = () => {
 
   const fetchUsageLogs = async () => {
     if (!user) return;
+    setLoading(true);
 
-    const { data, error } = await supabase
-      .from("usage_logs")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+    // Get exact counts via head:true to bypass 1000 row limit
+    const [countRes, sumRes, recentRes] = await Promise.all([
+      supabase
+        .from("usage_logs")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id),
+      supabase
+        .from("usage_logs")
+        .select("tokens_used, cost_usd")
+        .eq("user_id", user.id)
+        .limit(10000),
+      supabase
+        .from("usage_logs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(100),
+    ]);
 
-    if (!error) {
-      setUsageLogs(data || []);
-    }
+    setTotalCalls(countRes.count ?? 0);
+
+    const allLogs = sumRes.data || [];
+    setTotalTokens(allLogs.reduce((sum, l) => sum + (l.tokens_used || 0), 0));
+    setTotalCost(allLogs.reduce((sum, l) => sum + parseFloat((l.cost_usd || 0).toString()), 0));
+
+    setUsageLogs(recentRes.data || []);
     setLoading(false);
   };
 
-  // Generate sample chart data (will be empty if no usage)
+  // Chart: last 30 days aggregated from recent 100 logs
   const chartData = usageLogs.length > 0
-    ? usageLogs.reduce((acc: any[], log) => {
+    ? [...usageLogs].reverse().reduce((acc: any[], log) => {
         const date = new Date(log.created_at).toLocaleDateString();
         const existing = acc.find((d) => d.date === date);
         if (existing) {
@@ -56,22 +77,11 @@ const UsageTab = () => {
           existing.tokens += log.tokens_used;
           existing.cost += parseFloat(log.cost_usd.toString());
         } else {
-          acc.push({
-            date,
-            calls: 1,
-            tokens: log.tokens_used,
-            cost: parseFloat(log.cost_usd.toString()),
-          });
+          acc.push({ date, calls: 1, tokens: log.tokens_used, cost: parseFloat(log.cost_usd.toString()) });
         }
         return acc;
-      }, []).reverse()
-    : [
-        { date: "Today", calls: 0, tokens: 0, cost: 0 },
-      ];
-
-  const totalCalls = usageLogs.length;
-  const totalTokens = usageLogs.reduce((sum, log) => sum + log.tokens_used, 0);
-  const totalCost = usageLogs.reduce((sum, log) => sum + parseFloat(log.cost_usd.toString()), 0);
+      }, [])
+    : [{ date: "Today", calls: 0, tokens: 0, cost: 0 }];
 
   return (
     <div className="space-y-6">
@@ -130,11 +140,7 @@ const UsageTab = () => {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(0 0% 14%)" />
-                <XAxis
-                  dataKey="date"
-                  stroke="hsl(0 0% 55%)"
-                  fontSize={12}
-                />
+                <XAxis dataKey="date" stroke="hsl(0 0% 55%)" fontSize={12} />
                 <YAxis stroke="hsl(0 0% 55%)" fontSize={12} />
                 <Tooltip
                   contentStyle={{
