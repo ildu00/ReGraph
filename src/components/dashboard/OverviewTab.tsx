@@ -36,17 +36,24 @@ const OverviewTab = () => {
     monthStart.setDate(1);
     monthStart.setHours(0, 0, 0, 0);
 
-    const [todayLogs, monthLogs, wallet] = await Promise.all([
+    const [todayCount, todayLogs, monthLogs, wallet] = await Promise.all([
       supabase
         .from("usage_logs")
-        .select("id, compute_time_ms, cost_usd")
+        .select("*", { count: "exact", head: true })
         .eq("user_id", user.id)
         .gte("created_at", todayStart.toISOString()),
       supabase
         .from("usage_logs")
-        .select("id, cost_usd")
+        .select("compute_time_ms")
         .eq("user_id", user.id)
-        .gte("created_at", monthStart.toISOString()),
+        .gte("created_at", todayStart.toISOString())
+        .limit(10000),
+      supabase
+        .from("usage_logs")
+        .select("cost_usd")
+        .eq("user_id", user.id)
+        .gte("created_at", monthStart.toISOString())
+        .limit(10000),
       supabase
         .from("wallets")
         .select("balance_usd")
@@ -58,7 +65,7 @@ const OverviewTab = () => {
     const monthData = monthLogs.data || [];
     const balance = wallet.data?.balance_usd ?? 0;
 
-    const apiCallsToday = todayData.length;
+    const apiCallsToday = todayCount.count ?? 0;
     const totalComputeMs = todayData.reduce((sum, l) => sum + (l.compute_time_ms || 0), 0);
     const avgCompute = apiCallsToday > 0 ? Math.round(totalComputeMs / apiCallsToday) : 0;
     const monthCredits = monthData.reduce((sum, l) => sum + Number(l.cost_usd || 0), 0);
