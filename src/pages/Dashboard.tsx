@@ -57,6 +57,7 @@ const DashboardInner = () => {
   const [searchParams] = useSearchParams();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [tabRefreshCount, setTabRefreshCount] = useState(0);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const isMobile = useIsMobile();
   const { height: vpHeight } = useVisualViewport();
@@ -90,6 +91,7 @@ const DashboardInner = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    setTabRefreshCount(c => c + 1);
   };
 
   const navItems = useMemo(
@@ -352,7 +354,7 @@ const DashboardInner = () => {
           </TabsList>
 
           <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : ""}>
-            <OverviewTab key={activeTab === "overview" ? "active" : "inactive"} />
+            <OverviewTab key={activeTab === "overview" ? `overview-${tabRefreshCount}` : "overview-hidden"} />
           </TabsContent>
 
           <TabsContent value="wallet">
@@ -380,7 +382,7 @@ const DashboardInner = () => {
           </TabsContent>
 
           <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : ""}>
-            <UsageTab key={activeTab === "usage" ? "active" : "inactive"} />
+            <UsageTab key={activeTab === "usage" ? `usage-${tabRefreshCount}` : "usage-hidden"} />
           </TabsContent>
 
           <TabsContent value="settings">
