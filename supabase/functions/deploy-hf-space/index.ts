@@ -84,63 +84,56 @@ requests>=2.31.0
 `;
 
 /**
- * Upload a single file to a HuggingFace Space repository using the
- * official Hub HTTP API: https://huggingface.co/docs/hub/api#commit-operations
+ * Commits files to a HuggingFace repository using the Hub HTTP API (NDJSON format).
+ * Reference: https://github.com/huggingface/huggingface.js/blob/main/packages/hub/src/lib/commit.ts
  *
  * Endpoint: POST https://huggingface.co/api/spaces/{repo_id}/commit/{branch}
- * Content-Type: multipart/form-data
- *   - payload_as_json  (JSON string)
- *   - one part per file (name = file path, filename = file path)
+ * Content-Type: application/x-ndjson
+ * Body: newline-delimited JSON objects:
+ *   { key: "header", value: { summary, description } }
+ *   { key: "file", value: { path, content: base64 } }  (for small files)
  */
-async function commitFiles(
+async function commitFilesNdjson(
   token: string,
   repoId: string,
   files: { path: string; content: string }[],
-  message: string
+  summary: string
 ): Promise<{ status: number; body: string }> {
-  const boundary = `----HFBoundary${Date.now()}`;
   const enc = new TextEncoder();
 
-  const chunks: Uint8Array[] = [];
+  // Header line
+  const lines: string[] = [
+    JSON.stringify({ key: "header", value: { summary } }),
+  ];
 
-  const append = (s: string) => chunks.push(enc.encode(s));
-
-  // Part 1: payload_as_json
-  const payload = {
-    summary: message,
-    files: files.map((f) => ({
-      path: f.path,
-      encoding: "utf-8",
-    })),
-  };
-  append(`--${boundary}\r\n`);
-  append(`Content-Disposition: form-data; name="payload_as_json"\r\n`);
-  append(`Content-Type: application/json\r\n\r\n`);
-  append(JSON.stringify(payload));
-  append(`\r\n`);
-
-  // Parts 2+: actual file contents
+  // File lines — encode content as base64
   for (const f of files) {
-    append(`--${boundary}\r\n`);
-    append(`Content-Disposition: form-data; name="${f.path}"; filename="${f.path}"\r\n`);
-    append(`Content-Type: text/plain; charset=utf-8\r\n\r\n`);
-    append(f.content);
-    append(`\r\n`);
+    const bytes = enc.encode(f.content);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    const b64 = btoa(binary);
+    lines.push(
+      JSON.stringify({
+        key: "file",
+        value: {
+          path: f.path,
+          encoding: "base64",
+          content: b64,
+        },
+      })
+    );
   }
 
-  append(`--${boundary}--\r\n`);
-
-  const totalLen = chunks.reduce((s, c) => s + c.length, 0);
-  const body = new Uint8Array(totalLen);
-  let offset = 0;
-  for (const c of chunks) { body.set(c, offset); offset += c.length; }
+  const body = lines.join("\n");
 
   const url = `https://huggingface.co/api/spaces/${repoId}/commit/main`;
   const res = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${token}`,
-      "Content-Type": `multipart/form-data; boundary=${boundary}`,
+      "Content-Type": "application/x-ndjson",
     },
     body,
   });
@@ -158,12 +151,12 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "HUGGINGFACE_TOKEN not configured" }), { status: 500 });
   }
 
-  const result = await commitFiles(
+  const result = await commitFilesNdjson(
     token,
     "Regraph/ReGraphLLM",
     [
-      { path: "app.py", content: GRADIO_APP },
       { path: "README.md", content: README_MD },
+      { path: "app.py", content: GRADIO_APP },
       { path: "requirements.txt", content: REQUIREMENTS_TXT },
     ],
     "Deploy ReGraph LLM Gradio demo via ReGraph platform"
@@ -174,6 +167,9 @@ Deno.serve(async (req) => {
 
   return new Response(
     JSON.stringify({ ok: result.status >= 200 && result.status < 300, status: result.status, result: parsed }),
-    { status: result.status >= 200 && result.status < 300 ? 200 : 500, headers: { "Content-Type": "application/json" } }
+    {
+      status: result.status >= 200 && result.status < 300 ? 200 : 500,
+      headers: { "Content-Type": "application/json" },
+    }
   );
 });
