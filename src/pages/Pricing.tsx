@@ -391,7 +391,7 @@ const Pricing = () => {
                   );
                 })}
                 {unitModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">Нет данных.</p>
+                  <p className="text-center text-muted-foreground py-8">No data available.</p>
                 )}
               </div>
             )}
