@@ -73,14 +73,25 @@ const ctxLabel = (n?: number) => {
 };
 
 const categoryGroups: Record<string, string> = {
-  chat: "Chat & Completion",
-  reasoning: "Reasoning",
-  code: "Code",
+  llm: "Large Language Models",
+  chat: "Chat & Assistants",
+  reasoning: "Reasoning & Analysis",
+  code: "Code Generation",
   "image-gen": "Image Generation",
-  audio: "Audio",
-  embeddings: "Embeddings",
-  reranking: "Reranking",
+  "image-edit": "Image Editing",
+  vision: "Vision & Understanding",
+  multimodal: "Multimodal",
+  audio: "Speech Recognition",
+  tts: "Text-to-Speech",
+  video: "Video Generation",
+  embedding: "Embeddings",
+  rerank: "Reranking",
+  document: "Document AI",
+  ocr: "OCR & Extraction",
+  "fine-tune": "Fine-tunable Models",
 };
+
+const categoryOrder = ["llm", "chat", "reasoning", "code", "image-gen", "image-edit", "vision", "multimodal", "audio", "tts", "video", "embedding", "rerank", "document", "ocr", "fine-tune"];
 
 const Pricing = () => {
   const { data: gpus = [], isLoading: gpuLoading } = useGpuPricing();
@@ -216,7 +227,7 @@ const Pricing = () => {
               </div>
             ) : (
               <div className="space-y-10">
-                {Object.entries(grouped).map(([cat, catModels]) => (
+                {categoryOrder.filter((cat) => (grouped[cat] ?? []).length > 0).map((cat) => (
                   <div key={cat}>
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
                       {categoryGroups[cat] ?? cat}
@@ -234,7 +245,7 @@ const Pricing = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {catModels.map((m) => (
+                          {grouped[cat].map((m) => (
                             <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
                               <TableCell>
                                 <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
@@ -250,17 +261,20 @@ const Pricing = () => {
                               <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
                                 {ctxLabel(m.context_window) ?? "—"}
                               </TableCell>
-                              <TableCell className="text-right font-mono">
-                                ${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}
+                              <TableCell className="text-right font-mono text-sm">
+                                {Number(m.price_per_1k_input_tokens) > 0
+                                  ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
+                                  : <span className="text-muted-foreground text-xs">see notes</span>}
                               </TableCell>
-                              <TableCell className="text-right font-mono">
-                                ${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}
+                              <TableCell className="text-right font-mono text-sm">
+                                {Number(m.price_per_1k_output_tokens) > 0
+                                  ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
+                                  : <span className="text-muted-foreground">—</span>}
                               </TableCell>
                               <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
                                 {m.supports_cache && m.price_per_1k_cache_read_tokens
                                   ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>
-                                }
+                                  : <span className="text-muted-foreground">—</span>}
                               </TableCell>
                               <TableCell>
                                 <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
