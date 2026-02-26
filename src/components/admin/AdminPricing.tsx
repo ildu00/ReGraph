@@ -70,11 +70,11 @@ const defaultNewUnitModel = {
 };
 
 const unitPricingLabel: Record<string, string> = {
-  "image-gen": "$ / изображение",
-  "image-edit": "$ / изображение",
-  audio: "$ / минута",
-  tts: "$ / минута",
-  video: "$ / клип",
+  "image-gen": "$ / image",
+  "image-edit": "$ / image",
+  audio: "$ / minute",
+  tts: "$ / minute",
+  video: "$ / clip",
 };
 
 const unitFieldForCategory: Record<string, keyof ModelPrice> = {
@@ -275,7 +275,7 @@ export const AdminPricing = () => {
           /* Unit-based pricing fields */
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / изображение</Label>
+              <Label className="text-xs text-muted-foreground">$ / image</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.0001" className="h-8 font-mono"
@@ -284,7 +284,7 @@ export const AdminPricing = () => {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / минута аудио</Label>
+              <Label className="text-xs text-muted-foreground">$ / audio minute</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.0001" className="h-8 font-mono"
@@ -293,7 +293,7 @@ export const AdminPricing = () => {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / видео-клип</Label>
+              <Label className="text-xs text-muted-foreground">$ / video clip</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.001" className="h-8 font-mono"
@@ -307,14 +307,14 @@ export const AdminPricing = () => {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Вход / 1K токенов ($)</Label>
+                <Label className="text-xs text-muted-foreground">Input / 1K tokens ($)</Label>
                 <Input type="number" step="0.000001" className="h-8 font-mono"
                   value={getModelVal(model, "price_per_1k_input_tokens")}
                   onChange={(e) => setModelField(model.id, "price_per_1k_input_tokens", parseFloat(e.target.value) || 0)} />
                 <p className="text-xs text-muted-foreground">= ${((getModelVal(model, "price_per_1k_input_tokens") as number) * 1000).toFixed(4)}/1M</p>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Выход / 1K токенов ($)</Label>
+                <Label className="text-xs text-muted-foreground">Output / 1K tokens ($)</Label>
                 <Input type="number" step="0.000001" className="h-8 font-mono"
                   value={getModelVal(model, "price_per_1k_output_tokens")}
                   onChange={(e) => setModelField(model.id, "price_per_1k_output_tokens", parseFloat(e.target.value) || 0)} />
@@ -335,7 +335,7 @@ export const AdminPricing = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Context Window (токены)</Label>
+                <Label className="text-xs">Context Window (tokens)</Label>
                 <Input type="number" className="h-8"
                   value={getModelVal(model, "context_window")}
                   onChange={(e) => setModelField(model.id, "context_window", parseInt(e.target.value) || 0)} />
@@ -428,8 +428,8 @@ export const AdminPricing = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Управление тарифами</h1>
-        <p className="text-muted-foreground">GPU, языковые модели (по токенам) и медиа-модели (поштучно)</p>
+        <h1 className="text-2xl font-bold">Pricing Management</h1>
+        <p className="text-muted-foreground">GPU hourly rates, token-based language models, and unit-priced media models</p>
       </div>
 
       {/* GPU Pricing */}
@@ -437,21 +437,21 @@ export const AdminPricing = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">GPU — почасовая аренда</h2>
+            <h2 className="text-lg font-semibold">GPU — Hourly Rental</h2>
             <Badge variant="secondary">{gpuPrices.length}</Badge>
           </div>
           <Button size="sm" onClick={() => setShowAddGpu(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Добавить GPU
+            <Plus className="h-4 w-4 mr-1" /> Add GPU
           </Button>
         </div>
         <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Тип GPU</TableHead>
-                <TableHead>Цена / час</TableHead>
-                <TableHead>Активен</TableHead>
-                <TableHead className="w-24">Действия</TableHead>
+                <TableHead>GPU Type</TableHead>
+                <TableHead>Price / hr</TableHead>
+                <TableHead>Active</TableHead>
+                <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -494,11 +494,11 @@ export const AdminPricing = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Модели</h2>
+            <h2 className="text-lg font-semibold">Models</h2>
             <Badge variant="secondary">{modelPrices.length}</Badge>
           </div>
           <Button size="sm" onClick={() => setShowAddModel(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Добавить модель
+            <Plus className="h-4 w-4 mr-1" /> Add Model
           </Button>
         </div>
 
@@ -506,11 +506,11 @@ export const AdminPricing = () => {
           <TabsList>
             <TabsTrigger value="token">
               <BrainCircuit className="h-4 w-4 mr-1.5" />
-              По токенам ({tokenModels.length})
+              Token-based ({tokenModels.length})
             </TabsTrigger>
             <TabsTrigger value="unit">
               <Image className="h-4 w-4 mr-1.5" />
-              Поштучно ({unitModels.length})
+              Unit-based ({unitModels.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="token" className="mt-4">
@@ -518,7 +518,7 @@ export const AdminPricing = () => {
           </TabsContent>
           <TabsContent value="unit" className="mt-4">
             <div className="mb-3 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-              Модели с фиксированной ценой за единицу: изображение, минута аудио или видео-клип.
+              Fixed-price models billed per unit: image, audio minute, or video clip.
             </div>
             <ModelList models={unitModels} />
           </TabsContent>
@@ -528,17 +528,17 @@ export const AdminPricing = () => {
       {/* Add GPU Dialog */}
       <Dialog open={showAddGpu} onOpenChange={setShowAddGpu}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Добавить GPU</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Add GPU</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Тип GPU (например A100 80GB)" value={newGpu.gpu_type} onChange={(e) => setNewGpu({ ...newGpu, gpu_type: e.target.value })} />
+            <Input placeholder="GPU type (e.g. A100 80GB)" value={newGpu.gpu_type} onChange={(e) => setNewGpu({ ...newGpu, gpu_type: e.target.value })} />
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">$</span>
-              <Input type="number" step="0.01" placeholder="Цена в час" value={newGpu.price_per_hour} onChange={(e) => setNewGpu({ ...newGpu, price_per_hour: e.target.value })} />
+              <Input type="number" step="0.01" placeholder="Price per hour" value={newGpu.price_per_hour} onChange={(e) => setNewGpu({ ...newGpu, price_per_hour: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddGpu(false)}>Отмена</Button>
-            <Button onClick={addGpu}>Добавить</Button>
+            <Button variant="outline" onClick={() => setShowAddGpu(false)}>Cancel</Button>
+            <Button onClick={addGpu}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -546,11 +546,11 @@ export const AdminPricing = () => {
       {/* Add Model Dialog */}
       <Dialog open={showAddModel} onOpenChange={setShowAddModel}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Добавить модель</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Add Model</DialogTitle></DialogHeader>
           <Tabs value={addModelType} onValueChange={(v) => setAddModelType(v as "token" | "unit")}>
             <TabsList className="mb-4">
-              <TabsTrigger value="token"><BrainCircuit className="h-4 w-4 mr-1.5" />По токенам</TabsTrigger>
-              <TabsTrigger value="unit"><Image className="h-4 w-4 mr-1.5" />Поштучно</TabsTrigger>
+              <TabsTrigger value="token"><BrainCircuit className="h-4 w-4 mr-1.5" />Token-based</TabsTrigger>
+              <TabsTrigger value="unit"><Image className="h-4 w-4 mr-1.5" />Unit-based</TabsTrigger>
             </TabsList>
 
             {/* Token model form */}
@@ -587,12 +587,12 @@ export const AdminPricing = () => {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Вход / 1K ($)</Label>
+                  <Label className="text-xs text-muted-foreground">Input / 1K ($)</Label>
                   <Input type="number" step="0.000001" placeholder="0.000001" value={newTokenModel.price_per_1k_input_tokens}
                     onChange={(e) => setNewTokenModel({ ...newTokenModel, price_per_1k_input_tokens: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Выход / 1K ($)</Label>
+                  <Label className="text-xs text-muted-foreground">Output / 1K ($)</Label>
                   <Input type="number" step="0.000001" placeholder="0.000003" value={newTokenModel.price_per_1k_output_tokens}
                     onChange={(e) => setNewTokenModel({ ...newTokenModel, price_per_1k_output_tokens: e.target.value })} />
                 </div>
@@ -670,12 +670,12 @@ export const AdminPricing = () => {
               </div>
 
               <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                Заполните только нужное поле в зависимости от категории модели.
+                Fill in only the relevant field based on the model category.
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Image className="h-3 w-3" /> $ / изображение</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Image className="h-3 w-3" /> $ / image</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.0001" placeholder="0.004" value={newUnitModel.price_per_image}
@@ -683,7 +683,7 @@ export const AdminPricing = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mic className="h-3 w-3" /> $ / минута</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mic className="h-3 w-3" /> $ / minute</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.0001" placeholder="0.006" value={newUnitModel.price_per_minute}
@@ -691,7 +691,7 @@ export const AdminPricing = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Video className="h-3 w-3" /> $ / клип</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Video className="h-3 w-3" /> $ / clip</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.001" placeholder="0.04" value={newUnitModel.price_per_video}
@@ -701,20 +701,20 @@ export const AdminPricing = () => {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Description</Label>
-                <Input placeholder="Короткое описание модели" value={newUnitModel.description}
+                <Input placeholder="Short model description" value={newUnitModel.description}
                   onChange={(e) => setNewUnitModel({ ...newUnitModel, description: e.target.value })} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Notes</Label>
-                <Textarea rows={2} placeholder="Дополнительные детали (разрешение, FPS и т.д.)"
+                <Textarea rows={2} placeholder="Additional details (resolution, FPS, etc.)"
                   value={newUnitModel.notes} onChange={(e) => setNewUnitModel({ ...newUnitModel, notes: e.target.value })} />
               </div>
             </TabsContent>
           </Tabs>
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowAddModel(false)}>Отмена</Button>
-            <Button onClick={addModelType === "token" ? addTokenModel : addUnitModel}>Добавить</Button>
+            <Button variant="outline" onClick={() => setShowAddModel(false)}>Cancel</Button>
+            <Button onClick={addModelType === "token" ? addTokenModel : addUnitModel}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
