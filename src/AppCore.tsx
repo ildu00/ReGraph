@@ -38,6 +38,7 @@ const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const ModelPricing = lazyWithRetry(() => import("./pages/ModelPricing"));
 const GpuNodes = lazyWithRetry(() => import("./pages/GpuNodes"));
 const Mobile = lazyWithRetry(() => import("./pages/Mobile"));
+const Competitions = lazyWithRetry(() => import("./pages/Competitions"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -92,6 +93,7 @@ const AppCore = () => {
                     <Route path="/pricing/models/:modelId" element={<ModelPricing />} />
                     <Route path="/pricing/gpu/:gpuType" element={<GpuNodes />} />
                     <Route path="/mobile" element={<Mobile />} />
+                    <Route path="/competitions" element={<Competitions />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
