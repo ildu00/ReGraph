@@ -13,10 +13,10 @@ import {
 } from "@/components/ui/table";
 
 const statusMeta: Record<string, { label: string; color: string }> = {
-  online:      { label: "Online",      color: "text-emerald-500" },
+  online:      { label: "Online",      color: "text-primary" },
   offline:     { label: "Offline",     color: "text-muted-foreground" },
-  pending:     { label: "Pending",     color: "text-amber-500" },
-  maintenance: { label: "Maintenance", color: "text-orange-500" },
+  pending:     { label: "Pending",     color: "text-foreground" },
+  maintenance: { label: "Maintenance", color: "text-foreground" },
 };
 
 const fmt = (n: number) =>
