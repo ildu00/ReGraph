@@ -379,9 +379,6 @@ const Pricing = () => {
                     </div>
                   );
                 })}
-                {tokenModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No model pricing available yet.</p>
-                )}
               </div>
             )}
           </motion.div>
