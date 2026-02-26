@@ -254,9 +254,10 @@ const Pricing = () => {
                 </TableHeader>
                 <TableBody>
                   {gpus.map((g) => (
-                    <TableRow key={g.id}>
-                      <TableCell className="font-medium">{g.gpu_type}</TableCell>
-                      <TableCell className="text-right font-mono">${Number(g.price_per_hour).toFixed(2)}</TableCell>
+                    <TableRow key={g.id} className="cursor-pointer hover:bg-card/80 transition-colors group" onClick={() => window.location.href = `/pricing/gpu/${encodeURIComponent(g.gpu_type)}`}>
+                      <TableCell className="font-medium group-hover:text-primary transition-colors">{g.gpu_type}</TableCell>
+                      <TableCell className="text-right font-mono">${Number(g.price_per_hour).toFixed(2)}<span className="text-muted-foreground text-xs ml-1">/hr</span></TableCell>
+                      <TableCell className="w-8 text-right"><ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors inline" /></TableCell>
                     </TableRow>
                   ))}
                   {gpus.length === 0 && (
