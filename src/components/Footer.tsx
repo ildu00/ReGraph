@@ -85,9 +85,9 @@ const Footer = ({ insetLeft }: FooterProps) => {
     Resources: [
       { label: "Documentation", href: "/docs" },
       { label: "Blog", href: "/blog" },
+      { label: "Competitions", href: "/competitions" },
       { label: "Status", href: "/status" },
       { label: "Support", href: "/support" },
-      { label: "Competitions", href: "/competitions" },
     ],
     Company: [
       { label: "About", href: "/about" },
