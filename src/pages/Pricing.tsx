@@ -227,11 +227,7 @@ const Pricing = () => {
               </div>
             ) : (
               <div className="space-y-10">
-                {categoryOrder
-                  .filter((cat) => (grouped[cat] ?? []).length > 0)
-                  .map((cat) => {
-                    const catModels = grouped[cat];
-                    return (
+                {categoryOrder.filter((cat) => (grouped[cat] ?? []).length > 0).map((cat) => (
                   <div key={cat}>
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
                       {categoryGroups[cat] ?? cat}
@@ -249,7 +245,7 @@ const Pricing = () => {
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {catModels.map((m) => (
+                          {grouped[cat].map((m) => (
                             <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
                               <TableCell>
                                 <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
@@ -265,17 +261,20 @@ const Pricing = () => {
                               <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
                                 {ctxLabel(m.context_window) ?? "—"}
                               </TableCell>
-                              <TableCell className="text-right font-mono">
-                                ${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}
+                              <TableCell className="text-right font-mono text-sm">
+                                {Number(m.price_per_1k_input_tokens) > 0
+                                  ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
+                                  : <span className="text-muted-foreground text-xs">see notes</span>}
                               </TableCell>
-                              <TableCell className="text-right font-mono">
-                                ${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}
+                              <TableCell className="text-right font-mono text-sm">
+                                {Number(m.price_per_1k_output_tokens) > 0
+                                  ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
+                                  : <span className="text-muted-foreground">—</span>}
                               </TableCell>
                               <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
                                 {m.supports_cache && m.price_per_1k_cache_read_tokens
                                   ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>
-                                }
+                                  : <span className="text-muted-foreground">—</span>}
                               </TableCell>
                               <TableCell>
                                 <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
