@@ -546,11 +546,11 @@ export const AdminPricing = () => {
       {/* Add Model Dialog */}
       <Dialog open={showAddModel} onOpenChange={setShowAddModel}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Добавить модель</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Add Model</DialogTitle></DialogHeader>
           <Tabs value={addModelType} onValueChange={(v) => setAddModelType(v as "token" | "unit")}>
             <TabsList className="mb-4">
-              <TabsTrigger value="token"><BrainCircuit className="h-4 w-4 mr-1.5" />По токенам</TabsTrigger>
-              <TabsTrigger value="unit"><Image className="h-4 w-4 mr-1.5" />Поштучно</TabsTrigger>
+              <TabsTrigger value="token"><BrainCircuit className="h-4 w-4 mr-1.5" />Token-based</TabsTrigger>
+              <TabsTrigger value="unit"><Image className="h-4 w-4 mr-1.5" />Unit-based</TabsTrigger>
             </TabsList>
 
             {/* Token model form */}
@@ -587,12 +587,12 @@ export const AdminPricing = () => {
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Вход / 1K ($)</Label>
+                  <Label className="text-xs text-muted-foreground">Input / 1K ($)</Label>
                   <Input type="number" step="0.000001" placeholder="0.000001" value={newTokenModel.price_per_1k_input_tokens}
                     onChange={(e) => setNewTokenModel({ ...newTokenModel, price_per_1k_input_tokens: e.target.value })} />
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground">Выход / 1K ($)</Label>
+                  <Label className="text-xs text-muted-foreground">Output / 1K ($)</Label>
                   <Input type="number" step="0.000001" placeholder="0.000003" value={newTokenModel.price_per_1k_output_tokens}
                     onChange={(e) => setNewTokenModel({ ...newTokenModel, price_per_1k_output_tokens: e.target.value })} />
                 </div>
@@ -670,12 +670,12 @@ export const AdminPricing = () => {
               </div>
 
               <div className="p-3 rounded-lg bg-muted/50 text-xs text-muted-foreground">
-                Заполните только нужное поле в зависимости от категории модели.
+                Fill in only the relevant field based on the model category.
               </div>
 
               <div className="grid grid-cols-3 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Image className="h-3 w-3" /> $ / изображение</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Image className="h-3 w-3" /> $ / image</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.0001" placeholder="0.004" value={newUnitModel.price_per_image}
@@ -683,7 +683,7 @@ export const AdminPricing = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mic className="h-3 w-3" /> $ / минута</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Mic className="h-3 w-3" /> $ / minute</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.0001" placeholder="0.006" value={newUnitModel.price_per_minute}
@@ -691,7 +691,7 @@ export const AdminPricing = () => {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Video className="h-3 w-3" /> $ / клип</Label>
+                  <Label className="text-xs text-muted-foreground flex items-center gap-1"><Video className="h-3 w-3" /> $ / clip</Label>
                   <div className="flex items-center gap-1">
                     <span className="text-muted-foreground text-sm">$</span>
                     <Input type="number" step="0.001" placeholder="0.04" value={newUnitModel.price_per_video}
@@ -701,20 +701,20 @@ export const AdminPricing = () => {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Description</Label>
-                <Input placeholder="Короткое описание модели" value={newUnitModel.description}
+                <Input placeholder="Short model description" value={newUnitModel.description}
                   onChange={(e) => setNewUnitModel({ ...newUnitModel, description: e.target.value })} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Notes</Label>
-                <Textarea rows={2} placeholder="Дополнительные детали (разрешение, FPS и т.д.)"
+                <Textarea rows={2} placeholder="Additional details (resolution, FPS, etc.)"
                   value={newUnitModel.notes} onChange={(e) => setNewUnitModel({ ...newUnitModel, notes: e.target.value })} />
               </div>
             </TabsContent>
           </Tabs>
 
           <DialogFooter className="mt-4">
-            <Button variant="outline" onClick={() => setShowAddModel(false)}>Отмена</Button>
-            <Button onClick={addModelType === "token" ? addTokenModel : addUnitModel}>Добавить</Button>
+            <Button variant="outline" onClick={() => setShowAddModel(false)}>Cancel</Button>
+            <Button onClick={addModelType === "token" ? addTokenModel : addUnitModel}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
