@@ -394,11 +394,11 @@ const Pricing = () => {
         {unitModels.length > 0 && (
         <section className="container px-4 mb-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <Image className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Media Generation</h2>
+            <div className="flex items-center gap-2 mb-5">
+              <Image className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold">Media Generation</h3>
+              <span className="text-xs text-muted-foreground">· per unit</span>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Per-unit pricing for image, audio, and video models.</p>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
