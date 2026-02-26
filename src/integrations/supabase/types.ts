@@ -289,35 +289,65 @@ export type Database = {
       model_pricing: {
         Row: {
           category: string
+          context_window: number | null
           created_at: string
+          description: string | null
           display_name: string
           id: string
           is_active: boolean
+          max_output_tokens: number | null
           model_id: string
+          notes: string | null
+          price_per_1k_cache_read_tokens: number | null
+          price_per_1k_cache_write_tokens: number | null
           price_per_1k_input_tokens: number
           price_per_1k_output_tokens: number
+          provider: string | null
+          supports_cache: boolean | null
+          supports_function_calling: boolean | null
+          supports_vision: boolean | null
           updated_at: string
         }
         Insert: {
           category?: string
+          context_window?: number | null
           created_at?: string
+          description?: string | null
           display_name: string
           id?: string
           is_active?: boolean
+          max_output_tokens?: number | null
           model_id: string
+          notes?: string | null
+          price_per_1k_cache_read_tokens?: number | null
+          price_per_1k_cache_write_tokens?: number | null
           price_per_1k_input_tokens?: number
           price_per_1k_output_tokens?: number
+          provider?: string | null
+          supports_cache?: boolean | null
+          supports_function_calling?: boolean | null
+          supports_vision?: boolean | null
           updated_at?: string
         }
         Update: {
           category?: string
+          context_window?: number | null
           created_at?: string
+          description?: string | null
           display_name?: string
           id?: string
           is_active?: boolean
+          max_output_tokens?: number | null
           model_id?: string
+          notes?: string | null
+          price_per_1k_cache_read_tokens?: number | null
+          price_per_1k_cache_write_tokens?: number | null
           price_per_1k_input_tokens?: number
           price_per_1k_output_tokens?: number
+          provider?: string | null
+          supports_cache?: boolean | null
+          supports_function_calling?: boolean | null
+          supports_vision?: boolean | null
           updated_at?: string
         }
         Relationships: []
