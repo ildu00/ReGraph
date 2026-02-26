@@ -269,18 +269,18 @@ const Pricing = () => {
         </section>
 
         {/* Model Pricing Header + Search & Filters */}
-        <section className="container px-4 mb-8">
+        <section className="container px-4 mb-10">
           <div className="max-w-5xl mx-auto">
-            <div className="mb-6">
-              <h2 className="text-3xl font-bold mb-1">Модели</h2>
-              <p className="text-muted-foreground text-sm">Полный каталог моделей с посекундной тарификацией. Оплата только за использование.</p>
+            <div className="mb-5">
+              <h2 className="text-3xl font-bold mb-1">Model Pricing</h2>
+              <p className="text-muted-foreground text-sm">Pay-as-you-go access to every model. No minimums — billed per token or per unit.</p>
             </div>
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div className="relative flex-shrink-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                 <Input
-                  placeholder="Поиск моделей…"
-                  className="pl-8 h-8 text-sm w-52"
+                  placeholder="Search models…"
+                  className="pl-8 h-8 text-sm w-48"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
@@ -290,8 +290,9 @@ const Pricing = () => {
                   </button>
                 )}
               </div>
+              <div className="w-px h-5 bg-border hidden sm:block" />
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>Все</Badge>
+                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
                 {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
                   <Badge
                     key={cat}
@@ -312,8 +313,8 @@ const Pricing = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
             <div className="flex items-center gap-2 mb-5">
               <BrainCircuit className="h-5 w-5 text-primary shrink-0" />
-              <h3 className="text-lg font-semibold">Языковые модели</h3>
-              <span className="text-xs text-muted-foreground ml-1">· цена за 1M токенов</span>
+              <h3 className="text-base font-semibold">Language Models</h3>
+              <span className="text-xs text-muted-foreground">· per 1M tokens</span>
             </div>
 
             {modelLoading ? (
@@ -393,11 +394,11 @@ const Pricing = () => {
         {unitModels.length > 0 && (
         <section className="container px-4 mb-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <Image className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Media Generation</h2>
+            <div className="flex items-center gap-2 mb-5">
+              <Image className="h-5 w-5 text-primary" />
+              <h3 className="text-base font-semibold">Media Generation</h3>
+              <span className="text-xs text-muted-foreground">· per unit</span>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Per-unit pricing for image, audio, and video models.</p>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
