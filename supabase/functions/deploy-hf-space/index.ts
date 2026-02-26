@@ -83,6 +83,71 @@ const REQUIREMENTS_TXT = `gradio>=4.44.0
 requests>=2.31.0
 `;
 
+/**
+ * Upload a single file to a HuggingFace Space repository using the
+ * official Hub HTTP API: https://huggingface.co/docs/hub/api#commit-operations
+ *
+ * Endpoint: POST https://huggingface.co/api/spaces/{repo_id}/commit/{branch}
+ * Content-Type: multipart/form-data
+ *   - payload_as_json  (JSON string)
+ *   - one part per file (name = file path, filename = file path)
+ */
+async function commitFiles(
+  token: string,
+  repoId: string,
+  files: { path: string; content: string }[],
+  message: string
+): Promise<{ status: number; body: string }> {
+  const boundary = `----HFBoundary${Date.now()}`;
+  const enc = new TextEncoder();
+
+  const chunks: Uint8Array[] = [];
+
+  const append = (s: string) => chunks.push(enc.encode(s));
+
+  // Part 1: payload_as_json
+  const payload = {
+    summary: message,
+    files: files.map((f) => ({
+      path: f.path,
+      encoding: "utf-8",
+    })),
+  };
+  append(`--${boundary}\r\n`);
+  append(`Content-Disposition: form-data; name="payload_as_json"\r\n`);
+  append(`Content-Type: application/json\r\n\r\n`);
+  append(JSON.stringify(payload));
+  append(`\r\n`);
+
+  // Parts 2+: actual file contents
+  for (const f of files) {
+    append(`--${boundary}\r\n`);
+    append(`Content-Disposition: form-data; name="${f.path}"; filename="${f.path}"\r\n`);
+    append(`Content-Type: text/plain; charset=utf-8\r\n\r\n`);
+    append(f.content);
+    append(`\r\n`);
+  }
+
+  append(`--${boundary}--\r\n`);
+
+  const totalLen = chunks.reduce((s, c) => s + c.length, 0);
+  const body = new Uint8Array(totalLen);
+  let offset = 0;
+  for (const c of chunks) { body.set(c, offset); offset += c.length; }
+
+  const url = `https://huggingface.co/api/spaces/${repoId}/commit/main`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": `multipart/form-data; boundary=${boundary}`,
+    },
+    body,
+  });
+
+  return { status: res.status, body: await res.text() };
+}
+
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
     return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405 });
@@ -93,34 +158,22 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({ error: "HUGGINGFACE_TOKEN not configured" }), { status: 500 });
   }
 
-  const repoId = "Regraph/ReGraphLLM";
-  const files = [
-    { path: "app.py", content: GRADIO_APP },
-    { path: "README.md", content: README_MD },
-    { path: "requirements.txt", content: REQUIREMENTS_TXT },
-  ];
+  const result = await commitFiles(
+    token,
+    "Regraph/ReGraphLLM",
+    [
+      { path: "app.py", content: GRADIO_APP },
+      { path: "README.md", content: README_MD },
+      { path: "requirements.txt", content: REQUIREMENTS_TXT },
+    ],
+    "Deploy ReGraph LLM Gradio demo via ReGraph platform"
+  );
 
-  const results: Record<string, unknown> = {};
+  let parsed: unknown;
+  try { parsed = JSON.parse(result.body); } catch { parsed = result.body; }
 
-  // Upload each file using the single-file upload endpoint
-  for (const f of files) {
-    const uploadUrl = `https://huggingface.co/api/spaces/${repoId}/raw/main/${f.path}`;
-    const res = await fetch(uploadUrl, {
-      method: "PUT",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "text/plain; charset=utf-8",
-      },
-      body: f.content,
-    });
-    const body = await res.text();
-    results[f.path] = { status: res.status, body };
-  }
-
-  const allOk = Object.values(results).every((r: any) => r.status >= 200 && r.status < 300);
-
-  return new Response(JSON.stringify({ ok: allOk, results }), {
-    status: allOk ? 200 : 207,
-    headers: { "Content-Type": "application/json" },
-  });
+  return new Response(
+    JSON.stringify({ ok: result.status >= 200 && result.status < 300, status: result.status, result: parsed }),
+    { status: result.status >= 200 && result.status < 300 ? 200 : 500, headers: { "Content-Type": "application/json" } }
+  );
 });
