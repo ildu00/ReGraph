@@ -86,7 +86,7 @@ const GpuNodes = () => {
                 </div>
                 <div className="flex gap-4">
                   <div className="text-right">
-                    <div className="text-2xl font-bold text-emerald-500">{online}</div>
+                    <div className="text-2xl font-bold text-primary">{online}</div>
                     <div className="text-xs text-muted-foreground">Online now</div>
                   </div>
                   <div className="text-right">
