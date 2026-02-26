@@ -126,12 +126,32 @@ const getUnitLabel = (m: ModelRow): string => {
   return "";
 };
 
+const ALL_CATS = [...tokenCategoryOrder, ...unitCategoryOrder];
+
 const Pricing = () => {
   const { data: gpus = [], isLoading: gpuLoading } = useGpuPricing();
   const { data: models = [], isLoading: modelLoading } = useModelPricing();
 
-  const tokenModels = models.filter((m) => !isUnitBased(m));
-  const unitModels = models.filter((m) => isUnitBased(m));
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const filteredModels = useMemo(() => {
+    let list = models;
+    if (activeCategory) list = list.filter((m) => m.category === activeCategory);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.display_name.toLowerCase().includes(q) ||
+          m.model_id.toLowerCase().includes(q) ||
+          (m.provider ?? "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [models, search, activeCategory]);
+
+  const tokenModels = filteredModels.filter((m) => !isUnitBased(m));
+  const unitModels = filteredModels.filter((m) => isUnitBased(m));
 
   const groupedToken = tokenModels.reduce<Record<string, ModelRow[]>>((acc, m) => {
     const key = m.category || "chat";
