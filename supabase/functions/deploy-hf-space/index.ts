@@ -3,17 +3,19 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 const GRADIO_APP = `import gradio as gr
 import requests
 import os
+from typing import Generator
 
 REGRAPH_API_KEY = os.getenv("REGRAPH_API_KEY", "")
 REGRAPH_BASE_URL = "https://api.regraph.tech/v1"
 
-def chat(message: str, history: list) -> str:
+# Gradio 5: history is list[dict] with keys "role" and "content"
+def chat(message: str, history: list[dict]) -> Generator[str, None, None]:
     messages = [
         {"role": "system", "content": "You are a helpful AI assistant powered by ReGraph LLM — a decentralized, continuously-trained language model running on distributed GPU/NPU nodes worldwide."}
     ]
-    for h in history:
-        messages.append({"role": "user", "content": h[0]})
-        messages.append({"role": "assistant", "content": h[1]})
+    # Gradio 5 passes history as list of {"role": ..., "content": ...} dicts
+    for msg in history:
+        messages.append({"role": msg["role"], "content": msg["content"]})
     messages.append({"role": "user", "content": message})
 
     try:
@@ -24,12 +26,13 @@ def chat(message: str, history: list) -> str:
             timeout=60,
         )
         resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"]
+        yield resp.json()["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"[Error] {e}"
+        yield f"⚠️ {e}"
 
 demo = gr.ChatInterface(
     fn=chat,
+    type="messages",
     title="⚡ ReGraph LLM",
     description="""Interact with **ReGraph LLM** — a continuously-trained language model powered by decentralized GPU/NPU nodes worldwide.
 
@@ -41,7 +44,6 @@ demo = gr.ChatInterface(
         "Compare centralized vs decentralized AI inference",
     ],
     theme=gr.themes.Soft(primary_hue="violet"),
-    chatbot=gr.Chatbot(height=480),
 )
 
 if __name__ == "__main__":
