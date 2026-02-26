@@ -146,35 +146,24 @@ const Pricing = () => {
   });
 
   const nodeCounts = useMemo(() => {
-    const map: Record<string, { online: number; total: number }> = {};
+    const counts: Record<string, { online: number; total: number }> = {};
     for (const d of nodeCountsRaw) {
       const key = (d.device_model ?? "").toLowerCase();
-      if (!map[key]) map[key] = { online: 0, total: 0 };
-      map[key].total++;
-      if (d.status === "online") map[key].online++;
+      if (!counts[key]) counts[key] = { online: 0, total: 0 };
+      counts[key].total++;
+      if (d.status === "online") counts[key].online++;
     }
-    return map;
+    return counts;
   }, [nodeCountsRaw]);
 
-  const getNodeCounts = (gpuType: string) => {
-    const key = gpuType.toLowerCase();
-    // try exact match first, then partial
-    if (map[key]) return map[key];
-    const found = Object.entries(map).find(([k]) => k.includes(key) || key.includes(k));
-    return found ? found[1] : null;
-  };
-
-  // inline helper to avoid closure issues
   const gpuNodeCounts = useMemo(() => {
     return gpus.map((g) => {
       const key = g.gpu_type.toLowerCase();
-      const exact = nodeCounts[key];
-      if (exact) return exact;
+      if (nodeCounts[key]) return nodeCounts[key];
       const found = Object.entries(nodeCounts).find(([k]) => k.includes(key) || key.includes(k));
       return found ? found[1] : null;
     });
   }, [gpus, nodeCounts]);
-  const { data: models = [], isLoading: modelLoading } = useModelPricing();
 
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
