@@ -79,7 +79,7 @@ An interactive demo of **ReGraph LLM** — a continuously-trained language model
 - [GitHub](https://github.com/ildu00/ReGraph)
 `;
 
-const REQUIREMENTS_TXT = `gradio>=4.44.0
+const REQUIREMENTS_TXT = `gradio>=5.9.1
 requests>=2.31.0
 `;
 
