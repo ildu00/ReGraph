@@ -428,8 +428,8 @@ export const AdminPricing = () => {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Управление тарифами</h1>
-        <p className="text-muted-foreground">GPU, языковые модели (по токенам) и медиа-модели (поштучно)</p>
+        <h1 className="text-2xl font-bold">Pricing Management</h1>
+        <p className="text-muted-foreground">GPU hourly rates, token-based language models, and unit-priced media models</p>
       </div>
 
       {/* GPU Pricing */}
@@ -437,21 +437,21 @@ export const AdminPricing = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Cpu className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">GPU — почасовая аренда</h2>
+            <h2 className="text-lg font-semibold">GPU — Hourly Rental</h2>
             <Badge variant="secondary">{gpuPrices.length}</Badge>
           </div>
           <Button size="sm" onClick={() => setShowAddGpu(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Добавить GPU
+            <Plus className="h-4 w-4 mr-1" /> Add GPU
           </Button>
         </div>
         <div className="rounded-lg border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Тип GPU</TableHead>
-                <TableHead>Цена / час</TableHead>
-                <TableHead>Активен</TableHead>
-                <TableHead className="w-24">Действия</TableHead>
+                <TableHead>GPU Type</TableHead>
+                <TableHead>Price / hr</TableHead>
+                <TableHead>Active</TableHead>
+                <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -494,11 +494,11 @@ export const AdminPricing = () => {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BrainCircuit className="h-5 w-5 text-primary" />
-            <h2 className="text-lg font-semibold">Модели</h2>
+            <h2 className="text-lg font-semibold">Models</h2>
             <Badge variant="secondary">{modelPrices.length}</Badge>
           </div>
           <Button size="sm" onClick={() => setShowAddModel(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Добавить модель
+            <Plus className="h-4 w-4 mr-1" /> Add Model
           </Button>
         </div>
 
@@ -506,11 +506,11 @@ export const AdminPricing = () => {
           <TabsList>
             <TabsTrigger value="token">
               <BrainCircuit className="h-4 w-4 mr-1.5" />
-              По токенам ({tokenModels.length})
+              Token-based ({tokenModels.length})
             </TabsTrigger>
             <TabsTrigger value="unit">
               <Image className="h-4 w-4 mr-1.5" />
-              Поштучно ({unitModels.length})
+              Unit-based ({unitModels.length})
             </TabsTrigger>
           </TabsList>
           <TabsContent value="token" className="mt-4">
@@ -518,7 +518,7 @@ export const AdminPricing = () => {
           </TabsContent>
           <TabsContent value="unit" className="mt-4">
             <div className="mb-3 p-3 rounded-lg bg-muted/50 text-sm text-muted-foreground">
-              Модели с фиксированной ценой за единицу: изображение, минута аудио или видео-клип.
+              Fixed-price models billed per unit: image, audio minute, or video clip.
             </div>
             <ModelList models={unitModels} />
           </TabsContent>
