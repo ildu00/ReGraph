@@ -93,6 +93,7 @@ const AppCore = () => {
                     <Route path="/pricing/models/:modelId" element={<ModelPricing />} />
                     <Route path="/pricing/gpu/:gpuType" element={<GpuNodes />} />
                     <Route path="/mobile" element={<Mobile />} />
+                    <Route path="/competitions" element={<Competitions />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
