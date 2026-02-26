@@ -356,9 +356,9 @@ const Pricing = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Модель</TableHead>
-                              <TableHead className="text-right">Цена</TableHead>
-                              <TableHead className="hidden sm:table-cell text-right">Единица</TableHead>
+                            <TableHead>Model</TableHead>
+                              <TableHead className="text-right">Price</TableHead>
+                              <TableHead className="hidden sm:table-cell text-right">Unit</TableHead>
                               <TableHead className="w-8"></TableHead>
                             </TableRow>
                           </TableHeader>
