@@ -178,8 +178,8 @@ const Pricing = () => {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-xl border border-border bg-card p-8 flex flex-col">
               <h3 className="text-2xl font-bold mb-1">Free</h3>
-              <p className="text-muted-foreground mb-6">Для экспериментов и прототипов</p>
-              <div className="text-4xl font-bold mb-6">$0<span className="text-lg text-muted-foreground font-normal">/мес</span></div>
+              <p className="text-muted-foreground mb-6">Great for experimenting &amp; prototyping</p>
+              <div className="text-4xl font-bold mb-6">$0<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
               <ul className="space-y-3 mb-8 flex-1">
                 {freeTierFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
@@ -188,7 +188,7 @@ const Pricing = () => {
                 ))}
               </ul>
               <Button variant="outline" size="lg" className="w-full" asChild>
-                <Link to="/auth">Начать</Link>
+                <Link to="/auth">Get Started</Link>
               </Button>
             </motion.div>
 
