@@ -84,19 +84,31 @@ const GpuNodes = () => {
                     Provider nodes available on the ReGraph network for this GPU configuration.
                   </p>
                 </div>
-                <div className="flex gap-4">
-                  <div className="text-right">
-                    <div className="text-2xl font-bold text-primary">{online}</div>
-                    <div className="text-xs text-muted-foreground">Online now</div>
+                <div className="flex flex-wrap gap-3">
+                  {/* Online */}
+                  <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 min-w-[90px]">
+                    <Circle className="h-2.5 w-2.5 fill-primary text-primary shrink-0 animate-pulse" />
+                    <div>
+                      <div className="text-xl font-bold text-primary leading-none">{online}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">Online now</div>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-2xl font-bold">{total}</div>
-                    <div className="text-xs text-muted-foreground">Total nodes</div>
+                  {/* Total */}
+                  <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 min-w-[90px]">
+                    <Cpu className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                    <div>
+                      <div className="text-xl font-bold leading-none">{total}</div>
+                      <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">Total nodes</div>
+                    </div>
                   </div>
+                  {/* Price */}
                   {gpuRow && (
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">${Number(gpuRow.price_per_hour).toFixed(2)}</div>
-                      <div className="text-xs text-muted-foreground">/ hour</div>
+                    <div className="flex items-center gap-2.5 rounded-xl border border-border bg-card px-4 py-2.5 min-w-[90px]">
+                      <Zap className="h-3.5 w-3.5 text-primary shrink-0" />
+                      <div>
+                        <div className="text-xl font-bold text-primary leading-none font-mono">${Number(gpuRow.price_per_hour).toFixed(2)}</div>
+                        <div className="text-[10px] text-muted-foreground mt-0.5 whitespace-nowrap">per hour</div>
+                      </div>
                     </div>
                   )}
                 </div>
