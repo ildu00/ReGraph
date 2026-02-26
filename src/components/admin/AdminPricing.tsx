@@ -275,7 +275,7 @@ export const AdminPricing = () => {
           /* Unit-based pricing fields */
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / изображение</Label>
+              <Label className="text-xs text-muted-foreground">$ / image</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.0001" className="h-8 font-mono"
@@ -284,7 +284,7 @@ export const AdminPricing = () => {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / минута аудио</Label>
+              <Label className="text-xs text-muted-foreground">$ / audio minute</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.0001" className="h-8 font-mono"
@@ -293,7 +293,7 @@ export const AdminPricing = () => {
               </div>
             </div>
             <div className="space-y-1">
-              <Label className="text-xs text-muted-foreground">$ / видео-клип</Label>
+              <Label className="text-xs text-muted-foreground">$ / video clip</Label>
               <div className="flex items-center gap-1">
                 <span className="text-muted-foreground text-sm">$</span>
                 <Input type="number" step="0.001" className="h-8 font-mono"
