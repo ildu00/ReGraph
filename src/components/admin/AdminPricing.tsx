@@ -440,28 +440,28 @@ export const AdminPricing = () => {
             <h2 className="text-lg font-semibold">GPU — Hourly Rental</h2>
             <Badge variant="secondary">{gpuPrices.length}</Badge>
           </div>
-          <Button size="sm" onClick={() => setShowAddGpu(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add GPU
+          <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => setShowAddGpu(true)} title="Add GPU">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
         <div className="rounded-lg border overflow-x-auto">
-          <Table>
+          <Table className="min-w-[380px]">
             <TableHeader>
               <TableRow>
-                <TableHead>GPU Type</TableHead>
+                <TableHead className="min-w-[90px]">GPU Type</TableHead>
                 <TableHead>Price / hr</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead className="w-24">Actions</TableHead>
+                <TableHead className="w-16">Active</TableHead>
+                <TableHead className="w-[72px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {gpuPrices.map((gpu) => (
                 <TableRow key={gpu.id}>
-                  <TableCell className="font-mono font-medium">{gpu.gpu_type}</TableCell>
+                  <TableCell className="font-mono font-medium text-sm whitespace-nowrap">{gpu.gpu_type}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <span className="text-muted-foreground">$</span>
-                      <Input type="number" step="0.01" className="w-28 h-8"
+                      <Input type="number" step="0.01" className="w-24 h-8"
                         value={getGpuVal(gpu, "price_per_hour") as number}
                         onChange={(e) => setEditedGpu((prev) => ({ ...prev, [gpu.id]: { ...prev[gpu.id], price_per_hour: parseFloat(e.target.value) } }))} />
                     </div>
@@ -497,8 +497,8 @@ export const AdminPricing = () => {
             <h2 className="text-lg font-semibold">Models</h2>
             <Badge variant="secondary">{modelPrices.length}</Badge>
           </div>
-          <Button size="sm" onClick={() => setShowAddModel(true)}>
-            <Plus className="h-4 w-4 mr-1" /> Add Model
+          <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => setShowAddModel(true)} title="Add Model">
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
 
