@@ -139,7 +139,8 @@ const Pricing = () => {
       const { data } = await supabase
         .from("provider_devices")
         .select("device_model, status")
-        .eq("device_type", "gpu");
+        .eq("device_type", "gpu")
+        .limit(5000);
       return data ?? [];
     },
     staleTime: 60_000,
