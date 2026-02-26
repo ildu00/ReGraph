@@ -117,9 +117,9 @@ const getUnitPrice = (m: ModelRow): string => {
 };
 
 const getUnitLabel = (m: ModelRow): string => {
-  if (m.pricing_unit === "image" || m.category === "image-gen" || m.category === "image-edit") return "/ изображение";
-  if (m.pricing_unit === "minute" || m.category === "audio" || m.category === "tts") return "/ минута";
-  if (m.pricing_unit === "video" || m.category === "video") return "/ клип";
+  if (m.pricing_unit === "image" || m.category === "image-gen" || m.category === "image-edit") return "/ image";
+  if (m.pricing_unit === "minute" || m.category === "audio" || m.category === "tts") return "/ minute";
+  if (m.pricing_unit === "video" || m.category === "video") return "/ clip";
   return "";
 };
 
@@ -157,18 +157,18 @@ const Pricing = () => {
         {/* Hero */}
         <section className="container px-4 text-center mb-20">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-6xl font-bold mb-4">
-            <span className="text-gradient">Простые, прозрачные</span>{" "}
-            <span className="text-primary">цены</span>
+            <span className="text-gradient">Simple, transparent</span>{" "}
+            <span className="text-primary">pricing</span>
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Платите только за использование. Без минимумов, обязательств и скрытых комиссий. На 20% дешевле оригинальных провайдеров.
+            Pay only for what you use. No minimums, no commitments, no hidden fees. Up to 20% cheaper than major cloud providers.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="glow-primary" asChild>
-              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Начать бесплатно</Link>
+              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Start for Free</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/docs">Документация</Link>
+              <Link to="/docs">View Docs</Link>
             </Button>
           </motion.div>
         </section>
@@ -178,8 +178,8 @@ const Pricing = () => {
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="rounded-xl border border-border bg-card p-8 flex flex-col">
               <h3 className="text-2xl font-bold mb-1">Free</h3>
-              <p className="text-muted-foreground mb-6">Для экспериментов и прототипов</p>
-              <div className="text-4xl font-bold mb-6">$0<span className="text-lg text-muted-foreground font-normal">/мес</span></div>
+              <p className="text-muted-foreground mb-6">Great for experimenting &amp; prototyping</p>
+              <div className="text-4xl font-bold mb-6">$0<span className="text-lg text-muted-foreground font-normal">/mo</span></div>
               <ul className="space-y-3 mb-8 flex-1">
                 {freeTierFeatures.map((f) => (
                   <li key={f} className="flex items-start gap-2 text-sm">
@@ -188,14 +188,14 @@ const Pricing = () => {
                 ))}
               </ul>
               <Button variant="outline" size="lg" className="w-full" asChild>
-                <Link to="/auth">Начать</Link>
+                <Link to="/auth">Get Started</Link>
               </Button>
             </motion.div>
 
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="rounded-xl border border-primary/40 bg-card p-8 flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
               <h3 className="text-2xl font-bold mb-1">Pro</h3>
-              <p className="text-muted-foreground mb-6">Для production-нагрузок</p>
+              <p className="text-muted-foreground mb-6">For production workloads at scale</p>
               <div className="text-4xl font-bold mb-6">Pay-as-you-go</div>
               <ul className="space-y-3 mb-8 flex-1">
                 {proFeatures.map((f) => (
@@ -205,7 +205,7 @@ const Pricing = () => {
                 ))}
               </ul>
               <Button size="lg" className="w-full glow-primary" asChild>
-                <Link to="/auth"><Zap className="mr-2 h-4 w-4" />Начать работу</Link>
+                <Link to="/auth"><Zap className="mr-2 h-4 w-4" />Start Building</Link>
               </Button>
             </motion.div>
           </div>
@@ -218,7 +218,7 @@ const Pricing = () => {
               <Cpu className="h-6 w-6 text-primary" />
               <h2 className="text-3xl font-bold">GPU Compute</h2>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Аренда GPU по часам. Цены варьируются в зависимости от модели карты.</p>
+            <p className="text-muted-foreground mb-8 max-w-xl">Rent GPU power by the hour. Pick the performance tier that fits your workload.</p>
             {gpuLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
             ) : (
@@ -226,7 +226,7 @@ const Pricing = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>GPU</TableHead>
-                    <TableHead className="text-right">Цена / час</TableHead>
+                    <TableHead className="text-right">Price / hour</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -237,7 +237,7 @@ const Pricing = () => {
                     </TableRow>
                   ))}
                   {gpus.length === 0 && (
-                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">Нет данных по GPU.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">No GPU pricing available yet.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
@@ -250,75 +250,81 @@ const Pricing = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
               <BrainCircuit className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Языковые модели</h2>
+              <h2 className="text-3xl font-bold">Language Models</h2>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Тарификация по токенам. Цены за 1 миллион токенов.</p>
+            <p className="text-muted-foreground mb-8 max-w-xl">Per-token pricing for hosted models. Prices shown per 1 million tokens.</p>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
             ) : (
               <div className="space-y-10">
-                {tokenCategoryOrder.filter((cat) => (groupedToken[cat] ?? []).length > 0).map((cat) => (
-                  <div key={cat}>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">{tokenCategoryGroups[cat] ?? cat}</h3>
-                    <div className="rounded-xl border border-border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Модель</TableHead>
-                            <TableHead className="hidden sm:table-cell text-right">Контекст</TableHead>
-                            <TableHead className="text-right">Вход / 1M</TableHead>
-                            <TableHead className="text-right">Выход / 1M</TableHead>
-                            <TableHead className="hidden md:table-cell text-right">Кэш / 1M</TableHead>
-                            <TableHead className="w-8"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {groupedToken[cat].map((m) => (
-                            <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
-                              <TableCell>
-                                <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
-                                  <span className="font-medium group-hover:text-primary transition-colors">{m.display_name}</span>
-                                  <span className="text-xs text-muted-foreground font-mono hidden sm:block">{m.model_id}</span>
-                                  <div className="flex gap-1 mt-0.5">
-                                    {m.supports_vision && <Eye className="h-3 w-3 text-muted-foreground" />}
-                                    {m.supports_function_calling && <Wrench className="h-3 w-3 text-muted-foreground" />}
-                                    {m.supports_cache && <Database className="h-3 w-3 text-muted-foreground" />}
-                                  </div>
-                                </Link>
-                              </TableCell>
-                              <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
-                                {ctxLabel(m.context_window) ?? "—"}
-                              </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
-                                {Number(m.price_per_1k_input_tokens) > 0
-                                  ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
-                                {Number(m.price_per_1k_output_tokens) > 0
-                                  ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
-                                {m.supports_cache && m.price_per_1k_cache_read_tokens
-                                  ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell>
-                                <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </Link>
-                              </TableCell>
+                {tokenCategoryOrder.filter((cat) => (groupedToken[cat] ?? []).length > 0).map((cat) => {
+                  const catModels = groupedToken[cat];
+                  const hasCacheInGroup = catModels.some((m) => m.supports_cache);
+                  return (
+                    <div key={cat}>
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">{tokenCategoryGroups[cat] ?? cat}</h3>
+                      <div className="rounded-xl border border-border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Model</TableHead>
+                              <TableHead className="hidden sm:table-cell text-right">Context</TableHead>
+                              <TableHead className="text-right">Input / 1M</TableHead>
+                              <TableHead className="text-right">Output / 1M</TableHead>
+                              {hasCacheInGroup && <TableHead className="hidden md:table-cell text-right">Cache Read / 1M</TableHead>}
+                              <TableHead className="w-8"></TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {catModels.map((m) => (
+                              <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
+                                <TableCell>
+                                  <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
+                                    <span className="font-medium group-hover:text-primary transition-colors">{m.display_name}</span>
+                                    <span className="text-xs text-muted-foreground font-mono hidden sm:block">{m.model_id}</span>
+                                    <div className="flex gap-1 mt-0.5">
+                                      {m.supports_vision && <Eye className="h-3 w-3 text-muted-foreground" />}
+                                      {m.supports_function_calling && <Wrench className="h-3 w-3 text-muted-foreground" />}
+                                      {m.supports_cache && <Database className="h-3 w-3 text-muted-foreground" />}
+                                    </div>
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
+                                  {ctxLabel(m.context_window) ?? "—"}
+                                </TableCell>
+                                <TableCell className="text-right font-mono text-sm">
+                                  {Number(m.price_per_1k_input_tokens) > 0
+                                    ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
+                                    : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                <TableCell className="text-right font-mono text-sm">
+                                  {Number(m.price_per_1k_output_tokens) > 0
+                                    ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
+                                    : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                {hasCacheInGroup && (
+                                  <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
+                                    {m.supports_cache && Number(m.price_per_1k_cache_read_tokens) > 0
+                                      ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
+                                      : <span className="text-muted-foreground">—</span>}
+                                  </TableCell>
+                                )}
+                                <TableCell>
+                                  <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                  </Link>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {tokenModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">Нет данных по моделям.</p>
+                  <p className="text-center text-muted-foreground py-8">No model pricing available yet.</p>
                 )}
               </div>
             )}
@@ -330,9 +336,9 @@ const Pricing = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
               <Image className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Медиа и генерация</h2>
+              <h2 className="text-3xl font-bold">Media Generation</h2>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Поштучная тарификация для изображений, аудио и видео.</p>
+            <p className="text-muted-foreground mb-8 max-w-xl">Per-unit pricing for image, audio, and video models.</p>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
@@ -350,9 +356,9 @@ const Pricing = () => {
                         <Table>
                           <TableHeader>
                             <TableRow>
-                              <TableHead>Модель</TableHead>
-                              <TableHead className="text-right">Цена</TableHead>
-                              <TableHead className="hidden sm:table-cell text-right">Единица</TableHead>
+                            <TableHead>Model</TableHead>
+                              <TableHead className="text-right">Price</TableHead>
+                              <TableHead className="hidden sm:table-cell text-right">Unit</TableHead>
                               <TableHead className="w-8"></TableHead>
                             </TableRow>
                           </TableHeader>
@@ -385,7 +391,7 @@ const Pricing = () => {
                   );
                 })}
                 {unitModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">Нет данных.</p>
+                  <p className="text-center text-muted-foreground py-8">No data available.</p>
                 )}
               </div>
             )}
@@ -395,10 +401,10 @@ const Pricing = () => {
         {/* CTA */}
         <section className="container px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto text-center rounded-xl border border-border bg-card p-12">
-            <h2 className="text-3xl font-bold mb-4">Готовы начать?</h2>
-            <p className="text-muted-foreground mb-8">Регистрация за секунды. Первый $1 от нас.</p>
+            <h2 className="text-3xl font-bold mb-4">Ready to build?</h2>
+            <p className="text-muted-foreground mb-8">Sign up in seconds. Your first $1 is on us.</p>
             <Button size="lg" className="glow-primary" asChild>
-              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Начать бесплатно</Link>
+              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Get Started Free</Link>
             </Button>
           </motion.div>
         </section>
