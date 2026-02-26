@@ -51,8 +51,8 @@ if __name__ == "__main__":
 const README_MD = `---
 title: ReGraph LLM
 emoji: ⚡
-colorFrom: violet
-colorTo: purple
+colorFrom: purple
+colorTo: pink
 sdk: gradio
 sdk_version: "4.44.0"
 app_file: app.py
