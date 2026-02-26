@@ -70,11 +70,11 @@ const defaultNewUnitModel = {
 };
 
 const unitPricingLabel: Record<string, string> = {
-  "image-gen": "$ / изображение",
-  "image-edit": "$ / изображение",
-  audio: "$ / минута",
-  tts: "$ / минута",
-  video: "$ / клип",
+  "image-gen": "$ / image",
+  "image-edit": "$ / image",
+  audio: "$ / minute",
+  tts: "$ / minute",
+  video: "$ / clip",
 };
 
 const unitFieldForCategory: Record<string, keyof ModelPrice> = {
