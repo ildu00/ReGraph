@@ -268,14 +268,18 @@ const Pricing = () => {
           </motion.div>
         </section>
 
-        {/* Search & Filters — always visible */}
+        {/* Model Pricing Header + Search & Filters */}
         <section className="container px-4 mb-8">
           <div className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <div className="mb-6">
+              <h2 className="text-3xl font-bold mb-1">Модели</h2>
+              <p className="text-muted-foreground text-sm">Полный каталог моделей с посекундной тарификацией. Оплата только за использование.</p>
+            </div>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
               <div className="relative flex-shrink-0">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                 <Input
-                  placeholder="Search models…"
+                  placeholder="Поиск моделей…"
                   className="pl-8 h-8 text-sm w-52"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -287,7 +291,7 @@ const Pricing = () => {
                 )}
               </div>
               <div className="flex flex-wrap gap-1.5">
-                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
+                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>Все</Badge>
                 {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
                   <Badge
                     key={cat}
@@ -306,12 +310,10 @@ const Pricing = () => {
         {/* Token-based Model Pricing */}
         {tokenModels.length > 0 && <section className="container px-4 mb-16">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-6">
-              <BrainCircuit className="h-6 w-6 text-primary shrink-0" />
-              <div>
-                <h2 className="text-3xl font-bold">Language Models</h2>
-                <p className="text-muted-foreground text-sm mt-0.5">Per-token pricing · per 1M tokens</p>
-              </div>
+            <div className="flex items-center gap-2 mb-5">
+              <BrainCircuit className="h-5 w-5 text-primary shrink-0" />
+              <h3 className="text-lg font-semibold">Языковые модели</h3>
+              <span className="text-xs text-muted-foreground ml-1">· цена за 1M токенов</span>
             </div>
 
             {modelLoading ? (
