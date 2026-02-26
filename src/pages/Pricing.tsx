@@ -282,20 +282,34 @@ const Pricing = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>GPU</TableHead>
+                    <TableHead className="text-right">Available</TableHead>
                     <TableHead className="text-right">Price / hour</TableHead>
                     <TableHead className="w-8"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {gpus.map((g) => (
-                    <TableRow key={g.id} className="cursor-pointer hover:bg-card/80 transition-colors group" onClick={() => window.location.href = `/pricing/gpu/${encodeURIComponent(g.gpu_type)}`}>
-                      <TableCell className="font-medium group-hover:text-primary transition-colors">{g.gpu_type}</TableCell>
-                      <TableCell className="text-right font-mono">${Number(g.price_per_hour).toFixed(2)}<span className="text-muted-foreground text-xs ml-1">/hr</span></TableCell>
-                      <TableCell className="w-8 text-right"><ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors inline" /></TableCell>
-                    </TableRow>
-                  ))}
+                  {gpus.map((g, i) => {
+                    const counts = gpuNodeCounts[i];
+                    return (
+                      <TableRow key={g.id} className="cursor-pointer hover:bg-card/80 transition-colors group" onClick={() => window.location.href = `/pricing/gpu/${encodeURIComponent(g.gpu_type)}`}>
+                        <TableCell className="font-medium group-hover:text-primary transition-colors">{g.gpu_type}</TableCell>
+                        <TableCell className="text-right">
+                          {counts ? (
+                            <span className="text-sm font-mono">
+                              <span className={counts.online > 0 ? "text-primary" : "text-muted-foreground"}>{counts.online}</span>
+                              <span className="text-muted-foreground"> / {counts.total}</span>
+                            </span>
+                          ) : (
+                            <span className="text-muted-foreground text-sm">—</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">${Number(g.price_per_hour).toFixed(2)}<span className="text-muted-foreground text-xs ml-1">/hr</span></TableCell>
+                        <TableCell className="w-8 text-right"><ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors inline" /></TableCell>
+                      </TableRow>
+                    );
+                  })}
                   {gpus.length === 0 && (
-                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">No GPU pricing available yet.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={4} className="text-center text-muted-foreground">No GPU pricing available yet.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
