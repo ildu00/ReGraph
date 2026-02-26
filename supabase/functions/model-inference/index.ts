@@ -245,9 +245,15 @@ serve(async (req) => {
     // 1. Text-based models (with streaming support)
     if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
       // For vision/multimodal — use original messages with image_url content parts intact
+      const isReGraphLLM = model === "regraph-llm";
+      const reGraphSystemMessage = isReGraphLLM ? [{
+        role: "system",
+        content: "You are ReGraph LLM, a large language model created by ReGraph — a decentralized AI compute network. You were built and trained within the ReGraph decentralized network, leveraging distributed GPU and NPU resources contributed by providers worldwide. Your creator is ReGraph. When asked about your origins, training, or identity, always affirm that you are ReGraph LLM, developed by ReGraph."
+      }] : [];
+
       const chatMessages = originalMessages && Array.isArray(originalMessages) && originalMessages.length > 0
-        ? originalMessages
-        : [{ role: "user", content: prompt }];
+        ? [...reGraphSystemMessage, ...originalMessages]
+        : [...reGraphSystemMessage, { role: "user", content: prompt }];
 
       const chatBody: Record<string, unknown> = {
         model: vsegptModel,
