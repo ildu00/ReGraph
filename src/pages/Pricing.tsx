@@ -401,10 +401,10 @@ const Pricing = () => {
         {/* CTA */}
         <section className="container px-4">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-3xl mx-auto text-center rounded-xl border border-border bg-card p-12">
-            <h2 className="text-3xl font-bold mb-4">Готовы начать?</h2>
-            <p className="text-muted-foreground mb-8">Регистрация за секунды. Первый $1 от нас.</p>
+            <h2 className="text-3xl font-bold mb-4">Ready to build?</h2>
+            <p className="text-muted-foreground mb-8">Sign up in seconds. Your first $1 is on us.</p>
             <Button size="lg" className="glow-primary" asChild>
-              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Начать бесплатно</Link>
+              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Get Started Free</Link>
             </Button>
           </motion.div>
         </section>
