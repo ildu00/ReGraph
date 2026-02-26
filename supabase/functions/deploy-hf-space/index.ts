@@ -77,52 +77,11 @@ An interactive demo of **ReGraph LLM** — a continuously-trained language model
 - [ReGraph Platform](https://regraph.tech)
 - [Documentation](https://regraph.tech/docs)
 - [GitHub](https://github.com/ildu00/ReGraph)
-- [Competitions & Benchmarks](https://regraph.tech/competitions)
 `;
 
 const REQUIREMENTS_TXT = `gradio>=4.44.0
 requests>=2.31.0
 `;
-
-async function uploadFile(token: string, repoId: string, filePath: string, content: string) {
-  const url = `https://huggingface.co/api/repos/${repoId}/upload/main`;
-
-  // Use the Upload API: PUT a single file
-  const putUrl = `https://huggingface.co/${repoId}/resolve/main/${filePath}`;
-
-  // HF recommended: use the /api/repos/{repo_id}/commit endpoint
-  // Build the multipart body manually
-  const boundary = "----RegraphBoundary" + Date.now();
-  const encoder = new TextEncoder();
-
-  const headerPart = [
-    `--${boundary}`,
-    `Content-Disposition: form-data; name="file"; filename="${filePath}"`,
-    `Content-Type: text/plain`,
-    "",
-    content,
-  ].join("\r\n");
-
-  // Use the simple file upload via the Inference API approach
-  // Actually use the correct HF API: PATCH /api/spaces/{namespace}/{name}/settings or use commit API
-
-  const commitUrl = `https://huggingface.co/api/repos/move`; // not the right one
-
-  // Correct approach: use the hub API upload
-  const uploadUrl = `https://huggingface.co/api/spaces/${repoId.replace("/", "%2F")}/upload/${filePath}`;
-  
-  const res = await fetch(uploadUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/octet-stream",
-      "X-Filename": filePath,
-    },
-    body: encoder.encode(content),
-  });
-
-  return { status: res.status, text: await res.text() };
-}
 
 Deno.serve(async (req) => {
   if (req.method !== "POST") {
@@ -135,65 +94,33 @@ Deno.serve(async (req) => {
   }
 
   const repoId = "Regraph/ReGraphLLM";
-  
-  // Use HF Hub commit API (correct endpoint)
-  const commitUrl = `https://huggingface.co/api/spaces/${repoId}/commit/main`;
-
   const files = [
     { path: "app.py", content: GRADIO_APP },
     { path: "README.md", content: README_MD },
     { path: "requirements.txt", content: REQUIREMENTS_TXT },
   ];
 
-  // Build multipart form for the commit
-  const boundary = "RegraphDeploy" + Date.now();
-  const enc = new TextEncoder();
+  const results: Record<string, unknown> = {};
 
-  const parts: Uint8Array[] = [];
-
-  // Add payload part
-  const payloadJson = JSON.stringify({
-    summary: "Deploy ReGraph LLM Gradio demo via ReGraph platform",
-    files: files.map((f) => ({ path: f.path })),
-  });
-
-  parts.push(enc.encode(
-    `--${boundary}\r\nContent-Disposition: form-data; name="payload_as_json"\r\nContent-Type: application/json\r\n\r\n${payloadJson}\r\n`
-  ));
-
-  // Add file parts
+  // Upload each file using the single-file upload endpoint
   for (const f of files) {
-    parts.push(enc.encode(
-      `--${boundary}\r\nContent-Disposition: form-data; name="${f.path}"; filename="${f.path}"\r\nContent-Type: text/plain\r\n\r\n${f.content}\r\n`
-    ));
+    const uploadUrl = `https://huggingface.co/api/spaces/${repoId}/raw/main/${f.path}`;
+    const res = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+      body: f.content,
+    });
+    const body = await res.text();
+    results[f.path] = { status: res.status, body };
   }
 
-  parts.push(enc.encode(`--${boundary}--\r\n`));
+  const allOk = Object.values(results).every((r: any) => r.status >= 200 && r.status < 300);
 
-  // Merge all parts
-  const totalLength = parts.reduce((sum, p) => sum + p.length, 0);
-  const body = new Uint8Array(totalLength);
-  let offset = 0;
-  for (const p of parts) {
-    body.set(p, offset);
-    offset += p.length;
-  }
-
-  const commitRes = await fetch(commitUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": `multipart/form-data; boundary=${boundary}`,
-    },
-    body,
-  });
-
-  const resultText = await commitRes.text();
-  let result: unknown;
-  try { result = JSON.parse(resultText); } catch { result = resultText; }
-
-  return new Response(JSON.stringify({ ok: commitRes.ok, status: commitRes.status, result }), {
-    status: commitRes.ok ? 200 : 500,
+  return new Response(JSON.stringify({ ok: allOk, results }), {
+    status: allOk ? 200 : 207,
     headers: { "Content-Type": "application/json" },
   });
 });
