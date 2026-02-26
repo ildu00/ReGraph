@@ -227,7 +227,9 @@ const Pricing = () => {
               </div>
             ) : (
               <div className="space-y-10">
-                {Object.entries(grouped).map(([cat, catModels]) => (
+                {categoryOrder
+                  .filter((cat) => grouped[cat]?.length > 0)
+                  .map((cat) => { const catModels = grouped[cat]; return (
                   <div key={cat}>
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">
                       {categoryGroups[cat] ?? cat}
