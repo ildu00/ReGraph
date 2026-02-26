@@ -388,6 +388,7 @@ const Pricing = () => {
         </section>
 
         {/* Unit-based Model Pricing */}
+        {unitModels.length > 0 && (
         <section className="container px-4 mb-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
@@ -446,13 +447,11 @@ const Pricing = () => {
                     </div>
                   );
                 })}
-                {unitModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">No data available.</p>
-                )}
               </div>
             )}
           </motion.div>
         </section>
+        )}
 
         {/* CTA */}
         <section className="container px-4">
