@@ -195,7 +195,7 @@ const Pricing = () => {
             <motion.div initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }} className="rounded-xl border border-primary/40 bg-card p-8 flex flex-col relative overflow-hidden">
               <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs font-bold px-3 py-1 rounded-bl-lg">POPULAR</div>
               <h3 className="text-2xl font-bold mb-1">Pro</h3>
-              <p className="text-muted-foreground mb-6">Для production-нагрузок</p>
+              <p className="text-muted-foreground mb-6">For production workloads at scale</p>
               <div className="text-4xl font-bold mb-6">Pay-as-you-go</div>
               <ul className="space-y-3 mb-8 flex-1">
                 {proFeatures.map((f) => (
@@ -205,7 +205,7 @@ const Pricing = () => {
                 ))}
               </ul>
               <Button size="lg" className="w-full glow-primary" asChild>
-                <Link to="/auth"><Zap className="mr-2 h-4 w-4" />Начать работу</Link>
+                <Link to="/auth"><Zap className="mr-2 h-4 w-4" />Start Building</Link>
               </Button>
             </motion.div>
           </div>
