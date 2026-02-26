@@ -4,9 +4,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Zap, Check, Cpu, BrainCircuit, Eye, Wrench, Database, ChevronRight, Image, Mic, Video, Clock } from "lucide-react";
+import { Zap, Check, Cpu, BrainCircuit, Eye, Wrench, Database, ChevronRight, Image, Mic, Video, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "@/components/ui/table";
@@ -123,12 +126,32 @@ const getUnitLabel = (m: ModelRow): string => {
   return "";
 };
 
+const ALL_CATS = [...tokenCategoryOrder, ...unitCategoryOrder];
+
 const Pricing = () => {
   const { data: gpus = [], isLoading: gpuLoading } = useGpuPricing();
   const { data: models = [], isLoading: modelLoading } = useModelPricing();
 
-  const tokenModels = models.filter((m) => !isUnitBased(m));
-  const unitModels = models.filter((m) => isUnitBased(m));
+  const [search, setSearch] = useState("");
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const filteredModels = useMemo(() => {
+    let list = models;
+    if (activeCategory) list = list.filter((m) => m.category === activeCategory);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      list = list.filter(
+        (m) =>
+          m.display_name.toLowerCase().includes(q) ||
+          m.model_id.toLowerCase().includes(q) ||
+          (m.provider ?? "").toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [models, search, activeCategory]);
+
+  const tokenModels = filteredModels.filter((m) => !isUnitBased(m));
+  const unitModels = filteredModels.filter((m) => isUnitBased(m));
 
   const groupedToken = tokenModels.reduce<Record<string, ModelRow[]>>((acc, m) => {
     const key = m.category || "chat";
@@ -209,6 +232,50 @@ const Pricing = () => {
               </Button>
             </motion.div>
           </div>
+        </section>
+
+        {/* Model Search & Filter */}
+        <section className="container px-4 mb-12">
+          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-3 mb-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search models by name, ID or provider…"
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Badge
+                variant={activeCategory === null ? "default" : "outline"}
+                className="cursor-pointer"
+                onClick={() => setActiveCategory(null)}
+              >
+                All
+              </Badge>
+              {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => {
+                const label = tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat;
+                return (
+                  <Badge
+                    key={cat}
+                    variant={activeCategory === cat ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                  >
+                    {label}
+                  </Badge>
+                );
+              })}
+            </div>
+          </motion.div>
         </section>
 
         {/* GPU Pricing */}
