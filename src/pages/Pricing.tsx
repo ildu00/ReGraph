@@ -258,67 +258,73 @@ const Pricing = () => {
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
             ) : (
               <div className="space-y-10">
-                {tokenCategoryOrder.filter((cat) => (groupedToken[cat] ?? []).length > 0).map((cat) => (
-                  <div key={cat}>
-                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">{tokenCategoryGroups[cat] ?? cat}</h3>
-                    <div className="rounded-xl border border-border overflow-hidden">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Модель</TableHead>
-                            <TableHead className="hidden sm:table-cell text-right">Контекст</TableHead>
-                            <TableHead className="text-right">Вход / 1M</TableHead>
-                            <TableHead className="text-right">Выход / 1M</TableHead>
-                            <TableHead className="hidden md:table-cell text-right">Кэш / 1M</TableHead>
-                            <TableHead className="w-8"></TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {groupedToken[cat].map((m) => (
-                            <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
-                              <TableCell>
-                                <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
-                                  <span className="font-medium group-hover:text-primary transition-colors">{m.display_name}</span>
-                                  <span className="text-xs text-muted-foreground font-mono hidden sm:block">{m.model_id}</span>
-                                  <div className="flex gap-1 mt-0.5">
-                                    {m.supports_vision && <Eye className="h-3 w-3 text-muted-foreground" />}
-                                    {m.supports_function_calling && <Wrench className="h-3 w-3 text-muted-foreground" />}
-                                    {m.supports_cache && <Database className="h-3 w-3 text-muted-foreground" />}
-                                  </div>
-                                </Link>
-                              </TableCell>
-                              <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
-                                {ctxLabel(m.context_window) ?? "—"}
-                              </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
-                                {Number(m.price_per_1k_input_tokens) > 0
-                                  ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell className="text-right font-mono text-sm">
-                                {Number(m.price_per_1k_output_tokens) > 0
-                                  ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
-                                {m.supports_cache && m.price_per_1k_cache_read_tokens
-                                  ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
-                                  : <span className="text-muted-foreground">—</span>}
-                              </TableCell>
-                              <TableCell>
-                                <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
-                                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                                </Link>
-                              </TableCell>
+                {tokenCategoryOrder.filter((cat) => (groupedToken[cat] ?? []).length > 0).map((cat) => {
+                  const catModels = groupedToken[cat];
+                  const hasCacheInGroup = catModels.some((m) => m.supports_cache);
+                  return (
+                    <div key={cat}>
+                      <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-widest mb-3">{tokenCategoryGroups[cat] ?? cat}</h3>
+                      <div className="rounded-xl border border-border overflow-hidden">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Model</TableHead>
+                              <TableHead className="hidden sm:table-cell text-right">Context</TableHead>
+                              <TableHead className="text-right">Input / 1M</TableHead>
+                              <TableHead className="text-right">Output / 1M</TableHead>
+                              {hasCacheInGroup && <TableHead className="hidden md:table-cell text-right">Cache Read / 1M</TableHead>}
+                              <TableHead className="w-8"></TableHead>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {catModels.map((m) => (
+                              <TableRow key={m.id} className="cursor-pointer hover:bg-card/80 transition-colors group">
+                                <TableCell>
+                                  <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`} className="flex flex-col gap-0.5 hover:no-underline">
+                                    <span className="font-medium group-hover:text-primary transition-colors">{m.display_name}</span>
+                                    <span className="text-xs text-muted-foreground font-mono hidden sm:block">{m.model_id}</span>
+                                    <div className="flex gap-1 mt-0.5">
+                                      {m.supports_vision && <Eye className="h-3 w-3 text-muted-foreground" />}
+                                      {m.supports_function_calling && <Wrench className="h-3 w-3 text-muted-foreground" />}
+                                      {m.supports_cache && <Database className="h-3 w-3 text-muted-foreground" />}
+                                    </div>
+                                  </Link>
+                                </TableCell>
+                                <TableCell className="hidden sm:table-cell text-right font-mono text-muted-foreground text-sm">
+                                  {ctxLabel(m.context_window) ?? "—"}
+                                </TableCell>
+                                <TableCell className="text-right font-mono text-sm">
+                                  {Number(m.price_per_1k_input_tokens) > 0
+                                    ? `$${(Number(m.price_per_1k_input_tokens) * 1000).toFixed(4)}`
+                                    : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                <TableCell className="text-right font-mono text-sm">
+                                  {Number(m.price_per_1k_output_tokens) > 0
+                                    ? `$${(Number(m.price_per_1k_output_tokens) * 1000).toFixed(4)}`
+                                    : <span className="text-muted-foreground">—</span>}
+                                </TableCell>
+                                {hasCacheInGroup && (
+                                  <TableCell className="hidden md:table-cell text-right font-mono text-primary text-sm">
+                                    {m.supports_cache && Number(m.price_per_1k_cache_read_tokens) > 0
+                                      ? `$${(Number(m.price_per_1k_cache_read_tokens) * 1000).toFixed(4)}`
+                                      : <span className="text-muted-foreground">—</span>}
+                                  </TableCell>
+                                )}
+                                <TableCell>
+                                  <Link to={`/pricing/models/${encodeURIComponent(m.model_id)}`}>
+                                    <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                                  </Link>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {tokenModels.length === 0 && (
-                  <p className="text-center text-muted-foreground py-8">Нет данных по моделям.</p>
+                  <p className="text-center text-muted-foreground py-8">No model pricing available yet.</p>
                 )}
               </div>
             )}
