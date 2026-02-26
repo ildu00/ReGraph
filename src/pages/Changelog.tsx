@@ -39,6 +39,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.0.3",
+    date: "February 26, 2026",
+    title: "GPU Node Availability on Pricing Page",
+    type: "patch",
+    changes: [
+      { category: "feature", description: "GPU pricing table now shows real-time node availability — online and total counts displayed per hardware configuration" },
+      { category: "feature", description: "Clicking a GPU row navigates to a dedicated nodes page listing all available provider nodes for that hardware type" },
+      { category: "improvement", description: "Node availability aggregation uses partial model name matching to correctly combine all variants (e.g. RTX 3090 across different providers)" },
+      { category: "improvement", description: "Node list auto-refreshes every 30 seconds and displays status, VRAM, hourly rate, compute hours, and last seen timestamp" },
+    ]
+  },
+  {
     version: "3.0.2",
     date: "February 26, 2026",
     title: "Model Pricing Correction & Accuracy",
