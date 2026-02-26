@@ -4,9 +4,12 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import { Zap, Check, Cpu, BrainCircuit, Eye, Wrench, Database, ChevronRight, Image, Mic, Video, Clock } from "lucide-react";
+import { Zap, Check, Cpu, BrainCircuit, Eye, Wrench, Database, ChevronRight, Image, Mic, Video, Search, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
+import { useState, useMemo } from "react";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "@/components/ui/table";
