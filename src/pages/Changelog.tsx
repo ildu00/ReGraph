@@ -39,6 +39,19 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.0.2",
+    date: "February 26, 2026",
+    title: "Model Pricing Correction & Accuracy",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Corrected all model prices to be exactly 20% below official provider rates (previously some models like Claude Opus were not correctly discounted)" },
+      { category: "improvement", description: "Updated Claude models to latest versions: Claude Opus 4.6 ($4/MTok input, $20/MTok output) and Claude Sonnet 4.6 ($2.40/$12 MTok)" },
+      { category: "improvement", description: "Updated OpenAI models against Standard tier pricing: GPT-5 $1.00/$8.00, GPT-5 Mini $0.20/$1.60, GPT-5.1 $1.00/$8.00, GPT-5.2 $1.40/$11.20 per MTok" },
+      { category: "improvement", description: "Prompt cache pricing corrected for all models with caching support (write and read rates now properly reflect -20% from provider)" },
+      { category: "improvement", description: "Added context window and max output token data for all models (GPT-5: 128K, Claude: 200K, Gemini Pro: 2M)" },
+    ]
+  },
+  {
     version: "3.0.1",
     date: "February 25, 2026",
     title: "API Key Last Used Tracking",
