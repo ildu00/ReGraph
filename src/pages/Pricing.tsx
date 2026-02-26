@@ -157,18 +157,18 @@ const Pricing = () => {
         {/* Hero */}
         <section className="container px-4 text-center mb-20">
           <motion.h1 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-4xl md:text-6xl font-bold mb-4">
-            <span className="text-gradient">Простые, прозрачные</span>{" "}
-            <span className="text-primary">цены</span>
+            <span className="text-gradient">Simple, transparent</span>{" "}
+            <span className="text-primary">pricing</span>
           </motion.h1>
           <motion.p initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-            Платите только за использование. Без минимумов, обязательств и скрытых комиссий. На 20% дешевле оригинальных провайдеров.
+            Pay only for what you use. No minimums, no commitments, no hidden fees. Up to 20% cheaper than major cloud providers.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="flex flex-wrap justify-center gap-4">
             <Button size="lg" className="glow-primary" asChild>
-              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Начать бесплатно</Link>
+              <Link to="/auth"><Zap className="mr-2 h-5 w-5" />Start for Free</Link>
             </Button>
             <Button size="lg" variant="outline" asChild>
-              <Link to="/docs">Документация</Link>
+              <Link to="/docs">View Docs</Link>
             </Button>
           </motion.div>
         </section>
