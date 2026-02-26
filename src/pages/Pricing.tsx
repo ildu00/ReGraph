@@ -234,50 +234,6 @@ const Pricing = () => {
           </div>
         </section>
 
-        {/* Model Search & Filter */}
-        <section className="container px-4 mb-12">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder="Search models by name, ID or provider…"
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={activeCategory === null ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setActiveCategory(null)}
-              >
-                All
-              </Badge>
-              {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => {
-                const label = tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat;
-                return (
-                  <Badge
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                  >
-                    {label}
-                  </Badge>
-                );
-              })}
-            </div>
-          </motion.div>
-        </section>
-
         {/* GPU Pricing */}
         <section className="container px-4 mb-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto">
@@ -315,11 +271,44 @@ const Pricing = () => {
         {/* Token-based Model Pricing */}
         <section className="container px-4 mb-16">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex items-center gap-3 mb-3">
-              <BrainCircuit className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Language Models</h2>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+              <div className="flex items-center gap-3 flex-1">
+                <BrainCircuit className="h-6 w-6 text-primary shrink-0" />
+                <div>
+                  <h2 className="text-3xl font-bold">Language Models</h2>
+                  <p className="text-muted-foreground text-sm mt-0.5">Per-token pricing · per 1M tokens</p>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+                <div className="relative">
+                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                  <Input
+                    placeholder="Search models…"
+                    className="pl-8 h-8 text-sm w-48"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                  />
+                  {search && (
+                    <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                      <X className="h-3.5 w-3.5" />
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Per-token pricing for hosted models. Prices shown per 1 million tokens.</p>
+            <div className="flex flex-wrap gap-1.5 mb-6">
+              <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
+              {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
+                <Badge
+                  key={cat}
+                  variant={activeCategory === cat ? "default" : "outline"}
+                  className="cursor-pointer text-xs"
+                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                >
+                  {tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat}
+                </Badge>
+              ))}
+            </div>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
