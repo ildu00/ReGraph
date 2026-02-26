@@ -250,9 +250,9 @@ const Pricing = () => {
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
             <div className="flex items-center gap-3 mb-3">
               <BrainCircuit className="h-6 w-6 text-primary" />
-              <h2 className="text-3xl font-bold">Языковые модели</h2>
+              <h2 className="text-3xl font-bold">Language Models</h2>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Тарификация по токенам. Цены за 1 миллион токенов.</p>
+            <p className="text-muted-foreground mb-8 max-w-xl">Per-token pricing for hosted models. Prices shown per 1 million tokens.</p>
 
             {modelLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
