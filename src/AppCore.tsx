@@ -38,6 +38,7 @@ const Pricing = lazyWithRetry(() => import("./pages/Pricing"));
 const ModelPricing = lazyWithRetry(() => import("./pages/ModelPricing"));
 const GpuNodes = lazyWithRetry(() => import("./pages/GpuNodes"));
 const Mobile = lazyWithRetry(() => import("./pages/Mobile"));
+const Competitions = lazyWithRetry(() => import("./pages/Competitions"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
