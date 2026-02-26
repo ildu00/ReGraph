@@ -528,17 +528,17 @@ export const AdminPricing = () => {
       {/* Add GPU Dialog */}
       <Dialog open={showAddGpu} onOpenChange={setShowAddGpu}>
         <DialogContent>
-          <DialogHeader><DialogTitle>Добавить GPU</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Add GPU</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <Input placeholder="Тип GPU (например A100 80GB)" value={newGpu.gpu_type} onChange={(e) => setNewGpu({ ...newGpu, gpu_type: e.target.value })} />
+            <Input placeholder="GPU type (e.g. A100 80GB)" value={newGpu.gpu_type} onChange={(e) => setNewGpu({ ...newGpu, gpu_type: e.target.value })} />
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground">$</span>
-              <Input type="number" step="0.01" placeholder="Цена в час" value={newGpu.price_per_hour} onChange={(e) => setNewGpu({ ...newGpu, price_per_hour: e.target.value })} />
+              <Input type="number" step="0.01" placeholder="Price per hour" value={newGpu.price_per_hour} onChange={(e) => setNewGpu({ ...newGpu, price_per_hour: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setShowAddGpu(false)}>Отмена</Button>
-            <Button onClick={addGpu}>Добавить</Button>
+            <Button variant="outline" onClick={() => setShowAddGpu(false)}>Cancel</Button>
+            <Button onClick={addGpu}>Add</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
