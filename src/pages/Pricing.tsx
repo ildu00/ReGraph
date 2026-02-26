@@ -234,50 +234,6 @@ const Pricing = () => {
           </div>
         </section>
 
-        {/* Model Search & Filter */}
-        <section className="container px-4 mb-12">
-          <motion.div initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-3 mb-4">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-                <Input
-                  placeholder="Search models by name, ID or provider…"
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-                {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
-                    <X className="h-4 w-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-2">
-              <Badge
-                variant={activeCategory === null ? "default" : "outline"}
-                className="cursor-pointer"
-                onClick={() => setActiveCategory(null)}
-              >
-                All
-              </Badge>
-              {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => {
-                const label = tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat;
-                return (
-                  <Badge
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                  >
-                    {label}
-                  </Badge>
-                );
-              })}
-            </div>
-          </motion.div>
-        </section>
-
         {/* GPU Pricing */}
         <section className="container px-4 mb-24">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-4xl mx-auto">
