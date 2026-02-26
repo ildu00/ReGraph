@@ -271,39 +271,46 @@ const Pricing = () => {
         {/* Model Pricing Header + Search & Filters */}
         <section className="container px-4 mb-10">
           <div className="max-w-5xl mx-auto">
-            <div className="mb-5">
-              <h2 className="text-3xl font-bold mb-1">Model Pricing</h2>
-              <p className="text-muted-foreground text-sm">Pay-as-you-go access to every model. No minimums — billed per token or per unit.</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            {/* Title row */}
+            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
+              <div>
+                <h2 className="text-3xl font-bold mb-1">Model Pricing</h2>
+                <p className="text-muted-foreground text-sm">Pay-as-you-go · billed per token or per unit · no minimums</p>
+              </div>
+              {/* Search */}
+              <div className="relative sm:w-56">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
                 <Input
                   placeholder="Search models…"
-                  className="pl-8 h-8 text-sm w-48"
+                  className="pl-9 h-9 text-sm bg-card border-border rounded-lg"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                 />
                 {search && (
-                  <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                  <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                     <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
-              <div className="w-px h-5 bg-border hidden sm:block" />
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
-                {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
-                  <Badge
-                    key={cat}
-                    variant={activeCategory === cat ? "default" : "outline"}
-                    className="cursor-pointer text-xs"
-                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                  >
-                    {tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat}
-                  </Badge>
-                ))}
-              </div>
+            </div>
+            {/* Category pills */}
+            <div className="flex flex-wrap gap-2">
+              {[{ key: null, label: "All" }, ...ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => ({
+                key: cat,
+                label: tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat,
+              }))].map(({ key, label }) => (
+                <button
+                  key={String(key)}
+                  onClick={() => setActiveCategory(key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                    activeCategory === key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-transparent text-muted-foreground border-border hover:text-foreground hover:border-foreground/40"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
         </section>
