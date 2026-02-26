@@ -302,6 +302,10 @@ export type Database = {
           price_per_1k_cache_write_tokens: number | null
           price_per_1k_input_tokens: number
           price_per_1k_output_tokens: number
+          price_per_image: number | null
+          price_per_minute: number | null
+          price_per_video: number | null
+          pricing_unit: string | null
           provider: string | null
           supports_cache: boolean | null
           supports_function_calling: boolean | null
@@ -323,6 +327,10 @@ export type Database = {
           price_per_1k_cache_write_tokens?: number | null
           price_per_1k_input_tokens?: number
           price_per_1k_output_tokens?: number
+          price_per_image?: number | null
+          price_per_minute?: number | null
+          price_per_video?: number | null
+          pricing_unit?: string | null
           provider?: string | null
           supports_cache?: boolean | null
           supports_function_calling?: boolean | null
@@ -344,6 +352,10 @@ export type Database = {
           price_per_1k_cache_write_tokens?: number | null
           price_per_1k_input_tokens?: number
           price_per_1k_output_tokens?: number
+          price_per_image?: number | null
+          price_per_minute?: number | null
+          price_per_video?: number | null
+          pricing_unit?: string | null
           provider?: string | null
           supports_cache?: boolean | null
           supports_function_calling?: boolean | null
