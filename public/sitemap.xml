@@ -96,6 +96,16 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://regraph.tech/blog/platform-updates-q1-2026</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/smartphone-ai-mining</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://regraph.tech/status</loc>
     <changefreq>daily</changefreq>
     <priority>0.7</priority>
