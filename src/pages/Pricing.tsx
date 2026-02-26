@@ -117,9 +117,9 @@ const getUnitPrice = (m: ModelRow): string => {
 };
 
 const getUnitLabel = (m: ModelRow): string => {
-  if (m.pricing_unit === "image" || m.category === "image-gen" || m.category === "image-edit") return "/ изображение";
-  if (m.pricing_unit === "minute" || m.category === "audio" || m.category === "tts") return "/ минута";
-  if (m.pricing_unit === "video" || m.category === "video") return "/ клип";
+  if (m.pricing_unit === "image" || m.category === "image-gen" || m.category === "image-edit") return "/ image";
+  if (m.pricing_unit === "minute" || m.category === "audio" || m.category === "tts") return "/ minute";
+  if (m.pricing_unit === "video" || m.category === "video") return "/ clip";
   return "";
 };
 
