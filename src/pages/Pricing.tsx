@@ -218,7 +218,7 @@ const Pricing = () => {
               <Cpu className="h-6 w-6 text-primary" />
               <h2 className="text-3xl font-bold">GPU Compute</h2>
             </div>
-            <p className="text-muted-foreground mb-8 max-w-xl">Аренда GPU по часам. Цены варьируются в зависимости от модели карты.</p>
+            <p className="text-muted-foreground mb-8 max-w-xl">Rent GPU power by the hour. Pick the performance tier that fits your workload.</p>
             {gpuLoading ? (
               <div className="flex justify-center py-12"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" /></div>
             ) : (
@@ -226,7 +226,7 @@ const Pricing = () => {
                 <TableHeader>
                   <TableRow>
                     <TableHead>GPU</TableHead>
-                    <TableHead className="text-right">Цена / час</TableHead>
+                    <TableHead className="text-right">Price / hour</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -237,7 +237,7 @@ const Pricing = () => {
                     </TableRow>
                   ))}
                   {gpus.length === 0 && (
-                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">Нет данных по GPU.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={2} className="text-center text-muted-foreground">No GPU pricing available yet.</TableCell></TableRow>
                   )}
                 </TableBody>
               </Table>
