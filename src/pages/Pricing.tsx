@@ -250,6 +250,7 @@ const Pricing = () => {
                   <TableRow>
                     <TableHead>GPU</TableHead>
                     <TableHead className="text-right">Price / hour</TableHead>
+                    <TableHead className="w-8"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
