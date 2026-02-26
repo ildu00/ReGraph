@@ -132,6 +132,50 @@ const Pricing = () => {
   const { data: gpus = [], isLoading: gpuLoading } = useGpuPricing();
   const { data: models = [], isLoading: modelLoading } = useModelPricing();
 
+  // Count online nodes per GPU model
+  const { data: nodeCountsRaw = [] } = useQuery({
+    queryKey: ["gpu-node-counts-public"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("provider_devices")
+        .select("device_model, status")
+        .eq("device_type", "gpu");
+      return data ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const nodeCounts = useMemo(() => {
+    const map: Record<string, { online: number; total: number }> = {};
+    for (const d of nodeCountsRaw) {
+      const key = (d.device_model ?? "").toLowerCase();
+      if (!map[key]) map[key] = { online: 0, total: 0 };
+      map[key].total++;
+      if (d.status === "online") map[key].online++;
+    }
+    return map;
+  }, [nodeCountsRaw]);
+
+  const getNodeCounts = (gpuType: string) => {
+    const key = gpuType.toLowerCase();
+    // try exact match first, then partial
+    if (map[key]) return map[key];
+    const found = Object.entries(map).find(([k]) => k.includes(key) || key.includes(k));
+    return found ? found[1] : null;
+  };
+
+  // inline helper to avoid closure issues
+  const gpuNodeCounts = useMemo(() => {
+    return gpus.map((g) => {
+      const key = g.gpu_type.toLowerCase();
+      const exact = nodeCounts[key];
+      if (exact) return exact;
+      const found = Object.entries(nodeCounts).find(([k]) => k.includes(key) || key.includes(k));
+      return found ? found[1] : null;
+    });
+  }, [gpus, nodeCounts]);
+  const { data: models = [], isLoading: modelLoading } = useModelPricing();
+
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
