@@ -307,14 +307,14 @@ export const AdminPricing = () => {
           <>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Вход / 1K токенов ($)</Label>
+                <Label className="text-xs text-muted-foreground">Input / 1K tokens ($)</Label>
                 <Input type="number" step="0.000001" className="h-8 font-mono"
                   value={getModelVal(model, "price_per_1k_input_tokens")}
                   onChange={(e) => setModelField(model.id, "price_per_1k_input_tokens", parseFloat(e.target.value) || 0)} />
                 <p className="text-xs text-muted-foreground">= ${((getModelVal(model, "price_per_1k_input_tokens") as number) * 1000).toFixed(4)}/1M</p>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Выход / 1K токенов ($)</Label>
+                <Label className="text-xs text-muted-foreground">Output / 1K tokens ($)</Label>
                 <Input type="number" step="0.000001" className="h-8 font-mono"
                   value={getModelVal(model, "price_per_1k_output_tokens")}
                   onChange={(e) => setModelField(model.id, "price_per_1k_output_tokens", parseFloat(e.target.value) || 0)} />
@@ -335,7 +335,7 @@ export const AdminPricing = () => {
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label className="text-xs">Context Window (токены)</Label>
+                <Label className="text-xs">Context Window (tokens)</Label>
                 <Input type="number" className="h-8"
                   value={getModelVal(model, "context_window")}
                   onChange={(e) => setModelField(model.id, "context_window", parseInt(e.target.value) || 0)} />
