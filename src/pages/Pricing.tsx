@@ -268,46 +268,50 @@ const Pricing = () => {
           </motion.div>
         </section>
 
+        {/* Search & Filters — always visible */}
+        <section className="container px-4 mb-8">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div className="relative flex-shrink-0">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <Input
+                  placeholder="Search models…"
+                  className="pl-8 h-8 text-sm w-52"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+                {search && (
+                  <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
+                {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
+                  <Badge
+                    key={cat}
+                    variant={activeCategory === cat ? "default" : "outline"}
+                    className="cursor-pointer text-xs"
+                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                  >
+                    {tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Token-based Model Pricing */}
         {tokenModels.length > 0 && <section className="container px-4 mb-16">
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="max-w-5xl mx-auto">
-            <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-              <div className="flex items-center gap-3 flex-1">
-                <BrainCircuit className="h-6 w-6 text-primary shrink-0" />
-                <div>
-                  <h2 className="text-3xl font-bold">Language Models</h2>
-                  <p className="text-muted-foreground text-sm mt-0.5">Per-token pricing · per 1M tokens</p>
-                </div>
+            <div className="flex items-center gap-3 mb-6">
+              <BrainCircuit className="h-6 w-6 text-primary shrink-0" />
+              <div>
+                <h2 className="text-3xl font-bold">Language Models</h2>
+                <p className="text-muted-foreground text-sm mt-0.5">Per-token pricing · per 1M tokens</p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                <div className="relative">
-                  <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-                  <Input
-                    placeholder="Search models…"
-                    className="pl-8 h-8 text-sm w-48"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                  />
-                  {search && (
-                    <button onClick={() => setSearch("")} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                      <X className="h-3.5 w-3.5" />
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1.5 mb-6">
-              <Badge variant={activeCategory === null ? "default" : "outline"} className="cursor-pointer text-xs" onClick={() => setActiveCategory(null)}>All</Badge>
-              {ALL_CATS.filter((cat) => models.some((m) => m.category === cat)).map((cat) => (
-                <Badge
-                  key={cat}
-                  variant={activeCategory === cat ? "default" : "outline"}
-                  className="cursor-pointer text-xs"
-                  onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                >
-                  {tokenCategoryGroups[cat] ?? unitCategoryGroups[cat]?.label ?? cat}
-                </Badge>
-              ))}
             </div>
 
             {modelLoading ? (
