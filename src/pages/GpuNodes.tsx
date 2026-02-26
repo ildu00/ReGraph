@@ -84,7 +84,7 @@ const GpuNodes = () => {
                     Provider nodes available on the ReGraph network for this GPU configuration.
                   </p>
                 </div>
-                <div className="flex flex-wrap gap-3">
+                <div className="flex gap-2 sm:gap-3 shrink-0">
                   {/* Online */}
                   <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-2.5 min-w-[90px]">
                     <Circle className="h-2.5 w-2.5 fill-primary text-primary shrink-0 animate-pulse" />
