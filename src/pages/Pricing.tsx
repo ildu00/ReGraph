@@ -73,14 +73,25 @@ const ctxLabel = (n?: number) => {
 };
 
 const categoryGroups: Record<string, string> = {
-  chat: "Chat & Completion",
-  reasoning: "Reasoning",
-  code: "Code",
+  llm: "Large Language Models",
+  chat: "Chat & Assistants",
+  reasoning: "Reasoning & Analysis",
+  code: "Code Generation",
   "image-gen": "Image Generation",
-  audio: "Audio",
-  embeddings: "Embeddings",
-  reranking: "Reranking",
+  "image-edit": "Image Editing",
+  vision: "Vision & Understanding",
+  multimodal: "Multimodal",
+  audio: "Speech Recognition",
+  tts: "Text-to-Speech",
+  video: "Video Generation",
+  embedding: "Embeddings",
+  rerank: "Reranking",
+  document: "Document AI",
+  ocr: "OCR & Extraction",
+  "fine-tune": "Fine-tunable Models",
 };
+
+const categoryOrder = ["llm", "chat", "reasoning", "code", "image-gen", "image-edit", "vision", "multimodal", "audio", "tts", "video", "embedding", "rerank", "document", "ocr", "fine-tune"];
 
 const Pricing = () => {
   const { data: gpus = [], isLoading: gpuLoading } = useGpuPricing();
