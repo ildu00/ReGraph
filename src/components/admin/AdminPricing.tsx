@@ -451,7 +451,7 @@ export const AdminPricing = () => {
                 <TableHead className="min-w-[90px]">GPU Type</TableHead>
                 <TableHead>Price / hr</TableHead>
                 <TableHead className="w-16">Active</TableHead>
-                <TableHead className="w-20">Actions</TableHead>
+                <TableHead className="w-[72px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
