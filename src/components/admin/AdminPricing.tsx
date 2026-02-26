@@ -266,7 +266,7 @@ export const AdminPricing = () => {
                       <Badge variant="outline" className="capitalize text-xs">{model.category}</Badge>
                       {model.provider && <Badge variant="secondary" className="text-xs">{model.provider}</Badge>}
                       {!model.is_active && <Badge variant="destructive" className="text-xs">Inactive</Badge>}
-                      {hasChanges && <Badge className="text-xs bg-yellow-500/20 text-yellow-600 border-yellow-500/30">Unsaved</Badge>}
+                      {hasChanges && <Badge variant="outline" className="text-xs border-primary/50 text-primary">Unsaved</Badge>}
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5 font-mono">
                       In: ${(model.price_per_1k_input_tokens * 1000).toFixed(4)}/1M · Out: ${(model.price_per_1k_output_tokens * 1000).toFixed(4)}/1M
