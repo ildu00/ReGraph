@@ -139,7 +139,8 @@ const Pricing = () => {
       const { data } = await supabase
         .from("provider_devices")
         .select("device_model, status")
-        .eq("device_type", "gpu");
+        .eq("device_type", "gpu")
+        .limit(5000);
       return data ?? [];
     },
     staleTime: 60_000,
@@ -159,9 +160,13 @@ const Pricing = () => {
   const gpuNodeCounts = useMemo(() => {
     return gpus.map((g) => {
       const key = g.gpu_type.toLowerCase();
-      if (nodeCounts[key]) return nodeCounts[key];
-      const found = Object.entries(nodeCounts).find(([k]) => k.includes(key) || key.includes(k));
-      return found ? found[1] : null;
+      // Aggregate ALL matching keys (e.g. "RTX 3090" + "NVIDIA GeForce RTX 3090")
+      const matching = Object.entries(nodeCounts).filter(([k]) => k.includes(key) || key.includes(k));
+      if (matching.length === 0) return null;
+      return matching.reduce(
+        (acc, [, v]) => ({ online: acc.online + v.online, total: acc.total + v.total }),
+        { online: 0, total: 0 }
+      );
     });
   }, [gpus, nodeCounts]);
 
