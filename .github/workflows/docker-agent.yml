@@ -306,7 +306,7 @@ jobs:
   # ── Summary ───────────────────────────────────────────────────────────────
   summary:
     name: Summary
-    needs: [meta, build-cpu, build-nvidia, build-dev]
+    needs: [meta, build-cpu, build-nvidia, build-ascend, build-dev]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -318,6 +318,7 @@ jobs:
           echo "|--------|--------|--------|" >> "$GITHUB_STEP_SUMMARY"
           echo "| cpu    | ${{ needs.build-cpu.result }}    | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| nvidia | ${{ needs.build-nvidia.result }} | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ascend | ${{ needs.build-ascend.result }} | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| dev    | ${{ needs.build-dev.result }}    | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Version:** \`${{ needs.meta.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
