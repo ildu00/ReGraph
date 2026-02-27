@@ -7,7 +7,7 @@ export default function ClawTab() {
   const [activeAgent, setActiveAgent] = useState<ClawAgent | null>(null);
 
   return (
-    <div className="h-full">
+    <div className="flex flex-col flex-1 min-h-0 h-full">
       {activeAgent ? (
         <AgentChat agent={activeAgent} onBack={() => setActiveAgent(null)} />
       ) : (
