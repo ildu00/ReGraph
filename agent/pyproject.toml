@@ -21,7 +21,82 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-gpu = ["GPUtil>=1.4"]
+# NVIDIA GPU — high-throughput inference
+nvidia = [
+  "llama-cpp-python>=0.2.90",
+  "GPUtil>=1.4",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "bitsandbytes>=0.43.0",
+  "vllm>=0.4.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# Apple Silicon — Metal/MPS inference
+metal = [
+  "llama-cpp-python>=0.2.90",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# AMD ROCm
+rocm = [
+  "llama-cpp-python>=0.2.90",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# Windows DirectML (Intel/AMD/NVIDIA on Windows)
+directml = [
+  "torch-directml>=0.2.0",
+  "onnxruntime-directml>=1.18.0",
+  "transformers>=4.40.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# CPU-only (any platform)
+cpu = [
+  "llama-cpp-python>=0.2.90",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "onnxruntime>=1.18.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# Minimal GPU support (no vLLM — faster install)
+gpu = [
+  "llama-cpp-python>=0.2.90",
+  "GPUtil>=1.4",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
+# Full installation (everything)
+all = [
+  "llama-cpp-python>=0.2.90",
+  "GPUtil>=1.4",
+  "torch>=2.2.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "bitsandbytes>=0.43.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+  "onnxruntime>=1.18.0",
+  "datasets>=2.19.0",
+]
 
 [project.scripts]
 regraph-agent = "regraph_agent.cli:main"

@@ -1,10 +1,12 @@
-"""Task execution engine — handles inference and training shard tasks."""
+"""Task execution engine — handles inference, embedding, training and health checks."""
 
 from __future__ import annotations
 
 import logging
 import time
 from typing import Any
+
+import psutil
 
 logger = logging.getLogger("regraph.tasks")
 
@@ -54,20 +56,22 @@ class TaskExecutor:
     # ── Task handlers ─────────────────────────────────────
 
     def _run_inference(self, task: dict) -> dict:
-        """Run an inference request on a loaded model."""
-        model_id = task["payload"]["model"]
-        messages = task["payload"].get("messages", [])
-        params = task["payload"].get("params", {})
+        """Run a chat inference request."""
+        payload = task.get("payload", {})
+        model_id = payload["model"]
+        messages = payload.get("messages", [])
+        params = payload.get("params", {})
 
         model = self._load_model(model_id)
 
-        # Tokenize input
-        prompt = self._format_messages(messages)
-        logger.debug("Inference prompt length: %d chars", len(prompt))
+        # Guard against memory pressure before loading heavy inference
+        self._check_memory()
 
-        # Run inference
-        output = model.generate(
-            prompt,
+        logger.debug("Inference: model=%s, messages=%d", model_id, len(messages))
+
+        # Use native chat API if available (produces better results)
+        output = model.generate_chat(
+            messages=messages,
             max_tokens=params.get("max_tokens", 512),
             temperature=params.get("temperature", 0.7),
             top_p=params.get("top_p", 1.0),
@@ -78,6 +82,7 @@ class TaskExecutor:
             "choices": [{
                 "message": {"role": "assistant", "content": output.text},
                 "finish_reason": output.finish_reason,
+                "index": 0,
             }],
             "usage": {
                 "prompt_tokens": output.prompt_tokens,
@@ -88,17 +93,17 @@ class TaskExecutor:
 
     def _run_training_shard(self, task: dict) -> dict:
         """Process a training shard — forward/backward pass on a data slice."""
-        model_id = task["payload"]["model"]
-        shard_url = task["payload"]["shard_url"]
-        hyperparams = task["payload"].get("hyperparams", {})
+        payload = task.get("payload", {})
+        model_id = payload["model"]
+        shard_url = payload["shard_url"]
+        hyperparams = payload.get("hyperparams", {})
 
         model = self._load_model(model_id)
 
-        logger.info("Downloading shard from %s", shard_url)
+        logger.info("Downloading training shard from %s", shard_url)
         shard_data = self._download_shard(shard_url)
 
-        # Run training step
-        gradients = model.train_step(
+        result = model.train_step(
             shard_data,
             learning_rate=hyperparams.get("learning_rate", 1e-4),
             batch_size=hyperparams.get("batch_size", 8),
@@ -106,77 +111,129 @@ class TaskExecutor:
 
         return {
             "model": model_id,
-            "shard_id": task["payload"].get("shard_id"),
-            "gradient_hash": gradients.hash,
-            "gradient_url": gradients.upload_url,
-            "loss": gradients.loss,
-            "samples_processed": gradients.samples_processed,
+            "shard_id": payload.get("shard_id"),
+            "gradient_hash": result.hash,
+            "gradient_url": result.upload_url,
+            "loss": result.loss,
+            "samples_processed": result.samples_processed,
         }
 
     def _run_embedding(self, task: dict) -> dict:
-        """Generate embeddings for input text."""
-        model_id = task["payload"]["model"]
-        inputs = task["payload"]["input"]
+        """Generate embeddings for one or more input strings."""
+        payload = task.get("payload", {})
+        model_id = payload["model"]
+        inputs = payload["input"]
         if isinstance(inputs, str):
             inputs = [inputs]
 
         model = self._load_model(model_id)
 
         embeddings = []
+        total_tokens = 0
         for i, text in enumerate(inputs):
             vec = model.embed(text)
-            embeddings.append({"object": "embedding", "index": i, "embedding": vec})
+            embeddings.append({
+                "object": "embedding",
+                "index": i,
+                "embedding": vec,
+            })
+            total_tokens += max(1, len(text) // 4)
 
         return {
+            "object": "list",
             "model": model_id,
             "data": embeddings,
-            "usage": {"prompt_tokens": sum(len(t.split()) for t in inputs)},
+            "usage": {"prompt_tokens": total_tokens, "total_tokens": total_tokens},
         }
 
     def _run_health_check(self, _task: dict) -> dict:
         """Lightweight health check — confirms agent can execute tasks."""
-        import psutil
-        return {
+        mem = psutil.virtual_memory()
+        disk = psutil.disk_usage("/")
+
+        result: dict = {
             "status": "healthy",
             "cpu_percent": psutil.cpu_percent(interval=0.5),
-            "memory_percent": psutil.virtual_memory().percent,
+            "memory_percent": mem.percent,
+            "memory_available_mb": int(mem.available / (1024 * 1024)),
+            "disk_free_gb": round(disk.free / (1024 ** 3), 1),
             "gpu_mode": self.gpu_mode,
+            "models_loaded": list(self._model_cache.keys()),
         }
+
+        # NVIDIA GPU metrics
+        try:
+            import GPUtil  # type: ignore
+            gpus = GPUtil.getGPUs()
+            if gpus:
+                result["gpus"] = [
+                    {
+                        "id": g.id,
+                        "name": g.name,
+                        "load_percent": round(g.load * 100, 1),
+                        "memory_used_mb": int(g.memoryUsed),
+                        "memory_total_mb": int(g.memoryTotal),
+                        "temperature_c": g.temperature,
+                    }
+                    for g in gpus
+                ]
+        except ImportError:
+            pass
+
+        # MPS (Apple Silicon)
+        try:
+            import torch  # type: ignore
+            if torch.backends.mps.is_available():
+                result["mps_available"] = True
+        except ImportError:
+            pass
+
+        return result
 
     # ── Helpers ───────────────────────────────────────────
 
     def _load_model(self, model_id: str) -> Any:
-        """Load a model into memory (with caching)."""
+        """Load a model into memory with LRU-style caching."""
         if model_id in self._model_cache:
-            logger.debug("Model %s loaded from cache", model_id)
+            logger.debug("Model %s served from cache", model_id)
             return self._model_cache[model_id]
 
-        logger.info("Loading model %s ...", model_id)
+        # Evict least recently used model if memory is tight
+        if len(self._model_cache) >= 3:
+            oldest_key = next(iter(self._model_cache))
+            logger.info("Evicting model %s from cache (memory limit)", oldest_key)
+            del self._model_cache[oldest_key]
 
-        # In production this integrates with llama.cpp, vLLM, ONNX Runtime, etc.
-        # For now we use a stub that will be replaced with real model loading.
+        logger.info("Loading model %s …", model_id)
         from regraph_agent.model_runtime import load_model
         model = load_model(model_id, gpu_mode=self.gpu_mode)
-
         self._model_cache[model_id] = model
-        logger.info("Model %s loaded successfully", model_id)
+        logger.info("Model %s loaded (backend=%s)", model_id, model.backend)
         return model
 
-    @staticmethod
-    def _format_messages(messages: list[dict]) -> str:
-        """Convert chat messages to a prompt string."""
-        parts = []
-        for msg in messages:
-            role = msg.get("role", "user")
-            content = msg.get("content", "")
-            parts.append(f"<|{role}|>\n{content}")
-        parts.append("<|assistant|>\n")
-        return "\n".join(parts)
+    def _check_memory(self) -> None:
+        """Warn if memory usage is above the configured threshold."""
+        pct = psutil.virtual_memory().percent
+        if pct > self.max_memory_pct:
+            logger.warning(
+                "Memory usage %.1f%% exceeds threshold %d%% — consider reducing max_memory_percent",
+                pct, self.max_memory_pct,
+            )
 
     @staticmethod
-    def _download_shard(url: str) -> Any:
-        """Download training shard data from a URL."""
+    def _download_shard(url: str) -> bytes:
+        """Download a training shard from a URL with retry logic."""
         import httpx
-        resp = httpx.get(url, timeout=120)
-        resp.raise_for_status()
-        return resp.content
+
+        for attempt in range(1, 4):
+            try:
+                with httpx.Client(timeout=120) as client:
+                    resp = client.get(url, follow_redirects=True)
+                    resp.raise_for_status()
+                    return resp.content
+            except httpx.HTTPError as e:
+                if attempt == 3:
+                    raise RuntimeError(f"Failed to download shard after 3 attempts: {e}") from e
+                logger.warning("Shard download attempt %d failed: %s — retrying", attempt, e)
+                time.sleep(2 ** attempt)
+        raise RuntimeError("Shard download failed")  # unreachable
