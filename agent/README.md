@@ -28,6 +28,7 @@ regraph-agent start --key YOUR_CONNECTION_KEY
 - NVIDIA GPU with CUDA 11.8+ and `nvidia-smi`
 - Apple Silicon Mac (Metal support automatic)
 - AMD GPU with ROCm 5.0+
+- Huawei Ascend NPU with CANN 8.x driver (see [Ascend NPU](#ascend-npu) section)
 
 ## Commands
 
