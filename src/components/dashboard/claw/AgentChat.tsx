@@ -420,6 +420,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
     }
     const fullUserText = fileContext ? `${fileContext}\n${userText}` : userText;
+    pendingFilesRef.current = attachedFiles; // keep files available for document_reader tool
     setAttachedFiles([]);
     setIsLoading(true);
 
