@@ -673,13 +673,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : (
-                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
+                    <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           code({ node, className, children, ...props }: any) {
                             const inline = !className;
-                            if (inline) return <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
+                            if (inline) return <code className="bg-muted/30 px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
                             const lang = className?.replace("language-", "") || "";
                             return <CodeBlock code={String(children).replace(/\n$/, "")} language={lang} />;
                           },
@@ -692,25 +692,6 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         {msg.content || ""}
                       </ReactMarkdown>
                     </div>
-                  )}
-                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
-                      <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        components={{
-                          code({ node, className, children, ...props }: any) {
-                            const inline = !className;
-                            if (inline) return <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
-                            const lang = className?.replace("language-", "") || "";
-                            return <CodeBlock code={String(children).replace(/\n$/, "")} language={lang} />;
-                          },
-                          pre({ children }: any) { return <>{children}</>; },
-                        }}
-                      >
-                        {msg.content || ""}
-                      </ReactMarkdown>
-                    </div>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
                 </div>
                 {msg.role === "assistant" && msg.content && (
