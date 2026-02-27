@@ -354,7 +354,15 @@
     box-shadow: var(--glow-subtle);
   }
 
-  .dark .bg-grid {
+  .dark .hero-bottom-fade {
+    background: transparent;
+  }
+
+  .light .hero-bottom-fade {
+    background: linear-gradient(to top, hsl(var(--background)) 0%, transparent 100%);
+  }
+
+  .bg-grid {
     background-image: 
       linear-gradient(hsl(0 0% 15% / 0.3) 1px, transparent 1px),
       linear-gradient(90deg, hsl(0 0% 15% / 0.3) 1px, transparent 1px);
