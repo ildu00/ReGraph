@@ -536,7 +536,111 @@ class OnnxHandle:
         raise NotImplementedError("ONNX Runtime does not support training.")
 
 
-# ── Sentence Transformers backend (embeddings only) ───────────────────────────
+# ── Huawei Ascend NPU backend (torch_npu / CANN) ─────────────────────────────
+
+class AscendHandle:
+    """Model handle backed by torch_npu + HuggingFace Transformers for Huawei Ascend NPUs.
+
+    Requires: pip install torch_npu transformers accelerate
+    Supported hardware: Atlas 300I/300T, Atlas 800, Ascend 910/910B series.
+    """
+
+    def __init__(self, model_id: str, device: str = "npu:0", load_in_bf16: bool = True):
+        import torch  # type: ignore
+        import torch_npu  # type: ignore
+        from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
+
+        self.model_id = model_id
+        self.backend = "ascend"
+        self._device = device
+
+        logger.info("Loading Ascend NPU model %s on %s …", model_id, device)
+
+        # CANN prefers bfloat16 over float16 on Ascend 910B+
+        dtype = torch.bfloat16 if load_in_bf16 else torch.float16
+
+        self._tokenizer = AutoTokenizer.from_pretrained(model_id, trust_remote_code=True)
+        self._model = AutoModelForCausalLM.from_pretrained(
+            model_id,
+            torch_dtype=dtype,
+            device_map=None,  # manual placement — npu:N
+            trust_remote_code=True,
+        ).to(device)
+        self._model.eval()
+        logger.info("Ascend NPU model loaded: %s on %s", model_id, device)
+
+    def generate(
+        self,
+        prompt: str,
+        max_tokens: int = 512,
+        temperature: float = 0.7,
+        top_p: float = 1.0,
+        stop: list[str] | None = None,
+    ) -> GenerateResult:
+        import torch  # type: ignore
+
+        inputs = self._tokenizer(prompt, return_tensors="pt").to(self._device)
+        prompt_len = inputs["input_ids"].shape[1]
+
+        with torch.no_grad():
+            output_ids = self._model.generate(
+                **inputs,
+                max_new_tokens=max_tokens,
+                temperature=temperature,
+                top_p=top_p,
+                do_sample=temperature > 0,
+                pad_token_id=self._tokenizer.eos_token_id,
+            )
+
+        new_ids = output_ids[0][prompt_len:]
+        text = self._tokenizer.decode(new_ids, skip_special_tokens=True).strip()
+        return GenerateResult(
+            text=text,
+            finish_reason="stop",
+            prompt_tokens=prompt_len,
+            completion_tokens=len(new_ids),
+        )
+
+    def generate_chat(
+        self,
+        messages: list[dict],
+        max_tokens: int = 512,
+        temperature: float = 0.7,
+        top_p: float = 1.0,
+    ) -> GenerateResult:
+        try:
+            prompt = self._tokenizer.apply_chat_template(
+                messages,
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+        except Exception:
+            prompt = _apply_chat_template(messages)
+        return self.generate(prompt, max_tokens, temperature, top_p)
+
+    def embed(self, text: str) -> list[float]:
+        import torch  # type: ignore
+
+        try:
+            inputs = self._tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
+            inputs = {k: v.to(self._device) for k, v in inputs.items()}
+            with torch.no_grad():
+                outputs = self._model(**inputs, output_hidden_states=True)
+            last_hidden = outputs.hidden_states[-1]
+            embedding = last_hidden.mean(dim=1).squeeze().cpu().float().tolist()
+            return embedding
+        except Exception as e:
+            logger.warning("Ascend NPU embedding failed: %s", e)
+            return [0.0] * 768
+
+    def train_step(self, *args, **kwargs) -> TrainStepResult:
+        raise NotImplementedError(
+            "Training via torch_npu requires MindSpore or distributed training harness. "
+            "Use the training_shard task only with NVIDIA/ROCm backends."
+        )
+
+
+
 
 class SentenceTransformerHandle:
     """Dedicated embedding model via sentence-transformers."""
