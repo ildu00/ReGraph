@@ -431,7 +431,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           : (m.content || ""),
         ...(m.tool_name && m.role === "tool" ? { name: m.tool_name } : {}),
       })),
-      { role: "user", content: userText },
+      { role: "user", content: fullUserText },
     ];
 
     const toolDefs = buildToolDefs(agent.tools || []);
