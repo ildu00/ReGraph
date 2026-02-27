@@ -314,7 +314,7 @@ ${SECTION}
   # ── Create GitHub Release ───────────────────────────────────────────────────
   release:
     name: Create GitHub Release
-    needs: [prepare, build-assets, changelog]
+    needs: [prepare, build-assets, changelog, update-changelog]
     runs-on: ubuntu-latest
     steps:
       - name: Download assets
