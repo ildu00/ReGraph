@@ -156,7 +156,7 @@ const DashboardInner = () => {
       </Helmet>
       {/* Header - always in flow on mobile chat, fixed on desktop/other tabs */}
       <header className={`${
-        isMobileChatMode
+        (isMobileChatMode || isMobileClawMode)
           ? 'shrink-0'
           : 'fixed top-0 left-0 right-0'
       } h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6`}>
