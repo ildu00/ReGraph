@@ -497,7 +497,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         {!loadingHistory && messages.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3 -mt-4">
-            <span className="text-5xl opacity-60">{agent.emoji}</span>
+            <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-8 w-8 text-primary" />
+            </div>
             <div>
               <p className="text-lg font-medium mb-1">{agent.name}</p>
               <p className="text-sm max-w-md">{agent.description || "How can I help you today?"}</p>
