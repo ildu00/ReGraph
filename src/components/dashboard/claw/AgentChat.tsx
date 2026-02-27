@@ -478,8 +478,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               ? { ...m, tool_result: result, isStreaming: false }
               : m
             ));
-            // Store only lightweight URL, never base64 in DB
-            const persistableResult = sanitizeToolResult(result);
+            // Store URL in DB (never base64)
+            const persistableResult = sanitizeForDb(result);
             await persistMessage(conversationId, {
               role: "tool",
               content: null,
