@@ -291,7 +291,7 @@ const DashboardInner = () => {
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
                       {item.value === "mining" && miningStatus === "mining" && (
-                        <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                       )}
                     </button>
                   );
