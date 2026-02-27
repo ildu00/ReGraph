@@ -359,13 +359,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         // Tool calls?
         if (assistantMsg.tool_calls?.length > 0 && (choice?.finish_reason === "tool_calls" || !choice)) {
-          // Show assistant "thinking" message if any content
-          if (assistantMsg.content) {
+          // Show assistant "thinking" message if any meaningful content
+          const thinkingContent = assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
+          if (thinkingContent) {
             setMessages((prev) => prev.map((m) => m.id === assistantTempId
-              ? { ...m, content: assistantMsg.content, isStreaming: false }
+              ? { ...m, content: thinkingContent, isStreaming: false }
               : m
             ));
-            await persistMessage(conversationId, { role: "assistant", content: assistantMsg.content });
+            await persistMessage(conversationId, { role: "assistant", content: thinkingContent });
           }
 
           loopMessages.push({ role: "assistant", content: assistantMsg.content || "", tool_calls: assistantMsg.tool_calls } as any);
