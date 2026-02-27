@@ -487,7 +487,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         const res = await fetch(INFERENCE_URL, {
           method: "POST",
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}`, "x-api-key": apiKey },
           body: JSON.stringify({
             model: agent.model_id,
             prompt: promptText,
