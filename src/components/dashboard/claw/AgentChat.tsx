@@ -764,7 +764,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             el.style.height = Math.min(el.scrollHeight, 128) + "px";
           }}
           onKeyDown={handleKeyDown}
-          placeholder={`Message ${agent.name}...`}
+          placeholder="Type a message..."
           className="min-h-[40px] max-h-32 resize-none py-2 leading-5"
           rows={1}
           style={{ height: "40px" }}
