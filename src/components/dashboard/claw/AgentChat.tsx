@@ -430,6 +430,10 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     const apiKey = await getOrCreateApiKey(user.id);
     if (!apiKey) { toast.error("No API key"); setIsLoading(false); return; }
 
+    // Get JWT session token for authenticated billing/logging in edge functions
+    const { data: sessionData } = await supabase.auth.getSession();
+    const jwtToken = sessionData?.session?.access_token || apiKey;
+
     // Build messages for inference — strip base64 blobs from tool results
     // For API context: strip base64 to keep request small
     const sanitizeForApi = (result: any): any => {
