@@ -390,7 +390,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         // Final answer
         const finalContent = assistantMsg.content || "";
         setMessages((prev) => {
-          const idx = prev.findLastIndex((m) => m.role === "assistant" && m.isStreaming);
+          let idx = -1;
+          for (let i = prev.length - 1; i >= 0; i--) { if (prev[i].role === "assistant" && prev[i].isStreaming) { idx = i; break; } }
           if (idx === -1) return [...prev, { id: crypto.randomUUID(), role: "assistant", content: finalContent }];
           return prev.map((m, i) => i === idx ? { ...m, content: finalContent, isStreaming: false } : m);
         });
@@ -400,7 +401,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       } catch (err: any) {
         const errMsg = err?.message || "Network error";
         setMessages((prev) => {
-          const idx = prev.findLastIndex((m) => m.role === "assistant" && m.isStreaming);
+          let idx = -1;
+          for (let i = prev.length - 1; i >= 0; i--) { if (prev[i].role === "assistant" && prev[i].isStreaming) { idx = i; break; } }
           if (idx === -1) return prev;
           return prev.map((m, i) => i === idx ? { ...m, content: `❌ ${errMsg}`, isStreaming: false } : m);
         });
