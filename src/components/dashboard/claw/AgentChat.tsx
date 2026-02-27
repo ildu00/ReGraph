@@ -542,7 +542,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               isStreaming: true,
             }]);
 
-            const result = await executeTool(toolName, toolInput, apiKey);
+            const result = await executeTool(toolName, { ...toolInput, __attachedFiles: pendingFilesRef.current }, apiKey);
 
             setMessages((prev) => prev.map((m) => m.id === toolCallMsgId
               ? { ...m, tool_result: result, isStreaming: false }
