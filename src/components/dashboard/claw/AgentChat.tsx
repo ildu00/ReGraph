@@ -728,7 +728,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Image generation
     if (msg.tool_result?.image_url) {
-      return <img src={msg.tool_result.image_url} alt="Generated" className="max-w-xs rounded mt-1" />;
+      return <img src={msg.tool_result.image_url} alt="Generated" className="w-full max-w-xs rounded mt-1 h-auto object-contain" />;
     }
 
     // Web search — pretty render
