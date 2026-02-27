@@ -308,7 +308,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               .in("id", imageToolIds);
             if (imgMsgs) {
               for (const im of imgMsgs) {
-                const url = im.tool_result?.image_url;
+                const url = (im.tool_result as any)?.image_url;
                 if (url && typeof url === "string" && !url.startsWith("data:") && url !== "[image generated]") {
                   imageResults[im.id] = im.tool_result;
                 }
