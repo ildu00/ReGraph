@@ -32,6 +32,7 @@ import {
   Shield,
   MessageSquare,
   Pickaxe,
+  Workflow,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
