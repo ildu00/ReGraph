@@ -67,7 +67,7 @@ const DEFAULT: Omit<ClawAgent, "id" | "user_id"> = {
   emoji: "🤖",
   description: "",
   system_prompt: "You are a helpful AI assistant.",
-  model_id: "gpt-5-mini",
+  model_id: "regraph-llm",
   tools: ["calculator"],
 };
 
