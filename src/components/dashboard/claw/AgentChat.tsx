@@ -672,7 +672,27 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 }`}>
                   {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  ) : msg.role === "assistant" ? (
+                  ) : (
+                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
+                      <ReactMarkdown
+                        remarkPlugins={[remarkGfm]}
+                        components={{
+                          code({ node, className, children, ...props }: any) {
+                            const inline = !className;
+                            if (inline) return <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
+                            const lang = className?.replace("language-", "") || "";
+                            return <CodeBlock code={String(children).replace(/\n$/, "")} language={lang} />;
+                          },
+                          pre({ children }: any) { return <>{children}</>; },
+                          img({ src, alt }: any) {
+                            return <img src={src} alt={alt} className="max-w-full rounded mt-1 h-auto" />;
+                          },
+                        }}
+                      >
+                        {msg.content || ""}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                     <div className="markdown-response text-sm min-w-0 overflow-hidden">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
