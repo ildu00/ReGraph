@@ -107,26 +107,29 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
 
         // If it's a base64 data URL — upload to storage in background, show image immediately
         if (rawUrl.startsWith("data:")) {
-          // Return immediately with base64 so UI shows the image without waiting for upload
-          // Upload to storage in background (fire-and-forget)
-          (async () => {
-            try {
-              const [meta, base64] = rawUrl.split(",");
-              const mimeMatch = meta.match(/data:([^;]+);/);
-              const mimeType = mimeMatch?.[1] || "image/png";
-              const ext = mimeType.split("/")[1] || "png";
-              const binary = atob(base64);
-              const bytes = new Uint8Array(binary.length);
-              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-              const blob = new Blob([bytes], { type: mimeType });
-              const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-              await supabase.storage
-                .from("claw-images")
-                .upload(fileName, blob, { contentType: mimeType, upsert: false });
-            } catch (uploadErr) {
-              console.warn("[image_generation] Background storage upload failed:", uploadErr);
+          // Upload to storage and return public URL
+          try {
+            const [meta, base64] = rawUrl.split(",");
+            const mimeMatch = meta.match(/data:([^;]+);/);
+            const mimeType = mimeMatch?.[1] || "image/png";
+            const ext = mimeType.split("/")[1] || "png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mimeType });
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { data: uploadData, error: uploadErr } = await supabase.storage
+              .from("claw-images")
+              .upload(fileName, blob, { contentType: mimeType, upsert: false });
+            if (uploadData?.path) {
+              const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+              return { image_url: publicUrl };
             }
-          })();
+            if (uploadErr) console.warn("[image_generation] Storage upload failed:", uploadErr);
+          } catch (uploadErr) {
+            console.warn("[image_generation] Storage upload failed:", uploadErr);
+          }
+          // Fallback: return base64 (will be stripped before saving to DB)
           return { image_url: rawUrl };
         }
 
@@ -285,22 +288,33 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!convId) { setLoadingHistory(false); return; }
         setConversationId(convId);
 
-        // Load messages (last 50, strip heavy base64 from tool_result)
+        // Load messages (last 50, include tool_result for URLs but skip base64)
         const { data: msgs } = await supabase
           .from("claw_messages")
-          .select("id, role, content, tool_name, tool_input, created_at")
+          .select("id, role, content, tool_name, tool_input, tool_result, created_at")
           .eq("conversation_id", convId)
           .order("created_at", { ascending: false })
           .limit(50);
         if (msgs) {
-          setMessages(msgs.reverse().map((m: any) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            tool_name: m.tool_name,
-            tool_input: m.tool_input,
-            tool_result: null, // don't load heavy blobs from history
-          })));
+          setMessages(msgs.reverse().map((m: any) => {
+            // Strip base64 blobs but keep lightweight tool_result (URLs, text)
+            let toolResult = m.tool_result;
+            if (toolResult && typeof toolResult === "object") {
+              if (typeof toolResult.image_url === "string" && toolResult.image_url.startsWith("data:")) {
+                toolResult = null; // too heavy
+              } else if (toolResult.image_url === "[image generated]") {
+                toolResult = null; // placeholder without real URL
+              }
+            }
+            return {
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              tool_name: m.tool_name,
+              tool_input: m.tool_input,
+              tool_result: toolResult,
+            };
+          }));
         }
       } catch (e) {
         console.error("[AgentChat] Failed to load history:", e);
