@@ -82,16 +82,16 @@ const DashboardInner = () => {
     }
   }, [searchParams]);
 
-  // Lock body scroll when mobile chat is active to prevent iOS Safari
+  // Lock body scroll when mobile chat/claw is active to prevent iOS Safari
   // from scrolling fixed elements out of view when keyboard opens
   useEffect(() => {
-    if (isMobileChatMode) {
+    if (isMobileChatMode || isMobileClawMode) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       window.scrollTo(0, 0);
       return () => { document.body.style.overflow = prev; };
     }
-  }, [isMobileChatMode]);
+  }, [isMobileChatMode, isMobileClawMode]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
