@@ -11,6 +11,146 @@ import psutil
 logger = logging.getLogger("regraph.tasks")
 
 
+def _collect_ascend_metrics() -> list[dict]:
+    """Parse `npu-smi info -t usages-info` to collect per-device NPU metrics.
+
+    Falls back to `torch_npu` memory stats when npu-smi is unavailable.
+    Returns a list of per-device metric dicts (empty list on failure).
+    """
+    import re
+    import shutil
+    import subprocess
+
+    metrics: list[dict] = []
+
+    # ── Primary: npu-smi usages-info ──────────────────────────────────────────
+    if shutil.which("npu-smi"):
+        try:
+            proc = subprocess.run(
+                ["npu-smi", "info", "-t", "usages-info"],
+                capture_output=True, text=True, timeout=10,
+            )
+            raw = proc.stdout if proc.returncode == 0 else ""
+        except Exception:
+            raw = ""
+
+        if not raw:
+            # Older CANN versions use plain `npu-smi info`
+            try:
+                proc = subprocess.run(
+                    ["npu-smi", "info"],
+                    capture_output=True, text=True, timeout=10,
+                )
+                raw = proc.stdout if proc.returncode == 0 else ""
+            except Exception:
+                raw = ""
+
+        if raw:
+            # Group lines by NPU block (starts with "NPU ID : N")
+            current: dict[str, str] = {}
+            npu_id: int | None = None
+
+            def _flush(dev_id: int | None, info: dict) -> None:
+                if dev_id is None:
+                    return
+                entry: dict = {"id": dev_id}
+
+                # Utilisation — "NPU Utilization (%)" or "Aicore Usage (%)"
+                for key in ("npu utilization (%)", "aicore usage (%)", "npu utilization"):
+                    if key in info:
+                        try:
+                            entry["utilization_percent"] = float(info[key])
+                        except ValueError:
+                            pass
+                        break
+
+                # HBM used
+                for key in ("hbm used memory (mb)", "memory used (mb)", "hbm used (mb)"):
+                    if key in info:
+                        try:
+                            entry["hbm_used_mb"] = int(float(info[key]))
+                        except ValueError:
+                            pass
+                        break
+
+                # HBM total
+                for key in ("hbm total memory (mb)", "memory total (mb)", "hbm total (mb)"):
+                    if key in info:
+                        try:
+                            entry["hbm_total_mb"] = int(float(info[key]))
+                        except ValueError:
+                            pass
+                        break
+
+                # Derived: percent used
+                if "hbm_used_mb" in entry and "hbm_total_mb" in entry and entry["hbm_total_mb"]:
+                    entry["hbm_used_percent"] = round(
+                        entry["hbm_used_mb"] / entry["hbm_total_mb"] * 100, 1
+                    )
+
+                # Temperature
+                for key in ("temperature (°c)", "temperature(°c)", "chip temperature (°c)"):
+                    if key in info:
+                        try:
+                            entry["temperature_c"] = float(info[key])
+                        except ValueError:
+                            pass
+                        break
+
+                # Power
+                for key in ("power (w)", "chip power (w)"):
+                    if key in info:
+                        try:
+                            entry["power_w"] = float(info[key])
+                        except ValueError:
+                            pass
+                        break
+
+                metrics.append(entry)
+
+            for line in raw.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                m = re.match(r"NPU\s+ID\s*[:\|]\s*(\d+)", line, re.IGNORECASE)
+                if m:
+                    _flush(npu_id, current)
+                    npu_id = int(m.group(1))
+                    current = {}
+                    continue
+                if ":" in line:
+                    key, _, val = line.partition(":")
+                    current[key.strip().lower()] = val.strip()
+
+            _flush(npu_id, current)
+
+            if metrics:
+                return metrics
+
+    # ── Fallback: torch_npu memory API ────────────────────────────────────────
+    try:
+        import torch_npu  # type: ignore
+        count = torch_npu.npu.device_count()
+        for i in range(count):
+            mem = torch_npu.npu.memory_stats(i)
+            total = torch_npu.npu.get_device_properties(i).total_memory
+            used = mem.get("allocated_bytes.all.current", 0)
+            entry: dict = {
+                "id": i,
+                "hbm_used_mb": used // (1024 * 1024),
+                "hbm_total_mb": total // (1024 * 1024),
+            }
+            if entry["hbm_total_mb"]:
+                entry["hbm_used_percent"] = round(
+                    entry["hbm_used_mb"] / entry["hbm_total_mb"] * 100, 1
+                )
+            metrics.append(entry)
+    except Exception:
+        pass
+
+    return metrics
+
+
 class TaskExecutor:
     """Dispatches and executes tasks received from the network."""
 
