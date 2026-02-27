@@ -285,22 +285,33 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!convId) { setLoadingHistory(false); return; }
         setConversationId(convId);
 
-        // Load messages (last 50, strip heavy base64 from tool_result)
+        // Load messages (last 50, include tool_result for URLs but skip base64)
         const { data: msgs } = await supabase
           .from("claw_messages")
-          .select("id, role, content, tool_name, tool_input, created_at")
+          .select("id, role, content, tool_name, tool_input, tool_result, created_at")
           .eq("conversation_id", convId)
           .order("created_at", { ascending: false })
           .limit(50);
         if (msgs) {
-          setMessages(msgs.reverse().map((m: any) => ({
-            id: m.id,
-            role: m.role,
-            content: m.content,
-            tool_name: m.tool_name,
-            tool_input: m.tool_input,
-            tool_result: null, // don't load heavy blobs from history
-          })));
+          setMessages(msgs.reverse().map((m: any) => {
+            // Strip base64 blobs but keep lightweight tool_result (URLs, text)
+            let toolResult = m.tool_result;
+            if (toolResult && typeof toolResult === "object") {
+              if (typeof toolResult.image_url === "string" && toolResult.image_url.startsWith("data:")) {
+                toolResult = null; // too heavy
+              } else if (toolResult.image_url === "[image generated]") {
+                toolResult = null; // placeholder without real URL
+              }
+            }
+            return {
+              id: m.id,
+              role: m.role,
+              content: m.content,
+              tool_name: m.tool_name,
+              tool_input: m.tool_input,
+              tool_result: toolResult,
+            };
+          }));
         }
       } catch (e) {
         console.error("[AgentChat] Failed to load history:", e);
