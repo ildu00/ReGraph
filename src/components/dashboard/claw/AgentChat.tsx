@@ -286,32 +286,44 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         setConversationId(convId);
 
         // Load messages (last 50, include tool_result for URLs but skip base64)
+        // Fetch messages without tool_result to avoid loading heavy base64 blobs
         const { data: msgs } = await supabase
           .from("claw_messages")
-          .select("id, role, content, tool_name, tool_input, tool_result, created_at")
+          .select("id, role, content, tool_name, tool_input, created_at")
           .eq("conversation_id", convId)
           .order("created_at", { ascending: false })
           .limit(50);
+
+        // For image messages, fetch only those tool_results that look like URLs (lightweight)
         if (msgs) {
-          setMessages(msgs.reverse().map((m: any) => {
-            // Strip base64 blobs but keep lightweight tool_result (URLs, text)
-            let toolResult = m.tool_result;
-            if (toolResult && typeof toolResult === "object") {
-              if (typeof toolResult.image_url === "string" && toolResult.image_url.startsWith("data:")) {
-                toolResult = null; // too heavy
-              } else if (toolResult.image_url === "[image generated]") {
-                toolResult = null; // placeholder without real URL
+          const imageToolIds = msgs
+            .filter((m: any) => m.tool_name === "image_generation")
+            .map((m: any) => m.id);
+
+          let imageResults: Record<string, any> = {};
+          if (imageToolIds.length > 0) {
+            const { data: imgMsgs } = await supabase
+              .from("claw_messages")
+              .select("id, tool_result")
+              .in("id", imageToolIds);
+            if (imgMsgs) {
+              for (const im of imgMsgs) {
+                const url = (im.tool_result as any)?.image_url;
+                if (url && typeof url === "string" && !url.startsWith("data:") && url !== "[image generated]") {
+                  imageResults[im.id] = im.tool_result;
+                }
               }
             }
-            return {
-              id: m.id,
-              role: m.role,
-              content: m.content,
-              tool_name: m.tool_name,
-              tool_input: m.tool_input,
-              tool_result: toolResult,
-            };
-          }));
+          }
+
+          setMessages(msgs.reverse().map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            tool_name: m.tool_name,
+            tool_input: m.tool_input,
+            tool_result: imageResults[m.id] ?? null,
+          })));
         }
       } catch (e) {
         console.error("[AgentChat] Failed to load history:", e);
