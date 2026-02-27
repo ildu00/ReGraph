@@ -16,7 +16,11 @@ variable "VERSION" {
 }
 
 group "all" {
-  targets = ["cpu", "nvidia", "metal", "dev"]
+  targets = ["cpu", "nvidia", "ascend", "metal", "dev"]
+}
+
+group "gpu" {
+  targets = ["nvidia", "ascend"]
 }
 
 group "default" {
@@ -48,6 +52,23 @@ target "nvidia" {
   platforms  = ["linux/amd64"]
   cache-from = ["type=gha,scope=nvidia"]
   cache-to   = ["type=gha,mode=max,scope=nvidia"]
+}
+
+target "ascend" {
+  context    = "."
+  dockerfile = "Dockerfile"
+  target     = "ascend"
+  tags = [
+    "${REGISTRY}:${VERSION}-ascend",
+    "${REGISTRY}:latest-ascend",
+  ]
+  # Ascend NPUs run on amd64 (Atlas 300I/T/A) and arm64 (Atlas 200/800)
+  platforms  = ["linux/amd64", "linux/arm64"]
+  cache-from = ["type=gha,scope=ascend"]
+  cache-to   = ["type=gha,mode=max,scope=ascend"]
+  args = {
+    CANN_VERSION = "8.0.RC3"
+  }
 }
 
 target "metal" {

@@ -3,11 +3,13 @@
 # Profiles:
 #   cpu     — CPU-only mode (default)
 #   nvidia  — NVIDIA GPU via nvidia-container-toolkit
+#   ascend  — Huawei Ascend NPU via ascend-docker-runtime
 #   dev     — Local development with hot reload
 #
 # Usage:
 #   docker compose up                          # CPU mode
 #   docker compose --profile nvidia up        # NVIDIA GPU
+#   docker compose --profile ascend up        # Huawei Ascend NPU
 #   docker compose --profile dev up           # Dev mode
 #
 # Required env:
@@ -65,6 +67,46 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
+    command: ["start", "--key", "${REGRAPH_CONNECTION_KEY}"]
+
+  # ── Huawei Ascend NPU ────────────────────────────────────────────────────────
+  # Requires ascend-docker-runtime on the host:
+  #   https://gitee.com/ascend/ascend-docker-runtime
+  #
+  # Option A — ascend-docker-runtime plugin (recommended):
+  #   Ensure /etc/docker/daemon.json contains:
+  #     { "runtimes": { "ascend": { "path": "/usr/local/bin/ascend-docker-runtime" } } }
+  #
+  # Option B — manual device pass-through (no plugin needed):
+  #   Uncomment the devices: block and the volumes: host-lib mounts below.
+  agent-ascend:
+    <<: *base
+    image: ghcr.io/regraph-tech/agent:latest-ascend
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: ascend
+      args:
+        CANN_VERSION: "8.0.RC3"
+    profiles: ["ascend"]
+    runtime: ascend              # Option A: ascend-docker-runtime plugin
+    environment:
+      REGRAPH_API_URL: ${REGRAPH_API_URL:-https://api.regraph.tech}
+      REGRAPH_CONNECTION_KEY: ${REGRAPH_CONNECTION_KEY:?Set REGRAPH_CONNECTION_KEY}
+      REGRAPH_GPU_MODE: ascend
+      ASCEND_VISIBLE_DEVICES: ${ASCEND_VISIBLE_DEVICES:-0}
+      ASCEND_DEVICE_ID: ${ASCEND_DEVICE_ID:-0}
+    # Option B — uncomment for manual device pass-through (no plugin):
+    # devices:
+    #   - /dev/davinci0:/dev/davinci0
+    #   - /dev/davinci_manager:/dev/davinci_manager
+    #   - /dev/hisi_hdc:/dev/hisi_hdc
+    # volumes:
+    #   - /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro
+    #   - /usr/local/Ascend/firmware:/usr/local/Ascend/firmware:ro
+    #   - /usr/local/sbin/npu-smi:/usr/local/sbin/npu-smi:ro
+    #   - models:/data/models
+    #   - config:/home/agent/.regraph
     command: ["start", "--key", "${REGRAPH_CONNECTION_KEY}"]
 
   # ── Dev ─────────────────────────────────────────────────────────────────────
