@@ -377,7 +377,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               tool_call_id: tc.id,
               name: toolName,
               content: JSON.stringify(result),
-            });
+            } as any);
           }
 
           // Add a new streaming assistant message for continuation
