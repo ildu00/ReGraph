@@ -1,4 +1,4 @@
-"""Hardware detection — GPU (NVIDIA/ROCm/Metal/DirectML), CPU, RAM, NPU."""
+"""Hardware detection — GPU (NVIDIA/ROCm/Metal/DirectML/Ascend), CPU, RAM, NPU."""
 
 from __future__ import annotations
 
@@ -19,6 +19,7 @@ class GpuInfo:
     cuda_version: str = ""
     backend: str = "unknown"   # nvidia | rocm | metal | directml | mps
     device_index: int = 0
+    npu_info: str = ""       # extra info string for Ascend / other NPUs
 
 
 @dataclass
@@ -196,7 +197,141 @@ def _detect_apple_silicon() -> list[GpuInfo]:
     return []
 
 
-# ── DirectML (Windows, Intel/AMD/NVIDIA) ──────────────────────────────────────
+# ── Huawei Ascend NPU (CANN) ──────────────────────────────────────────────────
+
+def _detect_ascend() -> list[GpuInfo]:
+    """Detect Huawei Ascend NPUs via npu-smi (CANN toolkit)."""
+
+    # Primary: npu-smi (CANN 6.x+)
+    if shutil.which("npu-smi"):
+        raw = _run(["npu-smi", "info", "-t", "detail"])
+        if not raw:
+            raw = _run(["npu-smi", "info"])
+
+        if raw:
+            gpus: list[GpuInfo] = []
+            current: dict[str, str] = {}
+
+            for line in raw.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                # Detect NPU index header like "NPU ID          : 0"
+                m = re.match(r"NPU\s+ID\s*:\s*(\d+)", line, re.I)
+                if m:
+                    if current:
+                        gpus.append(_ascend_entry(current, len(gpus)))
+                    current = {"index": m.group(1)}
+                    continue
+                if ":" in line:
+                    key, _, val = line.partition(":")
+                    current[key.strip().lower()] = val.strip()
+
+            if current:
+                gpus.append(_ascend_entry(current, len(gpus)))
+
+            if gpus:
+                return gpus
+
+    # Fallback: ascend-dmi (older CANN / MindSpore distributions)
+    if shutil.which("ascend-dmi"):
+        raw = _run(["ascend-dmi", "-i"])
+        if raw:
+            gpus = []
+            for line in raw.split("\n"):
+                m = re.search(r"NPU\s+(\d+)\s*:\s*(.+)", line, re.I)
+                if m:
+                    name = m.group(2).strip() or "Huawei Ascend NPU"
+                    gpus.append(GpuInfo(
+                        name=name,
+                        vram_mb=0,
+                        backend="ascend",
+                        device_index=int(m.group(1)),
+                    ))
+            if gpus:
+                return gpus
+
+    # Fallback: Python torch_npu (MindSpore / PyTorch-NPU bridge)
+    try:
+        import torch_npu  # type: ignore
+        count = torch_npu.npu.device_count()
+        if count > 0:
+            gpus = []
+            for i in range(count):
+                props = torch_npu.npu.get_device_properties(i)
+                name = getattr(props, "name", f"Ascend NPU {i}")
+                vram_mb = getattr(props, "total_memory", 0) // (1024 * 1024)
+                gpus.append(GpuInfo(
+                    name=name,
+                    vram_mb=vram_mb,
+                    backend="ascend",
+                    device_index=i,
+                    npu_info="torch_npu",
+                ))
+            return gpus
+    except ImportError:
+        pass
+
+    # Fallback: /dev/davinci* device nodes (Atlas inference cards)
+    import glob
+    davinci_devs = sorted(glob.glob("/dev/davinci[0-9]*"))
+    if davinci_devs:
+        gpus = []
+        for path in davinci_devs:
+            idx_m = re.search(r"davinci(\d+)$", path)
+            idx = int(idx_m.group(1)) if idx_m else len(gpus)
+            gpus.append(GpuInfo(
+                name=f"Huawei Ascend NPU (davinci{idx})",
+                vram_mb=0,
+                backend="ascend",
+                device_index=idx,
+                npu_info=path,
+            ))
+        return gpus
+
+    return []
+
+
+def _ascend_entry(info: dict, fallback_idx: int) -> GpuInfo:
+    """Build a GpuInfo from parsed npu-smi key/value dict."""
+    idx_str = info.get("index", str(fallback_idx))
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        idx = fallback_idx
+
+    # Model name: "chip name", "product name", "npu name"
+    name = (
+        info.get("chip name")
+        or info.get("product name")
+        or info.get("npu name")
+        or info.get("name")
+        or "Huawei Ascend NPU"
+    )
+
+    # VRAM: "hbm total memory (mb)" or "memory capacity (mb)"
+    vram_mb = 0
+    for key in ("hbm total memory (mb)", "memory capacity (mb)", "total memory (mb)"):
+        val = info.get(key, "")
+        try:
+            vram_mb = int(float(val))
+            break
+        except (ValueError, TypeError):
+            pass
+
+    driver = info.get("driver version", info.get("driver", ""))
+
+    return GpuInfo(
+        name=name,
+        vram_mb=vram_mb,
+        driver=driver,
+        backend="ascend",
+        device_index=idx,
+        npu_info=info.get("soc version", info.get("chip type", "")),
+    )
+
+
+
 
 def _detect_directml() -> list[GpuInfo]:
     if platform.system() != "Windows":
@@ -231,10 +366,17 @@ def _detect_directml() -> list[GpuInfo]:
 # ── NPU detection ─────────────────────────────────────────────────────────────
 
 def _detect_npu() -> bool:
-    """Detect NPU presence (Qualcomm Hexagon, Intel NPU, Apple Neural Engine)."""
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
-        # Apple Silicon always has ANE
+    """Detect NPU presence (Qualcomm Hexagon, Intel NPU, Apple Neural Engine, Huawei Ascend)."""
+    # Huawei Ascend / CANN
+    if shutil.which("npu-smi") or shutil.which("ascend-dmi"):
         return True
+    import glob as _glob
+    if _glob.glob("/dev/davinci[0-9]*"):
+        return True
+    # Apple Silicon ANE
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        return True
+    # Windows NPU (Intel/Qualcomm)
     if platform.system() == "Windows":
         try:
             out = _run(["powershell", "-Command",
@@ -293,10 +435,11 @@ def detect_hardware(gpu_mode: str = "auto") -> HardwareReport:
         report.gpu_mode = "disabled"
         return report
 
-    # Ordered by preference: NVIDIA > ROCm > Metal > DirectML
+    # Ordered by preference: NVIDIA > ROCm > Metal > DirectML > Ascend
     detectors: list[tuple[str, Any]] = [
         ("nvidia", _detect_nvidia),
         ("rocm", _detect_rocm),
+        ("ascend", _detect_ascend),
         ("metal", _detect_apple_silicon),
         ("directml", _detect_directml),
     ]

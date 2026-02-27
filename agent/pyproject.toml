@@ -63,6 +63,16 @@ directml = [
   "huggingface-hub>=0.22.0",
 ]
 
+# Huawei Ascend NPU (CANN 6.x+ / Atlas inference cards)
+ascend = [
+  "torch>=2.1.0",
+  "torch_npu>=2.1.0",
+  "transformers>=4.40.0",
+  "accelerate>=0.30.0",
+  "sentence-transformers>=3.0.0",
+  "huggingface-hub>=0.22.0",
+]
+
 # CPU-only (any platform)
 cpu = [
   "llama-cpp-python>=0.2.90",
