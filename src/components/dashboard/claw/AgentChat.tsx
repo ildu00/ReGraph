@@ -102,9 +102,34 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           }
         );
         const data = await res.json();
-        const url = data?.imageUrl || data?.data?.[0]?.url || data?.url;
-        if (url) return { image_url: url };
-        return { error: data?.error || "Image generation failed" };
+        const rawUrl: string | undefined = data?.imageUrl || data?.data?.[0]?.url || data?.url;
+        if (!rawUrl) return { error: data?.error || "Image generation failed" };
+
+        // If it's a base64 data URL — upload to storage and return a permanent URL
+        if (rawUrl.startsWith("data:")) {
+          try {
+            const [meta, base64] = rawUrl.split(",");
+            const mimeMatch = meta.match(/data:([^;]+);/);
+            const mimeType = mimeMatch?.[1] || "image/png";
+            const ext = mimeType.split("/")[1] || "png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mimeType });
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { data: uploadData, error: uploadError } = await supabase.storage
+              .from("claw-images")
+              .upload(fileName, blob, { contentType: mimeType, upsert: false });
+            if (uploadError) throw uploadError;
+            const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+            return { image_url: publicUrl };
+          } catch (uploadErr) {
+            console.error("[image_generation] Storage upload failed, using raw URL:", uploadErr);
+            return { image_url: rawUrl };
+          }
+        }
+
+        return { image_url: rawUrl };
       } catch {
         return { error: "Image generation failed" };
       }
