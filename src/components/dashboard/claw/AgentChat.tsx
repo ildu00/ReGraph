@@ -585,7 +585,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
         <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
           {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
           <span className="font-mono">{msg.tool_name}</span>
-          {isRunning ? <span>Running...</span> : <span className="text-green-500">Done</span>}
+          {isRunning ? <span>Running...</span> : <span className="text-primary">Done</span>}
         </div>
         <Card className="bg-secondary/50 border-border p-3 text-xs font-mono">
           <div className="text-muted-foreground mb-1">Input:</div>
