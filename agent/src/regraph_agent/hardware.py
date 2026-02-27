@@ -197,7 +197,141 @@ def _detect_apple_silicon() -> list[GpuInfo]:
     return []
 
 
-# ── DirectML (Windows, Intel/AMD/NVIDIA) ──────────────────────────────────────
+# ── Huawei Ascend NPU (CANN) ──────────────────────────────────────────────────
+
+def _detect_ascend() -> list[GpuInfo]:
+    """Detect Huawei Ascend NPUs via npu-smi (CANN toolkit)."""
+
+    # Primary: npu-smi (CANN 6.x+)
+    if shutil.which("npu-smi"):
+        raw = _run(["npu-smi", "info", "-t", "detail"])
+        if not raw:
+            raw = _run(["npu-smi", "info"])
+
+        if raw:
+            gpus: list[GpuInfo] = []
+            current: dict[str, str] = {}
+
+            for line in raw.split("\n"):
+                line = line.strip()
+                if not line:
+                    continue
+                # Detect NPU index header like "NPU ID          : 0"
+                m = re.match(r"NPU\s+ID\s*:\s*(\d+)", line, re.I)
+                if m:
+                    if current:
+                        gpus.append(_ascend_entry(current, len(gpus)))
+                    current = {"index": m.group(1)}
+                    continue
+                if ":" in line:
+                    key, _, val = line.partition(":")
+                    current[key.strip().lower()] = val.strip()
+
+            if current:
+                gpus.append(_ascend_entry(current, len(gpus)))
+
+            if gpus:
+                return gpus
+
+    # Fallback: ascend-dmi (older CANN / MindSpore distributions)
+    if shutil.which("ascend-dmi"):
+        raw = _run(["ascend-dmi", "-i"])
+        if raw:
+            gpus = []
+            for line in raw.split("\n"):
+                m = re.search(r"NPU\s+(\d+)\s*:\s*(.+)", line, re.I)
+                if m:
+                    name = m.group(2).strip() or "Huawei Ascend NPU"
+                    gpus.append(GpuInfo(
+                        name=name,
+                        vram_mb=0,
+                        backend="ascend",
+                        device_index=int(m.group(1)),
+                    ))
+            if gpus:
+                return gpus
+
+    # Fallback: Python torch_npu (MindSpore / PyTorch-NPU bridge)
+    try:
+        import torch_npu  # type: ignore
+        count = torch_npu.npu.device_count()
+        if count > 0:
+            gpus = []
+            for i in range(count):
+                props = torch_npu.npu.get_device_properties(i)
+                name = getattr(props, "name", f"Ascend NPU {i}")
+                vram_mb = getattr(props, "total_memory", 0) // (1024 * 1024)
+                gpus.append(GpuInfo(
+                    name=name,
+                    vram_mb=vram_mb,
+                    backend="ascend",
+                    device_index=i,
+                    npu_info="torch_npu",
+                ))
+            return gpus
+    except ImportError:
+        pass
+
+    # Fallback: /dev/davinci* device nodes (Atlas inference cards)
+    import glob
+    davinci_devs = sorted(glob.glob("/dev/davinci[0-9]*"))
+    if davinci_devs:
+        gpus = []
+        for path in davinci_devs:
+            idx_m = re.search(r"davinci(\d+)$", path)
+            idx = int(idx_m.group(1)) if idx_m else len(gpus)
+            gpus.append(GpuInfo(
+                name=f"Huawei Ascend NPU (davinci{idx})",
+                vram_mb=0,
+                backend="ascend",
+                device_index=idx,
+                npu_info=path,
+            ))
+        return gpus
+
+    return []
+
+
+def _ascend_entry(info: dict, fallback_idx: int) -> GpuInfo:
+    """Build a GpuInfo from parsed npu-smi key/value dict."""
+    idx_str = info.get("index", str(fallback_idx))
+    try:
+        idx = int(idx_str)
+    except ValueError:
+        idx = fallback_idx
+
+    # Model name: "chip name", "product name", "npu name"
+    name = (
+        info.get("chip name")
+        or info.get("product name")
+        or info.get("npu name")
+        or info.get("name")
+        or "Huawei Ascend NPU"
+    )
+
+    # VRAM: "hbm total memory (mb)" or "memory capacity (mb)"
+    vram_mb = 0
+    for key in ("hbm total memory (mb)", "memory capacity (mb)", "total memory (mb)"):
+        val = info.get(key, "")
+        try:
+            vram_mb = int(float(val))
+            break
+        except (ValueError, TypeError):
+            pass
+
+    driver = info.get("driver version", info.get("driver", ""))
+
+    return GpuInfo(
+        name=name,
+        vram_mb=vram_mb,
+        driver=driver,
+        backend="ascend",
+        device_index=idx,
+        npu_info=info.get("soc version", info.get("chip type", "")),
+    )
+
+
+
 
 def _detect_directml() -> list[GpuInfo]:
     if platform.system() != "Windows":
