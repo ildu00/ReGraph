@@ -64,8 +64,10 @@ const DashboardInner = () => {
   const isMobile = useIsMobile();
   const { height: vpHeight } = useVisualViewport();
 
-  const isChatActive = activeTab === 'chat' || activeTab === 'claw';
+  const isChatActive = activeTab === 'chat';
+  const isClawActive = activeTab === 'claw';
   const isMobileChatMode = isChatActive && isMobile;
+  const isMobileClawMode = isClawActive && isMobile;
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
