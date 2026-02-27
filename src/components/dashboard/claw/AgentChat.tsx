@@ -52,8 +52,25 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
       }
     }
     case "web_search": {
-      // MVP: return placeholder — can be upgraded to a real search edge function
-      return { results: `Web search for "${input?.query}" is not yet available in MVP. Please use your knowledge to answer.` };
+      const query = input?.query || input?.expression || "";
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claw-web-search`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ query }),
+          }
+        );
+        const data = await res.json();
+        if (data.results?.length) {
+          const formatted = data.results.map((r: any) => `**${r.title}**\n${r.url}\n${r.description || ""}`).join("\n\n");
+          return { results: formatted };
+        }
+        return { results: "No results found." };
+      } catch {
+        return { error: "Web search failed." };
+      }
     }
     case "code_interpreter": {
       // Send code to inference for execution context
