@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Plus, Pencil, Trash2, MessageSquare, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, MessageSquare, Loader2, Bot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -172,7 +172,12 @@ function AgentCard({ agent, onOpen, onEdit, onDelete }: {
       <CardContent className="p-4 flex flex-col gap-3">
         {/* Top row */}
         <div className="flex items-start gap-3">
-          <span className="text-3xl shrink-0">{agent.emoji}</span>
+          <div className="shrink-0 relative">
+            <span className="text-3xl">{agent.emoji}</span>
+            <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-3 w-3 text-primary" />
+            </div>
+          </div>
           <div className="flex-1 min-w-0">
             <div className="font-semibold truncate">{agent.name}</div>
             <div className="text-xs text-muted-foreground truncate">{agent.model_id}</div>
