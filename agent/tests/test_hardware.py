@@ -196,6 +196,79 @@ class TestDetectDirectML:
         assert _detect_directml() == []
 
 
+# ── _detect_ascend ────────────────────────────────────────────────────────────
+
+class TestDetectAscend:
+    @patch("regraph_agent.hardware.shutil.which", return_value=None)
+    @patch("regraph_agent.hardware._run", return_value="")
+    def test_returns_empty_when_no_tools_and_no_devnodes(self, _mock_run, _mock_which):
+        import glob as _glob
+        with patch.object(_glob, "glob", return_value=[]):
+            assert _detect_ascend() == []
+
+    @patch("regraph_agent.hardware.shutil.which", side_effect=lambda x: "/usr/bin/npu-smi" if x == "npu-smi" else None)
+    @patch("regraph_agent.hardware._run")
+    def test_parses_npu_smi_text_output(self, mock_run, _mock_which):
+        npu_smi_output = (
+            "NPU ID          : 0\n"
+            "Chip Name       : Ascend 910B\n"
+            "HBM Total Memory (MB) : 32768\n"
+            "Driver Version  : 23.0.3\n"
+            "SOC Version     : Ascend910B2\n"
+        )
+        mock_run.return_value = npu_smi_output
+        gpus = _detect_ascend()
+        assert len(gpus) == 1
+        assert gpus[0].backend == "ascend"
+        assert gpus[0].device_index == 0
+        assert gpus[0].vram_mb == 32768
+        assert gpus[0].driver == "23.0.3"
+
+    @patch("regraph_agent.hardware.shutil.which", side_effect=lambda x: "/usr/bin/npu-smi" if x == "npu-smi" else None)
+    @patch("regraph_agent.hardware._run")
+    def test_parses_multiple_npus(self, mock_run, _mock_which):
+        multi_output = (
+            "NPU ID          : 0\n"
+            "Chip Name       : Ascend 910B\n"
+            "\n"
+            "NPU ID          : 1\n"
+            "Chip Name       : Ascend 910B\n"
+        )
+        mock_run.return_value = multi_output
+        gpus = _detect_ascend()
+        assert len(gpus) == 2
+        assert gpus[0].device_index == 0
+        assert gpus[1].device_index == 1
+
+    @patch("regraph_agent.hardware.shutil.which", return_value=None)
+    @patch("regraph_agent.hardware._run", return_value="")
+    def test_detects_via_davinci_devnodes(self, _mock_run, _mock_which):
+        import glob as _glob
+        with patch.object(_glob, "glob", return_value=["/dev/davinci0", "/dev/davinci1"]):
+            gpus = _detect_ascend()
+        assert len(gpus) == 2
+        assert all(g.backend == "ascend" for g in gpus)
+        assert gpus[0].device_index == 0
+        assert gpus[1].device_index == 1
+
+    @patch("regraph_agent.hardware.shutil.which", return_value=None)
+    @patch("regraph_agent.hardware._run", return_value="")
+    def test_detects_via_torch_npu(self, _mock_run, _mock_which):
+        import glob as _glob
+        mock_npu = MagicMock()
+        mock_npu.npu.device_count.return_value = 1
+        mock_props = MagicMock()
+        mock_props.name = "Ascend 910B"
+        mock_props.total_memory = 32 * 1024 * 1024 * 1024  # 32 GB
+        mock_npu.npu.get_device_properties.return_value = mock_props
+        with patch.object(_glob, "glob", return_value=[]):
+            with patch.dict("sys.modules", {"torch_npu": mock_npu}):
+                gpus = _detect_ascend()
+        assert len(gpus) == 1
+        assert gpus[0].backend == "ascend"
+        assert gpus[0].npu_info == "torch_npu"
+
+
 # ── detect_hardware (integration) ────────────────────────────────────────────
 
 class TestDetectHardware:
