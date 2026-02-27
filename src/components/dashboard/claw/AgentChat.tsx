@@ -260,10 +260,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
   // Load or create conversation
   useEffect(() => {
-    if (!user || !agent.id) {
-      setLoadingHistory(false);
-      return;
-    }
+    if (!user || !agent.id) return;
     (async () => {
       setLoadingHistory(true);
       try {
