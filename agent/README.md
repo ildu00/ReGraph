@@ -105,13 +105,64 @@ Models are downloaded automatically from the ReGraph model registry when a task 
 
 ## Docker
 
+Multi-stage Dockerfile with automatic platform detection:
+
+| Target | Base image | GPU |
+|--------|-----------|-----|
+| `cpu` | python:3.11-slim | ❌ CPU only |
+| `nvidia` | nvidia/cuda:12.1.1-cudnn8-devel | ✅ CUDA 12.1 + vLLM |
+| `metal` | python:3.11-slim | ⚠️ Metal not in Docker — use native install |
+| `dev` | cpu + dev tools | ❌ CPU only |
+
+### Quick start (auto-detect platform)
+
 ```bash
-docker build -t regraph-agent .
+# Auto-detects NVIDIA / Apple Silicon / CPU
+chmod +x run.sh && ./run.sh --key rg_conn_xxxxx
+```
+
+### Manual build
+
+```bash
+# CPU
+docker build --target cpu -t regraph-agent:cpu .
 docker run -d \
-  --name regraph-agent \
-  --gpus all \
   -e REGRAPH_CONNECTION_KEY=rg_conn_xxxxx \
-  regraph-agent
+  -v regraph-models:/data/models \
+  regraph-agent:cpu
+
+# NVIDIA (requires nvidia-container-toolkit)
+docker build --target nvidia -t regraph-agent:nvidia .
+docker run -d --gpus all \
+  -e REGRAPH_CONNECTION_KEY=rg_conn_xxxxx \
+  -v regraph-models:/data/models \
+  regraph-agent:nvidia
+```
+
+### Docker Compose
+
+```bash
+# CPU (default)
+REGRAPH_CONNECTION_KEY=rg_conn_xxxxx docker compose up -d
+
+# NVIDIA GPU
+REGRAPH_CONNECTION_KEY=rg_conn_xxxxx docker compose --profile nvidia up -d
+```
+
+### BuildKit bake (all targets)
+
+```bash
+docker buildx bake all
+```
+
+### Apple Silicon (Metal)
+
+Metal/MPS GPU acceleration is **not available inside Docker containers**.
+For full GPU performance on Apple Silicon, install natively:
+
+```bash
+pip install "regraph-agent[metal]"
+regraph-agent start --key rg_conn_xxxxx
 ```
 
 ## License

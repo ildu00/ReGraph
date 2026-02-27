@@ -1,0 +1,57 @@
+# .dockerignore — ReGraph Agent
+# Excludes files not needed in Docker build context
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+.tox/
+.venv/
+venv/
+env/
+
+# Model cache (can be huge — mounted as volume at runtime)
+.regraph/
+models/
+*.gguf
+*.bin
+*.safetensors
+*.onnx
+*.pt
+*.pth
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI / docs
+.github/
+*.md
+docs/
+
+# Test artifacts
+.pytest_cache/
+htmlcov/
+.coverage
+coverage.xml
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker files themselves (avoid layer confusion in multi-stage)
+docker-compose.override.yml
