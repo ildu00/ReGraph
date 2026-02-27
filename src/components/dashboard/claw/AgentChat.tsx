@@ -549,7 +549,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                       className="h-6 px-2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                       onClick={() => copyText(msg.id, msg.content!)}
                     >
-                      {copiedId === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                      {copiedId === msg.id ? <Check className="h-3 w-3 text-primary" /> : <Copy className="h-3 w-3" />}
                     </Button>
                   </div>
                 )}
