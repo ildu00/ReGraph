@@ -1,4 +1,5 @@
 // Blog images
+import regraphHuggingfaceImg from "@/assets/blog/regraph-huggingface.jpg";
 import decentralizedAiImg from "@/assets/blog/decentralized-ai.jpg";
 import gpt5ReasoningImg from "@/assets/blog/gpt5-reasoning.jpg";
 import geminiMultimodalImg from "@/assets/blog/gemini-multimodal.jpg";
