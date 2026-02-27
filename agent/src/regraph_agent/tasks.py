@@ -180,6 +180,12 @@ class TaskExecutor:
         except ImportError:
             pass
 
+        # Ascend NPU metrics
+        if self.gpu_mode == "ascend":
+            npu_metrics = _collect_ascend_metrics()
+            if npu_metrics:
+                result["npus"] = npu_metrics
+
         # MPS (Apple Silicon)
         try:
             import torch  # type: ignore
