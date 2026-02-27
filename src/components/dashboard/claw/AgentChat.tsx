@@ -574,20 +574,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
 function ToolCallMessage({ msg }: { msg: Message }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
-  const isStreaming = msg.isStreaming;
+  const isRunning = msg.isStreaming;
 
   return (
     <div className="flex gap-3 items-start">
-      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-amber-500/10 border border-amber-500/20">
-        <Wrench className="h-3.5 w-3.5 text-amber-500" />
+      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-secondary border border-border">
+        <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
       </div>
       <div className="flex-1">
         <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-          {isLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
+          {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
           <span className="font-mono">{msg.tool_name}</span>
-          {isLoading ? <span>Running...</span> : <span className="text-green-500">Done</span>}
+          {isRunning ? <span>Running...</span> : <span className="text-green-500">Done</span>}
         </div>
-        <Card className="bg-amber-500/5 border-amber-500/20 p-3 text-xs font-mono">
+        <Card className="bg-secondary/50 border-border p-3 text-xs font-mono">
           <div className="text-muted-foreground mb-1">Input:</div>
           <pre className="text-foreground whitespace-pre-wrap break-all">
             {JSON.stringify(msg.tool_input, null, 2)}
@@ -595,12 +595,13 @@ function ToolCallMessage({ msg }: { msg: Message }) {
           {msg.tool_result && (
             <>
               <div className="text-muted-foreground mt-2 mb-1">Result:</div>
-              <pre className="text-foreground whitespace-pre-wrap break-all">
-                {msg.tool_result?.image_url
-                  ? <img src={msg.tool_result.image_url} alt="Generated" className="max-w-xs rounded mt-1" />
-                  : JSON.stringify(msg.tool_result, null, 2)
-                }
-              </pre>
+              {msg.tool_result?.image_url ? (
+                <img src={msg.tool_result.image_url} alt="Generated" className="max-w-xs rounded mt-1" />
+              ) : (
+                <pre className="text-foreground whitespace-pre-wrap break-all">
+                  {JSON.stringify(msg.tool_result, null, 2)}
+                </pre>
+              )}
             </>
           )}
         </Card>
