@@ -763,6 +763,13 @@ def load_model(model_id: str, gpu_mode: str = "disabled") -> ModelHandle:
             elif gpu_mode == "metal":
                 import torch  # noqa: F401
                 device = "mps"
+            elif gpu_mode == "ascend":
+                try:
+                    import torch_npu  # noqa: F401
+                    device_id = int(os.environ.get("ASCEND_DEVICE_ID", "0"))
+                    device = f"npu:{device_id}"
+                except ImportError:
+                    pass
             return ModelHandle(SentenceTransformerHandle(model_id, device), model_id)
         except ImportError:
             pass
