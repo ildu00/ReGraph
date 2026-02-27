@@ -32,6 +32,7 @@ import {
   Shield,
   MessageSquare,
   Pickaxe,
+  Workflow,
 } from "lucide-react";
 import ApiKeysTab from "@/components/dashboard/ApiKeysTab";
 import UsageTab from "@/components/dashboard/UsageTab";
@@ -41,6 +42,7 @@ import ProviderTab from "@/components/dashboard/ProviderTab";
 import WalletTab from "@/components/dashboard/WalletTab";
 import ChatTab from "@/components/dashboard/ChatTab";
 import MiningTab from "@/components/dashboard/MiningTab";
+import ClawTab from "@/components/dashboard/ClawTab";
 
 const Dashboard = () => {
   return (
@@ -67,7 +69,7 @@ const DashboardInner = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat"].includes(tabParam)) {
+    if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat", "claw"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
     const stripeStatus = searchParams.get("stripe");
@@ -98,6 +100,7 @@ const DashboardInner = () => {
     () => [
       { value: "overview", label: "Overview", icon: BarChart3 },
       { value: "chat", label: "AI Chat", icon: MessageSquare },
+      { value: "claw", label: "Claw", icon: Workflow },
       { value: "wallet", label: "Wallet", icon: Wallet },
       { value: "api-keys", label: "API Keys", icon: Key },
       { value: "provider", label: "Provider", icon: Server },
@@ -226,7 +229,7 @@ const DashboardInner = () => {
                 <Icon className="h-4 w-4" />
                 <span>{item.label}</span>
                 {item.value === "mining" && miningStatus === "mining" && (
-                  <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                  <span className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                 )}
               </button>
             );
@@ -288,7 +291,7 @@ const DashboardInner = () => {
                       <Icon className="h-4 w-4" />
                       <span>{item.label}</span>
                       {item.value === "mining" && miningStatus === "mining" && (
-                        <span className="ml-auto h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                        <span className="ml-auto h-2 w-2 rounded-full bg-primary animate-pulse" />
                       )}
                     </button>
                   );
@@ -330,6 +333,9 @@ const DashboardInner = () => {
             <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2">
               <MessageSquare className="h-4 w-4" />
             </TabsTrigger>
+            <TabsTrigger value="claw" className="data-[state=active]:bg-secondary px-2">
+              <Workflow className="h-4 w-4" />
+            </TabsTrigger>
             <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2">
               <Wallet className="h-4 w-4" />
             </TabsTrigger>
@@ -342,7 +348,7 @@ const DashboardInner = () => {
             <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 relative">
               <Pickaxe className="h-4 w-4" />
               {miningStatus === "mining" && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
               )}
             </TabsTrigger>
             <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2">
@@ -367,6 +373,10 @@ const DashboardInner = () => {
               : ''
           }>
             <ChatTab />
+          </TabsContent>
+
+          <TabsContent value="claw" className="h-full">
+            <ClawTab />
           </TabsContent>
 
           <TabsContent value="api-keys">
