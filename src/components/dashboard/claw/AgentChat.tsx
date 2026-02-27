@@ -73,9 +73,22 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
       }
     }
     case "code_interpreter": {
-      // Send code to inference for execution context
       const code = input?.code || input?.query || "";
-      return { output: `Code received (${code.length} chars). Code execution sandbox not yet connected in MVP.` };
+      const language = input?.language || "javascript";
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claw-code-interpreter`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ code, language }),
+          }
+        );
+        const data = await res.json();
+        return data.error ? { error: data.error } : { output: data.output };
+      } catch {
+        return { error: "Code execution failed." };
+      }
     }
     case "image_generation": {
       const prompt = input?.prompt || input?.query || "";
@@ -655,6 +668,16 @@ function ToolCallMessage({ msg }: { msg: Message }) {
             );
           })}
         </div>
+      );
+    }
+
+    // Code interpreter
+    if (msg.tool_name === "code_interpreter") {
+      const out = msg.tool_result?.output || msg.tool_result?.error;
+      return (
+        <pre className="text-foreground whitespace-pre-wrap break-all mt-1 text-xs leading-relaxed">
+          {out || "(no output)"}
+        </pre>
       );
     }
 
