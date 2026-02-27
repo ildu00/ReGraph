@@ -20,23 +20,44 @@ interface InferenceRequest {
   stream?: boolean;
 }
 
-/** Extract authenticated user_id from the JWT in the Authorization header */
+/** Extract authenticated user_id from JWT or API key in the Authorization header */
 async function extractUserId(req: Request): Promise<string | null> {
   const authHeader = req.headers.get("authorization");
   if (!authHeader) return null;
   const token = authHeader.replace("Bearer ", "");
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
   if (token === anonKey) return null;
+
+  const supabase = createClient(
+    Deno.env.get("SUPABASE_URL")!,
+    Deno.env.get("SUPABASE_ANON_KEY")!
+  );
+
+  // Try JWT first
   try {
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!
-    );
     const { data } = await supabase.auth.getUser(token);
-    return data?.user?.id || null;
-  } catch {
-    return null;
+    if (data?.user?.id) return data.user.id;
+  } catch { /* not a JWT */ }
+
+  // Try API key lookup (rg- prefixed keys stored in api_keys table)
+  if (token.startsWith("rg-")) {
+    try {
+      const adminClient = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      );
+      const prefix = token.substring(0, 12); // first 12 chars as key_prefix
+      const { data: keyRow } = await adminClient
+        .from("api_keys")
+        .select("user_id")
+        .eq("key_prefix", prefix)
+        .eq("is_active", true)
+        .single();
+      if (keyRow?.user_id) return keyRow.user_id;
+    } catch { /* no match */ }
   }
+
+  return null;
 }
 
 /** Process billing: log usage + deduct balance for authenticated users */
