@@ -354,7 +354,7 @@
     box-shadow: var(--glow-subtle);
   }
 
-  .bg-grid {
+  .dark .bg-grid {
     background-image: 
       linear-gradient(hsl(0 0% 15% / 0.3) 1px, transparent 1px),
       linear-gradient(90deg, hsl(0 0% 15% / 0.3) 1px, transparent 1px);
