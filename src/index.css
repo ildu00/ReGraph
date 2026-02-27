@@ -70,6 +70,51 @@
     --background: 0 0% 3%;
     --foreground: 0 0% 98%;
   }
+
+  .light {
+    --background: 0 0% 98%;
+    --foreground: 0 0% 8%;
+
+    --card: 0 0% 95%;
+    --card-foreground: 0 0% 8%;
+
+    --popover: 0 0% 97%;
+    --popover-foreground: 0 0% 8%;
+
+    --primary: 270 80% 55%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 88%;
+    --secondary-foreground: 0 0% 8%;
+
+    --muted: 0 0% 85%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 280 70% 50%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 82%;
+    --input: 0 0% 90%;
+    --ring: 270 80% 55%;
+
+    --sidebar-background: 0 0% 93%;
+    --sidebar-foreground: 0 0% 8%;
+    --sidebar-primary: 270 80% 55%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 270 80% 55%;
+    --sidebar-accent-foreground: 0 0% 98%;
+    --sidebar-border: 0 0% 82%;
+    --sidebar-ring: 270 80% 55%;
+
+    --glow-primary: 0 0 40px hsl(270 80% 55% / 0.2);
+    --glow-subtle: 0 0 60px hsl(270 80% 55% / 0.08);
+    --gradient-dark: linear-gradient(180deg, hsl(0 0% 95%) 0%, hsl(0 0% 98%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 93%) 0%, hsl(0 0% 96%) 100%);
+    --gradient-glow: radial-gradient(ellipse at center, hsl(270 80% 55% / 0.04) 0%, transparent 70%);
+  }
 }
 
 @layer base {
