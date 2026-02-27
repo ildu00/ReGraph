@@ -3,11 +3,13 @@
 # Profiles:
 #   cpu     — CPU-only mode (default)
 #   nvidia  — NVIDIA GPU via nvidia-container-toolkit
+#   ascend  — Huawei Ascend NPU via ascend-docker-runtime
 #   dev     — Local development with hot reload
 #
 # Usage:
 #   docker compose up                          # CPU mode
 #   docker compose --profile nvidia up        # NVIDIA GPU
+#   docker compose --profile ascend up        # Huawei Ascend NPU
 #   docker compose --profile dev up           # Dev mode
 #
 # Required env:
