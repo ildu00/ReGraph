@@ -141,7 +141,37 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
       }
     }
     case "document_reader": {
-      return { content: "Document reading requires file upload. Please attach a file in your message." };
+      const attachedFiles: File[] = (input as any)?.__attachedFiles || [];
+      const fileToRead = attachedFiles.find(f => !f.type.startsWith("image/")) || attachedFiles[0];
+      if (!fileToRead) return { content: "No file attached. Please attach a document file in your message." };
+      try {
+        const text = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          if (fileToRead.type === "application/pdf" || fileToRead.name.endsWith(".pdf")) {
+            // For PDFs send to edge function for parsing
+            resolve("__PDF__");
+          } else {
+            reader.readAsText(fileToRead);
+          }
+        });
+        if (text === "__PDF__") {
+          // Upload PDF to edge function
+          const formData = new FormData();
+          formData.append("file", fileToRead);
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claw-document-reader`,
+            { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: formData }
+          );
+          const data = await res.json();
+          return { content: data.content || data.error || "Could not parse PDF." };
+        }
+        const preview = text.slice(0, 8000);
+        return { content: `File: ${fileToRead.name}\n\n${preview}${text.length > 8000 ? "\n\n[Truncated — showing first 8000 chars]" : ""}` };
+      } catch {
+        return { error: "Could not read file." };
+      }
     }
     default:
       return { error: `Unknown tool: ${name}` };
