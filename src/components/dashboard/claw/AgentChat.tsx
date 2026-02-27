@@ -378,7 +378,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!assistantMsg) break;
 
         // Tool calls?
-        if (assistantMsg.tool_calls?.length > 0 && (choice?.finish_reason === "tool_calls" || !choice)) {
+        if (assistantMsg.tool_calls?.length > 0) {
           // If model returned meaningful thinking content, show it
           const thinkingContent = assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
           if (thinkingContent) {
