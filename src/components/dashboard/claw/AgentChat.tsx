@@ -541,8 +541,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
-              <div className={`group max-w-[80%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`rounded-xl px-4 py-3 text-sm ${
+              <div className={`group max-w-[80%] min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 overflow-hidden ${
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
@@ -550,7 +550,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : msg.role === "assistant" ? (
-                    <div className="markdown-response text-sm">
+                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -675,7 +675,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
     if (msg.tool_name === "code_interpreter") {
       const out = msg.tool_result?.output || msg.tool_result?.error;
       return (
-        <pre className="text-foreground whitespace-pre-wrap break-all mt-1 text-xs leading-relaxed">
+        <pre className="text-foreground whitespace-pre overflow-x-auto mt-1 text-xs leading-relaxed max-w-full">
           {out || "(no output)"}
         </pre>
       );
@@ -692,7 +692,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Default
     return (
-      <pre className="text-foreground whitespace-pre-wrap break-all mt-1">
+      <pre className="text-foreground whitespace-pre overflow-x-auto mt-1 max-w-full">
         {typeof msg.tool_result === "string" ? msg.tool_result : JSON.stringify(msg.tool_result, null, 2)}
       </pre>
     );
@@ -720,7 +720,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
           }
         </div>
         {!isRunning && msg.tool_result && (
-          <Card className="bg-muted/30 border-border/50 p-2.5 text-xs">
+          <Card className="bg-muted/30 border-border/50 p-2.5 text-xs overflow-hidden">
             {renderResult()}
           </Card>
         )}

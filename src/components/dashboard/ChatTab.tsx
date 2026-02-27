@@ -460,7 +460,7 @@ const ChatTab = () => {
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-xl px-4 py-3 ${
+                className={`max-w-[80%] min-w-0 overflow-hidden rounded-xl px-4 py-3 ${
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
@@ -488,7 +488,7 @@ const ChatTab = () => {
 
                 {/* Content */}
                 {msg.role === "assistant" ? (
-                  <div className="markdown-response text-sm">
+                  <div className="markdown-response text-sm min-w-0 overflow-hidden">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
