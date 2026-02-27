@@ -452,7 +452,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0 md:h-[calc(100vh-12rem)]">
+    <div className="flex flex-col h-[calc(100dvh-10rem)] md:h-[calc(100vh-12rem)]">
       {/* Header */}
       <div className="shrink-0 flex items-center gap-2 py-2 mb-2">
         <Button variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={onBack} className="text-muted-foreground shrink-0">
