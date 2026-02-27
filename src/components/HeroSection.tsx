@@ -116,7 +116,7 @@ const HeroSection = () => {
   return (
     <section className="relative min-h-[85vh] flex items-center justify-center overflow-hidden">
       {/* Background effects */}
-      <div className="absolute inset-0 bg-grid opacity-30" />
+      <div className="absolute inset-0 bg-grid opacity-30 hidden dark:block" />
       <div className="absolute inset-0 bg-gradient-radial" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
       {/* Soft fade to background at bottom — visible in light theme */}
