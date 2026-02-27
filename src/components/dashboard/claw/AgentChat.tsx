@@ -507,8 +507,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           </div>
         )}
 
+        {isLoading && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex gap-3 justify-start">
+            <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+            <div className="bg-secondary/70 rounded-xl px-4 py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        )}
+
         {messages.map((msg) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
+          if (msg.role === "assistant" && !msg.content) return null;
           return (
             <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -605,35 +617,90 @@ function ToolCallMessage({ msg }: { msg: Message }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
   const isRunning = msg.isStreaming;
 
-  return (
-    <div className="flex gap-3 items-start">
-      <div className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-secondary border border-border">
-        <Wrench className="h-3.5 w-3.5 text-muted-foreground" />
-      </div>
-      <div className="flex-1">
-        <div className="text-xs text-muted-foreground mb-1 flex items-center gap-1.5">
-          {isRunning ? <Loader2 className="h-3 w-3 animate-spin" /> : <Icon className="h-3 w-3" />}
-          <span className="font-mono">{msg.tool_name}</span>
-          {isRunning ? <span>Running...</span> : <span className="text-primary">Done</span>}
+  const toolLabels: Record<string, string> = {
+    web_search: "Web Search",
+    calculator: "Calculator",
+    code_interpreter: "Code Interpreter",
+    image_generation: "Image Generation",
+    document_reader: "Document Reader",
+  };
+
+  const renderResult = () => {
+    if (!msg.tool_result) return null;
+
+    // Image generation
+    if (msg.tool_result?.image_url) {
+      return <img src={msg.tool_result.image_url} alt="Generated" className="max-w-xs rounded mt-1" />;
+    }
+
+    // Web search — pretty render
+    if (msg.tool_name === "web_search") {
+      const resultsText: string = msg.tool_result?.results || msg.tool_result?.error || "";
+      if (!resultsText) return null;
+      // Parse markdown-like results: **Title**\nURL\nDesc
+      const blocks = resultsText.split("\n\n").filter(Boolean);
+      return (
+        <div className="space-y-2 mt-1">
+          {blocks.map((block, i) => {
+            const lines = block.split("\n");
+            const title = lines[0]?.replace(/^\*\*|\*\*$/g, "");
+            const url = lines[1];
+            const desc = lines.slice(2).join(" ");
+            return (
+              <div key={i} className="border border-border/50 rounded p-2 bg-background/40">
+                <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary font-medium hover:underline text-xs block truncate">{title}</a>
+                <p className="text-muted-foreground text-xs truncate">{url}</p>
+                {desc && <p className="text-foreground/80 text-xs mt-0.5 line-clamp-2">{desc}</p>}
+              </div>
+            );
+          })}
         </div>
-        <Card className="bg-secondary/50 border-border p-3 text-xs font-mono">
-          <div className="text-muted-foreground mb-1">Input:</div>
-          <pre className="text-foreground whitespace-pre-wrap break-all">
-            {JSON.stringify(msg.tool_input, null, 2)}
-          </pre>
-          {msg.tool_result && (
-            <>
-              <div className="text-muted-foreground mt-2 mb-1">Result:</div>
-              {msg.tool_result?.image_url ? (
-                <img src={msg.tool_result.image_url} alt="Generated" className="max-w-xs rounded mt-1" />
-              ) : (
-                <pre className="text-foreground whitespace-pre-wrap break-all">
-                  {JSON.stringify(msg.tool_result, null, 2)}
-                </pre>
-              )}
-            </>
-          )}
-        </Card>
+      );
+    }
+
+    // Calculator
+    if (msg.tool_name === "calculator") {
+      return (
+        <div className="mt-1 text-foreground font-mono text-sm">
+          = {msg.tool_result?.result ?? msg.tool_result?.error}
+        </div>
+      );
+    }
+
+    // Default
+    return (
+      <pre className="text-foreground whitespace-pre-wrap break-all mt-1">
+        {typeof msg.tool_result === "string" ? msg.tool_result : JSON.stringify(msg.tool_result, null, 2)}
+      </pre>
+    );
+  };
+
+  const queryText = msg.tool_name === "web_search"
+    ? msg.tool_input?.query
+    : msg.tool_name === "calculator"
+    ? msg.tool_input?.expression
+    : msg.tool_input?.prompt || msg.tool_input?.code || JSON.stringify(msg.tool_input);
+
+  return (
+    <div className="flex gap-3 items-start pl-1">
+      <div className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center bg-muted border border-border">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <div className="text-xs text-muted-foreground mb-1.5 flex items-center gap-1.5">
+          {isRunning ? <Loader2 className="h-3 w-3 animate-spin text-primary" /> : <Icon className="h-3 w-3 text-primary" />}
+          <span className="font-medium text-foreground/70">{toolLabels[msg.tool_name || ""] || msg.tool_name}</span>
+          {queryText && <span className="text-muted-foreground truncate max-w-[200px]">— {queryText}</span>}
+          {isRunning
+            ? <span className="text-xs text-muted-foreground ml-auto animate-pulse">Running...</span>
+            : <span className="text-xs text-primary ml-auto">✓ Done</span>
+          }
+        </div>
+        {!isRunning && msg.tool_result && (
+          <Card className="bg-muted/30 border-border/50 p-2.5 text-xs">
+            {renderResult()}
+          </Card>
+        )}
       </div>
     </div>
   );
