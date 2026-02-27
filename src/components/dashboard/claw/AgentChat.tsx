@@ -671,6 +671,16 @@ function ToolCallMessage({ msg }: { msg: Message }) {
       );
     }
 
+    // Code interpreter
+    if (msg.tool_name === "code_interpreter") {
+      const out = msg.tool_result?.output || msg.tool_result?.error;
+      return (
+        <pre className="text-foreground whitespace-pre-wrap break-all mt-1 text-xs leading-relaxed">
+          {out || "(no output)"}
+        </pre>
+      );
+    }
+
     // Calculator
     if (msg.tool_name === "calculator") {
       return (
