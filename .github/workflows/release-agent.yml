@@ -381,5 +381,6 @@ ${SECTION}
           echo "| Pre-release | \`${{ needs.prepare.outputs.is_prerelease }}\` |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Release | ${{ needs.release.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Docker trigger | ${{ needs.trigger-docker.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| CHANGELOG.md   | ${{ needs.update-changelog.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Release URL:** https://github.com/${{ github.repository }}/releases/tag/${{ needs.prepare.outputs.tag }}" >> "$GITHUB_STEP_SUMMARY"
