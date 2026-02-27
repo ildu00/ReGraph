@@ -77,8 +77,36 @@ Deno.serve(async (req) => {
         error = 'Invalid JSON: ' + e.message;
       }
     } else {
-      // For other languages, return helpful message
-      output = `Language "${language}" is not supported in this sandbox. Supported: JavaScript, TypeScript, JSON.`;
+      // Try Piston API for other languages (bash, ruby, go, rust, etc.)
+      const pistonLangMap: Record<string, { language: string; version: string }> = {
+        bash: { language: 'bash', version: '5.2.0' },
+        sh: { language: 'bash', version: '5.2.0' },
+        ruby: { language: 'ruby', version: '3.0.1' },
+        go: { language: 'go', version: '1.16.2' },
+        rust: { language: 'rust', version: '1.50.0' },
+        java: { language: 'java', version: '15.0.2' },
+        cpp: { language: 'c++', version: '10.2.0' },
+        c: { language: 'c', version: '10.2.0' },
+        php: { language: 'php', version: '8.0.2' },
+      };
+      const pistonLang = pistonLangMap[lang];
+      if (pistonLang) {
+        try {
+          const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ language: pistonLang.language, version: pistonLang.version, files: [{ content: code }] }),
+          });
+          const pistonData = await pistonRes.json();
+          const run = pistonData?.run;
+          if (run?.stderr) error = run.stderr;
+          else output = run?.stdout || '(no output)';
+        } catch (e: any) {
+          error = `Execution failed: ${e instanceof Error ? e.message : String(e)}`;
+        }
+      } else {
+        output = `Language "${language}" is not supported. Supported: JavaScript, TypeScript, Python, Bash, Ruby, Go, Rust, Java, C, C++, PHP, JSON.`;
+      }
     }
 
     return new Response(
