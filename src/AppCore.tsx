@@ -54,6 +54,7 @@ const queryClient = new QueryClient({
 const AppCore = () => {
   return (
     <HelmetProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
