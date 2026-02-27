@@ -187,6 +187,15 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               {!loading && user ? (
                 <Button size="sm" className="glow-primary" asChild>
                   <Link to="/dashboard">
