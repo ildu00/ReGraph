@@ -119,8 +119,8 @@ const HeroSection = () => {
       <div className="absolute inset-0 bg-grid opacity-30" />
       <div className="absolute inset-0 bg-gradient-radial" />
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[800px] rounded-full bg-primary/5 blur-3xl" />
-      {/* Light theme: soft fade to background at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-background to-transparent light:block dark:hidden pointer-events-none" />
+      {/* Soft fade to background at bottom — visible in light theme */}
+      <div className="absolute bottom-0 left-0 right-0 h-40 pointer-events-none hero-bottom-fade" />
 
       <div className="container relative z-10 px-4 py-20">
         <div className="text-center max-w-5xl mx-auto">
