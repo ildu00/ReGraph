@@ -366,10 +366,17 @@ def _detect_directml() -> list[GpuInfo]:
 # ── NPU detection ─────────────────────────────────────────────────────────────
 
 def _detect_npu() -> bool:
-    """Detect NPU presence (Qualcomm Hexagon, Intel NPU, Apple Neural Engine)."""
-    if platform.system() == "Darwin" and platform.machine() == "arm64":
-        # Apple Silicon always has ANE
+    """Detect NPU presence (Qualcomm Hexagon, Intel NPU, Apple Neural Engine, Huawei Ascend)."""
+    # Huawei Ascend / CANN
+    if shutil.which("npu-smi") or shutil.which("ascend-dmi"):
         return True
+    import glob as _glob
+    if _glob.glob("/dev/davinci[0-9]*"):
+        return True
+    # Apple Silicon ANE
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        return True
+    # Windows NPU (Intel/Qualcomm)
     if platform.system() == "Windows":
         try:
             out = _run(["powershell", "-Command",
