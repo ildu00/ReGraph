@@ -615,6 +615,7 @@ def _gpu_layers_for_mode(gpu_mode: str) -> int:
     """Return n_gpu_layers for llama-cpp based on GPU mode."""
     if gpu_mode in ("nvidia", "metal", "rocm"):
         return -1   # offload all layers
+    # Ascend NPU: llama.cpp has no CANN backend yet — fall back to CPU layers
     return 0        # CPU only
 
 
