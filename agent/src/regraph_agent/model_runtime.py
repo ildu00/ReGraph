@@ -1,10 +1,11 @@
 """Model runtime abstraction — pluggable backends for inference and training.
 
 Backend selection priority:
-1. NVIDIA GPU  → llama-cpp-python (CUDA) or vLLM
+1. NVIDIA GPU    → llama-cpp-python (CUDA) or vLLM
 2. Apple Silicon → llama-cpp-python (Metal)
-3. ROCm        → llama-cpp-python (ROCm)
-4. CPU fallback → llama-cpp-python (CPU) or ctransformers
+3. ROCm          → llama-cpp-python (ROCm)
+4. Ascend NPU    → torch_npu (PyTorch-NPU) → transformers
+5. CPU fallback  → llama-cpp-python (CPU) or ctransformers
 """
 
 from __future__ import annotations
