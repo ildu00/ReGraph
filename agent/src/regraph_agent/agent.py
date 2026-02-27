@@ -91,12 +91,38 @@ class Agent:
     # ── Heartbeat ─────────────────────────────────────────
     def _heartbeat_loop(self) -> None:
         interval = self.config.provider.heartbeat_interval_sec
+        gpu_mode = self.config.compute.gpu_mode
+
         while self._running and not self._stop_event.is_set():
             try:
                 metrics = collect_metrics()
+
+                # Attach live Ascend NPU metrics so the platform gets fresh
+                # utilization data every heartbeat without waiting for health_check.
+                if gpu_mode == "ascend":
+                    from regraph_agent.tasks import _collect_ascend_metrics
+                    npu_metrics = _collect_ascend_metrics()
+                    if npu_metrics:
+                        metrics["npus"] = npu_metrics
+                        # Convenience aggregate: avg utilisation across all NPUs
+                        util_values = [
+                            m["utilization_percent"]
+                            for m in npu_metrics
+                            if "utilization_percent" in m
+                        ]
+                        if util_values:
+                            metrics["npu_utilization_avg_percent"] = round(
+                                sum(util_values) / len(util_values), 1
+                            )
+
                 self.api.heartbeat(self.device_id, metrics)
-                logger.debug("Heartbeat sent (cpu=%.1f%%, mem=%.1f%%)",
-                             metrics["cpu_percent"], metrics["memory_percent"])
+                logger.debug(
+                    "Heartbeat sent (cpu=%.1f%%, mem=%.1f%%%s)",
+                    metrics["cpu_percent"],
+                    metrics["memory_percent"],
+                    f", npu_avg={metrics['npu_utilization_avg_percent']}%"
+                    if "npu_utilization_avg_percent" in metrics else "",
+                )
             except APIError as e:
                 logger.warning("Heartbeat failed: %s", e)
             except Exception as e:
