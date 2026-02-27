@@ -100,6 +100,7 @@ const DashboardInner = () => {
     () => [
       { value: "overview", label: "Overview", icon: BarChart3 },
       { value: "chat", label: "AI Chat", icon: MessageSquare },
+      { value: "claw", label: "Claw", icon: Workflow },
       { value: "wallet", label: "Wallet", icon: Wallet },
       { value: "api-keys", label: "API Keys", icon: Key },
       { value: "provider", label: "Provider", icon: Server },
