@@ -303,8 +303,21 @@
     border-radius: 0.5rem;
     padding: 1rem 1.25rem;
     overflow-x: auto;
+    overflow-y: hidden;
     font-size: 0.875rem;
     line-height: 1.6;
+    max-width: 100%;
+    min-width: 0;
+  }
+
+  .markdown-response pre code {
+    white-space: pre;
+  }
+
+  .markdown-response table {
+    display: block;
+    overflow-x: auto;
+    max-width: 100%;
   }
 
   .markdown-response pre code {

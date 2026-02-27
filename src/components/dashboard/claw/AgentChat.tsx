@@ -535,14 +535,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
           if (msg.role === "assistant" && !msg.content) return null;
           return (
-            <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+            <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
                 <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm">
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
-              <div className={`group max-w-[80%] min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 overflow-hidden ${
+              <div className={`group min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end max-w-[80%]" : "items-start flex-1"}`}>
+                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 w-full ${
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
