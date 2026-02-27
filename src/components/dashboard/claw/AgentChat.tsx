@@ -452,38 +452,41 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   };
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col flex-1 min-h-0 md:h-[calc(100vh-12rem)]">
       {/* Header */}
-      <div className="shrink-0 flex items-center gap-3 pb-4 border-b border-border">
-        <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
+      <div className="shrink-0 flex items-center gap-2 py-2 mb-2">
+        <Button variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={onBack} className="text-muted-foreground shrink-0">
           <ArrowLeft className="h-4 w-4 mr-1" />
-          Library
+          <span className="hidden sm:inline">Library</span>
         </Button>
-        <span className="text-muted-foreground">|</span>
-        <span className="text-2xl">{agent.emoji}</span>
-        <div>
-          <div className="font-semibold">{agent.name}</div>
-          <div className="text-xs text-muted-foreground">{agent.model_id}</div>
+        <span className="text-muted-foreground hidden sm:block">|</span>
+        <span className="text-xl shrink-0">{agent.emoji}</span>
+        <div className="min-w-0">
+          <div className="font-semibold truncate">{agent.name}</div>
+          <div className="text-xs text-muted-foreground truncate hidden sm:block">{agent.model_id}</div>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          {enabledTools.map((t) => {
+        <div className="ml-auto flex items-center gap-1.5 shrink-0">
+          {enabledTools.slice(0, 3).map((t) => {
             const Icon = t.icon;
             return (
-              <Badge key={t.id} variant="secondary" className="text-xs gap-1 hidden sm:flex">
+              <Badge key={t.id} variant="secondary" className="text-xs gap-1 hidden md:flex">
                 <Icon className="h-2.5 w-2.5" />
                 {t.label}
               </Badge>
             );
           })}
-          <Button variant="ghost" size="sm" onClick={startNewConversation} className="text-muted-foreground">
-            <Plus className="h-4 w-4 mr-1" />
-            New
+          {enabledTools.length > 3 && (
+            <Badge variant="secondary" className="text-xs hidden md:flex">+{enabledTools.length - 3}</Badge>
+          )}
+          <Button variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={startNewConversation} className="text-muted-foreground h-8 px-2">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline ml-1">New</span>
           </Button>
         </div>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-4 min-h-0">
+      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 ${messages.length > 0 || loadingHistory ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
         {loadingHistory && (
           <div className="flex justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
@@ -491,11 +494,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         )}
 
         {!loadingHistory && messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <span className="text-5xl mb-3">{agent.emoji}</span>
-            <div className="font-semibold text-lg mb-1">{agent.name}</div>
-            <div className="text-sm text-muted-foreground max-w-xs">
-              {agent.description || "How can I help you today?"}
+          <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3 -mt-4">
+            <span className="text-5xl opacity-60">{agent.emoji}</span>
+            <div>
+              <p className="text-lg font-medium mb-1">{agent.name}</p>
+              <p className="text-sm max-w-md">{agent.description || "How can I help you today?"}</p>
             </div>
           </div>
         )}
@@ -503,25 +506,22 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         {messages.map((msg) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
           return (
-            <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}>
-              <div className={`shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm ${
-                msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-secondary"
-              }`}>
-                {msg.role === "user" ? <User className="h-4 w-4" /> : <span>{agent.emoji}</span>}
-              </div>
-              <div className={`group max-w-[80%] ${msg.role === "user" ? "items-end" : "items-start"} flex flex-col gap-1`}>
-                <Card className={`px-4 py-3 text-sm ${
+            <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+              {msg.role === "assistant" && (
+                <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-sm">
+                  <Bot className="h-4 w-4 text-primary" />
+                </div>
+              )}
+              <div className={`group max-w-[80%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                <div className={`rounded-xl px-4 py-3 text-sm ${
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground border-primary"
-                    : "bg-card border-border"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-secondary/70"
                 }`}>
                   {msg.isStreaming && !msg.content ? (
-                    <span className="flex gap-1 items-center text-muted-foreground">
-                      <Loader2 className="h-3 w-3 animate-spin" />
-                      <span className="text-xs">Thinking...</span>
-                    </span>
-                  ) : (
-                    <div className="prose prose-sm dark:prose-invert max-w-none break-words">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : msg.role === "assistant" ? (
+                    <div className="markdown-response text-sm">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
@@ -531,53 +531,67 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                             const lang = className?.replace("language-", "") || "";
                             return <CodeBlock code={String(children).replace(/\n$/, "")} language={lang} />;
                           },
+                          pre({ children }: any) { return <>{children}</>; },
                         }}
                       >
                         {msg.content || ""}
                       </ReactMarkdown>
                     </div>
+                  ) : (
+                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
-                </Card>
+                </div>
                 {msg.role === "assistant" && msg.content && (
-                  <button
-                    onClick={() => copyText(msg.id, msg.content!)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground p-1"
-                  >
-                    {copiedId === msg.id ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-                  </button>
+                  <div className="flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => copyText(msg.id, msg.content!)}
+                    >
+                      {copiedId === msg.id ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                    </Button>
+                  </div>
                 )}
               </div>
+              {msg.role === "user" && (
+                <div className="shrink-0 h-8 w-8 rounded-full bg-secondary flex items-center justify-center">
+                  <User className="h-4 w-4 text-muted-foreground" />
+                </div>
+              )}
             </div>
           );
         })}
         <div ref={messagesEndRef} />
-      </div>
+      </Card>
 
       {/* Input */}
-      <div className="shrink-0 pt-4 border-t border-border">
-        <div className="flex gap-2 items-end">
-          <Textarea
-            ref={textareaRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message ${agent.name}...`}
-            className="min-h-[44px] max-h-32 resize-none"
-            rows={1}
-            disabled={isLoading}
-          />
-          <Button
-            size="icon"
-            onClick={handleSend}
-            disabled={isLoading || !input.trim()}
-            onMouseDown={(e) => e.preventDefault()}
-          >
-            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
-        </div>
-        <p className="text-xs text-muted-foreground mt-2 text-center">
-          Enter to send · Shift+Enter for new line
-        </p>
+      <div className="flex gap-2 items-end shrink-0 pb-2">
+        <Textarea
+          ref={textareaRef}
+          value={input}
+          onChange={(e) => {
+            setInput(e.target.value);
+            const el = e.target;
+            el.style.height = "auto";
+            el.style.height = Math.min(el.scrollHeight, 128) + "px";
+          }}
+          onKeyDown={handleKeyDown}
+          placeholder={`Message ${agent.name}...`}
+          className="min-h-[40px] max-h-32 resize-none py-2 leading-5"
+          rows={1}
+          style={{ height: "40px" }}
+          disabled={isLoading}
+        />
+        <Button
+          size="icon"
+          onClick={handleSend}
+          disabled={isLoading || !input.trim()}
+          onMouseDown={(e) => e.preventDefault()}
+          className="shrink-0 h-10 w-10 glow-primary"
+        >
+          {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        </Button>
       </div>
     </div>
   );
