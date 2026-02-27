@@ -329,8 +329,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         }
 
         const data = await res.json();
+
+        // model-inference may return {response: "..."} or OpenAI-style {choices: [{message: {...}}]}
         const choice = data?.choices?.[0];
-        const assistantMsg = choice?.message;
+        const assistantMsg = choice?.message ?? (
+          data?.response != null
+            ? { role: "assistant", content: data.response, tool_calls: data.tool_calls }
+            : null
+        );
 
         if (!assistantMsg) break;
 
