@@ -460,7 +460,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           <span className="hidden sm:inline">Library</span>
         </Button>
         <span className="text-muted-foreground hidden sm:block">|</span>
-        <span className="text-xl shrink-0">{agent.emoji}</span>
+        <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <Bot className="h-4 w-4 text-primary" />
+        </div>
         <div className="min-w-0">
           <div className="font-semibold truncate">{agent.name}</div>
           <div className="text-xs text-muted-foreground truncate hidden sm:block">{agent.model_id}</div>
