@@ -541,8 +541,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
               )}
-              <div className={`group max-w-[80%] flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
-                <div className={`rounded-xl px-4 py-3 text-sm ${
+              <div className={`group max-w-[80%] min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end" : "items-start"}`}>
+                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 overflow-hidden ${
                   msg.role === "user"
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
@@ -550,7 +550,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : msg.role === "assistant" ? (
-                    <div className="markdown-response text-sm">
+                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
