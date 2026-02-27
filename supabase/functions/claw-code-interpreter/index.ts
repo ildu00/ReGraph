@@ -48,9 +48,27 @@ Deno.serve(async (req) => {
         error = e instanceof Error ? e.message : String(e);
       }
     } else if (lang === 'python' || lang === 'py') {
-      // Python not directly runnable in Deno — use a simple expression evaluator approach
-      // For basic math/logic we can attempt via a simple approach
-      output = `Python execution is not supported in this sandbox. Consider rewriting in JavaScript:\n\n${code}`;
+      // Use Piston API for Python execution
+      try {
+        const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language: 'python',
+            version: '3.10.0',
+            files: [{ content: code }],
+          }),
+        });
+        const pistonData = await pistonRes.json();
+        const run = pistonData?.run;
+        if (run?.stderr) {
+          error = run.stderr;
+        } else {
+          output = run?.stdout || '(no output)';
+        }
+      } catch (e: any) {
+        error = 'Python execution failed: ' + (e instanceof Error ? e.message : String(e));
+      }
     } else if (lang === 'json') {
       try {
         const parsed = JSON.parse(code);
