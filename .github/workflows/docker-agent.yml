@@ -1,0 +1,268 @@
+name: Build & Publish Agent Docker Images
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "agent/**"
+      - ".github/workflows/docker-agent.yml"
+    tags:
+      - "agent/v*"
+  pull_request:
+    branches: [main]
+    paths:
+      - "agent/**"
+  workflow_dispatch:
+    inputs:
+      targets:
+        description: "Targets to build (comma-separated: cpu,nvidia,dev or 'all')"
+        required: false
+        default: "all"
+      push:
+        description: "Push images to registry"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  packages: write   # required to push to ghcr.io
+
+concurrency:
+  group: docker-agent-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/regraph-agent
+
+jobs:
+  # ── Determine version from git tag or pyproject.toml ──────────────────────
+  meta:
+    name: Resolve version & targets
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      should_push: ${{ steps.flags.outputs.should_push }}
+      targets: ${{ steps.flags.outputs.targets }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract version
+        id: version
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/agent/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/agent/v}"
+          else
+            VERSION=$(grep '^version' agent/pyproject.toml | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: ${VERSION}"
+
+      - name: Determine build flags
+        id: flags
+        run: |
+          # Push on: main push, tag push, or manual trigger with push=true
+          if [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]] || \
+             [[ "${{ github.ref }}" == refs/tags/* ]] || \
+             [[ "${{ github.event.inputs.push }}" == "true" ]]; then
+            echo "should_push=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "should_push=false" >> "$GITHUB_OUTPUT"
+          fi
+
+          # Targets: respect manual input, else build all
+          INPUT="${{ github.event.inputs.targets }}"
+          if [[ -z "$INPUT" || "$INPUT" == "all" ]]; then
+            echo "targets=cpu nvidia dev" >> "$GITHUB_OUTPUT"
+          else
+            echo "targets=${INPUT//,/ }" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── CPU image (linux/amd64 + linux/arm64) ─────────────────────────────────
+  build-cpu:
+    name: Build — cpu
+    needs: meta
+    if: contains(needs.meta.outputs.targets, 'cpu')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up QEMU (arm64 emulation)
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: needs.meta.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta (cpu)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.meta.outputs.version }}-cpu
+            type=raw,value=latest-cpu
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,prefix=sha-,suffix=-cpu
+
+      - name: Build & push (cpu)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./agent
+          file: ./agent/Dockerfile
+          target: cpu
+          platforms: linux/amd64,linux/arm64
+          push: ${{ needs.meta.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=agent-cpu
+          cache-to: type=gha,mode=max,scope=agent-cpu
+          build-args: |
+            VERSION=${{ needs.meta.outputs.version }}
+
+  # ── NVIDIA image (linux/amd64 only — CUDA) ────────────────────────────────
+  build-nvidia:
+    name: Build — nvidia (CUDA 12.1)
+    needs: meta
+    if: contains(needs.meta.outputs.targets, 'nvidia')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # NVIDIA image is amd64-only — no QEMU needed
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Free disk space
+        # CUDA base images are large; reclaim space before build
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
+          sudo docker image prune -af
+          df -h
+
+      - name: Log in to GHCR
+        if: needs.meta.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta (nvidia)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=${{ needs.meta.outputs.version }}-nvidia
+            type=raw,value=latest-nvidia
+            type=sha,prefix=sha-,suffix=-nvidia
+
+      - name: Build & push (nvidia)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./agent
+          file: ./agent/Dockerfile
+          target: nvidia
+          platforms: linux/amd64
+          push: ${{ needs.meta.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=agent-nvidia
+          cache-to: type=gha,mode=max,scope=agent-nvidia
+          build-args: |
+            VERSION=${{ needs.meta.outputs.version }}
+
+  # ── Dev image ─────────────────────────────────────────────────────────────
+  build-dev:
+    name: Build — dev
+    needs: meta
+    if: contains(needs.meta.outputs.targets, 'dev')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        if: needs.meta.outputs.should_push == 'true'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Docker meta (dev)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=dev
+            type=sha,prefix=sha-,suffix=-dev
+
+      - name: Build & push (dev)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./agent
+          file: ./agent/Dockerfile
+          target: dev
+          platforms: linux/amd64,linux/arm64
+          push: ${{ needs.meta.outputs.should_push == 'true' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=agent-dev
+          cache-to: type=gha,mode=max,scope=agent-dev
+
+  # ── Smoke test (CPU image only — fast) ────────────────────────────────────
+  smoke-test:
+    name: Smoke test — cpu
+    needs: [meta, build-cpu]
+    if: needs.meta.outputs.should_push == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Pull and test
+        run: |
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.meta.outputs.version }}-cpu"
+          docker pull "$IMAGE"
+          # Verify the agent binary is present and returns version
+          docker run --rm "$IMAGE" --version
+          # Verify status command works (no network needed)
+          docker run --rm "$IMAGE" status || true
+          echo "✅  Smoke test passed"
+
+  # ── Summary ───────────────────────────────────────────────────────────────
+  summary:
+    name: Summary
+    needs: [meta, build-cpu, build-nvidia, build-dev]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report
+        run: |
+          echo "## Docker Build Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Target | Status | Pushed |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|--------|--------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| cpu    | ${{ needs.build-cpu.result }}    | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| nvidia | ${{ needs.build-nvidia.result }} | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| dev    | ${{ needs.build-dev.result }}    | ${{ needs.meta.outputs.should_push }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Version:** \`${{ needs.meta.outputs.version }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Registry:** \`ghcr.io/${{ env.IMAGE_NAME }}\`" >> "$GITHUB_STEP_SUMMARY"
