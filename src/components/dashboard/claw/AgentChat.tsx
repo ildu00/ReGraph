@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
-  Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus
+  Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
+  ImagePlus, FileUp, X
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
