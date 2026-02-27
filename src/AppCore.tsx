@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HelmetProvider } from "react-helmet-async";
+import { ThemeProvider } from "next-themes";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -53,6 +54,7 @@ const queryClient = new QueryClient({
 const AppCore = () => {
   return (
     <HelmetProvider>
+      <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
       <AppErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
@@ -103,6 +105,7 @@ const AppCore = () => {
           </AuthProvider>
         </QueryClientProvider>
       </AppErrorBoundary>
+      </ThemeProvider>
     </HelmetProvider>
   );
 };

@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Menu, X, Zap, LayoutDashboard } from "lucide-react";
+import { Menu, X, Zap, LayoutDashboard, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useTheme } from "next-themes";
 
 const navItems = [
   { label: "Pricing", href: "/pricing", isRoute: true },
@@ -23,6 +24,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, loading } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const handleAnchorClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
@@ -185,6 +187,15 @@ const Navbar = () => {
 
             {/* Desktop CTAs */}
             <div className="hidden md:flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="text-muted-foreground hover:text-foreground"
+                aria-label="Toggle theme"
+              >
+                {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </Button>
               {!loading && user ? (
                 <Button size="sm" className="glow-primary" asChild>
                   <Link to="/dashboard">
@@ -287,6 +298,15 @@ const Navbar = () => {
                   </Button>
                 </>
               )}
+              <Button
+                variant="ghost"
+                size="lg"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="justify-center gap-2"
+              >
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </Button>
               <Button
                 variant="ghost"
                 size="lg"
