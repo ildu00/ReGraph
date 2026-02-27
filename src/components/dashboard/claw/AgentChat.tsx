@@ -312,13 +312,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     let loopCount = 0;
     const MAX_LOOPS = 6;
 
-    const assistantTempId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: assistantTempId, role: "assistant", content: "", isStreaming: true }]);
+    // Track current streaming placeholder ID
+    let currentStreamingId = crypto.randomUUID();
+    // Don't add placeholder yet — add it lazily only when we need to show final answer
+    // For tool-call phases, we don't need a placeholder
 
     while (loopCount < MAX_LOOPS) {
       loopCount++;
       try {
-        // Extract last user/tool message as prompt (required by model-inference)
         const lastUserMsg = [...loopMessages].reverse().find((m) => m.role === "user" || m.role === "tool");
         const promptText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : userText;
 
@@ -330,6 +331,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             prompt: promptText,
             messages: loopMessages,
             category: "llm",
+            max_tokens: 4096,
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
           }),
         });
@@ -337,17 +339,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!res.ok) {
           const err = await res.json().catch(() => ({}));
           const errMsg = err?.error || `Error ${res.status}`;
-          setMessages((prev) => prev.map((m) => m.id === assistantTempId
-            ? { ...m, content: `❌ ${errMsg}`, isStreaming: false }
-            : m
-          ));
+          setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ ${errMsg}` }]);
           await persistMessage(conversationId, { role: "assistant", content: `❌ ${errMsg}` });
           break;
         }
 
         const data = await res.json();
 
-        // model-inference may return {response: "..."} or OpenAI-style {choices: [{message: {...}}]}
         const choice = data?.choices?.[0];
         const assistantMsg = choice?.message ?? (
           data?.response != null
@@ -359,13 +357,10 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         // Tool calls?
         if (assistantMsg.tool_calls?.length > 0 && (choice?.finish_reason === "tool_calls" || !choice)) {
-          // Show assistant "thinking" message if any meaningful content
+          // If model returned meaningful thinking content, show it
           const thinkingContent = assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
           if (thinkingContent) {
-            setMessages((prev) => prev.map((m) => m.id === assistantTempId
-              ? { ...m, content: thinkingContent, isStreaming: false }
-              : m
-            ));
+            setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: thinkingContent }]);
             await persistMessage(conversationId, { role: "assistant", content: thinkingContent });
           }
 
@@ -376,7 +371,6 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             const toolName = tc.function?.name;
             const toolInput = JSON.parse(tc.function?.arguments || "{}");
 
-            // Show tool call message
             const toolCallMsgId = crypto.randomUUID();
             setMessages((prev) => [...prev, {
               id: toolCallMsgId,
@@ -409,32 +403,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
-          // Add a new streaming assistant message for continuation
-          const nextId = crypto.randomUUID();
-          setMessages((prev) => [...prev, { id: nextId, role: "assistant", content: "", isStreaming: true }]);
-          // Update temp ID reference for next iteration
+          // Prepare new streaming placeholder for next iteration's final answer
+          currentStreamingId = crypto.randomUUID();
           continue;
         }
 
-        // Final answer
+        // Final answer — add streaming placeholder then fill it
         const finalContent = assistantMsg.content || "";
-        setMessages((prev) => {
-          let idx = -1;
-          for (let i = prev.length - 1; i >= 0; i--) { if (prev[i].role === "assistant" && prev[i].isStreaming) { idx = i; break; } }
-          if (idx === -1) return [...prev, { id: crypto.randomUUID(), role: "assistant", content: finalContent }];
-          return prev.map((m, i) => i === idx ? { ...m, content: finalContent, isStreaming: false } : m);
-        });
+        setMessages((prev) => [...prev, { id: currentStreamingId, role: "assistant", content: finalContent }]);
         await persistMessage(conversationId, { role: "assistant", content: finalContent });
         break;
 
       } catch (err: any) {
         const errMsg = err?.message || "Network error";
-        setMessages((prev) => {
-          let idx = -1;
-          for (let i = prev.length - 1; i >= 0; i--) { if (prev[i].role === "assistant" && prev[i].isStreaming) { idx = i; break; } }
-          if (idx === -1) return prev;
-          return prev.map((m, i) => i === idx ? { ...m, content: `❌ ${errMsg}`, isStreaming: false } : m);
-        });
+        setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ ${errMsg}` }]);
         break;
       }
     }
