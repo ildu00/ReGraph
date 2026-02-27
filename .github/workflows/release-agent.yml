@@ -366,7 +366,7 @@ ${SECTION}
   # ── Step summary ────────────────────────────────────────────────────────────
   summary:
     name: Release summary
-    needs: [prepare, release, trigger-docker]
+    needs: [prepare, release, trigger-docker, update-changelog]
     if: always()
     runs-on: ubuntu-latest
     steps:
