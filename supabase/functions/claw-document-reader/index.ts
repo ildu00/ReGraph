@@ -36,32 +36,49 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PDF — use Gemini multimodal
+    // PDF — use Lovable AI gateway (Gemini multimodal via OpenAI-compatible API)
     if (ext === 'pdf') {
       const apiKey = Deno.env.get('LOVABLE_API_KEY');
       if (!apiKey) return new Response(JSON.stringify({ error: 'AI not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
       const base64 = arrayBufferToBase64(arrayBuffer);
+      const dataUrl = `data:application/pdf;base64,${base64}`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [
-                { text: `Extract all the text content from this PDF document. Return only the text content, preserving structure as much as possible.` },
-                { inline_data: { mime_type: 'application/pdf', data: base64 } },
+      const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extract all the text content from this PDF document. Return only the extracted text content, preserving structure as much as possible.',
+                },
+                {
+                  type: 'image_url',
+                  image_url: { url: dataUrl },
+                },
               ],
-            }],
-            generationConfig: { maxOutputTokens: 8192 },
-          }),
-        }
-      );
+            },
+          ],
+          max_tokens: 8192,
+        }),
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error('Lovable AI error:', res.status, errText);
+        return new Response(JSON.stringify({ error: `AI gateway error: ${res.status}` }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
 
       const data = await res.json();
-      const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      const text = data?.choices?.[0]?.message?.content || '';
       if (!text) return new Response(JSON.stringify({ error: 'Could not extract PDF content' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
       return new Response(JSON.stringify({ content: `File: ${file.name}\n\n${text}` }), {
@@ -75,6 +92,7 @@ Deno.serve(async (req) => {
     });
 
   } catch (e) {
+    console.error('Document reader error:', e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : 'Unknown error' }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
