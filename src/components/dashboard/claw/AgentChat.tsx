@@ -354,16 +354,49 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     return data?.id as string;
   }, []);
 
+  const handleFileAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachedFiles((prev) => [...prev, ...files]);
+    e.target.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !user || !conversationId) return;
+    if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
     setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "40px";
+
+    // Process attached files
+    let fileContext = "";
+    let imageBase64: string | undefined;
+    for (const file of attachedFiles) {
+      if (file.type.startsWith("image/") && !imageBase64) {
+        imageBase64 = await fileToBase64(file);
+      } else {
+        fileContext += `[Attached: ${file.name}]\n`;
+      }
+    }
+    const fullUserText = fileContext ? `${fileContext}\n${userText}` : userText;
+    setAttachedFiles([]);
     setIsLoading(true);
 
-    // Add user message
+    // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userText }]);
-    await persistMessage(conversationId, { role: "user", content: userText });
+    const userContent = imageBase64 ? `${fullUserText}\n\n![attached](${imageBase64})` : fullUserText;
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userContent }]);
+    await persistMessage(conversationId, { role: "user", content: fullUserText });
 
     const apiKey = await getOrCreateApiKey(user.id);
     if (!apiKey) { toast.error("No API key"); setIsLoading(false); return; }
