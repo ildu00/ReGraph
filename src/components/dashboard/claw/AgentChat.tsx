@@ -102,9 +102,9 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           }
         );
         const data = await res.json();
-        const url = data?.data?.[0]?.url || data?.url;
+        const url = data?.imageUrl || data?.data?.[0]?.url || data?.url;
         if (url) return { image_url: url };
-        return { error: "Image generation failed" };
+        return { error: data?.error || "Image generation failed" };
       } catch {
         return { error: "Image generation failed" };
       }
