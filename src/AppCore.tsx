@@ -105,6 +105,7 @@ const AppCore = () => {
           </AuthProvider>
         </QueryClientProvider>
       </AppErrorBoundary>
+      </ThemeProvider>
     </HelmetProvider>
   );
 };
