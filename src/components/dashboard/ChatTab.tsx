@@ -436,7 +436,7 @@ const ChatTab = () => {
       </div>
 
       {/* Messages Area */}
-      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 ${messages.length > 0 ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
+      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 overflow-x-hidden ${messages.length > 0 ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
         {messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center text-muted-foreground gap-3 -mt-4">
             <Bot className="h-12 w-12 opacity-30" />
