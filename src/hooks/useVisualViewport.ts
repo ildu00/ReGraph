@@ -30,6 +30,12 @@ export function useVisualViewport() {
       height: vv.height,
       offsetTop: vv.offsetTop,
     });
+
+    // On iOS Safari, when the keyboard opens the layout viewport scrolls down,
+    // pushing fixed elements out of view. Force scroll back to top.
+    if (vv.offsetTop > 0) {
+      window.scrollTo(0, 0);
+    }
   }, []);
 
   useEffect(() => {
