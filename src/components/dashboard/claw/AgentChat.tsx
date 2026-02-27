@@ -107,26 +107,29 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
 
         // If it's a base64 data URL — upload to storage in background, show image immediately
         if (rawUrl.startsWith("data:")) {
-          // Return immediately with base64 so UI shows the image without waiting for upload
-          // Upload to storage in background (fire-and-forget)
-          (async () => {
-            try {
-              const [meta, base64] = rawUrl.split(",");
-              const mimeMatch = meta.match(/data:([^;]+);/);
-              const mimeType = mimeMatch?.[1] || "image/png";
-              const ext = mimeType.split("/")[1] || "png";
-              const binary = atob(base64);
-              const bytes = new Uint8Array(binary.length);
-              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-              const blob = new Blob([bytes], { type: mimeType });
-              const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-              await supabase.storage
-                .from("claw-images")
-                .upload(fileName, blob, { contentType: mimeType, upsert: false });
-            } catch (uploadErr) {
-              console.warn("[image_generation] Background storage upload failed:", uploadErr);
+          // Upload to storage and return public URL
+          try {
+            const [meta, base64] = rawUrl.split(",");
+            const mimeMatch = meta.match(/data:([^;]+);/);
+            const mimeType = mimeMatch?.[1] || "image/png";
+            const ext = mimeType.split("/")[1] || "png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const blob = new Blob([bytes], { type: mimeType });
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const { data: uploadData, error: uploadErr } = await supabase.storage
+              .from("claw-images")
+              .upload(fileName, blob, { contentType: mimeType, upsert: false });
+            if (uploadData?.path) {
+              const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+              return { image_url: publicUrl };
             }
-          })();
+            if (uploadErr) console.warn("[image_generation] Storage upload failed:", uploadErr);
+          } catch (uploadErr) {
+            console.warn("[image_generation] Storage upload failed:", uploadErr);
+          }
+          // Fallback: return base64 (will be stripped before saving to DB)
           return { image_url: rawUrl };
         }
 
