@@ -126,28 +126,8 @@ export default function AgentFormModal({ open, onClose, onSave, initial }: Agent
         <div className="space-y-4 py-2">
           {/* Emoji + Name */}
           <div className="flex gap-3 items-start">
-            <div className="relative">
-              <button
-                type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className="w-12 h-12 text-2xl rounded-lg border border-border bg-secondary flex items-center justify-center hover:bg-accent transition-colors"
-              >
-                {form.emoji}
-              </button>
-              {showEmojiPicker && (
-                <div className="absolute top-14 left-0 z-50 bg-popover border border-border rounded-lg p-2 grid grid-cols-8 gap-1 shadow-lg">
-                  {EMOJIS.map((e) => (
-                    <button
-                      key={e}
-                      type="button"
-                      onClick={() => { setForm((f) => ({ ...f, emoji: e })); setShowEmojiPicker(false); }}
-                      className="w-8 h-8 text-lg rounded hover:bg-accent transition-colors flex items-center justify-center"
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+              <Bot className="h-6 w-6 text-primary" />
             </div>
             <div className="flex-1 space-y-1">
               <Label>Name</Label>
