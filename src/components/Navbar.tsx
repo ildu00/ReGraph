@@ -301,6 +301,15 @@ const Navbar = () => {
               <Button
                 variant="ghost"
                 size="lg"
+                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                className="justify-center gap-2"
+              >
+                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {theme === "dark" ? "Light Mode" : "Dark Mode"}
+              </Button>
+              <Button
+                variant="ghost"
+                size="lg"
                 onClick={() => setIsMobileMenuOpen(false)}
                 className="justify-center"
               >
