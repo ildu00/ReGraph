@@ -64,8 +64,10 @@ const DashboardInner = () => {
   const isMobile = useIsMobile();
   const { height: vpHeight } = useVisualViewport();
 
-  const isChatActive = activeTab === 'chat' || activeTab === 'claw';
+  const isChatActive = activeTab === 'chat';
+  const isClawActive = activeTab === 'claw';
   const isMobileChatMode = isChatActive && isMobile;
+  const isMobileClawMode = isClawActive && isMobile;
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -80,16 +82,16 @@ const DashboardInner = () => {
     }
   }, [searchParams]);
 
-  // Lock body scroll when mobile chat is active to prevent iOS Safari
+  // Lock body scroll when mobile chat/claw is active to prevent iOS Safari
   // from scrolling fixed elements out of view when keyboard opens
   useEffect(() => {
-    if (isMobileChatMode) {
+    if (isMobileChatMode || isMobileClawMode) {
       const prev = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
       window.scrollTo(0, 0);
       return () => { document.body.style.overflow = prev; };
     }
-  }, [isMobileChatMode]);
+  }, [isMobileChatMode, isMobileClawMode]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -128,7 +130,7 @@ const DashboardInner = () => {
   // The useVisualViewport hook forces window.scrollTo(0,0) on every viewport
   // change, which keeps position:fixed elements at the top of the visible area.
   // No transform needed — just set height to the visual viewport height.
-  const rootStyle: React.CSSProperties = isMobileChatMode
+  const rootStyle: React.CSSProperties = (isMobileChatMode || isMobileClawMode)
     ? {
         position: 'fixed',
         top: 0,
@@ -142,7 +144,7 @@ const DashboardInner = () => {
   return (
     <div
       className={
-        isMobileChatMode
+        (isMobileChatMode || isMobileClawMode)
           ? "flex flex-col bg-background"
           : "min-h-screen bg-background"
       }
@@ -154,7 +156,7 @@ const DashboardInner = () => {
       </Helmet>
       {/* Header - always in flow on mobile chat, fixed on desktop/other tabs */}
       <header className={`${
-        isMobileChatMode
+        (isMobileChatMode || isMobileClawMode)
           ? 'shrink-0'
           : 'fixed top-0 left-0 right-0'
       } h-16 bg-card/80 backdrop-blur-xl border-b border-border z-50 flex items-center justify-between px-4 md:px-6`}>
@@ -317,12 +319,12 @@ const DashboardInner = () => {
 
       {/* Main Content */}
       <main className={
-        isMobileChatMode
+        (isMobileChatMode || isMobileClawMode)
           ? 'flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-4'
           : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
       }>
         <Tabs value={activeTab} onValueChange={handleTabChange} className={
-          isMobileChatMode
+          (isMobileChatMode || isMobileClawMode)
             ? 'flex-1 min-h-0 flex flex-col'
             : 'space-y-6'
         }>
@@ -376,7 +378,7 @@ const DashboardInner = () => {
           </TabsContent>
 
           <TabsContent value="claw" className={
-            isMobileChatMode
+            isMobileClawMode
               ? 'flex-1 min-h-0 flex flex-col mt-0'
               : ''
           }>
