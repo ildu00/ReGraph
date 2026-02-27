@@ -122,12 +122,12 @@ export default function AgentFormModal({ open, onClose, onSave, initial }: Agent
 
         <div className="space-y-4 py-2">
           {/* Emoji + Name */}
-          <div className="flex gap-3 items-start">
-            <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-              <Bot className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1 space-y-1">
-              <Label>Name</Label>
+          <div className="space-y-1">
+            <Label>Name</Label>
+            <div className="flex gap-2 items-center">
+              <div className="w-9 h-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Bot className="h-5 w-5 text-primary" />
+              </div>
               <Input
                 placeholder="e.g. Research Assistant"
                 value={form.name}
