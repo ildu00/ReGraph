@@ -16,7 +16,7 @@ class NetworkConfig(BaseModel):
 
 
 class ComputeConfig(BaseModel):
-    gpu_mode: Literal["auto", "nvidia", "rocm", "metal", "directml", "disabled"] = "auto"
+    gpu_mode: Literal["auto", "nvidia", "rocm", "metal", "directml", "ascend", "disabled"] = "auto"
     max_memory_percent: int = Field(default=80, ge=10, le=100)
     max_cpu_percent: int = Field(default=90, ge=10, le=100)
     idle_only: bool = False

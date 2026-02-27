@@ -1,4 +1,4 @@
-"""Hardware detection — GPU (NVIDIA/ROCm/Metal/DirectML), CPU, RAM, NPU."""
+"""Hardware detection — GPU (NVIDIA/ROCm/Metal/DirectML/Ascend), CPU, RAM, NPU."""
 
 from __future__ import annotations
 
