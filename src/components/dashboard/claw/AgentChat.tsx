@@ -692,7 +692,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Default
     return (
-      <pre className="text-foreground whitespace-pre-wrap break-all mt-1">
+      <pre className="text-foreground whitespace-pre overflow-x-auto mt-1 max-w-full">
         {typeof msg.tool_result === "string" ? msg.tool_result : JSON.stringify(msg.tool_result, null, 2)}
       </pre>
     );

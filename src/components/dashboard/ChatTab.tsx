@@ -488,7 +488,7 @@ const ChatTab = () => {
 
                 {/* Content */}
                 {msg.role === "assistant" ? (
-                  <div className="markdown-response text-sm">
+                  <div className="markdown-response text-sm min-w-0 overflow-hidden">
                     <ReactMarkdown
                       remarkPlugins={[remarkGfm]}
                       components={{
