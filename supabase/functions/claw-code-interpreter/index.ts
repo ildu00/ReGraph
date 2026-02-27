@@ -3,6 +3,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function pistonExecute(language: string, version: string, code: string): Promise<{ output: string; error: string }> {
+  const res = await fetch('https://emkc.org/api/v2/piston/execute', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ language, version, files: [{ name: 'main', content: code }] }),
+  });
+  const data = await res.json();
+  console.log('Piston response:', JSON.stringify(data));
+  const run = data?.run;
+  const stdout = run?.stdout?.trim() ?? '';
+  const stderr = run?.stderr?.trim() ?? '';
+  if (stdout) return { output: stderr ? `${stdout}\n${stderr}` : stdout, error: '' };
+  if (stderr) return { output: '', error: stderr };
+  return { output: '(no output)', error: '' };
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -15,7 +31,6 @@ Deno.serve(async (req) => {
     let error = '';
 
     if (lang === 'javascript' || lang === 'js' || lang === 'typescript' || lang === 'ts') {
-      // Capture console.log output
       const logs: string[] = [];
       const originalLog = console.log;
       const originalError = console.error;
@@ -26,10 +41,8 @@ Deno.serve(async (req) => {
       console.warn = (...args: any[]) => logs.push('WARN: ' + args.map(String).join(' '));
 
       try {
-        // Wrap in async IIFE to support await
         const wrappedCode = `(async () => { ${code} })()`;
         const result = await eval(wrappedCode);
-        
         console.log = originalLog;
         console.error = originalError;
         console.warn = originalWarn;
@@ -47,28 +60,6 @@ Deno.serve(async (req) => {
         console.warn = originalWarn;
         error = e instanceof Error ? e.message : String(e);
       }
-    } else if (lang === 'python' || lang === 'py') {
-      // Use Piston API for Python execution
-      try {
-        const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            language: 'python',
-            version: '3.10.0',
-            files: [{ content: code }],
-          }),
-        });
-        const pistonData = await pistonRes.json();
-        const run = pistonData?.run;
-        if (run?.stderr) {
-          error = run.stderr;
-        } else {
-          output = run?.stdout || '(no output)';
-        }
-      } catch (e: any) {
-        error = 'Python execution failed: ' + (e instanceof Error ? e.message : String(e));
-      }
     } else if (lang === 'json') {
       try {
         const parsed = JSON.parse(code);
@@ -77,8 +68,9 @@ Deno.serve(async (req) => {
         error = 'Invalid JSON: ' + e.message;
       }
     } else {
-      // Try Piston API for other languages (bash, ruby, go, rust, etc.)
       const pistonLangMap: Record<string, { language: string; version: string }> = {
+        python: { language: 'python', version: '3.10.0' },
+        py: { language: 'python', version: '3.10.0' },
         bash: { language: 'bash', version: '5.2.0' },
         sh: { language: 'bash', version: '5.2.0' },
         ruby: { language: 'ruby', version: '3.0.1' },
@@ -91,19 +83,9 @@ Deno.serve(async (req) => {
       };
       const pistonLang = pistonLangMap[lang];
       if (pistonLang) {
-        try {
-          const pistonRes = await fetch('https://emkc.org/api/v2/piston/execute', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ language: pistonLang.language, version: pistonLang.version, files: [{ content: code }] }),
-          });
-          const pistonData = await pistonRes.json();
-          const run = pistonData?.run;
-          if (run?.stderr) error = run.stderr;
-          else output = run?.stdout || '(no output)';
-        } catch (e: any) {
-          error = `Execution failed: ${e instanceof Error ? e.message : String(e)}`;
-        }
+        const result = await pistonExecute(pistonLang.language, pistonLang.version, code);
+        output = result.output;
+        error = result.error;
       } else {
         output = `Language "${language}" is not supported. Supported: JavaScript, TypeScript, Python, Bash, Ruby, Go, Rust, Java, C, C++, PHP, JSON.`;
       }
