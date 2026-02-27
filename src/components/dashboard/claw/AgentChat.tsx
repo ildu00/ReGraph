@@ -421,14 +421,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               role: "tool",
               tool_call_id: tc.id,
               name: toolName,
-              content: JSON.stringify(result),
+              content: JSON.stringify(sanitizeToolResult(result)),
             } as any);
           }
 
-          // If any tool was image_generation and succeeded — stop here, no need for a follow-up LLM call
+          // If any tool was image_generation — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
-          const imageResult = loopMessages.slice().reverse().find((m: any) => m.role === "tool" && m.name === "image_generation");
-          if (hadImageGen && imageResult) break;
+          if (hadImageGen) break;
 
           // Prepare new streaming placeholder for next iteration's final answer
           currentStreamingId = crypto.randomUUID();
