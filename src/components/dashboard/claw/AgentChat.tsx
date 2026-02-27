@@ -144,20 +144,10 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
       const attachedFiles: File[] = (input as any)?.__attachedFiles || [];
       const fileToRead = attachedFiles.find(f => !f.type.startsWith("image/")) || attachedFiles[0];
       if (!fileToRead) return { content: "No file attached. Please attach a document file in your message." };
+      const ext = fileToRead.name.split('.').pop()?.toLowerCase() || '';
       try {
-        const text = await new Promise<string>((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result as string);
-          reader.onerror = reject;
-          if (fileToRead.type === "application/pdf" || fileToRead.name.endsWith(".pdf")) {
-            // For PDFs send to edge function for parsing
-            resolve("__PDF__");
-          } else {
-            reader.readAsText(fileToRead);
-          }
-        });
-        if (text === "__PDF__") {
-          // Upload PDF to edge function
+        // PDF and DOCX — send to edge function
+        if (ext === 'pdf' || ext === 'docx') {
           const formData = new FormData();
           formData.append("file", fileToRead);
           const res = await fetch(
@@ -165,8 +155,15 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
             { method: "POST", headers: { Authorization: `Bearer ${apiKey}` }, body: formData }
           );
           const data = await res.json();
-          return { content: data.content || data.error || "Could not parse PDF." };
+          return { content: data.content || data.error || `Could not parse ${ext.toUpperCase()}.` };
         }
+        // Plain text files — read directly
+        const text = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsText(fileToRead);
+        });
         const preview = text.slice(0, 8000);
         return { content: `File: ${fileToRead.name}\n\n${preview}${text.length > 8000 ? "\n\n[Truncated — showing first 8000 chars]" : ""}` };
       } catch {
