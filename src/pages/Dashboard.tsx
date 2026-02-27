@@ -64,7 +64,7 @@ const DashboardInner = () => {
   const isMobile = useIsMobile();
   const { height: vpHeight } = useVisualViewport();
 
-  const isChatActive = activeTab === 'chat';
+  const isChatActive = activeTab === 'chat' || activeTab === 'claw';
   const isMobileChatMode = isChatActive && isMobile;
 
   useEffect(() => {
@@ -375,7 +375,11 @@ const DashboardInner = () => {
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw">
+          <TabsContent value="claw" className={
+            isMobileChatMode
+              ? 'flex-1 min-h-0 flex flex-col mt-0'
+              : ''
+          }>
             <ClawTab />
           </TabsContent>
 
