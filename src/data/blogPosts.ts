@@ -1,4 +1,5 @@
 // Blog images
+import regraphHuggingfaceImg from "@/assets/blog/regraph-huggingface.jpg";
 import decentralizedAiImg from "@/assets/blog/decentralized-ai.jpg";
 import gpt5ReasoningImg from "@/assets/blog/gpt5-reasoning.jpg";
 import geminiMultimodalImg from "@/assets/blog/gemini-multimodal.jpg";
@@ -30,6 +31,170 @@ export interface BlogPost {
 }
 
 export const blogPosts: BlogPost[] = [
+  {
+    id: "17",
+    slug: "regraph-llm-now-on-huggingface",
+    title: "ReGraph LLM Is Now Live on HuggingFace — Try the Decentralized AI Demo",
+    excerpt: "We've launched an interactive demo of ReGraph LLM on HuggingFace Spaces. Experience firsthand how our decentralized network serves inference requests powered by real community hardware nodes.",
+    featured: false,
+    content: `We're excited to announce that **ReGraph LLM** is now publicly accessible on [HuggingFace Spaces](https://huggingface.co/spaces/Regraph/ReGraphLLM). This marks a significant milestone in our mission to make decentralized AI inference open, transparent, and accessible to every developer and researcher on the planet.
+
+---
+
+## What Is ReGraph LLM?
+
+ReGraph LLM is our continuously-trained foundation model, built on top of a decentralized compute network. Unlike traditional cloud-hosted models that route every request through centralized data centers, ReGraph LLM inference is served by a global mesh of GPU, NPU, and CPU nodes contributed by the community.
+
+The key properties of the model:
+
+| Property | Details |
+|----------|---------|
+| Architecture | Transformer-based, decoder-only |
+| Training | Continuous on-chain training pipeline |
+| Inference | Fully decentralized via ReGraph node network |
+| Cost | ~10× cheaper than GPT-4 class models |
+| Availability | 24/7, no rate-limit queue for API users |
+
+---
+
+## Why HuggingFace?
+
+HuggingFace Spaces is the de facto standard for sharing AI demos with the machine learning community. Publishing there means:
+
+- **Researchers** can benchmark ReGraph LLM against other open models without writing a single line of setup code
+- **Developers** get an interactive playground to test prompts before integrating via the ReGraph API
+- **The open-source community** can watch the model evolve in real time as training progresses
+
+The demo is built with **Gradio 5**, connected directly to our live \`regraph-llm-latest\` endpoint. Every message you send in the Spaces UI travels through the same decentralized routing layer that production API requests use — there's no special "demo mode."
+
+---
+
+## How the Decentralized Network Serves Your Request
+
+When you type a prompt in the HuggingFace Space, here's what happens under the hood:
+
+\`\`\`
+User Prompt
+    ↓
+ReGraph API Gateway (Edge)
+    ↓
+Task Scheduler — selects lowest-latency available node
+    ↓
+Provider Node (GPU / NPU / CPU anywhere on Earth)
+    ↓
+Streamed tokens → Gradio UI
+\`\`\`
+
+1. **Request routing** — The gateway scores all online nodes by latency, VRAM availability, and current load.
+2. **Inference execution** — The selected node runs the model forward pass and streams tokens back.
+3. **Fault tolerance** — If a node goes offline mid-stream, the scheduler transparently fails over to the next best node.
+4. **Billing** — Usage is metered per token; node operators earn a share of every request they serve.
+
+This architecture means the network gets **more resilient and cheaper** as more nodes join — the opposite of centralized scaling.
+
+---
+
+## Trying the Demo
+
+Visit the Space directly: [huggingface.co/spaces/Regraph/ReGraphLLM](https://huggingface.co/spaces/Regraph/ReGraphLLM)
+
+No account required. The interface supports:
+- Multi-turn conversation with persistent context
+- Streaming responses (tokens appear as they're generated)
+- System prompt customization
+
+If you want to integrate ReGraph LLM into your own application, the API is fully OpenAI-compatible:
+
+\`\`\`bash
+curl https://api.regraph.tech/v1/chat/completions \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model": "regraph-llm-latest",
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "stream": true
+  }'
+\`\`\`
+
+---
+
+## Integrating with Popular Frameworks
+
+Because the API is OpenAI-compatible, you can point any existing OpenAI SDK integration at ReGraph with a one-line change:
+
+### Python (OpenAI SDK)
+
+\`\`\`python
+from openai import OpenAI
+
+client = OpenAI(
+    base_url="https://api.regraph.tech/v1",
+    api_key="YOUR_API_KEY"
+)
+
+response = client.chat.completions.create(
+    model="regraph-llm-latest",
+    messages=[{"role": "user", "content": "Explain quantum entanglement simply."}]
+)
+print(response.choices[0].message.content)
+\`\`\`
+
+### JavaScript / TypeScript
+
+\`\`\`typescript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "https://api.regraph.tech/v1",
+  apiKey: process.env.REGRAPH_API_KEY,
+});
+
+const stream = await client.chat.completions.create({
+  model: "regraph-llm-latest",
+  messages: [{ role: "user", content: "Write a haiku about distributed systems." }],
+  stream: true,
+});
+
+for await (const chunk of stream) {
+  process.stdout.write(chunk.choices[0]?.delta?.content ?? "");
+}
+\`\`\`
+
+### LangChain
+
+\`\`\`python
+from langchain_openai import ChatOpenAI
+
+llm = ChatOpenAI(
+    model="regraph-llm-latest",
+    openai_api_base="https://api.regraph.tech/v1",
+    openai_api_key="YOUR_API_KEY"
+)
+
+result = llm.invoke("Summarize the benefits of decentralized AI.")
+print(result.content)
+\`\`\`
+
+---
+
+## What's Next
+
+The HuggingFace Space is a starting point, not the destination. Upcoming milestones:
+
+- **Model weights release** — We plan to publish quantized checkpoints of ReGraph LLM for local inference
+- **Fine-tuning API** — Submit training jobs that run across the decentralized network, earning rewards for node operators
+- **Benchmarks page** — A live leaderboard tracking MMLU, HumanEval, and MATH scores as training progresses
+
+Follow [@ReGraph on X](https://x.com/regraph_tech) or watch the [HuggingFace Space](https://huggingface.co/spaces/Regraph/ReGraphLLM) for updates.
+
+---
+
+*Questions or feedback? Join the conversation on our [Discord](https://discord.gg/regraph) or reach out via the [support page](/support).*`,
+    date: "2026-02-27",
+    readTime: "6 min",
+    category: "Platform",
+    image: regraphHuggingfaceImg,
+  },
   {
     id: "16",
     slug: "smartphone-ai-mining-turn-your-phone-into-compute-node",
