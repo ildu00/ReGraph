@@ -115,7 +115,12 @@ export default function AgentFormModal({ open, onClose, onSave, initial }: Agent
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{initial ? "Edit Agent" : "Create New Agent"}</DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+            {initial ? "Edit Agent" : "Create New Agent"}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
