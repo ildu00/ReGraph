@@ -255,8 +255,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const enabledTools = TOOLS.filter((t) => agent.tools?.includes(t.id));
 
