@@ -703,6 +703,23 @@ def load_model(model_id: str, gpu_mode: str = "disabled") -> ModelHandle:
     except ImportError:
         logger.debug("llama-cpp-python not installed")
 
+    # ── Huawei Ascend NPU (torch_npu / CANN) ──
+    if gpu_mode == "ascend":
+        try:
+            import torch_npu  # noqa: F401
+            import torch  # noqa: F401
+            import transformers  # noqa: F401
+
+            device_id = int(os.environ.get("ASCEND_DEVICE_ID", "0"))
+            npu_device = f"npu:{device_id}"
+            logger.info("Using Ascend NPU backend for %s on %s (torch_npu)", model_id, npu_device)
+            return ModelHandle(AscendHandle(model_id, npu_device), model_id)
+        except ImportError:
+            logger.warning(
+                "torch_npu not installed — falling back to transformers CPU for Ascend. "
+                "Install with: pip install torch_npu"
+            )
+
     # ── HuggingFace Transformers + PyTorch ──
     try:
         import torch  # noqa: F401
@@ -724,6 +741,9 @@ def load_model(model_id: str, gpu_mode: str = "disabled") -> ModelHandle:
             import torch
             if torch.cuda.is_available():  # ROCm exposes CUDA interface
                 device = "cuda"
+        elif gpu_mode == "ascend":
+            # torch_npu not available — use CPU with a warning already emitted above
+            pass
 
         logger.info("Using transformers backend for %s on %s", model_id, device)
         return ModelHandle(TransformersHandle(model_id, device, load_in_4bit), model_id)
