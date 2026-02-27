@@ -12,7 +12,11 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ## [Unreleased]
 
 ### Added
-- Nothing yet
+- Huawei Ascend NPU support: `_detect_ascend()` in `hardware.py` with four detection strategies (npu-smi, ascend-dmi, torch_npu, /dev/davinci* device nodes)
+- `AscendHandle` backend in `model_runtime.py` using `torch_npu` + HuggingFace Transformers (bfloat16 by default)
+- `ascend` extra in `pyproject.toml`: `torch_npu>=2.1.0`
+- `ascend` GPU mode added to `ComputeConfig` validation enum in `config.py`
+- Tests for Ascend detection and `detect_hardware(gpu_mode="ascend")` routing in `test_hardware.py`
 
 ---
 

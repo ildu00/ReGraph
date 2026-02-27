@@ -16,6 +16,7 @@ from regraph_agent.hardware import (
     GpuInfo,
     HardwareReport,
     _detect_apple_silicon,
+    _detect_ascend,
     _detect_directml,
     _detect_nvidia,
     _detect_rocm,
