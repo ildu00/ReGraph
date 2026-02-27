@@ -154,7 +154,7 @@ const ApiKeysTab = () => {
           <DialogTrigger asChild>
             <Button
               size="icon"
-              className="glow-primary rounded-none aspect-square h-10 w-10 md:hidden"
+              className="glow-primary aspect-square h-10 w-10 md:hidden"
               aria-label="Create Key"
             >
               <Plus className="h-4 w-4" />
