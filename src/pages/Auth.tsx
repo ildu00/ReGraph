@@ -64,7 +64,7 @@ const Auth = () => {
         <meta name="keywords" content="ReGraph login, sign up, AI API account, GPU compute access" />
       </Helmet>
       {/* Background effects */}
-      <div className="absolute inset-0 bg-grid opacity-30" />
+      <div className="absolute inset-0 bg-grid opacity-30 hidden dark:block" />
       <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
       <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
 
