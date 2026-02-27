@@ -301,11 +301,16 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     while (loopCount < MAX_LOOPS) {
       loopCount++;
       try {
+        // Extract last user/tool message as prompt (required by model-inference)
+        const lastUserMsg = [...loopMessages].reverse().find((m) => m.role === "user" || m.role === "tool");
+        const promptText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : userText;
+
         const res = await fetch(INFERENCE_URL, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
           body: JSON.stringify({
             model: agent.model_id,
+            prompt: promptText,
             messages: loopMessages,
             category: "llm",
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
