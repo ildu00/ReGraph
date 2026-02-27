@@ -39,18 +39,17 @@ async function extractUserId(req: Request): Promise<string | null> {
     if (data?.user?.id) return data.user.id;
   } catch { /* not a JWT */ }
 
-  // Try API key lookup (rg- prefixed keys stored in api_keys table)
+  // Try API key lookup (full_key stored in api_keys table)
   if (token.startsWith("rg-")) {
     try {
       const adminClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
         Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
       );
-      const prefix = token.substring(0, 12); // first 12 chars as key_prefix
       const { data: keyRow } = await adminClient
         .from("api_keys")
         .select("user_id")
-        .eq("key_prefix", prefix)
+        .eq("full_key", token)
         .eq("is_active", true)
         .single();
       if (keyRow?.user_id) return keyRow.user_id;
