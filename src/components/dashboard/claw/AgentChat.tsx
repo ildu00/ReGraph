@@ -341,7 +341,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!assistantMsg) break;
 
         // Tool calls?
-        if (choice?.finish_reason === "tool_calls" && assistantMsg.tool_calls?.length > 0) {
+        if (assistantMsg.tool_calls?.length > 0 && (choice?.finish_reason === "tool_calls" || !choice)) {
           // Show assistant "thinking" message if any content
           if (assistantMsg.content) {
             setMessages((prev) => prev.map((m) => m.id === assistantTempId
