@@ -3,17 +3,54 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-async function pistonExecute(language: string, version: string, code: string): Promise<{ output: string; error: string }> {
-  const res = await fetch('https://emkc.org/api/v2/piston/execute', {
+// Judge0 language IDs
+const judge0LangMap: Record<string, number> = {
+  python: 71,   // Python 3.8
+  py: 71,
+  bash: 46,
+  sh: 46,
+  ruby: 72,
+  go: 60,
+  rust: 73,
+  java: 62,
+  cpp: 54,      // C++ (GCC 9.2.0)
+  c: 50,        // C (GCC 9.2.0)
+  php: 68,
+};
+
+async function judge0Execute(languageId: number, code: string): Promise<{ output: string; error: string }> {
+  const JUDGE0_URL = 'https://judge0-ce.p.rapidapi.com';
+  const apiKey = Deno.env.get('RAPIDAPI_KEY');
+
+  // Try public judge0 instance first (no auth needed for basic usage)
+  const submitUrl = apiKey
+    ? `${JUDGE0_URL}/submissions?base64_encoded=false&wait=true`
+    : 'https://ce.judge0.com/submissions?base64_encoded=false&wait=true';
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (apiKey) {
+    headers['X-RapidAPI-Key'] = apiKey;
+    headers['X-RapidAPI-Host'] = 'judge0-ce.p.rapidapi.com';
+  }
+
+  const res = await fetch(submitUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ language, version, files: [{ name: 'main', content: code }] }),
+    headers,
+    body: JSON.stringify({ language_id: languageId, source_code: code }),
   });
+
+  if (!res.ok) {
+    const text = await res.text();
+    console.log('Judge0 error:', res.status, text);
+    return { output: '', error: `Execution service error: ${res.status}` };
+  }
+
   const data = await res.json();
-  console.log('Piston response:', JSON.stringify(data));
-  const run = data?.run;
-  const stdout = run?.stdout?.trim() ?? '';
-  const stderr = run?.stderr?.trim() ?? '';
+  console.log('Judge0 response:', JSON.stringify(data));
+
+  const stdout = (data.stdout || '').trim();
+  const stderr = (data.stderr || data.compile_output || '').trim();
+
   if (stdout) return { output: stderr ? `${stdout}\n${stderr}` : stdout, error: '' };
   if (stderr) return { output: '', error: stderr };
   return { output: '(no output)', error: '' };
@@ -68,24 +105,15 @@ Deno.serve(async (req) => {
         error = 'Invalid JSON: ' + e.message;
       }
     } else {
-      const pistonLangMap: Record<string, { language: string; version: string }> = {
-        python: { language: 'python', version: '3.10.0' },
-        py: { language: 'python', version: '3.10.0' },
-        bash: { language: 'bash', version: '5.2.0' },
-        sh: { language: 'bash', version: '5.2.0' },
-        ruby: { language: 'ruby', version: '3.0.1' },
-        go: { language: 'go', version: '1.16.2' },
-        rust: { language: 'rust', version: '1.50.0' },
-        java: { language: 'java', version: '15.0.2' },
-        cpp: { language: 'c++', version: '10.2.0' },
-        c: { language: 'c', version: '10.2.0' },
-        php: { language: 'php', version: '8.0.2' },
-      };
-      const pistonLang = pistonLangMap[lang];
-      if (pistonLang) {
-        const result = await pistonExecute(pistonLang.language, pistonLang.version, code);
-        output = result.output;
-        error = result.error;
+      const langId = judge0LangMap[lang];
+      if (langId) {
+        try {
+          const result = await judge0Execute(langId, code);
+          output = result.output;
+          error = result.error;
+        } catch (e: any) {
+          error = `Execution failed: ${e instanceof Error ? e.message : String(e)}`;
+        }
       } else {
         output = `Language "${language}" is not supported. Supported: JavaScript, TypeScript, Python, Bash, Ruby, Go, Rust, Java, C, C++, PHP, JSON.`;
       }
