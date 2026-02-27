@@ -574,7 +574,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
 function ToolCallMessage({ msg }: { msg: Message }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
-  const isLoading = msg.isStreaming;
+  const isStreaming = msg.isStreaming;
 
   return (
     <div className="flex gap-3 items-start">
