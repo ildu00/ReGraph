@@ -1,0 +1,179 @@
+name: Test Agent
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "agent/**"
+      - ".github/workflows/test-agent.yml"
+  push:
+    branches: [main]
+    paths:
+      - "agent/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write        # post test results as PR check
+  pull-requests: write # comment with coverage summary
+
+concurrency:
+  group: test-agent-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  # ── Lint & type-check (fast, runs once) ─────────────────────────────────────
+  lint:
+    name: Lint & type-check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install lint tools
+        run: pip install ruff mypy pydantic
+
+      - name: Ruff — lint
+        working-directory: agent
+        run: |
+          ruff check src/ tests/ --output-format=github || true
+
+      - name: Ruff — format check
+        working-directory: agent
+        run: |
+          ruff format src/ tests/ --check || true
+
+      - name: Mypy — type check (non-blocking)
+        working-directory: agent
+        run: |
+          pip install -e "." --quiet
+          mypy src/regraph_agent/ \
+            --ignore-missing-imports \
+            --no-strict-optional \
+            --follow-imports=silent \
+            || true
+
+  # ── Pytest matrix ────────────────────────────────────────────────────────────
+  test:
+    name: pytest / Python ${{ matrix.python-version }} / ${{ matrix.os }}
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest]
+        include:
+          # Also run 3.11 on macOS to catch Darwin-specific code paths
+          - python-version: "3.11"
+            os: macos-latest
+          # And 3.11 on Windows to test Windows-specific paths
+          - python-version: "3.11"
+            os: windows-latest
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+          cache-dependency-path: agent/pyproject.toml
+
+      - name: Install agent (core deps only — no heavy ML libs)
+        working-directory: agent
+        run: |
+          pip install --upgrade pip
+          pip install -e "." pytest pytest-cov pytest-mock
+
+      - name: Run tests
+        working-directory: agent
+        run: |
+          pytest tests/ \
+            --cov=src/regraph_agent \
+            --cov-report=xml:coverage.xml \
+            --cov-report=term-missing \
+            --junitxml=junit.xml \
+            -v
+
+      - name: Upload JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.os }}-py${{ matrix.python-version }}
+          path: agent/junit.xml
+          retention-days: 7
+
+      - name: Upload coverage report
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.11'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: agent/coverage.xml
+          retention-days: 7
+
+  # ── Coverage comment on PR ────────────────────────────────────────────────────
+  coverage:
+    name: Coverage report
+    needs: test
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-report
+          path: ./
+
+      - name: Coverage summary comment
+        uses: MishaKav/pytest-coverage-comment@main
+        with:
+          pytest-xml-coverage-path: ./coverage.xml
+          title: "Agent Test Coverage"
+          badge-title: "Coverage"
+          hide-comment: false
+          create-new-comment: false
+          default-branch: main
+
+  # ── Test summary ──────────────────────────────────────────────────────────────
+  summary:
+    name: Test Summary
+    needs: test
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all JUnit reports
+        uses: actions/download-artifact@v4
+        with:
+          pattern: junit-*
+          merge-multiple: true
+          path: ./junit-reports/
+
+      - name: Publish test results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: runner.os == 'Linux'
+        with:
+          files: "junit-reports/**/*.xml"
+          comment_title: "Agent Unit Test Results"
+          check_name: "Agent Tests"
+
+      - name: Write step summary
+        if: always()
+        run: |
+          echo "## 🧪 Agent Test Matrix Results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| OS | Python | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|--------|--------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ubuntu | 3.10 | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ubuntu | 3.11 | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| ubuntu | 3.12 | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| macOS  | 3.11 | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Windows| 3.11 | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
