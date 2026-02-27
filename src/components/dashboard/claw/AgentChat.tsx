@@ -305,13 +305,22 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     const apiKey = await getOrCreateApiKey(user.id);
     if (!apiKey) { toast.error("No API key"); setIsLoading(false); return; }
 
-    // Build messages for inference
+    // Build messages for inference — strip base64 blobs from tool results
+    const sanitizeToolResult = (result: any): any => {
+      if (!result || typeof result !== "object") return result;
+      const sanitized = { ...result };
+      if (typeof sanitized.image_url === "string" && sanitized.image_url.startsWith("data:")) {
+        sanitized.image_url = "[image generated]";
+      }
+      return sanitized;
+    };
+
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
       ...messages.filter((m) => m.role !== "tool" || m.content).map((m) => ({
         role: m.role === "tool" ? "tool" : m.role,
         content: m.role === "tool"
-          ? JSON.stringify(m.tool_result)
+          ? JSON.stringify(sanitizeToolResult(m.tool_result))
           : (m.content || ""),
         ...(m.tool_name && m.role === "tool" ? { name: m.tool_name } : {}),
       })),
