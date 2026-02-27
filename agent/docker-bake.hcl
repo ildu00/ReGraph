@@ -16,7 +16,11 @@ variable "VERSION" {
 }
 
 group "all" {
-  targets = ["cpu", "nvidia", "metal", "dev"]
+  targets = ["cpu", "nvidia", "ascend", "metal", "dev"]
+}
+
+group "gpu" {
+  targets = ["nvidia", "ascend"]
 }
 
 group "default" {
