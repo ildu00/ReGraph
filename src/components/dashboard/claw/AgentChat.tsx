@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
-  Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus
+  Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
+  ImagePlus, FileUp, X
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -254,8 +255,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const enabledTools = TOOLS.filter((t) => agent.tools?.includes(t.id));
 
@@ -350,16 +354,49 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     return data?.id as string;
   }, []);
 
+  const handleFileAttach = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    setAttachedFiles((prev) => [...prev, ...files]);
+    e.target.value = "";
+  };
+
+  const removeFile = (index: number) => {
+    setAttachedFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const fileToBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
   const handleSend = async () => {
-    if (!input.trim() || isLoading || !user || !conversationId) return;
+    if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
     setInput("");
+    if (textareaRef.current) textareaRef.current.style.height = "40px";
+
+    // Process attached files
+    let fileContext = "";
+    let imageBase64: string | undefined;
+    for (const file of attachedFiles) {
+      if (file.type.startsWith("image/") && !imageBase64) {
+        imageBase64 = await fileToBase64(file);
+      } else {
+        fileContext += `[Attached: ${file.name}]\n`;
+      }
+    }
+    const fullUserText = fileContext ? `${fileContext}\n${userText}` : userText;
+    setAttachedFiles([]);
     setIsLoading(true);
 
-    // Add user message
+    // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userText }]);
-    await persistMessage(conversationId, { role: "user", content: userText });
+    const userContent = imageBase64 ? `${fullUserText}\n\n![attached](${imageBase64})` : fullUserText;
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userContent }]);
+    await persistMessage(conversationId, { role: "user", content: fullUserText });
 
     const apiKey = await getOrCreateApiKey(user.id);
     if (!apiKey) { toast.error("No API key"); setIsLoading(false); return; }
@@ -394,7 +431,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           : (m.content || ""),
         ...(m.tool_name && m.role === "tool" ? { name: m.tool_name } : {}),
       })),
-      { role: "user", content: userText },
+      { role: "user", content: fullUserText },
     ];
 
     const toolDefs = buildToolDefs(agent.tools || []);
@@ -635,25 +672,26 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 }`}>
                   {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                  ) : msg.role === "assistant" ? (
-                    <div className="markdown-response text-sm min-w-0 overflow-hidden">
+                  ) : (
+                    <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
                         components={{
                           code({ node, className, children, ...props }: any) {
                             const inline = !className;
-                            if (inline) return <code className="bg-muted px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
+                            if (inline) return <code className="bg-muted/30 px-1 py-0.5 rounded text-xs" {...props}>{children}</code>;
                             const lang = className?.replace("language-", "") || "";
                             return <CodeBlock code={String(children).replace(/\n$/, "")} language={lang} />;
                           },
                           pre({ children }: any) { return <>{children}</>; },
+                          img({ src, alt }: any) {
+                            return <img src={src} alt={alt} className="max-w-full rounded mt-1 h-auto" />;
+                          },
                         }}
                       >
                         {msg.content || ""}
                       </ReactMarkdown>
                     </div>
-                  ) : (
-                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
                   )}
                 </div>
                 {msg.role === "assistant" && msg.content && (
@@ -680,8 +718,42 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         <div ref={messagesEndRef} />
       </Card>
 
+      {/* Attached files preview */}
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2 shrink-0">
+          {attachedFiles.map((file, i) => (
+            <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1">
+              {file.type.startsWith("image/") ? "🖼️" : "📎"} {file.name}
+              <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex gap-2 items-end shrink-0 pb-2">
+        <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileAttach} />
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+        <Button
+          variant="ghost" size="icon"
+          className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => imageInputRef.current?.click()}
+          title="Attach image"
+        >
+          <ImagePlus className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost" size="icon"
+          className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach file"
+        >
+          <FileUp className="h-5 w-5" />
+        </Button>
         <Textarea
           ref={textareaRef}
           value={input}
@@ -701,7 +773,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         <Button
           size="icon"
           onClick={handleSend}
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
           onMouseDown={(e) => e.preventDefault()}
           className="shrink-0 h-10 w-10 glow-primary"
         >
