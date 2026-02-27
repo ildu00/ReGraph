@@ -428,10 +428,11 @@ def detect_hardware(gpu_mode: str = "auto") -> HardwareReport:
         report.gpu_mode = "disabled"
         return report
 
-    # Ordered by preference: NVIDIA > ROCm > Metal > DirectML
+    # Ordered by preference: NVIDIA > ROCm > Metal > DirectML > Ascend
     detectors: list[tuple[str, Any]] = [
         ("nvidia", _detect_nvidia),
         ("rocm", _detect_rocm),
+        ("ascend", _detect_ascend),
         ("metal", _detect_apple_silicon),
         ("directml", _detect_directml),
     ]
