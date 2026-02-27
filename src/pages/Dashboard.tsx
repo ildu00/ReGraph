@@ -144,7 +144,7 @@ const DashboardInner = () => {
   return (
     <div
       className={
-        isMobileChatMode
+        (isMobileChatMode || isMobileClawMode)
           ? "flex flex-col bg-background"
           : "min-h-screen bg-background"
       }
