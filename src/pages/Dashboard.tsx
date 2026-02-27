@@ -130,7 +130,7 @@ const DashboardInner = () => {
   // The useVisualViewport hook forces window.scrollTo(0,0) on every viewport
   // change, which keeps position:fixed elements at the top of the visible area.
   // No transform needed — just set height to the visual viewport height.
-  const rootStyle: React.CSSProperties = isMobileChatMode
+  const rootStyle: React.CSSProperties = (isMobileChatMode || isMobileClawMode)
     ? {
         position: 'fixed',
         top: 0,
