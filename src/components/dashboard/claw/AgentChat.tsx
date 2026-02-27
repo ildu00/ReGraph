@@ -720,7 +720,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
           }
         </div>
         {!isRunning && msg.tool_result && (
-          <Card className="bg-muted/30 border-border/50 p-2.5 text-xs">
+          <Card className="bg-muted/30 border-border/50 p-2.5 text-xs overflow-hidden">
             {renderResult()}
           </Card>
         )}
