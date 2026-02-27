@@ -166,6 +166,101 @@ pip install "regraph-agent[metal]"
 regraph-agent start --key rg_conn_xxxxx
 ```
 
+## Ascend NPU
+
+Run the ReGraph agent on Huawei Ascend NPUs powered by the CANN toolkit.
+
+### Supported Hardware
+
+| Device | Series | Memory | Notes |
+|--------|--------|--------|-------|
+| Ascend 910B | Atlas 300T Pro | 64 GB HBM | Training & inference |
+| Ascend 910 | Atlas 300T | 32 GB HBM | Training & inference |
+| Ascend 310P | Atlas 300I Pro | 16 GB HBM | Inference-optimized |
+| Ascend 310 | Atlas 300I | 8 GB HBM | Edge inference |
+| Ascend 910B (server) | Atlas 800T A2 | 64 GB × 8 | Multi-NPU server |
+
+### Prerequisites
+
+1. **OS**: Ubuntu 20.04 / 22.04 or OpenEuler 22.03 LTS
+2. **CANN Toolkit 8.x** — install from [Huawei Ascend Community](https://www.hiascend.com/software/cann/community):
+   ```bash
+   # Verify driver is present
+   npu-smi info
+   ```
+3. **Python 3.10+** with pip
+4. **Device nodes** — confirm `/dev/davinci*` are visible:
+   ```bash
+   ls /dev/davinci*
+   # e.g. /dev/davinci0  /dev/davinci_manager  /dev/hisi_hdc
+   ```
+
+### Quick Start — Native Install
+
+```bash
+# Auto-detect Ascend NPU and install torch_npu extras
+curl -fsSL https://regraph.tech/scripts/install.sh | bash -s -- --ascend
+
+# Or force Ascend mode explicitly
+bash install.sh --ascend --key rg_conn_xxxxx
+
+# Verify NPU is detected
+regraph-agent status
+# Expected: gpu_mode: ascend, devices: [Ascend 910B ...]
+```
+
+### Quick Start — Docker
+
+```bash
+# Pull the Ascend image (CANN + torch_npu pre-installed)
+docker pull ghcr.io/regraph-tech/agent:latest-ascend
+
+# Run with Ascend runtime (requires ascend-docker-runtime installed on host)
+docker run -d \
+  --runtime=ascend \
+  -e REGRAPH_CONNECTION_KEY=rg_conn_xxxxx \
+  -v regraph-models:/data/models \
+  ghcr.io/regraph-tech/agent:latest-ascend
+
+# Alternative: manual device pass-through (no runtime plugin needed)
+docker run -d \
+  --device /dev/davinci0 \
+  --device /dev/davinci_manager \
+  --device /dev/hisi_hdc \
+  -v /usr/local/Ascend/driver:/usr/local/Ascend/driver:ro \
+  -e REGRAPH_CONNECTION_KEY=rg_conn_xxxxx \
+  -e ASCEND_VISIBLE_DEVICES=0 \
+  -v regraph-models:/data/models \
+  ghcr.io/regraph-tech/agent:latest-ascend
+```
+
+### Docker Compose
+
+```bash
+# Ascend profile (single NPU)
+REGRAPH_CONNECTION_KEY=rg_conn_xxxxx docker compose --profile ascend up -d
+
+# Check logs
+docker compose logs -f agent-ascend
+```
+
+### Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `ASCEND_VISIBLE_DEVICES` | `all` | Comma-separated NPU indices to expose |
+| `ASCEND_DEVICE_ID` | `0` | Primary NPU device index |
+| `LD_LIBRARY_PATH` | `/usr/local/Ascend/driver/lib64` | CANN driver library path |
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| `npu-smi: command not found` | Install CANN driver: `bash Ascend-cann-toolkit_*.run --install` |
+| `/dev/davinci* not found` | Reboot after driver install; verify with `dmesg \| grep davinci` |
+| `torch_npu import error` | Run `pip install torch_npu==2.1.0.post8 --index-url https://repo.huaweicloud.com/repository/pypi/simple/` |
+| `device busy` | Check no other process holds the NPU: `npu-smi info -t proc-info -i 0` |
+
 ## License
 
 MIT — see [LICENSE](../LICENSE)
