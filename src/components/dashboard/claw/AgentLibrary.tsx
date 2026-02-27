@@ -94,10 +94,7 @@ export default function AgentLibrary({ onOpenChat }: AgentLibraryProps) {
             Build and run autonomous AI agents — your personal AI workforce
           </p>
         </div>
-        <Button onClick={() => { setEditing(null); setModalOpen(true); }} size="icon" className="hidden sm:inline-flex">
-          <Plus className="h-4 w-4" />
-        </Button>
-        <Button onClick={() => { setEditing(null); setModalOpen(true); }} size="icon" className="sm:hidden rounded-xl">
+        <Button onClick={() => { setEditing(null); setModalOpen(true); }} size="icon">
           <Plus className="h-4 w-4" />
         </Button>
       </div>
