@@ -39,6 +39,23 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.1.0",
+    date: "February 27, 2026",
+    title: "Huawei Ascend NPU Support",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Full Huawei Ascend NPU support in the provider agent — hardware detection via npu-smi (CANN 6.x+), ascend-dmi, /dev/davinci* device nodes, and torch_npu Python bridge" },
+      { category: "feature", description: "Ascend inference backend in model runtime — routes chat, embedding, and training tasks to torch_npu (npu:N devices) with bfloat16 precision by default" },
+      { category: "feature", description: "New ascend Docker image target based on Ubuntu 22.04 with CANN toolkit and torch_npu pre-installed; supports both ascend-docker-runtime and manual /dev/davinci* pass-through" },
+      { category: "feature", description: "Live Ascend NPU metrics in agent heartbeat — per-device utilization %, HBM used/total MB, HBM used %, temperature, and power parsed from npu-smi usages-info on every heartbeat tick" },
+      { category: "feature", description: "install.sh Ascend detection — auto-detects /dev/davinci* nodes or npu-smi presence and installs regraph-agent[ascend] with torch_npu from Huawei Cloud index" },
+      { category: "improvement", description: "Hardware detector priority order updated: NVIDIA → ROCm → Ascend → Apple Silicon → DirectML" },
+      { category: "improvement", description: "pyproject.toml gains [ascend] extras group (torch_npu>=2.1.0); gpu_mode enum extended with ascend value" },
+      { category: "improvement", description: "Docker Compose adds agent-ascend service profile; docker-bake.hcl adds multi-arch (amd64/arm64) ascend target; CI/CD publishes latest-ascend and {version}-ascend image tags" },
+      { category: "improvement", description: "Supported hardware documented: Ascend 910B (Atlas 300T Pro, 64 GB HBM), Ascend 910 (Atlas 300T, 32 GB), Ascend 310P (Atlas 300I Pro, 16 GB), Ascend 310 (Atlas 300I, 8 GB), Atlas 800T A2 server" },
+    ]
+  },
+  {
     version: "3.0.3",
     date: "February 26, 2026",
     title: "GPU Node Availability on Pricing Page",
