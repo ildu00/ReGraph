@@ -321,3 +321,205 @@ class TestDownloadShard:
             instance.get.side_effect = httpx.ConnectError("unreachable")
             with pytest.raises(RuntimeError, match="Failed to download shard"):
                 TaskExecutor._download_shard("https://bad.host/shard.bin")
+
+
+# ── _collect_ascend_metrics ───────────────────────────────────────────────────
+
+# Realistic npu-smi usages-info output (two NPU blocks)
+_NPU_SMI_USAGES_TWO_DEVICES = """\
+NPU ID : 0
+    Chip Name               : Ascend 910B
+    NPU Utilization (%)     : 72
+    HBM Used Memory (MB)    : 32768
+    HBM Total Memory (MB)   : 65536
+    Temperature (°C)        : 55
+    Power (W)               : 310
+
+NPU ID : 1
+    Chip Name               : Ascend 910B
+    NPU Utilization (%)     : 0
+    HBM Used Memory (MB)    : 1024
+    HBM Total Memory (MB)   : 65536
+    Temperature (°C)        : 42
+    Power (W)               : 180
+"""
+
+# Single-device output using "Aicore Usage (%)" key variant (CANN 7.x)
+_NPU_SMI_USAGES_AICORE_KEY = """\
+NPU ID : 0
+    Chip Name               : Ascend 310P
+    Aicore Usage (%)        : 45
+    HBM Used Memory (MB)    : 4096
+    HBM Total Memory (MB)   : 16384
+    Temperature (°C)        : 38
+"""
+
+# Plain `npu-smi info` fallback (no -t usages-info support)
+_NPU_SMI_PLAIN_OUTPUT = """\
+NPU ID : 0
+    Product Name            : Atlas 300I
+    HBM Used Memory (MB)    : 2048
+    HBM Total Memory (MB)   : 8192
+"""
+
+
+def _make_run_result(stdout: str, returncode: int = 0) -> subprocess.CompletedProcess:
+    return subprocess.CompletedProcess(args=[], returncode=returncode, stdout=stdout, stderr="")
+
+
+class TestCollectAscendMetrics:
+    """Tests for _collect_ascend_metrics() — npu-smi parsing and torch_npu fallback."""
+
+    # ── two devices, full fields ───────────────────────────────────────────────
+
+    def test_two_devices_returned(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert len(result) == 2
+
+    def test_first_device_id(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["id"] == 0
+        assert result[1]["id"] == 1
+
+    def test_utilization_percent(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["utilization_percent"] == pytest.approx(72.0)
+        assert result[1]["utilization_percent"] == pytest.approx(0.0)
+
+    def test_hbm_used_mb(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["hbm_used_mb"] == 32768
+        assert result[1]["hbm_used_mb"] == 1024
+
+    def test_hbm_total_mb(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["hbm_total_mb"] == 65536
+        assert result[1]["hbm_total_mb"] == 65536
+
+    def test_hbm_used_percent_calculated(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        # 32768 / 65536 * 100 = 50.0
+        assert result[0]["hbm_used_percent"] == pytest.approx(50.0)
+        # 1024 / 65536 * 100 ≈ 1.6
+        assert result[1]["hbm_used_percent"] == pytest.approx(1.6, abs=0.05)
+
+    def test_temperature_c(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["temperature_c"] == pytest.approx(55.0)
+        assert result[1]["temperature_c"] == pytest.approx(42.0)
+
+    def test_power_w(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+            result = _collect_ascend_metrics()
+        assert result[0]["power_w"] == pytest.approx(310.0)
+        assert result[1]["power_w"] == pytest.approx(180.0)
+
+    # ── aicore key variant (CANN 7.x) ─────────────────────────────────────────
+
+    def test_aicore_key_parsed_as_utilization(self):
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_AICORE_KEY)):
+            result = _collect_ascend_metrics()
+        assert len(result) == 1
+        assert result[0]["utilization_percent"] == pytest.approx(45.0)
+        assert result[0]["hbm_total_mb"] == 16384
+        assert result[0]["hbm_used_percent"] == pytest.approx(25.0)
+
+    # ── plain npu-smi fallback (usages-info returns empty) ────────────────────
+
+    def test_falls_back_to_plain_npu_smi(self):
+        """First subprocess call returns empty (no usages-info); second returns plain output."""
+        responses = [
+            _make_run_result(""),                          # -t usages-info: unsupported
+            _make_run_result(_NPU_SMI_PLAIN_OUTPUT),       # plain npu-smi info
+        ]
+        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("subprocess.run", side_effect=responses):
+            result = _collect_ascend_metrics()
+        assert len(result) == 1
+        assert result[0]["hbm_used_mb"] == 2048
+        assert result[0]["hbm_total_mb"] == 8192
+        assert result[0]["hbm_used_percent"] == pytest.approx(25.0)
+
+    # ── npu-smi not found → torch_npu fallback ─────────────────────────────────
+
+    def test_torch_npu_fallback_when_no_smi(self):
+        mock_props = MagicMock()
+        mock_props.total_memory = 64 * 1024 * 1024 * 1024  # 64 GB
+
+        mock_torch_npu = MagicMock()
+        mock_torch_npu.npu.device_count.return_value = 1
+        mock_torch_npu.npu.get_device_properties.return_value = mock_props
+        mock_torch_npu.npu.memory_stats.return_value = {
+            "allocated_bytes.all.current": 8 * 1024 * 1024 * 1024  # 8 GB used
+        }
+
+        with patch("shutil.which", return_value=None), \
+             patch.dict("sys.modules", {"torch_npu": mock_torch_npu}):
+            result = _collect_ascend_metrics()
+
+        assert len(result) == 1
+        assert result[0]["id"] == 0
+        assert result[0]["hbm_total_mb"] == 64 * 1024
+        assert result[0]["hbm_used_mb"] == 8 * 1024
+        assert result[0]["hbm_used_percent"] == pytest.approx(12.5)
+
+    def test_torch_npu_multi_device_fallback(self):
+        mock_props = MagicMock()
+        mock_props.total_memory = 32 * 1024 * 1024 * 1024
+
+        mock_torch_npu = MagicMock()
+        mock_torch_npu.npu.device_count.return_value = 4
+        mock_torch_npu.npu.get_device_properties.return_value = mock_props
+        mock_torch_npu.npu.memory_stats.return_value = {
+            "allocated_bytes.all.current": 4 * 1024 * 1024 * 1024
+        }
+
+        with patch("shutil.which", return_value=None), \
+             patch.dict("sys.modules", {"torch_npu": mock_torch_npu}):
+            result = _collect_ascend_metrics()
+
+        assert len(result) == 4
+        for i, entry in enumerate(result):
+            assert entry["id"] == i
+
+    # ── no hardware at all ─────────────────────────────────────────────────────
+
+    def test_empty_list_when_nothing_available(self):
+        with patch("shutil.which", return_value=None), \
+             patch.dict("sys.modules", {"torch_npu": None}):
+            result = _collect_ascend_metrics()
+        assert result == []
+
+    # ── health_check integration ───────────────────────────────────────────────
+
+    def test_health_check_includes_npus_key_for_ascend_mode(self):
+        """TaskExecutor with gpu_mode=ascend must include 'npus' in health result."""
+        ex = TaskExecutor(gpu_mode="ascend", max_memory_pct=80)
+        mock_metrics = [{"id": 0, "utilization_percent": 30.0, "hbm_used_mb": 4096,
+                          "hbm_total_mb": 32768, "hbm_used_percent": 12.5}]
+        with patch("regraph_agent.tasks._collect_ascend_metrics", return_value=mock_metrics):
+            out = ex.execute({"id": "hc", "type": "health_check", "payload": {}})
+        assert "npus" in out["result"]
+        assert out["result"]["npus"] == mock_metrics
+
+    def test_health_check_no_npus_key_for_cpu_mode(self):
+        """TaskExecutor with gpu_mode=disabled must NOT include 'npus'."""
+        ex = TaskExecutor(gpu_mode="disabled", max_memory_pct=80)
+        out = ex.execute({"id": "hc", "type": "health_check", "payload": {}})
+        assert "npus" not in out["result"]
