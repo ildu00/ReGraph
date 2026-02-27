@@ -74,7 +74,7 @@ jobs:
           # Targets: respect manual input, else build all
           INPUT="${{ github.event.inputs.targets }}"
           if [[ -z "$INPUT" || "$INPUT" == "all" ]]; then
-            echo "targets=cpu nvidia dev" >> "$GITHUB_OUTPUT"
+            echo "targets=cpu nvidia ascend dev" >> "$GITHUB_OUTPUT"
           else
             echo "targets=${INPUT//,/ }" >> "$GITHUB_OUTPUT"
           fi
