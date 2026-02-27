@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <!-- Core pages -->
   <url>
     <loc>https://regraph.tech/</loc>
     <changefreq>weekly</changefreq>
@@ -20,78 +21,239 @@
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
+
+  <!-- GPU pricing detail pages -->
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/H100</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/A100-80GB</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/A100</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/RTX%205090</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/RTX%204090</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/RTX%203090</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/L40S</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/gpu/V100</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Model pricing detail pages -->
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-5</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-5.2</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-5.1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-5-mini</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-5-nano</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-4o</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-4.1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/gpt-4.1-mini</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/regraph/ReGraph-LLM</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/google/gemini-3-pro</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/google/gemini-3-flash</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/google/gemini-2.5-pro</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/google/gemini-2.5-flash</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/anthropic/claude-opus-4-6</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/anthropic/claude-sonnet-4-6</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/anthropic/claude-haiku-4-5</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/meta/llama-3.1-70b</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/meta/llama-3.1-8b</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/meta/llama-3.2-90b-vision</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/deepseek/deepseek-r1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/deepseek/deepseek-coder-33b</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/mistral/mistral-large</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/mistral/mixtral-8x22b</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/alibaba/qwen-72b</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/xai/grok-code-fast-1</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/stability/sdxl-1.0</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/stability/sdxl-turbo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/stability/stable-video</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/whisper-large-v3</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/text-embedding-3-large</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/openai/text-embedding-3-small</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/cohere/command-r-plus</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/cohere/rerank-v3.5</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/baai/bge-large-en</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/pricing/model/elevenlabs/eleven-turbo</loc>
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+
+  <!-- Blog -->
   <url>
     <loc>https://regraph.tech/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://regraph.tech/blog/future-of-decentralized-ai-inference</loc>
+    <loc>https://regraph.tech/blog/regraph-llm-now-on-huggingface</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://regraph.tech/blog/gpt5-new-era-reasoning-models</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/gemini-3-pro-google-multimodal-ai</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/building-ai-applications-best-practices-2026</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/regraph-network-10000-providers-milestone</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/understanding-ai-model-benchmarks</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/rise-of-small-language-models</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/introducing-batch-processing-api</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/ai-ethics-responsible-development</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/getting-started-with-regraph-complete-guide</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/regraph-platform-launch-new-era</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/regraph-vs-gonka-ai-inference-comparison</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/enterprise-deep-dive-regraph-platform</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://regraph.tech/blog/new-models-january-2025</loc>
+    <loc>https://regraph.tech/blog/smartphone-ai-mining-turn-your-phone-into-compute-node</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -101,10 +263,77 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://regraph.tech/blog/smartphone-ai-mining</loc>
+    <loc>https://regraph.tech/blog/new-models-january-2025</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+  <url>
+    <loc>https://regraph.tech/blog/enterprise-deep-dive-regraph-platform</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/regraph-vs-gonka-ai-inference-comparison</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/regraph-platform-launch-new-era</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/getting-started-with-regraph-complete-guide</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/ai-ethics-responsible-development</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/introducing-batch-processing-api</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/rise-of-small-language-models</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/understanding-ai-model-benchmarks</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/regraph-network-10000-providers-milestone</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/building-ai-applications-best-practices-2026</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/gemini-3-pro-google-multimodal-ai</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/gpt5-new-era-reasoning-models</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://regraph.tech/blog/future-of-decentralized-ai-inference</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- Other public pages -->
   <url>
     <loc>https://regraph.tech/status</loc>
     <changefreq>daily</changefreq>
