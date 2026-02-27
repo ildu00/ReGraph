@@ -290,6 +290,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const pendingFilesRef = useRef<File[]>([]);
 
   const enabledTools = TOOLS.filter((t) => agent.tools?.includes(t.id));
 
