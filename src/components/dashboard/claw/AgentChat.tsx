@@ -237,44 +237,49 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     }
     (async () => {
       setLoadingHistory(true);
-      // Get latest conversation for this agent
-      const { data: conv } = await supabase
-        .from("claw_conversations")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("agent_id", agent.id!)
-        .order("updated_at", { ascending: false })
-        .limit(1)
-        .single();
-
-      let convId = conv?.id;
-      if (!convId) {
-        const { data: newConv } = await supabase
+      try {
+        // Get latest conversation for this agent
+        const { data: conv } = await supabase
           .from("claw_conversations")
-          .insert({ user_id: user.id, agent_id: agent.id!, title: `Chat with ${agent.name}` })
-          .select("id").single();
-        convId = newConv?.id;
-      }
-      if (!convId) { setLoadingHistory(false); return; }
-      setConversationId(convId);
+          .select("id")
+          .eq("user_id", user.id)
+          .eq("agent_id", agent.id!)
+          .order("updated_at", { ascending: false })
+          .limit(1)
+          .single();
 
-      // Load messages
-      const { data: msgs } = await supabase
-        .from("claw_messages")
-        .select("*")
-        .eq("conversation_id", convId)
-        .order("created_at", { ascending: true });
-      if (msgs) {
-        setMessages(msgs.map((m: any) => ({
-          id: m.id,
-          role: m.role,
-          content: m.content,
-          tool_name: m.tool_name,
-          tool_input: m.tool_input,
-          tool_result: m.tool_result,
-        })));
+        let convId = conv?.id;
+        if (!convId) {
+          const { data: newConv } = await supabase
+            .from("claw_conversations")
+            .insert({ user_id: user.id, agent_id: agent.id!, title: `Chat with ${agent.name}` })
+            .select("id").single();
+          convId = newConv?.id;
+        }
+        if (!convId) { setLoadingHistory(false); return; }
+        setConversationId(convId);
+
+        // Load messages
+        const { data: msgs } = await supabase
+          .from("claw_messages")
+          .select("*")
+          .eq("conversation_id", convId)
+          .order("created_at", { ascending: true });
+        if (msgs) {
+          setMessages(msgs.map((m: any) => ({
+            id: m.id,
+            role: m.role,
+            content: m.content,
+            tool_name: m.tool_name,
+            tool_input: m.tool_input,
+            tool_result: m.tool_result,
+          })));
+        }
+      } catch (e) {
+        console.error("[AgentChat] Failed to load history:", e);
+      } finally {
+        setLoadingHistory(false);
       }
-      setLoadingHistory(false);
     })();
   }, [user, agent.id]);
 
