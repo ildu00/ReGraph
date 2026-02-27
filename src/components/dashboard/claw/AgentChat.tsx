@@ -259,20 +259,21 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!convId) { setLoadingHistory(false); return; }
         setConversationId(convId);
 
-        // Load messages
+        // Load messages (last 50, strip heavy base64 from tool_result)
         const { data: msgs } = await supabase
           .from("claw_messages")
-          .select("*")
+          .select("id, role, content, tool_name, tool_input, created_at")
           .eq("conversation_id", convId)
-          .order("created_at", { ascending: true });
+          .order("created_at", { ascending: false })
+          .limit(50);
         if (msgs) {
-          setMessages(msgs.map((m: any) => ({
+          setMessages(msgs.reverse().map((m: any) => ({
             id: m.id,
             role: m.role,
             content: m.content,
             tool_name: m.tool_name,
             tool_input: m.tool_input,
-            tool_result: m.tool_result,
+            tool_result: null, // don't load heavy blobs from history
           })));
         }
       } catch (e) {
