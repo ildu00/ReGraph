@@ -188,6 +188,121 @@ export type Database = {
         }
         Relationships: []
       }
+      claw_agents: {
+        Row: {
+          created_at: string
+          description: string | null
+          emoji: string
+          id: string
+          model_id: string
+          name: string
+          system_prompt: string
+          tools: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          emoji?: string
+          id?: string
+          model_id?: string
+          name: string
+          system_prompt?: string
+          tools?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          emoji?: string
+          id?: string
+          model_id?: string
+          name?: string
+          system_prompt?: string
+          tools?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      claw_conversations: {
+        Row: {
+          agent_id: string
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_id: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_id?: string
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claw_conversations_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "claw_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      claw_messages: {
+        Row: {
+          content: string | null
+          conversation_id: string
+          created_at: string
+          id: string
+          role: string
+          tool_input: Json | null
+          tool_name: string | null
+          tool_result: Json | null
+        }
+        Insert: {
+          content?: string | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          role: string
+          tool_input?: Json | null
+          tool_name?: string | null
+          tool_result?: Json | null
+        }
+        Update: {
+          content?: string | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          role?: string
+          tool_input?: Json | null
+          tool_name?: string | null
+          tool_result?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claw_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "claw_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpu_pricing: {
         Row: {
           created_at: string
