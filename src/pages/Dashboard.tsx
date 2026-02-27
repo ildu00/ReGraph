@@ -375,7 +375,11 @@ const DashboardInner = () => {
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw">
+          <TabsContent value="claw" className={
+            isMobileChatMode
+              ? 'flex-1 min-h-0 flex flex-col mt-0'
+              : ''
+          }>
             <ClawTab />
           </TabsContent>
 
