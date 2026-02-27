@@ -333,6 +333,9 @@ const DashboardInner = () => {
             <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2">
               <MessageSquare className="h-4 w-4" />
             </TabsTrigger>
+            <TabsTrigger value="claw" className="data-[state=active]:bg-secondary px-2">
+              <Workflow className="h-4 w-4" />
+            </TabsTrigger>
             <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2">
               <Wallet className="h-4 w-4" />
             </TabsTrigger>
@@ -345,7 +348,7 @@ const DashboardInner = () => {
             <TabsTrigger value="mining" className="data-[state=active]:bg-secondary px-2 relative">
               <Pickaxe className="h-4 w-4" />
               {miningStatus === "mining" && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-primary animate-pulse" />
               )}
             </TabsTrigger>
             <TabsTrigger value="usage" className="data-[state=active]:bg-secondary px-2">
@@ -370,6 +373,10 @@ const DashboardInner = () => {
               : ''
           }>
             <ChatTab />
+          </TabsContent>
+
+          <TabsContent value="claw" className="h-full">
+            <ClawTab />
           </TabsContent>
 
           <TabsContent value="api-keys">
