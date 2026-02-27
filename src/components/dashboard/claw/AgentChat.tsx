@@ -378,7 +378,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         if (!assistantMsg) break;
 
         // Tool calls?
-        if (assistantMsg.tool_calls?.length > 0 && (choice?.finish_reason === "tool_calls" || !choice)) {
+        if (assistantMsg.tool_calls?.length > 0) {
           // If model returned meaningful thinking content, show it
           const thinkingContent = assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
           if (thinkingContent) {
@@ -432,6 +432,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         // Final answer — add streaming placeholder then fill it
         const finalContent = assistantMsg.content || "";
+        // Skip placeholder "No response generated" messages — check if last tool was image_generation
+        const lastToolMsg = loopMessages.slice().reverse().find((m: any) => m.role === "tool");
+        const isAfterImageGen = lastToolMsg && (loopMessages.slice().reverse().find((m: any) => m.role === "assistant" && m.tool_calls?.length > 0) as any)?.tool_calls?.some((tc: any) => tc.function?.name === "image_generation");
+        if (!finalContent || finalContent === "No response generated") {
+          if (isAfterImageGen) break; // image was already shown, nothing more to say
+          // For other tools, still break to avoid infinite loop
+          break;
+        }
         setMessages((prev) => [...prev, { id: currentStreamingId, role: "assistant", content: finalContent }]);
         await persistMessage(conversationId, { role: "assistant", content: finalContent });
         break;
