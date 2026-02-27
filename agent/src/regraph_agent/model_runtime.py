@@ -626,6 +626,7 @@ def load_model(model_id: str, gpu_mode: str = "disabled") -> ModelHandle:
     - NVIDIA: vLLM (if installed) → llama.cpp CUDA → transformers
     - Apple Silicon: llama.cpp Metal → transformers (MPS)
     - ROCm: llama.cpp ROCm → transformers
+    - Ascend NPU: torch_npu → transformers (npu device)
     - CPU / fallback: llama.cpp CPU → transformers CPU → error
 
     For embedding-only model IDs (contains 'embed' or 'e5' or 'bge'):
