@@ -340,7 +340,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             await persistMessage(conversationId, { role: "assistant", content: assistantMsg.content });
           }
 
-          loopMessages.push({ role: "assistant", content: assistantMsg.content || "", tool_calls: assistantMsg.tool_calls });
+          loopMessages.push({ role: "assistant", content: assistantMsg.content || "", tool_calls: assistantMsg.tool_calls } as any);
 
           // Execute each tool call
           for (const tc of assistantMsg.tool_calls) {
