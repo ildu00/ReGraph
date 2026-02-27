@@ -3,17 +3,23 @@
 #
 # Targets:
 #   base      — CPU-only (any x86_64 / arm64)
+#   cpu       — CPU target alias
 #   nvidia    — CUDA 12.1 + llama.cpp CUDA + vLLM
+#   ascend    — Huawei Ascend NPU (CANN 8.x) + torch_npu
 #   metal     — macOS Apple Silicon hint (CPU image + Metal note)
 #   dev       — base + dev tools for local development
 #
 # Usage:
-#   # Auto-detect (see docker-bake.hcl or use BUILDKIT_TARGET)
-#   docker build --target cpu   -t regraph-agent:cpu   .
+#   docker build --target cpu    -t regraph-agent:cpu    .
 #   docker build --target nvidia -t regraph-agent:nvidia .
+#   docker build --target ascend -t regraph-agent:ascend .
 #
-#   # NVIDIA (requires nvidia-container-toolkit)
+#   # NVIDIA  (requires nvidia-container-toolkit)
 #   docker run --gpus all -e REGRAPH_CONNECTION_KEY=rg_conn_xxx regraph-agent:nvidia
+#
+#   # Ascend  (requires Ascend Docker Runtime — ascend-docker-runtime)
+#   docker run --device /dev/davinci0 --device /dev/davinci_manager \
+#              -e REGRAPH_CONNECTION_KEY=rg_conn_xxx regraph-agent:ascend
 #
 #   # CPU
 #   docker run -e REGRAPH_CONNECTION_KEY=rg_conn_xxx regraph-agent:cpu
