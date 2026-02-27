@@ -507,8 +507,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           </div>
         )}
 
+        {isLoading && messages[messages.length - 1]?.role === "user" && (
+          <div className="flex gap-3 justify-start">
+            <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+              <Bot className="h-4 w-4 text-primary" />
+            </div>
+            <div className="bg-secondary/70 rounded-xl px-4 py-3">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        )}
+
         {messages.map((msg) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
+          if (msg.role === "assistant" && !msg.content) return null;
           return (
             <div key={msg.id} className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
