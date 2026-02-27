@@ -69,7 +69,7 @@ const DashboardInner = () => {
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
-    if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat"].includes(tabParam)) {
+    if (tabParam && ["overview", "wallet", "api-keys", "provider", "mining", "usage", "settings", "chat", "claw"].includes(tabParam)) {
       setActiveTab(tabParam);
     }
     const stripeStatus = searchParams.get("stripe");
