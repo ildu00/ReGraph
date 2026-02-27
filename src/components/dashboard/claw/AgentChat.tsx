@@ -252,7 +252,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [loadingHistory, setLoadingHistory] = useState(true);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -260,10 +260,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
   // Load or create conversation
   useEffect(() => {
-    if (!user || !agent.id) {
-      setLoadingHistory(false);
-      return;
-    }
+    if (!user || !agent.id) return;
     (async () => {
       setLoadingHistory(true);
       try {
