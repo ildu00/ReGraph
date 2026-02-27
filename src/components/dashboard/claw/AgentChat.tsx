@@ -425,21 +425,19 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
+          // If any tool was image_generation and succeeded — stop here, no need for a follow-up LLM call
+          const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
+          const imageResult = loopMessages.slice().reverse().find((m: any) => m.role === "tool" && m.name === "image_generation");
+          if (hadImageGen && imageResult) break;
+
           // Prepare new streaming placeholder for next iteration's final answer
           currentStreamingId = crypto.randomUUID();
           continue;
         }
 
-        // Final answer — add streaming placeholder then fill it
+        // Final answer
         const finalContent = assistantMsg.content || "";
-        // Skip placeholder "No response generated" messages — check if last tool was image_generation
-        const lastToolMsg = loopMessages.slice().reverse().find((m: any) => m.role === "tool");
-        const isAfterImageGen = lastToolMsg && (loopMessages.slice().reverse().find((m: any) => m.role === "assistant" && m.tool_calls?.length > 0) as any)?.tool_calls?.some((tc: any) => tc.function?.name === "image_generation");
-        if (!finalContent || finalContent === "No response generated") {
-          if (isAfterImageGen) break; // image was already shown, nothing more to say
-          // For other tools, still break to avoid infinite loop
-          break;
-        }
+        if (!finalContent || finalContent === "No response generated") break;
         setMessages((prev) => [...prev, { id: currentStreamingId, role: "assistant", content: finalContent }]);
         await persistMessage(conversationId, { role: "assistant", content: finalContent });
         break;
