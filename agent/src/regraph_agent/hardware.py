@@ -19,6 +19,7 @@ class GpuInfo:
     cuda_version: str = ""
     backend: str = "unknown"   # nvidia | rocm | metal | directml | mps
     device_index: int = 0
+    npu_info: str = ""       # extra info string for Ascend / other NPUs
 
 
 @dataclass
