@@ -326,3 +326,35 @@ class TestDetectHardware:
         report = detect_hardware(gpu_mode="disabled")
         # May be empty on some CI runners, just check it's a string
         assert isinstance(report.cpu_model, str)
+
+    @patch("regraph_agent.hardware._detect_nvidia", return_value=[])
+    @patch("regraph_agent.hardware._detect_rocm", return_value=[])
+    @patch("regraph_agent.hardware._detect_apple_silicon", return_value=[])
+    @patch("regraph_agent.hardware._detect_directml", return_value=[])
+    @patch("regraph_agent.hardware._detect_ascend", return_value=[
+        GpuInfo(name="Ascend 910B", vram_mb=32768, backend="ascend"),
+    ])
+    def test_auto_picks_ascend_when_only_ascend(self, _da, _dm, _das, _dr, _dn):
+        report = detect_hardware(gpu_mode="auto")
+        assert report.gpu_mode == "ascend"
+        assert len(report.gpus) == 1
+        assert report.gpus[0].name == "Ascend 910B"
+
+    @patch("regraph_agent.hardware._detect_nvidia", return_value=[
+        GpuInfo(name="RTX 4090", vram_mb=24576, backend="nvidia"),
+    ])
+    @patch("regraph_agent.hardware._detect_ascend", return_value=[
+        GpuInfo(name="Ascend 910B", vram_mb=32768, backend="ascend"),
+    ])
+    @patch("regraph_agent.hardware._detect_rocm", return_value=[])
+    @patch("regraph_agent.hardware._detect_apple_silicon", return_value=[])
+    @patch("regraph_agent.hardware._detect_directml", return_value=[])
+    def test_nvidia_preferred_over_ascend(self, _dm, _das, _dr, _da, _dn):
+        report = detect_hardware(gpu_mode="auto")
+        assert report.gpu_mode == "nvidia"
+
+    def test_config_accepts_ascend_gpu_mode(self):
+        """ComputeConfig should accept 'ascend' as a valid gpu_mode literal."""
+        from regraph_agent.config import ComputeConfig
+        cfg = ComputeConfig(gpu_mode="ascend")
+        assert cfg.gpu_mode == "ascend"
