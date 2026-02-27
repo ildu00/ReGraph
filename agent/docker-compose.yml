@@ -1,0 +1,95 @@
+# ReGraph Agent — Docker Compose
+#
+# Profiles:
+#   cpu     — CPU-only mode (default)
+#   nvidia  — NVIDIA GPU via nvidia-container-toolkit
+#   dev     — Local development with hot reload
+#
+# Usage:
+#   docker compose up                          # CPU mode
+#   docker compose --profile nvidia up        # NVIDIA GPU
+#   docker compose --profile dev up           # Dev mode
+#
+# Required env:
+#   REGRAPH_CONNECTION_KEY=rg_conn_xxxxx
+
+x-base: &base
+  restart: unless-stopped
+  environment:
+    REGRAPH_API_URL: ${REGRAPH_API_URL:-https://api.regraph.tech}
+    REGRAPH_CONNECTION_KEY: ${REGRAPH_CONNECTION_KEY:?Set REGRAPH_CONNECTION_KEY}
+    REGRAPH_GPU_MODE: ${REGRAPH_GPU_MODE:-auto}
+  volumes:
+    - models:/data/models
+    - config:/home/agent/.regraph
+  logging:
+    driver: json-file
+    options:
+      max-size: "50m"
+      max-file: "3"
+
+services:
+
+  # ── CPU (default) ──────────────────────────────────────────────────────────
+  agent-cpu:
+    <<: *base
+    image: ghcr.io/regraph-tech/agent:latest-cpu
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: cpu
+    profiles: ["", "cpu"]
+    environment:
+      REGRAPH_API_URL: ${REGRAPH_API_URL:-https://api.regraph.tech}
+      REGRAPH_CONNECTION_KEY: ${REGRAPH_CONNECTION_KEY:?Set REGRAPH_CONNECTION_KEY}
+      REGRAPH_GPU_MODE: disabled
+    command: ["start", "--key", "${REGRAPH_CONNECTION_KEY}", "--cpu-only"]
+
+  # ── NVIDIA ──────────────────────────────────────────────────────────────────
+  agent-nvidia:
+    <<: *base
+    image: ghcr.io/regraph-tech/agent:latest-nvidia
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: nvidia
+    profiles: ["nvidia"]
+    environment:
+      REGRAPH_API_URL: ${REGRAPH_API_URL:-https://api.regraph.tech}
+      REGRAPH_CONNECTION_KEY: ${REGRAPH_CONNECTION_KEY:?Set REGRAPH_CONNECTION_KEY}
+      REGRAPH_GPU_MODE: nvidia
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    command: ["start", "--key", "${REGRAPH_CONNECTION_KEY}"]
+
+  # ── Dev ─────────────────────────────────────────────────────────────────────
+  agent-dev:
+    <<: *base
+    image: ghcr.io/regraph-tech/agent:dev
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    profiles: ["dev"]
+    environment:
+      REGRAPH_API_URL: ${REGRAPH_API_URL:-http://host.docker.internal:8000}
+      REGRAPH_CONNECTION_KEY: ${REGRAPH_CONNECTION_KEY:-rg_conn_dev}
+      REGRAPH_GPU_MODE: disabled
+    volumes:
+      - .:/app          # live source mount
+      - models:/data/models
+      - config:/home/agent/.regraph
+    stdin_open: true
+    tty: true
+    command: ["bash"]
+
+volumes:
+  models:
+    driver: local
+  config:
+    driver: local
