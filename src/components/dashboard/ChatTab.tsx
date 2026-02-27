@@ -452,7 +452,7 @@ const ChatTab = () => {
           messages.map((msg) => (
             <div
               key={msg.id}
-              className={`flex gap-3 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+              className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {msg.role === "assistant" && (
                 <div className="shrink-0 h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -460,10 +460,10 @@ const ChatTab = () => {
                 </div>
               )}
               <div
-                className={`max-w-[80%] min-w-0 overflow-hidden rounded-xl px-4 py-3 ${
+                className={`min-w-0 rounded-xl px-4 py-3 ${
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/70"
+                    ? "bg-primary text-primary-foreground max-w-[80%]"
+                    : "bg-secondary/70 flex-1"
                 }`}
               >
                 {/* User attachments */}
