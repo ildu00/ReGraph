@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Bot } from "lucide-react";
 import {
   Dialog,
   DialogContent,
