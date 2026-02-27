@@ -364,7 +364,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     if (!apiKey) { toast.error("No API key"); setIsLoading(false); return; }
 
     // Build messages for inference — strip base64 blobs from tool results
-    const sanitizeToolResult = (result: any): any => {
+    // For API context: strip base64 to keep request small
+    const sanitizeForApi = (result: any): any => {
       if (!result || typeof result !== "object") return result;
       const sanitized = { ...result };
       if (typeof sanitized.image_url === "string" && sanitized.image_url.startsWith("data:")) {
@@ -372,6 +373,16 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
       return sanitized;
     };
+    // For DB persistence: save public URLs, discard base64
+    const sanitizeForDb = (result: any): any => {
+      if (!result || typeof result !== "object") return result;
+      const sanitized = { ...result };
+      if (typeof sanitized.image_url === "string" && sanitized.image_url.startsWith("data:")) {
+        return null; // never store base64 in DB
+      }
+      return sanitized;
+    };
+    const sanitizeToolResult = sanitizeForApi;
 
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
@@ -467,8 +478,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               ? { ...m, tool_result: result, isStreaming: false }
               : m
             ));
-            // Store only lightweight URL, never base64 in DB
-            const persistableResult = sanitizeToolResult(result);
+            // Store URL in DB (never base64)
+            const persistableResult = sanitizeForDb(result);
             await persistMessage(conversationId, {
               role: "tool",
               content: null,
