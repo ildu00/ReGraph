@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -711,6 +712,25 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   );
 }
 
+function ImageWithLightbox({ src }: { src: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <img
+        src={src}
+        alt="Generated"
+        className="w-full max-w-xs rounded mt-1 h-auto object-contain cursor-zoom-in"
+        onClick={() => setOpen(true)}
+      />
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex items-center justify-center bg-background/95">
+          <img src={src} alt="Generated" className="max-w-full max-h-[90vh] object-contain rounded" />
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function ToolCallMessage({ msg }: { msg: Message }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
   const isRunning = msg.isStreaming;
@@ -728,7 +748,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Image generation
     if (msg.tool_result?.image_url) {
-      return <img src={msg.tool_result.image_url} alt="Generated" className="w-full max-w-xs rounded mt-1 h-auto object-contain" />;
+      return <ImageWithLightbox src={msg.tool_result.image_url} />;
     }
 
     // Web search — pretty render
