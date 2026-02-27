@@ -717,8 +717,42 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         <div ref={messagesEndRef} />
       </Card>
 
+      {/* Attached files preview */}
+      {attachedFiles.length > 0 && (
+        <div className="flex flex-wrap gap-2 mb-2 shrink-0">
+          {attachedFiles.map((file, i) => (
+            <Badge key={i} variant="secondary" className="flex items-center gap-1 pr-1">
+              {file.type.startsWith("image/") ? "🖼️" : "📎"} {file.name}
+              <button onClick={() => removeFile(i)} className="ml-1 hover:text-destructive">
+                <X className="h-3 w-3" />
+              </button>
+            </Badge>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
       <div className="flex gap-2 items-end shrink-0 pb-2">
+        <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={handleFileAttach} />
+        <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileAttach} />
+        <Button
+          variant="ghost" size="icon"
+          className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => imageInputRef.current?.click()}
+          title="Attach image"
+        >
+          <ImagePlus className="h-5 w-5" />
+        </Button>
+        <Button
+          variant="ghost" size="icon"
+          className="shrink-0 h-10 w-10 text-muted-foreground"
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => fileInputRef.current?.click()}
+          title="Attach file"
+        >
+          <FileUp className="h-5 w-5" />
+        </Button>
         <Textarea
           ref={textareaRef}
           value={input}
@@ -738,7 +772,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         <Button
           size="icon"
           onClick={handleSend}
-          disabled={isLoading || !input.trim()}
+          disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
           onMouseDown={(e) => e.preventDefault()}
           className="shrink-0 h-10 w-10 glow-primary"
         >
