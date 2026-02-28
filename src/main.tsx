@@ -68,6 +68,18 @@ window.addEventListener("pageshow", (e) => {
   }
 });
 
+// When the Service Worker updates and takes control (skipWaiting + clientsClaim),
+// reload the page so users immediately get the new version instead of waiting
+// for the next manual refresh.
+if ("serviceWorker" in navigator) {
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}
+
 // Helper to log detailed import diagnostics
 const logImportAttempt = (name: string, stage: string, error?: unknown) => {
   try {
