@@ -321,7 +321,7 @@ const DashboardInner = () => {
       <main className={
         (isMobileChatMode || isMobileClawMode)
           ? 'flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-4'
-          : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
+          : 'fixed top-16 left-0 md:left-64 right-0 bottom-0 flex flex-col overflow-hidden px-4 md:px-8 pt-4'
       }>
         <Tabs value={activeTab} onValueChange={handleTabChange} className={
           (isMobileChatMode || isMobileClawMode)
