@@ -436,6 +436,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     pendingFilesRef.current = attachedFiles; // keep files available for document_reader tool
     setAttachedFiles([]);
     setIsLoading(true);
+    setTimeout(() => textareaRef.current?.focus(), 50);
 
     // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
@@ -631,6 +632,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     // Clear any remaining streaming states
     setMessages((prev) => prev.map((m) => m.isStreaming ? { ...m, isStreaming: false } : m));
     setIsLoading(false);
+    setTimeout(() => textareaRef.current?.focus(), 50);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
