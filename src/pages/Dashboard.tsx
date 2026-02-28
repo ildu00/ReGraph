@@ -365,11 +365,11 @@ const DashboardInner = () => {
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col mt-0">
+          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col mt-0 data-[state=inactive]:hidden">
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0">
+          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0 data-[state=inactive]:hidden">
             <ClawTab />
           </TabsContent>
 
