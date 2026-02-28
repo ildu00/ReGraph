@@ -39,6 +39,47 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.4.0",
+    date: "February 28, 2026",
+    title: "ReGraph Claw — Public Launch",
+    type: "major",
+    changes: [
+      { category: "feature", description: "ReGraph Claw is now publicly available — a managed AI agent builder accessible from the dashboard. Create, configure, and run autonomous agents with no infrastructure required." },
+      { category: "feature", description: "Agent Library — save and manage multiple named agents, each with its own system prompt, model, emoji, and tool configuration. Agents persist across sessions." },
+      { category: "feature", description: "Real-time Web Search tool powered by Firecrawl — agents can browse the live web, retrieve news, and read any public URL during a reasoning loop." },
+      { category: "feature", description: "Code Interpreter tool via Judge0 CE sandbox — agents execute Python, JavaScript, TypeScript, C++, Go, Ruby, and more in isolated runtime environments." },
+      { category: "feature", description: "Document Reader tool — agents parse and extract content from PDFs, Word documents, spreadsheets, and plain text files uploaded by the user." },
+      { category: "feature", description: "Browser calculator tool for mathematical expression evaluation and quick REPL-style scripting inside the agent reasoning loop." },
+      { category: "feature", description: "Persistent conversation history — each agent maintains separate conversation threads stored per user; context is never lost between sessions." },
+      { category: "feature", description: "Dedicated /claw landing page with full feature overview, use cases, and public roadmap of planned integrations." },
+      { category: "improvement", description: "Claw agent images stored in Supabase Storage bucket instead of database columns — avoids row size limits and improves query performance at scale." },
+      { category: "improvement", description: "Mobile-optimized Claw UI — input field stays pinned to the bottom using visual viewport API, preventing layout shifts when the virtual keyboard opens on iOS and Android." },
+      { category: "improvement", description: "Default model for new agents is regraph-llm running on the decentralized compute network — no external API key required." },
+    ]
+  },
+  {
+    version: "3.3.0",
+    date: "February 28, 2026",
+    title: "Homepage Claw Section & UI Polish",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "New Claw section on the homepage — showcases agent capabilities, available tools, and links to the /claw detail page." },
+      { category: "improvement", description: "Trust badges (SOC2, GDPR, Uptime SLA, E2E Encryption) in the CTA section replaced with Lucide icon components for visual consistency with the design system." },
+      { category: "improvement", description: "Use case cards on the /claw page updated to use Lucide icons instead of emoji, matching platform visual identity." },
+    ]
+  },
+  {
+    version: "3.2.0",
+    date: "February 28, 2026",
+    title: "Admin Blog Preview & Dialog Fixes",
+    type: "minor",
+    changes: [
+      { category: "fix", description: "Fixed article preview and edit dialogs in the admin blog panel exceeding viewport width on mobile — dialogs now constrained to calc(100vw - 2rem) with proper overflow handling." },
+      { category: "fix", description: "Fixed long article titles and excerpts being clipped in the preview dialog on narrow screens — added break-words and min-w-0 constraints to content containers." },
+      { category: "improvement", description: "Base DialogContent component updated with responsive width tokens — all dialogs across the platform now correctly fit within the mobile viewport." },
+    ]
+  },
+  {
     version: "3.1.0",
     date: "February 27, 2026",
     title: "Huawei Ascend NPU Support",
