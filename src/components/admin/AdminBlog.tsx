@@ -309,7 +309,7 @@ export const AdminBlog = () => {
         <Table className="table-fixed w-full min-w-[360px]">
           <TableHeader>
             <TableRow>
-              <TableHead className="w-[44px]">Featured</TableHead>
+              <TableHead className="w-[36px]"><span className="hidden sm:inline">Featured</span><Star className="h-3.5 w-3.5 sm:hidden text-muted-foreground" /></TableHead>
               <TableHead className="w-[60px] hidden sm:table-cell">Image</TableHead>
               <TableHead>Title</TableHead>
               <TableHead className="hidden md:table-cell w-[130px]">Category</TableHead>
