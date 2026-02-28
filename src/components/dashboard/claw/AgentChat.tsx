@@ -466,25 +466,37 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     };
     const sanitizeToolResult = sanitizeForApi;
 
-    // Build clean history for API: only include simple user/assistant text messages.
-    // Tool call cycles (assistant tool_calls + tool results) are intentionally excluded from
-    // the loaded history context because tool_result data isn't fully loaded from DB,
-    // and an incomplete tool_call sequence causes API 500 errors.
+    // Build clean history for API: only user/assistant TEXT exchanges.
+    // Strategy: build pairs where each user message is followed by a text assistant response.
+    // User messages answered only by tool_calls (no text) are dropped to avoid
+    // the model thinking the previous request is still unanswered.
+    const textAssistantIds = new Set<number>();
+    const textOnlyMessages = messages.filter((m) => {
+      if (m.role === "tool") return false;
+      if (m.role === "assistant") return !!(m.content && m.content.trim() && m.content !== "No response generated");
+      return true;
+    });
+    // Walk through textOnlyMessages and drop user messages not followed by an assistant response
+    const pairedMessages: typeof textOnlyMessages = [];
+    for (let i = 0; i < textOnlyMessages.length; i++) {
+      const m = textOnlyMessages[i];
+      if (m.role === "user") {
+        const next = textOnlyMessages[i + 1];
+        if (next && next.role === "assistant") {
+          pairedMessages.push(m); // keep user only if followed by assistant text
+        }
+        // else: drop this user message (it was answered only by tool calls)
+      } else {
+        pairedMessages.push(m);
+      }
+    }
+
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
-      ...messages
-        .filter((m) => {
-          if (m.role === "tool") return false; // never include tool results from history
-          if (m.role === "assistant") {
-            // only include if has real text content
-            return !!(m.content && m.content.trim() && m.content !== "No response generated");
-          }
-          return true; // include all user messages
-        })
-        .map((m) => ({
-          role: m.role,
-          content: m.content || "",
-        })),
+      ...pairedMessages.map((m) => ({
+        role: m.role,
+        content: m.content || "",
+      })),
       { role: "user", content: fullUserText },
     ];
 
