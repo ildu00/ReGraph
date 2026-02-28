@@ -130,22 +130,22 @@ const benefits = [
 
 const useCases = [
   {
-    emoji: "🔬",
+    icon: Search,
     title: "Research Assistant",
     description: "Search the web, read papers, summarize findings, and generate structured reports — fully automated.",
   },
   {
-    emoji: "📊",
+    icon: BarChart2,
     title: "Data Analyst",
     description: "Upload a CSV, ask questions in plain English. The agent writes and executes code to produce charts and insights.",
   },
   {
-    emoji: "💻",
+    icon: Terminal,
     title: "Dev Companion",
     description: "Debug code, write tests, explain architecture, and fetch live docs — all without leaving your workflow.",
   },
   {
-    emoji: "✍️",
+    icon: MessageSquare,
     title: "Content Creator",
     description: "Research topics, draft long-form content, adapt tone, and format for blogs, docs, or social media.",
   },
@@ -297,7 +297,9 @@ const Claw = () => {
                 transition={{ delay: i * 0.08 }}
                 className="p-6 rounded-xl bg-card/50 border border-border hover:border-primary/30 hover:bg-card transition-all duration-300 text-center"
               >
-                <div className="text-4xl mb-3">{uc.emoji}</div>
+                <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 mx-auto group-hover:scale-110 transition-transform">
+                  <uc.icon className="h-6 w-6 text-primary" />
+                </div>
                 <h3 className="font-semibold mb-2">{uc.title}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{uc.description}</p>
               </motion.div>
