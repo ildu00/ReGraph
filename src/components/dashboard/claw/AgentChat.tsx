@@ -466,28 +466,25 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     };
     const sanitizeToolResult = sanitizeForApi;
 
-    // Build clean history: skip tool messages without tool_result (incomplete tool cycles from loaded history)
-    // Also skip assistant messages that have tool_calls but no following completed tool result
-    const completedToolIds = new Set(
-      messages.filter((m) => m.role === "tool" && m.tool_result != null).map((m) => m.id)
-    );
-    // Filter out: tool messages with no result, and assistant messages that only had tool_calls (no text content) when their tool wasn't completed
-    const cleanMessages = messages.filter((m) => {
-      if (m.role === "tool") return m.tool_result != null;
-      // For assistant messages: keep if they have text content (not just tool_calls without content)
-      if (m.role === "assistant") return m.content && m.content.trim() && m.content !== "No response generated";
-      return true;
-    });
-
+    // Build clean history for API: only include simple user/assistant text messages.
+    // Tool call cycles (assistant tool_calls + tool results) are intentionally excluded from
+    // the loaded history context because tool_result data isn't fully loaded from DB,
+    // and an incomplete tool_call sequence causes API 500 errors.
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
-      ...cleanMessages.map((m) => ({
-        role: m.role === "tool" ? "tool" : m.role,
-        content: m.role === "tool"
-          ? JSON.stringify(sanitizeToolResult(m.tool_result))
-          : (m.content || ""),
-        ...(m.tool_name && m.role === "tool" ? { name: m.tool_name } : {}),
-      })),
+      ...messages
+        .filter((m) => {
+          if (m.role === "tool") return false; // never include tool results from history
+          if (m.role === "assistant") {
+            // only include if has real text content
+            return !!(m.content && m.content.trim() && m.content !== "No response generated");
+          }
+          return true; // include all user messages
+        })
+        .map((m) => ({
+          role: m.role,
+          content: m.content || "",
+        })),
       { role: "user", content: fullUserText },
     ];
 
