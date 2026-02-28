@@ -227,7 +227,7 @@ const Claw = () => {
                   <div className="min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <h3 className="font-semibold">{tool.name}</h3>
-                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 border border-green-500/20">Live</span>
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Live</span>
                     </div>
                     <p className="text-sm text-muted-foreground leading-relaxed">{tool.description}</p>
                   </div>
