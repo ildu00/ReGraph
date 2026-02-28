@@ -426,18 +426,23 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       reader.readAsDataURL(file);
     });
 
-  const handleSend = async () => {
+  const handleSend = () => {
     if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
-    // Reset input synchronously BEFORE any await so iOS Safari keeps keyboard open
+    const filesToProcess = attachedFiles;
+    // Reset synchronously so iOS Safari keeps keyboard focus
     setInput("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
     }
-    const filesToProcess = attachedFiles;
     setAttachedFiles([]);
     setIsLoading(true);
+    // Defer async work so the browser finishes the touch/click event first (keeps keyboard open on iOS)
+    setTimeout(() => { doSend(userText, filesToProcess); }, 0);
+  };
 
+  const doSend = async (userText: string, filesToProcess: File[]) => {
+    if (!user || !conversationId) return;
     // Process attached files
     let fileContext = "";
     let imageBase64: string | undefined;
