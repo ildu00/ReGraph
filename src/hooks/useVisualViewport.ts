@@ -7,16 +7,15 @@ interface ViewportState {
 
 /**
  * Tracks window.visualViewport on iOS Safari.
- * 
- * When the keyboard opens on iOS Safari, the browser scrolls the layout
- * viewport, which moves `position: fixed` elements out of view.
- * 
- * This hook:
- * 1. Tracks the visual viewport height (shrinks when keyboard opens)
- * 2. Forces window.scrollTo(0,0) on every viewport change to prevent
- *    Safari from scrolling fixed elements away
+ *
+ * Pass `active = true` when the chat/claw mobile UI is open.
+ * In active mode:
+ *  - Both 'resize' and 'scroll' events are handled
+ *  - scrollTo(0,0) is forced when offsetTop > 0 to keep fixed elements in view
+ * In inactive mode (other tabs):
+ *  - Only 'resize' is handled, no forced scroll (prevents auto-scroll-to-top bug)
  */
-export function useVisualViewport() {
+export function useVisualViewport(active = false) {
   const [state, setState] = useState<ViewportState>(() => ({
     height: window.visualViewport?.height ?? window.innerHeight,
     offsetTop: window.visualViewport?.offsetTop ?? 0,
@@ -25,18 +24,15 @@ export function useVisualViewport() {
   const update = useCallback(() => {
     const vv = window.visualViewport;
     if (!vv) return;
-    
-    setState({
-      height: vv.height,
-      offsetTop: vv.offsetTop,
-    });
 
-    // When keyboard opens/closes on iOS Safari, force scroll to top so
-    // fixed-position elements stay visible. This runs only on 'resize'
-    // (keyboard open/close), NOT on 'scroll', so it won't fight the user
-    // scrolling content on non-chat tabs.
-    window.scrollTo(0, 0);
-  }, []);
+    setState({ height: vv.height, offsetTop: vv.offsetTop });
+
+    // Only force scroll-to-top in active (chat/claw) mode to counteract
+    // iOS Safari scrolling the layout viewport when the keyboard opens.
+    if (active && vv.offsetTop > 0) {
+      window.scrollTo(0, 0);
+    }
+  }, [active]);
 
   useEffect(() => {
     const vv = window.visualViewport;
@@ -44,15 +40,15 @@ export function useVisualViewport() {
 
     update();
 
-    // Only listen to 'resize' (keyboard open/close changes viewport height).
-    // Removing the 'scroll' listener prevents Safari from auto-scrolling to
-    // the top when the user scrolls content on non-chat tabs.
     vv.addEventListener("resize", update);
+    // Scroll listener only in active mode to avoid fighting user scroll elsewhere
+    if (active) vv.addEventListener("scroll", update);
 
     return () => {
       vv.removeEventListener("resize", update);
+      if (active) vv.removeEventListener("scroll", update);
     };
-  }, [update]);
+  }, [update, active]);
 
   return state;
 }

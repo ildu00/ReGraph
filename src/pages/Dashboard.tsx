@@ -62,12 +62,11 @@ const DashboardInner = () => {
   const [tabRefreshCount, setTabRefreshCount] = useState(0);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const isMobile = useIsMobile();
-  const { height: vpHeight } = useVisualViewport();
-
   const isChatActive = activeTab === 'chat';
   const isClawActive = activeTab === 'claw';
   const isMobileChatMode = isChatActive && isMobile;
   const isMobileClawMode = isClawActive && isMobile;
+  const { height: vpHeight } = useVisualViewport(isMobileChatMode || isMobileClawMode);
 
   useEffect(() => {
     const tabParam = searchParams.get("tab");
@@ -136,7 +135,7 @@ const DashboardInner = () => {
         top: 0,
         left: 0,
         right: 0,
-        height: '100dvh',
+        height: vpHeight ? `${vpHeight}px` : '100dvh',
         overflow: 'hidden',
       }
     : {};
