@@ -855,7 +855,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   );
 }
 
-function ImageWithLightbox({ src }: { src: string }) {
+function ImageWithLightbox({ src, onLoad }: { src: string; onLoad?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -864,6 +864,7 @@ function ImageWithLightbox({ src }: { src: string }) {
         alt="Generated"
         className="w-full max-w-xs rounded mt-1 h-auto object-contain cursor-zoom-in"
         onClick={() => setOpen(true)}
+        onLoad={onLoad}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex items-center justify-center bg-background/95">
