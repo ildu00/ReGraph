@@ -298,23 +298,26 @@ const Navbar = () => {
                   </Button>
                 </>
               )}
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                className="justify-center gap-2"
-              >
-                {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                {theme === "dark" ? "Light Mode" : "Dark Mode"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="lg"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="justify-center"
-              >
-                Close
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  className="flex-1 justify-center gap-2"
+                >
+                  {theme === "dark" ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                  {theme === "dark" ? "Light" : "Dark"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="lg"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex-1 justify-center"
+                >
+                  <X className="h-5 w-5 mr-2" />
+                  Close
+                </Button>
+              </div>
             </div>
           </div>
         </div>
