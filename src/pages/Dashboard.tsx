@@ -361,7 +361,7 @@ const DashboardInner = () => {
             <OverviewTab key={activeTab === "overview" ? `overview-${tabRefreshCount}` : "overview-hidden"} />
           </TabsContent>
 
-          <TabsContent value="wallet" className="flex-1 min-h-0 overflow-y-auto pb-8">
+          <TabsContent value="wallet" className="flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">
             <WalletTab />
           </TabsContent>
 
@@ -373,23 +373,23 @@ const DashboardInner = () => {
             <ClawTab isMobile={isMobileClawMode} />
           </TabsContent>
 
-          <TabsContent value="api-keys" className="flex-1 min-h-0 overflow-y-auto pb-8">
+          <TabsContent value="api-keys" className="flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">
             <ApiKeysTab />
           </TabsContent>
 
-          <TabsContent value="provider" className="flex-1 min-h-0 overflow-y-auto pb-8">
+          <TabsContent value="provider" className="flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">
             <ProviderTab />
           </TabsContent>
 
-          <TabsContent value="mining" className="flex-1 min-h-0 overflow-y-auto pb-8">
+          <TabsContent value="mining" className="flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">
             <MiningTab />
           </TabsContent>
 
-          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
+          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]"}>
             <UsageTab key={activeTab === "usage" ? `usage-${tabRefreshCount}` : "usage-hidden"} />
           </TabsContent>
 
-          <TabsContent value="settings" className="flex-1 min-h-0 overflow-y-auto pb-8">
+          <TabsContent value="settings" className="flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]">
             <SettingsTab />
           </TabsContent>
         </Tabs>
