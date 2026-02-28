@@ -449,9 +449,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
     }
     const fullUserText = fileContext ? `${fileContext}\n${userText}` : userText;
-    pendingFilesRef.current = attachedFiles; // keep files available for document_reader tool
-    setAttachedFiles([]);
-    setIsLoading(true);
+    pendingFilesRef.current = filesToProcess; // keep files available for document_reader tool
 
     // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
