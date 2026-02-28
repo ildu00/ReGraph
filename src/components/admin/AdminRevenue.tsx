@@ -358,8 +358,8 @@ export const AdminRevenue = () => {
             {transactions.length} total
           </span>
         </CardHeader>
-        <CardContent className="overflow-x-hidden">
-            <Table className="table-fixed w-full">
+        <CardContent className="overflow-x-auto p-0 sm:p-6">
+            <Table className="table-fixed w-full min-w-[320px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[25%] sm:w-[20%]">Type</TableHead>

@@ -468,8 +468,8 @@ export const AdminResources = () => {
         <CardHeader>
           <CardTitle>Devices ({filteredAndSortedDevices.length})</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-hidden">
-            <Table className="table-fixed w-full">
+        <CardContent className="overflow-x-auto p-0 sm:p-6">
+            <Table className="table-fixed w-full min-w-[360px]">
               <TableHeader>
                 <TableRow>
                    <SortableHeader field="device_name">Device</SortableHeader>

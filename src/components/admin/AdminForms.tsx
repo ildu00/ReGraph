@@ -65,7 +65,8 @@ export const AdminForms = () => {
   ];
 
   const renderTable = (data: SupportRequest[]) => (
-      <Table className="table-fixed w-full">
+    <div className="overflow-x-auto">
+      <Table className="table-fixed w-full min-w-[320px]">
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
@@ -125,6 +126,7 @@ export const AdminForms = () => {
           )}
         </TableBody>
       </Table>
+    </div>
   );
 
   if (loading) {

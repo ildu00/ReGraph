@@ -107,8 +107,8 @@ export const AdminApiKeys = () => {
       ) : keys.length === 0 ? (
         <div className="text-center py-12 text-muted-foreground">No API keys found.</div>
       ) : (
-        <div className="rounded-lg border border-border overflow-hidden">
-          <Table>
+        <div className="rounded-lg border border-border overflow-x-auto">
+          <Table className="table-fixed w-full min-w-[320px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>

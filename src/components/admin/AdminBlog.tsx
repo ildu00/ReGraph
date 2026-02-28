@@ -305,8 +305,8 @@ export const AdminBlog = () => {
       </div>
 
       {/* Articles Table */}
-      <div className="border border-border rounded-lg overflow-x-hidden">
-        <Table className="table-fixed w-full">
+      <div className="border border-border rounded-lg overflow-x-auto">
+        <Table className="table-fixed w-full min-w-[360px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[44px]">Featured</TableHead>
