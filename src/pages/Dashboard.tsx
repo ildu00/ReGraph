@@ -136,7 +136,7 @@ const DashboardInner = () => {
         top: 0,
         left: 0,
         right: 0,
-        height: '100dvh',
+        height: vpHeight ? `${vpHeight}px` : '100dvh',
         overflow: 'hidden',
       }
     : {};
