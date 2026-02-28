@@ -62,7 +62,7 @@ const DashboardInner = () => {
   const [tabRefreshCount, setTabRefreshCount] = useState(0);
   const [showSignOutDialog, setShowSignOutDialog] = useState(false);
   const isMobile = useIsMobile();
-  const { height: vpHeight } = useVisualViewport();
+  const { height: vpHeight } = useVisualViewport(isMobileChatMode || isMobileClawMode);
 
   const isChatActive = activeTab === 'chat';
   const isClawActive = activeTab === 'claw';
