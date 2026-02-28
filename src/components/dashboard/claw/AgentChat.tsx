@@ -368,12 +368,22 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    // Delayed scroll to catch images/content that render after initial layout
     const t = setTimeout(() => {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, 300);
     return () => clearTimeout(t);
   }, [messages]);
+
+  // Scroll to bottom when keyboard opens (visualViewport resize)
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => {
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+    };
+    vv.addEventListener("resize", onResize);
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
 
   // After history finishes loading (including image fetches), scroll to bottom
   useEffect(() => {
