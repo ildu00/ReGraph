@@ -369,8 +369,8 @@ const DashboardInner = () => {
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0 data-[state=inactive]:hidden">
-            <ClawTab />
+          <TabsContent value="claw" className={`flex-1 min-h-0 mt-0 data-[state=inactive]:hidden ${isMobileClawMode ? 'flex flex-col overflow-hidden' : 'overflow-y-auto pb-8'}`}>
+            <ClawTab isMobile={isMobileClawMode} />
           </TabsContent>
 
           <TabsContent value="api-keys" className="flex-1 min-h-0 overflow-y-auto pb-8">

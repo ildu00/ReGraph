@@ -3,11 +3,13 @@ import AgentLibrary from "./claw/AgentLibrary";
 import AgentChat from "./claw/AgentChat";
 import { ClawAgent } from "./claw/AgentFormModal";
 
-export default function ClawTab() {
+interface ClawTabProps { isMobile?: boolean; }
+
+export default function ClawTab({ isMobile }: ClawTabProps) {
   const [activeAgent, setActiveAgent] = useState<ClawAgent | null>(null);
 
   if (activeAgent) {
     return <div className="flex flex-col flex-1 min-h-0"><AgentChat agent={activeAgent} onBack={() => setActiveAgent(null)} /></div>;
   }
-  return <div className="flex flex-col flex-1 min-h-0 overflow-y-auto"><AgentLibrary onOpenChat={setActiveAgent} /></div>;
+  return <AgentLibrary onOpenChat={setActiveAgent} />;
 }
