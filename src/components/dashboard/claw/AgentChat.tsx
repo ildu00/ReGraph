@@ -726,7 +726,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         )}
 
         {messages.map((msg) => {
-          if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
+          if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} onImageLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })} />;
           if (msg.role === "assistant" && !msg.content) return null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
