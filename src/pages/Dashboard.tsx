@@ -357,7 +357,7 @@ const DashboardInner = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
+          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-[calc(2rem+env(safe-area-inset-bottom))]"}>
             <OverviewTab key={activeTab === "overview" ? `overview-${tabRefreshCount}` : "overview-hidden"} />
           </TabsContent>
 
