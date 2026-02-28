@@ -856,7 +856,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         />
         <Button
           size="icon"
-          onMouseDown={(e) => { e.preventDefault(); textareaRef.current?.focus(); }}
+          onMouseDown={(e) => { e.preventDefault(); }}
           onClick={() => { handleSend(); }}
           disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
           className="shrink-0 h-10 w-10 glow-primary"
