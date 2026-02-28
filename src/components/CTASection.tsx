@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Github, Zap } from "lucide-react";
+import { ArrowRight, Github, Zap, Lock, Globe, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -65,11 +65,20 @@ const CTASection = () => {
           </div>
 
           {/* Trust badges */}
-          <div className="flex flex-wrap justify-center gap-8 text-muted-foreground text-sm">
-            <span>🔒 SOC2 Compliant</span>
-            <span>🌍 GDPR Ready</span>
-            <span>⚡ 99.9% Uptime SLA</span>
-            <span>🛡️ End-to-end Encrypted</span>
+          <div className="flex flex-wrap justify-center gap-6 text-sm">
+            {[
+              { icon: Lock, label: "SOC2 Compliant" },
+              { icon: Globe, label: "GDPR Ready" },
+              { icon: Zap, label: "99.9% Uptime SLA" },
+              { icon: ShieldCheck, label: "End-to-end Encrypted" },
+            ].map(({ icon: Icon, label }) => (
+              <div key={label} className="flex items-center gap-2 text-muted-foreground">
+                <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
+                  <Icon className="h-3.5 w-3.5 text-primary" />
+                </div>
+                <span>{label}</span>
+              </div>
+            ))}
           </div>
         </motion.div>
       </div>
