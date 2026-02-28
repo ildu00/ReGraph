@@ -328,7 +328,7 @@ const DashboardInner = () => {
             ? 'flex-1 min-h-0 flex flex-col'
             : 'space-y-6'
         }>
-          <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start sticky top-16 z-40">
+          <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2">
               <BarChart3 className="h-4 w-4" />
             </TabsTrigger>
