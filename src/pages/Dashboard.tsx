@@ -321,14 +321,10 @@ const DashboardInner = () => {
       <main className={
         (isMobileChatMode || isMobileClawMode)
           ? 'flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-4'
-          : 'pt-20 md:ml-64 px-4 md:px-8 pb-8'
+          : 'fixed top-16 left-0 md:left-64 right-0 bottom-0 flex flex-col overflow-hidden px-4 md:px-8 pt-4'
       }>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className={
-          (isMobileChatMode || isMobileClawMode)
-            ? 'flex-1 min-h-0 flex flex-col'
-            : 'space-y-6'
-        }>
-          <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start sticky top-16 z-40">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col">
+          <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start mb-2">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2">
               <BarChart3 className="h-4 w-4" />
             </TabsTrigger>
@@ -361,47 +357,39 @@ const DashboardInner = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : ""}>
+          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
             <OverviewTab key={activeTab === "overview" ? `overview-${tabRefreshCount}` : "overview-hidden"} />
           </TabsContent>
 
-          <TabsContent value="wallet">
+          <TabsContent value="wallet" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat" className={
-            isMobileChatMode
-              ? 'flex-1 min-h-0 flex flex-col mt-0'
-              : 'flex flex-col'
-          }>
+          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col mt-0">
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className={
-            isMobileClawMode
-              ? 'flex-1 min-h-0 flex flex-col mt-0'
-              : 'flex flex-col'
-          }>
+          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0">
             <ClawTab />
           </TabsContent>
 
-          <TabsContent value="api-keys">
+          <TabsContent value="api-keys" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <ApiKeysTab />
           </TabsContent>
 
-          <TabsContent value="provider">
+          <TabsContent value="provider" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <ProviderTab />
           </TabsContent>
 
-          <TabsContent value="mining">
+          <TabsContent value="mining" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <MiningTab />
           </TabsContent>
 
-          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : ""}>
+          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
             <UsageTab key={activeTab === "usage" ? `usage-${tabRefreshCount}` : "usage-hidden"} />
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <SettingsTab />
           </TabsContent>
         </Tabs>
