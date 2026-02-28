@@ -892,7 +892,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Image generation
     if (msg.tool_result?.image_url) {
-      return <ImageWithLightbox src={msg.tool_result.image_url} />;
+      return <ImageWithLightbox src={msg.tool_result.image_url} onLoad={onImageLoad} />;
     }
 
     // Web search — pretty render
