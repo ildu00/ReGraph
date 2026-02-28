@@ -31,12 +31,11 @@ export function useVisualViewport() {
       offsetTop: vv.offsetTop,
     });
 
-    // Only force scroll-to-top when keyboard pushes the viewport offset up
-    // (i.e. keyboard is open). Do NOT react to scroll events — that would
-    // fight the user's intentional scroll on non-chat tabs.
-    if (vv.offsetTop > 0) {
-      window.scrollTo(0, 0);
-    }
+    // When keyboard opens/closes on iOS Safari, force scroll to top so
+    // fixed-position elements stay visible. This runs only on 'resize'
+    // (keyboard open/close), NOT on 'scroll', so it won't fight the user
+    // scrolling content on non-chat tabs.
+    window.scrollTo(0, 0);
   }, []);
 
   useEffect(() => {
