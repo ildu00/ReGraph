@@ -173,10 +173,30 @@ export const AdminForms = () => {
         <CardContent>
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="mb-4">
-              <TabsTrigger value="contact">Contact ({contactRequests.length})</TabsTrigger>
-              <TabsTrigger value="support">Support ({supportTickets.length})</TabsTrigger>
-              <TabsTrigger value="careers">Careers ({careerApplications.length})</TabsTrigger>
-              <TabsTrigger value="legal">Legal ({legalInquiries.length})</TabsTrigger>
+              <TabsTrigger value="contact" className="gap-1.5">
+                <MessageSquare className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Contact</span>
+                <span className="hidden sm:inline">({contactRequests.length})</span>
+                <span className="sm:hidden">{contactRequests.length}</span>
+              </TabsTrigger>
+              <TabsTrigger value="support" className="gap-1.5">
+                <FileText className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Support</span>
+                <span className="hidden sm:inline">({supportTickets.length})</span>
+                <span className="sm:hidden">{supportTickets.length}</span>
+              </TabsTrigger>
+              <TabsTrigger value="careers" className="gap-1.5">
+                <Briefcase className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Careers</span>
+                <span className="hidden sm:inline">({careerApplications.length})</span>
+                <span className="sm:hidden">{careerApplications.length}</span>
+              </TabsTrigger>
+              <TabsTrigger value="legal" className="gap-1.5">
+                <Users className="h-4 w-4 shrink-0" />
+                <span className="hidden sm:inline">Legal</span>
+                <span className="hidden sm:inline">({legalInquiries.length})</span>
+                <span className="sm:hidden">{legalInquiries.length}</span>
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="contact">{renderTable(contactRequests)}</TabsContent>
             <TabsContent value="support">{renderTable(supportTickets)}</TabsContent>
