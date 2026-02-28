@@ -126,6 +126,7 @@ export const AdminForms = () => {
           )}
         </TableBody>
       </Table>
+    </div>
   );
 
   if (loading) {
