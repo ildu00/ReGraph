@@ -429,15 +429,19 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const handleSend = async () => {
     if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
+    // Reset input synchronously BEFORE any await so iOS Safari keeps keyboard open
     setInput("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
     }
+    const filesToProcess = attachedFiles;
+    setAttachedFiles([]);
+    setIsLoading(true);
 
     // Process attached files
     let fileContext = "";
     let imageBase64: string | undefined;
-    for (const file of attachedFiles) {
+    for (const file of filesToProcess) {
       if (file.type.startsWith("image/") && !imageBase64) {
         imageBase64 = await fileToBase64(file);
       } else {
@@ -445,9 +449,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
     }
     const fullUserText = fileContext ? `${fileContext}\n${userText}` : userText;
-    pendingFilesRef.current = attachedFiles; // keep files available for document_reader tool
-    setAttachedFiles([]);
-    setIsLoading(true);
+    pendingFilesRef.current = filesToProcess; // keep files available for document_reader tool
 
     // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
