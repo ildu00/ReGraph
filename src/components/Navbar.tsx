@@ -15,6 +15,8 @@ const navItems = [
 
 const mobileOnlyItems = [
   { label: "AI Mining", href: "/mobile", afterItem: "Features" },
+  { label: "ReGraph LLM", href: "/#llm", afterItem: "Features" },
+  { label: "ReGraph Claw", href: "/claw", afterItem: "Features" },
 ];
 
 const Navbar = () => {
