@@ -156,6 +156,7 @@ export default function AgentLibrary({ onOpenChat }: AgentLibraryProps) {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+    </div>
   );
 }
 
