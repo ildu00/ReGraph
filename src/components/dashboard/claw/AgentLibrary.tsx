@@ -182,7 +182,7 @@ function AgentCard({ agent, onOpen, onEdit, onDelete }: {
             </div>
             <div className="text-xs text-muted-foreground truncate">{agent.model_id}</div>
           </div>
-          <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+          <div className="flex gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
             <button
               onClick={onEdit}
               className="p-1.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
