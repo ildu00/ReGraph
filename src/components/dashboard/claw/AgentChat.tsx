@@ -430,10 +430,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
     setInput("");
-    if (textareaRef.current) textareaRef.current.style.height = "40px";
-
-    // Focus immediately before any async work so mobile keyboard stays open
-    textareaRef.current?.focus();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "40px";
+      // Focus AFTER DOM mutation so iOS Safari keyboard stays open
+      textareaRef.current.focus();
+    }
 
     // Process attached files
     let fileContext = "";
