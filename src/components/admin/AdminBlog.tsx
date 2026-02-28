@@ -668,7 +668,7 @@ export const AdminBlog = () => {
             <DialogTitle>Article Preview</DialogTitle>
           </DialogHeader>
           {previewPost && (
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0 w-full">
               <div className="aspect-video relative rounded-lg overflow-hidden bg-muted">
                 {previewPost.image ? (
                   <img
@@ -701,8 +701,8 @@ export const AdminBlog = () => {
                   </Badge>
                 )}
               </div>
-              <h2 className="text-2xl font-bold">{previewPost.title}</h2>
-              <p className="text-muted-foreground">{previewPost.excerpt}</p>
+              <h2 className="text-2xl font-bold break-words">{previewPost.title}</h2>
+              <p className="text-muted-foreground break-words">{previewPost.excerpt}</p>
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   Content Preview
