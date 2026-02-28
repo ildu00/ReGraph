@@ -432,8 +432,6 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     setInput("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
-      // Focus AFTER DOM mutation so iOS Safari keyboard stays open
-      textareaRef.current.focus();
     }
 
     // Process attached files
@@ -858,7 +856,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         />
         <Button
           size="icon"
-          onMouseDown={(e) => { e.preventDefault(); textareaRef.current?.focus(); }}
+          onMouseDown={(e) => { e.preventDefault(); }}
           onClick={() => { handleSend(); }}
           disabled={isLoading || (!input.trim() && attachedFiles.length === 0)}
           className="shrink-0 h-10 w-10 glow-primary"
