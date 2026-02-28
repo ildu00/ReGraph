@@ -260,8 +260,8 @@ export const AdminRequests = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-hidden">
-            <Table className="table-fixed w-full">
+        <CardContent className="overflow-x-auto p-0 sm:p-6">
+            <Table className="table-fixed w-full min-w-[320px]">
               <TableHeader>
                 <TableRow>
                   <SortableHeader field="name" className="w-[30%] sm:w-[22%]">From</SortableHeader>
