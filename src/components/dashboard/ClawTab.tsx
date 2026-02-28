@@ -7,7 +7,7 @@ export default function ClawTab() {
   const [activeAgent, setActiveAgent] = useState<ClawAgent | null>(null);
 
   if (activeAgent) {
-    return <AgentChat agent={activeAgent} onBack={() => setActiveAgent(null)} />;
+    return <div className="flex flex-col flex-1 min-h-0"><AgentChat agent={activeAgent} onBack={() => setActiveAgent(null)} /></div>;
   }
-  return <AgentLibrary onOpenChat={setActiveAgent} />;
+  return <div className="flex flex-col flex-1 min-h-0 overflow-y-auto"><AgentLibrary onOpenChat={setActiveAgent} /></div>;
 }
