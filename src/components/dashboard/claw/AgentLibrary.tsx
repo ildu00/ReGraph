@@ -169,8 +169,8 @@ function AgentCard({ agent, onOpen, onEdit, onDelete }: {
   const agentTools = TOOLS.filter((t) => agent.tools?.includes(t.id));
 
   return (
-    <Card className="bg-card border border-border hover:border-primary/30 transition-all group">
-      <CardContent className="p-4 flex flex-col gap-3">
+    <Card className="bg-card border border-border hover:border-primary/30 transition-all group flex flex-col">
+      <CardContent className="p-4 flex flex-col gap-3 flex-1">
         {/* Top row */}
         <div className="flex items-start gap-3">
           <div className="shrink-0 h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -203,25 +203,23 @@ function AgentCard({ agent, onOpen, onEdit, onDelete }: {
           <p className="text-xs text-muted-foreground line-clamp-2">{agent.description}</p>
         )}
 
-        {/* Tools */}
-        {agentTools.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {agentTools.map((t) => {
-              const Icon = t.icon;
-              return (
-                <Badge key={t.id} variant="secondary" className="text-xs px-2 py-0.5 gap-1">
-                  <Icon className="h-2.5 w-2.5" />
-                  {t.label}
-                </Badge>
-              );
-            })}
-          </div>
-        )}
+        {/* Tools — fixed-height slot so button stays aligned */}
+        <div className="min-h-[28px] flex flex-wrap gap-1">
+          {agentTools.map((t) => {
+            const Icon = t.icon;
+            return (
+              <Badge key={t.id} variant="secondary" className="text-xs px-2 py-0.5 gap-1">
+                <Icon className="h-2.5 w-2.5" />
+                {t.label}
+              </Badge>
+            );
+          })}
+        </div>
 
         {/* Open button */}
         <Button size="sm" className="w-full mt-auto" onClick={onOpen}>
           <MessageSquare className="h-3.5 w-3.5 mr-2" />
-          Open Chat
+          Open Agent
         </Button>
       </CardContent>
     </Card>
