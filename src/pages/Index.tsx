@@ -48,6 +48,9 @@ const Index = () => {
           <MobileAISection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
+          <ClawSection />
+        </Suspense>
+        <Suspense fallback={<SectionPlaceholder />}>
           <HowItWorksSection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
