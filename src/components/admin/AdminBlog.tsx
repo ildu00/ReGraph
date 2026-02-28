@@ -668,7 +668,7 @@ export const AdminBlog = () => {
             <DialogTitle>Article Preview</DialogTitle>
           </DialogHeader>
           {previewPost && (
-            <div className="space-y-4">
+            <div className="space-y-4 min-w-0 w-full">
               <div className="aspect-video relative rounded-lg overflow-hidden bg-muted">
                 {previewPost.image ? (
                   <img
