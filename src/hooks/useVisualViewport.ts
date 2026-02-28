@@ -31,8 +31,9 @@ export function useVisualViewport() {
       offsetTop: vv.offsetTop,
     });
 
-    // On iOS Safari, when the keyboard opens the layout viewport scrolls down,
-    // pushing fixed elements out of view. Force scroll back to top.
+    // Only force scroll-to-top when keyboard pushes the viewport offset up
+    // (i.e. keyboard is open). Do NOT react to scroll events — that would
+    // fight the user's intentional scroll on non-chat tabs.
     if (vv.offsetTop > 0) {
       window.scrollTo(0, 0);
     }
@@ -44,12 +45,13 @@ export function useVisualViewport() {
 
     update();
 
+    // Only listen to 'resize' (keyboard open/close changes viewport height).
+    // Removing the 'scroll' listener prevents Safari from auto-scrolling to
+    // the top when the user scrolls content on non-chat tabs.
     vv.addEventListener("resize", update);
-    vv.addEventListener("scroll", update);
 
     return () => {
       vv.removeEventListener("resize", update);
-      vv.removeEventListener("scroll", update);
     };
   }, [update]);
 
