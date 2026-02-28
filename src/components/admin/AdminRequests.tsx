@@ -260,17 +260,59 @@ export const AdminRequests = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0 sm:p-6">
-            <Table className="table-fixed w-full min-w-[320px]">
+        <CardContent className="p-0 sm:p-6">
+
+          {/* Mobile card layout */}
+          <div className="sm:hidden divide-y divide-border">
+            {paginatedRequests.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground px-4">No requests found</div>
+            ) : (
+              paginatedRequests.map((request) => (
+                <div key={request.id} className="px-4 py-3 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-medium truncate">{request.name}</div>
+                      <div className="text-xs text-muted-foreground truncate">{request.email}</div>
+                    </div>
+                    <div className="shrink-0">{getStatusBadge(request.status)}</div>
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
+                    <span className="text-xs text-muted-foreground">
+                      {request.user_id ? (request.profile?.display_name || "User") : "Guest"}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-auto">
+                      {new Date(request.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" className="h-8 flex-1" onClick={() => setSelectedRequest(request)}>
+                      <Eye className="h-3.5 w-3.5 mr-1.5" /> View
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 flex-1" onClick={() => updateStatus(request.id, "in_progress")}>
+                      <Clock className="h-3.5 w-3.5 mr-1.5 text-blue-500" /> In Progress
+                    </Button>
+                    <Button variant="ghost" size="sm" className="h-8 flex-1" onClick={() => updateStatus(request.id, "resolved")}>
+                      <CheckCircle className="h-3.5 w-3.5 mr-1.5 text-green-500" /> Resolve
+                    </Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="hidden sm:block">
+            <Table>
               <TableHeader>
                 <TableRow>
-                  <SortableHeader field="name" className="w-[30%] sm:w-[22%]">From</SortableHeader>
-                  <TableHead className="hidden lg:table-cell w-[12%]">Account</TableHead>
-                  <SortableHeader field="subject" className="hidden sm:table-cell w-[14%]">Category</SortableHeader>
-                  <TableHead className="hidden xl:table-cell w-[20%]">Message</TableHead>
-                  <SortableHeader field="status" className="w-[20%] sm:w-[12%]">Status</SortableHeader>
-                  <SortableHeader field="created_at" className="hidden md:table-cell w-[10%]">Date</SortableHeader>
-                  <TableHead className="w-[44px] sm:w-[100px] text-right">Actions</TableHead>
+                  <SortableHeader field="name">From</SortableHeader>
+                  <TableHead className="hidden lg:table-cell">Account</TableHead>
+                  <SortableHeader field="subject">Category</SortableHeader>
+                  <TableHead className="hidden xl:table-cell">Message</TableHead>
+                  <SortableHeader field="status">Status</SortableHeader>
+                  <SortableHeader field="created_at" className="hidden md:table-cell">Date</SortableHeader>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -283,72 +325,39 @@ export const AdminRequests = () => {
                 ) : (
                   paginatedRequests.map((request) => (
                     <TableRow key={request.id}>
-                      <TableCell className="max-w-0">
+                      <TableCell className="max-w-[200px]">
                         <div className="truncate font-medium">{request.name}</div>
                         <div className="text-xs text-muted-foreground truncate">{request.email}</div>
-                        <div className="sm:hidden mt-0.5">
-                          <Badge variant="outline" className="text-xs">{request.subject || "General"}</Badge>
-                        </div>
-                        <div className="lg:hidden mt-1">
-                          {request.user_id ? (
-                            <span className="text-xs text-primary flex items-center gap-1">
-                              <User className="h-3 w-3" />
-                              <span className="truncate">{request.profile?.display_name || "User"}</span>
-                            </span>
-                          ) : (
-                            <span className="text-xs text-muted-foreground">Guest</span>
-                          )}
-                        </div>
-                        <div className="md:hidden text-xs text-muted-foreground mt-0.5">
-                          {new Date(request.created_at).toLocaleDateString()}
-                        </div>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell max-w-0">
+                      <TableCell className="hidden lg:table-cell">
                         {request.user_id ? (
-                          <div className="flex items-center gap-1.5 truncate">
+                          <div className="flex items-center gap-1.5">
                             <User className="h-3 w-3 text-primary shrink-0" />
-                            <span className="text-sm truncate">
-                              {request.profile?.display_name || "User"}
-                            </span>
+                            <span className="text-sm truncate max-w-[120px]">{request.profile?.display_name || "User"}</span>
                           </div>
                         ) : (
                           <span className="text-xs text-muted-foreground">Guest</span>
                         )}
                       </TableCell>
-                      <TableCell className="hidden sm:table-cell">
+                      <TableCell>
                         <span className="text-sm text-muted-foreground">{request.subject || "General"}</span>
                       </TableCell>
-                      <TableCell className="hidden xl:table-cell max-w-0">
-                        <span className="truncate block">{request.message}</span>
+                      <TableCell className="hidden xl:table-cell max-w-[200px]">
+                        <span className="truncate block text-sm">{request.message}</span>
                       </TableCell>
                       <TableCell>{getStatusBadge(request.status)}</TableCell>
-                      <TableCell className="hidden md:table-cell text-xs">
+                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
                         {new Date(request.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right p-1">
+                      <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => setSelectedRequest(request)}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRequest(request)}>
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hidden sm:inline-flex"
-                            onClick={() => updateStatus(request.id, "in_progress")}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStatus(request.id, "in_progress")}>
                             <Clock className="h-4 w-4 text-blue-500" />
                           </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 hidden sm:inline-flex"
-                            onClick={() => updateStatus(request.id, "resolved")}
-                          >
+                          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => updateStatus(request.id, "resolved")}>
                             <CheckCircle className="h-4 w-4 text-green-500" />
                           </Button>
                         </div>
@@ -358,10 +367,11 @@ export const AdminRequests = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between mt-4 pt-4 border-t">
+            <div className="flex items-center justify-between mt-4 pt-4 border-t px-4 sm:px-0">
               <div className="text-sm text-muted-foreground">
                 Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
                 {Math.min(currentPage * itemsPerPage, filteredAndSortedRequests.length)} of{" "}
