@@ -369,7 +369,7 @@ const DashboardInner = () => {
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0 data-[state=inactive]:hidden">
+          <TabsContent value="claw" className={`flex-1 min-h-0 mt-0 data-[state=inactive]:hidden ${isClawActive ? 'overflow-y-auto pb-8' : ''}`}>
             <ClawTab />
           </TabsContent>
 
