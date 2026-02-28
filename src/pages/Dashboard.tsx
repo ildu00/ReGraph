@@ -323,7 +323,7 @@ const DashboardInner = () => {
           ? 'flex-1 min-h-0 flex flex-col overflow-hidden px-4 pt-4'
           : 'fixed top-16 left-0 md:left-64 right-0 bottom-0 flex flex-col overflow-hidden px-4 md:px-8 pt-4'
       }>
-        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col">
+        <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col h-full">
           <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start mb-2">
             <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2">
               <BarChart3 className="h-4 w-4" />
@@ -365,11 +365,11 @@ const DashboardInner = () => {
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col mt-0">
+          <TabsContent value="chat" className="h-full min-h-0 flex flex-col mt-0">
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0">
+          <TabsContent value="claw" className="h-full min-h-0 flex flex-col mt-0">
             <ClawTab />
           </TabsContent>
 
