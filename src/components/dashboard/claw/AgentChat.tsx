@@ -370,6 +370,17 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // After history finishes loading (including image fetches), scroll to bottom
+  useEffect(() => {
+    if (!loadingHistory) {
+      // Use a small delay to allow images to render and expand layout
+      const t = setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+      }, 150);
+      return () => clearTimeout(t);
+    }
+  }, [loadingHistory]);
+
   const persistMessage = useCallback(async (convId: string, msg: Omit<Message, "id" | "isStreaming">) => {
     const { data } = await supabase.from("claw_messages").insert({
       conversation_id: convId,
