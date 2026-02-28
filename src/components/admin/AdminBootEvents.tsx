@@ -224,72 +224,95 @@ export const AdminBootEvents = () => {
 
       {/* Events Table */}
       <Card className="bg-card border-border">
-        <CardContent className="p-0 overflow-x-auto">
-          <Table className="table-fixed w-full min-w-[320px]">
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[30%] sm:w-[20%]">Time</TableHead>
-                <TableHead className="w-[30%] sm:w-[20%]">Reason</TableHead>
-                <TableHead className="hidden sm:table-cell w-[10%]">Device</TableHead>
-                <TableHead className="hidden md:table-cell w-[10%]">Attempts</TableHead>
-                <TableHead className="hidden lg:table-cell w-[10%]">Storage</TableHead>
-                <TableHead className="hidden lg:table-cell w-[15%]">IP</TableHead>
-                <TableHead className="w-[44px]"></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paginatedEvents.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
-                    No boot events found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                paginatedEvents.map((event) => (
-                  <TableRow key={event.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEvent(event)}>
-                    <TableCell className="text-sm">
-                      <div>{format(new Date(event.created_at), "MMM d, HH:mm:ss")}</div>
-                      <div className="flex items-center gap-2 sm:hidden mt-1">
-                        {isMobile(event.user_agent) ? (
-                          <Smartphone className="h-3 w-3 text-orange-400" />
-                        ) : (
-                          <Monitor className="h-3 w-3 text-muted-foreground" />
-                        )}
-                        <span className="text-xs text-muted-foreground">×{event.attempts}</span>
-                        {event.storage_fallback && <AlertTriangle className="h-3 w-3 text-yellow-400" />}
-                      </div>
-                    </TableCell>
-                    <TableCell className="truncate max-w-0">
-                      <Badge variant="outline" className={`${getReasonBadge(event.reason)} truncate max-w-full`}>
-                        {event.reason}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
+        <CardContent className="p-0">
+
+          {/* Mobile card layout */}
+          <div className="sm:hidden divide-y divide-border">
+            {paginatedEvents.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground px-4">No boot events found</div>
+            ) : (
+              paginatedEvents.map((event) => (
+                <div key={event.id} className="px-4 py-3 space-y-2 cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEvent(event)}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs text-muted-foreground">{format(new Date(event.created_at), "MMM d, HH:mm:ss")}</span>
+                    <div className="flex items-center gap-1.5">
                       {isMobile(event.user_agent) ? (
-                        <Smartphone className="h-4 w-4 text-orange-400" />
+                        <Smartphone className="h-3.5 w-3.5 text-orange-400" />
                       ) : (
-                        <Monitor className="h-4 w-4 text-muted-foreground" />
+                        <Monitor className="h-3.5 w-3.5 text-muted-foreground" />
                       )}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">{event.attempts}</TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {event.storage_fallback ? (
-                        <AlertTriangle className="h-4 w-4 text-yellow-400" />
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono truncate max-w-[120px]">
-                      {event.ip_address || "—"}
-                    </TableCell>
-                    <TableCell>
-                      <Button variant="ghost" size="sm">View</Button>
+                      {event.storage_fallback && <AlertTriangle className="h-3.5 w-3.5 text-yellow-400" />}
+                      <span className="text-xs text-muted-foreground">×{event.attempts}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Badge variant="outline" className={`${getReasonBadge(event.reason)} text-xs`}>
+                      {event.reason}
+                    </Badge>
+                    <Button variant="ghost" size="sm" className="h-7 text-xs px-2">View</Button>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table layout */}
+          <div className="hidden sm:block overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Time</TableHead>
+                  <TableHead>Reason</TableHead>
+                  <TableHead className="hidden sm:table-cell">Device</TableHead>
+                  <TableHead className="hidden md:table-cell">Attempts</TableHead>
+                  <TableHead className="hidden lg:table-cell">Storage</TableHead>
+                  <TableHead className="hidden lg:table-cell">IP</TableHead>
+                  <TableHead className="w-[60px]"></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginatedEvents.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                      No boot events found
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  paginatedEvents.map((event) => (
+                    <TableRow key={event.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedEvent(event)}>
+                      <TableCell className="text-sm">{format(new Date(event.created_at), "MMM d, HH:mm:ss")}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={getReasonBadge(event.reason)}>
+                          {event.reason}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        {isMobile(event.user_agent) ? (
+                          <Smartphone className="h-4 w-4 text-orange-400" />
+                        ) : (
+                          <Monitor className="h-4 w-4 text-muted-foreground" />
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">{event.attempts}</TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {event.storage_fallback ? (
+                          <AlertTriangle className="h-4 w-4 text-yellow-400" />
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-xs text-muted-foreground font-mono">
+                        {event.ip_address || "—"}
+                      </TableCell>
+                      <TableCell>
+                        <Button variant="ghost" size="sm">View</Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
