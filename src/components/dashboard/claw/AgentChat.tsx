@@ -875,7 +875,7 @@ function ImageWithLightbox({ src, onLoad }: { src: string; onLoad?: () => void }
   );
 }
 
-function ToolCallMessage({ msg }: { msg: Message }) {
+function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () => void }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
   const isRunning = msg.isStreaming;
 
