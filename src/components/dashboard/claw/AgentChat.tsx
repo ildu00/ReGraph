@@ -726,7 +726,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         )}
 
         {messages.map((msg) => {
-          if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} />;
+          if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} onImageLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })} />;
           if (msg.role === "assistant" && !msg.content) return null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -855,7 +855,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
   );
 }
 
-function ImageWithLightbox({ src }: { src: string }) {
+function ImageWithLightbox({ src, onLoad }: { src: string; onLoad?: () => void }) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -864,6 +864,7 @@ function ImageWithLightbox({ src }: { src: string }) {
         alt="Generated"
         className="w-full max-w-xs rounded mt-1 h-auto object-contain cursor-zoom-in"
         onClick={() => setOpen(true)}
+        onLoad={onLoad}
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[95vw] max-h-[95vh] p-2 flex items-center justify-center bg-background/95">
@@ -874,7 +875,7 @@ function ImageWithLightbox({ src }: { src: string }) {
   );
 }
 
-function ToolCallMessage({ msg }: { msg: Message }) {
+function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () => void }) {
   const Icon = TOOL_ICONS[msg.tool_name || ""] || Wrench;
   const isRunning = msg.isStreaming;
 
@@ -891,7 +892,7 @@ function ToolCallMessage({ msg }: { msg: Message }) {
 
     // Image generation
     if (msg.tool_result?.image_url) {
-      return <ImageWithLightbox src={msg.tool_result.image_url} />;
+      return <ImageWithLightbox src={msg.tool_result.image_url} onLoad={onImageLoad} />;
     }
 
     // Web search — pretty render
