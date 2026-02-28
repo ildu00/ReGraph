@@ -3,7 +3,9 @@ import AgentLibrary from "./claw/AgentLibrary";
 import AgentChat from "./claw/AgentChat";
 import { ClawAgent } from "./claw/AgentFormModal";
 
-export default function ClawTab() {
+interface ClawTabProps { isMobile?: boolean; }
+
+export default function ClawTab({ isMobile }: ClawTabProps) {
   const [activeAgent, setActiveAgent] = useState<ClawAgent | null>(null);
 
   if (activeAgent) {
