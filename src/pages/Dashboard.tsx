@@ -357,47 +357,39 @@ const DashboardInner = () => {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : ""}>
+          <TabsContent value="overview" forceMount className={activeTab !== "overview" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
             <OverviewTab key={activeTab === "overview" ? `overview-${tabRefreshCount}` : "overview-hidden"} />
           </TabsContent>
 
-          <TabsContent value="wallet">
+          <TabsContent value="wallet" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <WalletTab />
           </TabsContent>
 
-          <TabsContent value="chat" className={
-            isMobileChatMode
-              ? 'flex-1 min-h-0 flex flex-col mt-0'
-              : 'flex flex-col'
-          }>
+          <TabsContent value="chat" className="flex-1 min-h-0 flex flex-col mt-0">
             <ChatTab />
           </TabsContent>
 
-          <TabsContent value="claw" className={
-            isMobileClawMode
-              ? 'flex-1 min-h-0 flex flex-col mt-0'
-              : 'flex flex-col'
-          }>
+          <TabsContent value="claw" className="flex-1 min-h-0 flex flex-col mt-0">
             <ClawTab />
           </TabsContent>
 
-          <TabsContent value="api-keys">
+          <TabsContent value="api-keys" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <ApiKeysTab />
           </TabsContent>
 
-          <TabsContent value="provider">
+          <TabsContent value="provider" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <ProviderTab />
           </TabsContent>
 
-          <TabsContent value="mining">
+          <TabsContent value="mining" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <MiningTab />
           </TabsContent>
 
-          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : ""}>
+          <TabsContent value="usage" forceMount className={activeTab !== "usage" ? "hidden" : "flex-1 min-h-0 overflow-y-auto pb-8"}>
             <UsageTab key={activeTab === "usage" ? `usage-${tabRefreshCount}` : "usage-hidden"} />
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="flex-1 min-h-0 overflow-y-auto pb-8">
             <SettingsTab />
           </TabsContent>
         </Tabs>
