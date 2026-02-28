@@ -39,6 +39,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.4.1",
+    date: "February 28, 2026",
+    title: "Claw Mobile Fixes & UX Improvements",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "iOS Safari keyboard no longer dismisses after sending a message in Claw chat — send handler is now synchronous to keep focus before async work begins." },
+      { category: "fix", description: "Removed disabled state from Claw chat textarea during loading — the previous disabled prop caused iOS to immediately close the virtual keyboard on send." },
+      { category: "fix", description: "Agent cards in the Claw library now open on the first tap on mobile — edit/delete buttons are always visible on touch devices instead of relying on CSS hover state." },
+      { category: "improvement", description: "Claw and AI Chat now auto-scroll to the latest message when the virtual keyboard opens on mobile via visualViewport resize events." },
+    ]
+  },
+  {
     version: "3.4.0",
     date: "February 28, 2026",
     title: "ReGraph Claw — Public Launch",
