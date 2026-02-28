@@ -701,8 +701,8 @@ export const AdminBlog = () => {
                   </Badge>
                 )}
               </div>
-              <h2 className="text-2xl font-bold">{previewPost.title}</h2>
-              <p className="text-muted-foreground">{previewPost.excerpt}</p>
+              <h2 className="text-2xl font-bold break-words">{previewPost.title}</h2>
+              <p className="text-muted-foreground break-words">{previewPost.excerpt}</p>
               <div className="border-t border-border pt-4">
                 <h4 className="text-sm font-medium text-muted-foreground mb-2">
                   Content Preview
