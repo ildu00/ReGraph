@@ -432,8 +432,6 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
     setInput("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "40px";
-      // Focus AFTER DOM mutation so iOS Safari keyboard stays open
-      textareaRef.current.focus();
     }
 
     // Process attached files
