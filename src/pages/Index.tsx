@@ -13,6 +13,7 @@ const FeaturesSection = lazyWithRetry(() => import("@/components/FeaturesSection
 const APISection = lazyWithRetry(() => import("@/components/APISection"));
 const SDKSection = lazyWithRetry(() => import("@/components/SDKSection"));
 const CTASection = lazyWithRetry(() => import("@/components/CTASection"));
+const ClawSection = lazyWithRetry(() => import("@/components/ClawSection"));
 
 const SectionPlaceholder = () => (
   <section className="py-16">
@@ -45,6 +46,9 @@ const Index = () => {
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <MobileAISection />
+        </Suspense>
+        <Suspense fallback={<SectionPlaceholder />}>
+          <ClawSection />
         </Suspense>
         <Suspense fallback={<SectionPlaceholder />}>
           <HowItWorksSection />
