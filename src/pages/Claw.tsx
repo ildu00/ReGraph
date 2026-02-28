@@ -130,22 +130,22 @@ const benefits = [
 
 const useCases = [
   {
-    emoji: "🔬",
+    icon: Search,
     title: "Research Assistant",
     description: "Search the web, read papers, summarize findings, and generate structured reports — fully automated.",
   },
   {
-    emoji: "📊",
+    icon: BarChart2,
     title: "Data Analyst",
     description: "Upload a CSV, ask questions in plain English. The agent writes and executes code to produce charts and insights.",
   },
   {
-    emoji: "💻",
+    icon: Terminal,
     title: "Dev Companion",
     description: "Debug code, write tests, explain architecture, and fetch live docs — all without leaving your workflow.",
   },
   {
-    emoji: "✍️",
+    icon: MessageSquare,
     title: "Content Creator",
     description: "Research topics, draft long-form content, adapt tone, and format for blogs, docs, or social media.",
   },
