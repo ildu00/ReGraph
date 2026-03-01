@@ -258,9 +258,20 @@ serve(async (req) => {
             headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
             body: formData,
           });
-          const transcribeData = await transcribeRes.json();
-          userText = transcribeData?.text || "";
-          console.log("Transcribed voice:", userText.slice(0, 100));
+          const rawText = await transcribeRes.text();
+          console.log("Transcribe response status:", transcribeRes.status, "body:", rawText.slice(0, 200));
+          if (transcribeRes.ok) {
+            try {
+              const transcribeData = JSON.parse(rawText);
+              userText = transcribeData?.text || "";
+            } catch {
+              // Some providers return plain text
+              userText = rawText.trim();
+            }
+            console.log("Transcribed voice:", userText.slice(0, 100));
+          } else {
+            console.error("Transcription API error:", transcribeRes.status, rawText.slice(0, 200));
+          }
         }
       } catch (e) {
         console.error("Voice transcription failed:", e);
