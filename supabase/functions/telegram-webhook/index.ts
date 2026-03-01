@@ -178,24 +178,18 @@ async function executeTool(name: string, input: any): Promise<string> {
         const res = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "opus" }),
+          body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
         });
         if (!res.ok) {
           const err = await res.text();
           console.error("TTS error:", res.status, err);
           return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
         }
-        const audioBytes = new Uint8Array(await res.arrayBuffer());
-        const fileName = `tts-${Date.now()}.opus`;
-        const storageRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
-          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/opus", "x-upsert": "false" }, body: audioBytes }
-        );
-        if (storageRes.ok) {
-          const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
-          return JSON.stringify({ audioUrl, message: "Voice message generated" });
-        }
-        return JSON.stringify({ error: "Failed to upload audio" });
+        const audioBytes = await res.arrayBuffer();
+        console.log("TTS audio generated, bytes:", audioBytes.byteLength);
+        // Store audio bytes as base64 to pass back for direct Telegram upload
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBytes)));
+        return JSON.stringify({ audioBase64: base64Audio, audioFormat: "mp3", message: "Voice message generated" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
