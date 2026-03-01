@@ -675,7 +675,7 @@ serve(async (req) => {
       }
 
       // If image/audio was generated — no need for another LLM call, just exit loop
-      if (generatedImageUrl || generatedImageBase64 || generatedAudioBuffer || generatedAudioUrl) break;
+      if (generatedImageUrl || generatedImageBase64 || generatedAudioBuffer || generatedAudioUrl || generatedFileUrl) break;
     }
 
     // Billing: charge user and log usage
