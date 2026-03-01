@@ -59,6 +59,22 @@ const TOOL_DEFINITIONS: Record<string, object> = {
       parameters: { type: "object", properties: { text: { type: "string", description: "The text to convert to speech" }, voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style to use (default: nova)" } }, required: ["text"] },
     },
   },
+  file_generator: {
+    type: "function",
+    function: {
+      name: "file_generator",
+      description: "Generate and send a file (TXT, JSON, CSV, PDF) to the user. Use this tool when the user asks to create, generate, or save a file. NEVER use code_interpreter to generate files — always use this tool instead.",
+      parameters: {
+        type: "object",
+        properties: {
+          filename: { type: "string", description: "The file name including extension, e.g. resume.pdf" },
+          format: { type: "string", enum: ["txt", "json", "csv", "pdf"], description: "File format" },
+          content: { type: "string", description: "The full text content of the file. For PDF, use plain text with newlines. For CSV, use comma-separated rows." },
+        },
+        required: ["filename", "format", "content"],
+      },
+    },
+  },
 };
 
 async function executeTool(name: string, input: any): Promise<string> {
