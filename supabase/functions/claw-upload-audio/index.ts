@@ -14,6 +14,7 @@ serve(async (req) => {
 
   try {
     const audioBuffer = await req.arrayBuffer();
+    console.log("claw-upload-audio: received bytes:", audioBuffer.byteLength, "content-type:", req.headers.get("content-type"));
     if (!audioBuffer.byteLength) {
       return new Response(JSON.stringify({ error: "Empty audio data" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
