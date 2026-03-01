@@ -86,8 +86,35 @@ async function getNotoSansFont(): Promise<Uint8Array> {
   return new Uint8Array(await res.arrayBuffer());
 }
 
+// Inline segment: plain text or bold (**text**)
+type Segment = { text: string; bold: boolean };
+
+function parseInlineSegments(text: string): Segment[] {
+  const segments: Segment[] = [];
+  // Strip links, keep display text
+  const t = text.replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+  const regex = /\*\*(.*?)\*\*|__(.*?)__|([^*_]+|[*_])/g;
+  let m: RegExpExecArray | null;
+  while ((m = regex.exec(t)) !== null) {
+    if (m[1] !== undefined) segments.push({ text: m[1], bold: true });
+    else if (m[2] !== undefined) segments.push({ text: m[2], bold: true });
+    else if (m[3]) segments.push({ text: m[3].replace(/\*(.*?)\*/g, "$1").replace(/`(.*?)`/g, "$1"), bold: false });
+  }
+  return segments.length ? segments : [{ text: t, bold: false }];
+}
+
+// Strip all inline markdown to plain text
+function stripInline(text: string): string {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/__(.*?)__/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`(.*?)`/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+}
+
 type ParsedLine = {
-  text: string;
+  text: string;          // raw text (may contain **)
   type: "h1" | "h2" | "h3" | "bullet" | "numbered" | "code" | "hr" | "blank" | "body";
   indent: number;
 };
@@ -95,35 +122,26 @@ type ParsedLine = {
 function parseMarkdownLines(content: string): ParsedLine[] {
   const result: ParsedLine[] = [];
   for (const raw of content.split("\n")) {
-    const line = raw;
-    if (/^---+$/.test(line.trim()) || /^\*\*\*+$/.test(line.trim())) {
+    if (/^---+$/.test(raw.trim()) || /^\*\*\*+$/.test(raw.trim())) {
       result.push({ text: "", type: "hr", indent: 0 });
-    } else if (/^# (.+)/.test(line)) {
-      result.push({ text: line.replace(/^# /, ""), type: "h1", indent: 0 });
-    } else if (/^## (.+)/.test(line)) {
-      result.push({ text: line.replace(/^## /, ""), type: "h2", indent: 0 });
-    } else if (/^### (.+)/.test(line)) {
-      result.push({ text: line.replace(/^### /, ""), type: "h3", indent: 0 });
-    } else if (/^(\s*)[*\-+] (.+)/.test(line)) {
-      const m = line.match(/^(\s*)[*\-+] (.+)/);
-      const indentLevel = m ? Math.floor(m[1].length / 2) : 0;
-      result.push({ text: m ? m[2] : line, type: "bullet", indent: indentLevel });
-    } else if (/^(\s*)\d+\. (.+)/.test(line)) {
-      const m = line.match(/^(\s*)\d+\. (.+)/);
-      result.push({ text: m ? m[2] : line, type: "numbered", indent: 0 });
-    } else if (/^`{3}/.test(line.trim())) {
+    } else if (/^# (.+)/.test(raw)) {
+      result.push({ text: raw.replace(/^# /, ""), type: "h1", indent: 0 });
+    } else if (/^## (.+)/.test(raw)) {
+      result.push({ text: raw.replace(/^## /, ""), type: "h2", indent: 0 });
+    } else if (/^### (.+)/.test(raw)) {
+      result.push({ text: raw.replace(/^### /, ""), type: "h3", indent: 0 });
+    } else if (/^(\s*)[*\-+] (.+)/.test(raw)) {
+      const m = raw.match(/^(\s*)[*\-+] (.+)/);
+      result.push({ text: m ? m[2] : raw, type: "bullet", indent: m ? Math.floor(m[1].length / 2) : 0 });
+    } else if (/^(\s*)\d+\. (.+)/.test(raw)) {
+      const m = raw.match(/^(\s*)\d+\. (.+)/);
+      result.push({ text: m ? m[2] : raw, type: "numbered", indent: 0 });
+    } else if (/^`{3}/.test(raw.trim())) {
       result.push({ text: "", type: "code", indent: 0 });
-    } else if (/^\s*$/.test(line)) {
+    } else if (/^\s*$/.test(raw)) {
       result.push({ text: "", type: "blank", indent: 0 });
     } else {
-      // Strip inline markdown for plain rendering
-      const cleaned = line
-        .replace(/\*\*(.*?)\*\*/g, "$1")
-        .replace(/__(.*?)__/g, "$1")
-        .replace(/\*(.*?)\*/g, "$1")
-        .replace(/`(.*?)`/g, "$1")
-        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
-      result.push({ text: cleaned, type: "body", indent: 0 });
+      result.push({ text: raw, type: "body", indent: 0 });
     }
   }
   return result;
@@ -143,33 +161,109 @@ async function buildPdf(content: string): Promise<Uint8Array> {
   const marginX = 55;
   const marginY = 55;
   const bodySize = 11;
+  const boldSize = 11.5;    // slightly larger to visually distinguish bold
   const h1Size = 20;
   const h2Size = 16;
   const h3Size = 13;
   const lineHeightBody = bodySize * 1.6;
   const maxWidth = pageWidth - 2 * marginX;
 
-  // Colors
   const colorBlack = rgb(0.08, 0.08, 0.08);
-  const colorGray = rgb(0.45, 0.45, 0.45);
-  const colorAccent = rgb(0.12, 0.29, 0.69); // dark blue for headings
-  const colorRule = rgb(0.8, 0.8, 0.8);
-  const colorCode = rgb(0.95, 0.95, 0.95);
+  const colorBold  = rgb(0.05, 0.05, 0.05);  // near-black, same font drawn twice for fake-bold
+  const colorGray  = rgb(0.45, 0.45, 0.45);
+  const colorAccent = rgb(0.12, 0.29, 0.69);
+  const colorRule  = rgb(0.8, 0.8, 0.8);
+  const colorCode  = rgb(0.95, 0.95, 0.95);
 
-  const wrapText = (text: string, maxW: number, size: number): string[] => {
-    if (!text.trim()) return [""];
-    const words = text.split(" ");
+  // Measure text width (strips markdown first)
+  const measureW = (text: string, size: number) => {
+    try { return font.widthOfTextAtSize(text, size); } catch { return text.length * size * 0.55; }
+  };
+
+  // Word-wrap plain text
+  const wrapPlain = (text: string, maxW: number, size: number): string[] => {
+    const plain = stripInline(text);
+    if (!plain.trim()) return [""];
+    const words = plain.split(" ");
     const lines: string[] = [];
     let cur = "";
     for (const w of words) {
       const test = cur ? cur + " " + w : w;
-      let width = 0;
-      try { width = font.widthOfTextAtSize(test, size); } catch { width = test.length * size * 0.55; }
-      if (width > maxW && cur) { lines.push(cur); cur = w; }
+      if (measureW(test, size) > maxW && cur) { lines.push(cur); cur = w; }
       else cur = test;
     }
     if (cur) lines.push(cur);
     return lines.length ? lines : [""];
+  };
+
+  // Draw a line of text with inline bold support, returns advance x
+  // Fake-bold: draw text, then shift 0.35px right and draw again
+  const drawSegments = (
+    page: ReturnType<typeof pdfDoc.addPage>,
+    segments: Segment[],
+    startX: number, startY: number, size: number, color: ReturnType<typeof rgb>
+  ) => {
+    let cx = startX;
+    for (const seg of segments) {
+      if (!seg.text) continue;
+      if (seg.bold) {
+        page.drawText(seg.text, { x: cx, y: startY, size: boldSize, font, color: colorBold });
+        // Fake bold: redraw shifted slightly
+        page.drawText(seg.text, { x: cx + 0.35, y: startY, size: boldSize, font, color: colorBold });
+        cx += measureW(seg.text, boldSize);
+      } else {
+        page.drawText(seg.text, { x: cx, y: startY, size, font, color });
+        cx += measureW(seg.text, size);
+      }
+    }
+  };
+
+  // Word-wrap with inline segments, splitting bold/plain at word boundaries
+  const wrapSegments = (rawText: string, maxW: number, size: number): Segment[][] => {
+    // Flatten all segments into words tagged with bold
+    const segments = parseInlineSegments(rawText);
+    type TaggedWord = { word: string; bold: boolean };
+    const tagged: TaggedWord[] = [];
+    for (const seg of segments) {
+      const words = seg.text.split(" ");
+      for (let i = 0; i < words.length; i++) {
+        if (words[i]) tagged.push({ word: words[i], bold: seg.bold });
+        // restore inter-word space as a plain segment (except last word in segment)
+        if (i < words.length - 1) tagged.push({ word: " ", bold: seg.bold });
+      }
+    }
+
+    const lines: Segment[][] = [];
+    let currentLine: TaggedWord[] = [];
+    let currentW = 0;
+
+    for (const tw of tagged) {
+      const wSize = tw.bold ? boldSize : size;
+      const ww = measureW(tw.word, wSize);
+      if (currentW + ww > maxW && currentLine.length > 0 && tw.word !== " ") {
+        // flush line
+        lines.push(mergeTagged(currentLine));
+        currentLine = [tw];
+        currentW = ww;
+      } else {
+        currentLine.push(tw);
+        currentW += ww;
+      }
+    }
+    if (currentLine.length) lines.push(mergeTagged(currentLine));
+    return lines.length ? lines : [[{ text: stripInline(rawText), bold: false }]];
+  };
+
+  const mergeTagged = (tagged: { word: string; bold: boolean }[]): Segment[] => {
+    const out: Segment[] = [];
+    for (const tw of tagged) {
+      if (out.length && out[out.length - 1].bold === tw.bold) {
+        out[out.length - 1].text += tw.word;
+      } else {
+        out.push({ text: tw.word, bold: tw.bold });
+      }
+    }
+    return out;
   };
 
   let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
@@ -177,150 +271,95 @@ async function buildPdf(content: string): Promise<Uint8Array> {
 
   const ensureSpace = (needed: number) => {
     if (y - needed < marginY) {
-      // Draw page number
       const pageNum = pdfDoc.getPageCount();
-      currentPage.drawText(`— ${pageNum} —`, {
-        x: pageWidth / 2 - 15, y: marginY / 2,
-        size: 9, font, color: colorGray,
-      });
+      currentPage.drawText(`— ${pageNum} —`, { x: pageWidth / 2 - 15, y: marginY / 2, size: 9, font, color: colorGray });
       currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
       y = pageHeight - marginY;
     }
   };
 
-  const parsedLines = parseMarkdownLines(content);
-
-  for (const parsed of parsedLines) {
-    if (parsed.type === "blank") {
-      y -= lineHeightBody * 0.4;
-      continue;
-    }
+  for (const parsed of parseMarkdownLines(content)) {
+    if (parsed.type === "blank") { y -= lineHeightBody * 0.4; continue; }
 
     if (parsed.type === "hr") {
-      ensureSpace(20);
-      y -= 6;
-      currentPage.drawLine({
-        start: { x: marginX, y },
-        end: { x: pageWidth - marginX, y },
-        thickness: 0.8,
-        color: colorRule,
-      });
-      y -= 12;
-      continue;
+      ensureSpace(20); y -= 6;
+      currentPage.drawLine({ start: { x: marginX, y }, end: { x: pageWidth - marginX, y }, thickness: 0.8, color: colorRule });
+      y -= 12; continue;
     }
 
     if (parsed.type === "h1") {
-      ensureSpace(h1Size * 2.5);
-      y -= 14;
-      // Background accent bar
-      currentPage.drawRectangle({
-        x: marginX - 5, y: y - 4,
-        width: pageWidth - 2 * marginX + 10, height: h1Size + 10,
-        color: rgb(0.92, 0.95, 1.0),
-      });
-      currentPage.drawRectangle({
-        x: marginX - 5, y: y - 4,
-        width: 4, height: h1Size + 10,
-        color: colorAccent,
-      });
-      const wrapped = wrapText(parsed.text, maxWidth - 20, h1Size);
-      for (const line of wrapped) {
+      ensureSpace(h1Size * 2.5); y -= 14;
+      currentPage.drawRectangle({ x: marginX - 5, y: y - 4, width: pageWidth - 2 * marginX + 10, height: h1Size + 10, color: rgb(0.92, 0.95, 1.0) });
+      currentPage.drawRectangle({ x: marginX - 5, y: y - 4, width: 4, height: h1Size + 10, color: colorAccent });
+      for (const line of wrapPlain(parsed.text, maxWidth - 20, h1Size)) {
         ensureSpace(h1Size * 1.5);
         currentPage.drawText(line, { x: marginX + 8, y, size: h1Size, font, color: colorAccent });
         y -= h1Size * 1.5;
       }
-      y -= 6;
-      continue;
+      y -= 6; continue;
     }
 
     if (parsed.type === "h2") {
-      ensureSpace(h2Size * 2.2);
-      y -= 10;
-      const wrapped = wrapText(parsed.text, maxWidth, h2Size);
-      for (const line of wrapped) {
+      ensureSpace(h2Size * 2.2); y -= 10;
+      for (const line of wrapPlain(parsed.text, maxWidth, h2Size)) {
         ensureSpace(h2Size * 1.4);
         currentPage.drawText(line, { x: marginX, y, size: h2Size, font, color: colorAccent });
         y -= h2Size * 1.4;
       }
-      // Underline
-      currentPage.drawLine({
-        start: { x: marginX, y: y + 4 },
-        end: { x: pageWidth - marginX, y: y + 4 },
-        thickness: 0.6, color: colorAccent,
-      });
-      y -= 6;
-      continue;
+      y -= 4; continue;
     }
 
     if (parsed.type === "h3") {
-      ensureSpace(h3Size * 2);
-      y -= 8;
-      const wrapped = wrapText(parsed.text, maxWidth, h3Size);
-      for (const line of wrapped) {
+      ensureSpace(h3Size * 2); y -= 8;
+      for (const line of wrapPlain(parsed.text, maxWidth, h3Size)) {
         ensureSpace(h3Size * 1.3);
         currentPage.drawText(line, { x: marginX, y, size: h3Size, font, color: colorBlack });
         y -= h3Size * 1.3;
       }
-      y -= 4;
-      continue;
+      y -= 4; continue;
     }
 
     if (parsed.type === "bullet") {
       const indentOffset = parsed.indent * 16;
       const bulletX = marginX + indentOffset;
       const textX = bulletX + 14;
-      const availW = maxWidth - indentOffset - 14;
-      const wrapped = wrapText(parsed.text, availW, bodySize);
-      for (let i = 0; i < wrapped.length; i++) {
+      const lines = wrapSegments(parsed.text, maxWidth - indentOffset - 14, bodySize);
+      for (let i = 0; i < lines.length; i++) {
         ensureSpace(lineHeightBody);
-        if (i === 0) {
-          // Bullet dot
-          currentPage.drawCircle({ x: bulletX + 3, y: y + 3, size: 2.5, color: colorAccent });
-        }
-        currentPage.drawText(wrapped[i], { x: textX, y, size: bodySize, font, color: colorBlack });
+        if (i === 0) currentPage.drawCircle({ x: bulletX + 3, y: y + 3, size: 2.5, color: colorAccent });
+        drawSegments(currentPage, lines[i], textX, y, bodySize, colorBlack);
         y -= lineHeightBody;
       }
       continue;
     }
 
     if (parsed.type === "numbered") {
-      const wrapped = wrapText(parsed.text, maxWidth - 20, bodySize);
-      for (let i = 0; i < wrapped.length; i++) {
+      for (const lineSegs of wrapSegments(parsed.text, maxWidth - 20, bodySize)) {
         ensureSpace(lineHeightBody);
-        currentPage.drawText(wrapped[i], { x: marginX + 16, y, size: bodySize, font, color: colorBlack });
+        drawSegments(currentPage, lineSegs, marginX + 16, y, bodySize, colorBlack);
         y -= lineHeightBody;
       }
       continue;
     }
 
     if (parsed.type === "code") {
-      // Code block marker — draw a subtle bg strip
       ensureSpace(lineHeightBody);
-      currentPage.drawRectangle({
-        x: marginX - 4, y: y - 2, width: maxWidth + 8, height: lineHeightBody,
-        color: colorCode,
-      });
-      y -= lineHeightBody * 0.5;
-      continue;
+      currentPage.drawRectangle({ x: marginX - 4, y: y - 2, width: maxWidth + 8, height: lineHeightBody, color: colorCode });
+      y -= lineHeightBody * 0.5; continue;
     }
 
-    // body
-    const wrapped = wrapText(parsed.text, maxWidth, bodySize);
-    for (const line of wrapped) {
+    // body — support inline bold
+    for (const lineSegs of wrapSegments(parsed.text, maxWidth, bodySize)) {
       ensureSpace(lineHeightBody);
-      currentPage.drawText(line, { x: marginX, y, size: bodySize, font, color: colorBlack });
+      drawSegments(currentPage, lineSegs, marginX, y, bodySize, colorBlack);
       y -= lineHeightBody;
     }
   }
 
-  // Last page number
   const pageNum = pdfDoc.getPageCount();
-  currentPage.drawText(`— ${pageNum} —`, {
-    x: pageWidth / 2 - 15, y: marginY / 2, size: 9, font, color: colorGray,
-  });
+  currentPage.drawText(`— ${pageNum} —`, { x: pageWidth / 2 - 15, y: marginY / 2, size: 9, font, color: colorGray });
 
-  const bytes = await pdfDoc.save();
-  return new Uint8Array(bytes);
+  return new Uint8Array(await pdfDoc.save());
 }
 
 // ─── DOCX generation ────────────────────────────────────────────────────────────
