@@ -187,28 +187,11 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Upload to Supabase Storage via REST API with service role key
-        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
-        const uploadRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-              "Content-Type": "audio/mpeg",
-              "x-upsert": "false",
-            },
-            body: new Uint8Array(audioBuffer),
-          }
-        );
-        if (uploadRes.ok) {
-          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
-          console.log("Audio uploaded to storage:", publicUrl);
-          return JSON.stringify({ audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
-        }
-        const uploadErrText = await uploadRes.text().catch(() => "");
-        console.error("Audio storage upload failed:", uploadRes.status, uploadErrText);
-        return JSON.stringify({ error: "Audio storage upload failed: " + uploadErrText.slice(0, 200) });
+        // Return raw buffer reference — will be sent directly via multipart to Telegram
+        const audioKey = `audio_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        if (!(globalThis as any).__audioBuffers) (globalThis as any).__audioBuffers = {};
+        (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
+        return JSON.stringify({ audioKey, audioFormat: "mp3", message: "Voice message generated" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
