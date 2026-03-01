@@ -565,12 +565,18 @@ async function executeTool(name: string, input: any): Promise<string> {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ model: "dall-e-3", prompt, type: "image" }),
+          body: JSON.stringify({ model: "dall-e-3", prompt, category: "image-gen" }),
         });
-        if (!res.ok) return "Image generation failed: " + res.status;
         const data = await res.json();
-        const url = data?.url || data?.data?.[0]?.url;
-        if (!url) return "Image generation failed: no URL";
+        if (!res.ok) {
+          console.error("Image generation error:", JSON.stringify(data));
+          return "Image generation failed: " + (data?.error || res.status);
+        }
+        const url = data?.imageUrl || data?.url || data?.data?.[0]?.url || data?.response;
+        if (!url) {
+          console.error("Image generation: no URL in response", JSON.stringify(data));
+          return "Image generation failed: no URL in response";
+        }
         return `__IMAGE__:${url}`;
       } catch (e: any) {
         return "Image error: " + e.message;
