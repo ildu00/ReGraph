@@ -372,6 +372,24 @@ function buildToolDefs(toolIds: string[]) {
       },
     });
   }
+  if (toolIds.includes("file_generator")) {
+    defs.push({
+      type: "function",
+      function: {
+        name: "file_generator",
+        description: "Generate and download a file. Use when the user asks to create, export, or save a file in any format: TXT (plain text), JSON (structured data), CSV (spreadsheet/table data), XLSX (Excel spreadsheet), or PDF (document). Always use this tool when asked to 'create a file', 'export as', 'save as', or 'generate a [format] file'.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: { type: "string", description: "Name of the file without extension, e.g. 'report' or 'data'" },
+            format: { type: "string", enum: ["txt", "json", "csv", "xlsx", "pdf"], description: "File format to generate" },
+            content: { type: "string", description: "The full content of the file. For CSV/XLSX: comma-separated rows with newlines. For JSON: valid JSON string. For PDF/TXT: plain text." },
+          },
+          required: ["filename", "format", "content"],
+        },
+      },
+    });
+  }
   return defs;
 }
 
