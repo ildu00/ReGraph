@@ -245,101 +245,55 @@ async function executeTool(name: string, input: any): Promise<string> {
         let ext = format;
 
         if (format === "pdf") {
-          // Build a minimal valid PDF in pure Deno/TypeScript
           mimeType = "application/pdf";
-          const lines = content.split("\n");
-          const pageWidth = 595, pageHeight = 842, margin = 50, lineHeight = 14, fontSize = 11;
-          let y = pageHeight - margin;
-          const contentLines: string[] = [];
-          for (const line of lines) {
-            // Wrap long lines ~80 chars
-            const chunks = line.match(/.{1,90}/g) || [""];
-            for (const chunk of chunks) contentLines.push(chunk);
-          }
+          // Use pdf-lib + DejaVu Sans (Cyrillic support) for proper Unicode rendering
+          const { PDFDocument, rgb } = await import("https://esm.sh/pdf-lib@1.17.1");
+          const fontkit = (await import("https://esm.sh/@pdf-lib/fontkit@1.1.1")).default;
 
-          const textOps: string[] = [];
-          let pageContents: string[] = [];
-          let pages: string[] = [];
+          const pdfDoc = await PDFDocument.create();
+          pdfDoc.registerFontkit(fontkit);
 
-          const encoder = new TextEncoder();
-          let pdfParts: Uint8Array[] = [];
-          let offset = 0;
-          const offsets: number[] = [];
+          // Fetch DejaVu Sans which supports Cyrillic
+          const fontBytes = await fetch(
+            "https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf"
+          ).then(r => r.arrayBuffer());
+          const customFont = await pdfDoc.embedFont(fontBytes);
 
-          const addPart = (s: string) => {
-            const b = encoder.encode(s);
-            pdfParts.push(b);
-            offset += b.byteLength;
-          };
+          const pageWidth = 595, pageHeight = 842, margin = 50, lineHeight = 16, fontSize = 11;
+          const maxLineWidth = pageWidth - margin * 2;
 
-          addPart("%PDF-1.4\n");
-          // obj 1: catalog (will set after)
-          // obj 2: pages (will set after)
-          // obj 3: font
-          offsets[3] = offset;
-          addPart("3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n");
-
-          // Build page content streams
-          const LINES_PER_PAGE = Math.floor((pageHeight - 2 * margin) / lineHeight);
-          const pageChunks: string[][] = [];
-          for (let i = 0; i < contentLines.length; i += LINES_PER_PAGE) {
-            pageChunks.push(contentLines.slice(i, i + LINES_PER_PAGE));
-          }
-          if (pageChunks.length === 0) pageChunks.push([""]);
-
-          const pageObjNums: number[] = [];
-          let nextObj = 4;
-
-          for (const chunk of pageChunks) {
-            // Content stream
-            let stream = `BT\n/F1 ${fontSize} Tf\n`;
-            let cy = pageHeight - margin;
-            for (const ln of chunk) {
-              // Escape special PDF chars
-              const safe = ln.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
-              stream += `${margin} ${cy} Td\n(${safe}) Tj\n0 ${-lineHeight} Td\n`;
-              cy -= lineHeight;
+          // Split content into lines and wrap
+          const allLines: string[] = [];
+          for (const line of content.split("\n")) {
+            if (!line.trim()) { allLines.push(""); continue; }
+            // Simple word-wrap
+            const words = line.split(" ");
+            let current = "";
+            for (const word of words) {
+              const test = current ? current + " " + word : word;
+              const testWidth = customFont.widthOfTextAtSize(test, fontSize);
+              if (testWidth > maxLineWidth && current) {
+                allLines.push(current);
+                current = word;
+              } else {
+                current = test;
+              }
             }
-            stream += "ET\n";
-            const streamBytes = encoder.encode(stream);
-
-            // Content stream object
-            const contentObjNum = nextObj++;
-            offsets[contentObjNum] = offset;
-            addPart(`${contentObjNum} 0 obj\n<< /Length ${streamBytes.byteLength} >>\nstream\n`);
-            pdfParts.push(streamBytes);
-            offset += streamBytes.byteLength;
-            addPart("\nendstream\nendobj\n");
-
-            // Page object
-            const pageObjNum = nextObj++;
-            pageObjNums.push(pageObjNum);
-            offsets[pageObjNum] = offset;
-            addPart(`${pageObjNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 3 0 R >> >> >>\nendobj\n`);
+            if (current) allLines.push(current);
           }
 
-          // obj 2: pages
-          offsets[2] = offset;
-          addPart(`2 0 obj\n<< /Type /Pages /Kids [${pageObjNums.map(n => `${n} 0 R`).join(" ")}] /Count ${pageObjNums.length} >>\nendobj\n`);
-
-          // obj 1: catalog
-          offsets[1] = offset;
-          addPart("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
-
-          const xrefOffset = offset;
-          const totalObjs = nextObj;
-          let xref = `xref\n0 ${totalObjs}\n0000000000 65535 f \n`;
-          for (let i = 1; i < totalObjs; i++) {
-            xref += String(offsets[i] || 0).padStart(10, "0") + " 00000 n \n";
+          const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
+          for (let p = 0; p < Math.ceil(allLines.length / linesPerPage); p++) {
+            const page = pdfDoc.addPage([pageWidth, pageHeight]);
+            const chunk = allLines.slice(p * linesPerPage, (p + 1) * linesPerPage);
+            let y = pageHeight - margin;
+            for (const ln of chunk) {
+              page.drawText(ln, { x: margin, y, size: fontSize, font: customFont, color: rgb(0, 0, 0) });
+              y -= lineHeight;
+            }
           }
-          addPart(xref);
-          addPart(`trailer\n<< /Size ${totalObjs} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
 
-          // Merge all parts
-          const totalLen = pdfParts.reduce((s, b) => s + b.byteLength, 0);
-          fileBytes = new Uint8Array(totalLen);
-          let pos = 0;
-          for (const part of pdfParts) { fileBytes.set(part, pos); pos += part.byteLength; }
+          fileBytes = new Uint8Array(await pdfDoc.save());
 
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
