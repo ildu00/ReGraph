@@ -495,7 +495,13 @@ serve(async (req) => {
       content: finalReply,
     });
 
-    if (generatedImageUrl) {
+    if (generatedAudioUrl) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
+      });
+    } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
