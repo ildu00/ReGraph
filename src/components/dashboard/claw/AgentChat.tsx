@@ -160,21 +160,37 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("[voice_message] Got audio buffer, size:", audioBuffer.byteLength);
-        // Upload to claw-images storage bucket for stable URL
+
+        // Upload via Storage REST API with user's JWT token (more reliable than SDK)
         const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
-        const bytes = new Uint8Array(audioBuffer);
-        const { data: uploadData, error: uploadErr } = await supabase.storage
-          .from("claw-images")
-          .upload(fileName, bytes, { contentType: "audio/mpeg", upsert: false });
-        if (uploadData?.path) {
-          const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
-          console.log("[voice_message] Uploaded to storage:", publicUrl);
-          return { audio_url: publicUrl };
+        try {
+          const uploadRes = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+            {
+              method: "POST",
+              headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "audio/mpeg",
+                "x-upsert": "false",
+              },
+              body: audioBuffer,
+            }
+          );
+          if (uploadRes.ok) {
+            const publicUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+            console.log("[voice_message] Uploaded to storage:", publicUrl);
+            return { audio_url: publicUrl };
+          }
+          const uploadErr = await uploadRes.text().catch(() => "");
+          console.warn("[voice_message] Storage upload failed:", uploadRes.status, uploadErr);
+        } catch (uploadErr) {
+          console.warn("[voice_message] Storage upload exception:", uploadErr);
         }
-        console.warn("[voice_message] Storage upload failed:", uploadErr);
-        // Fallback: return blob URL for in-session playback only
+
+        // Fallback: blob URL for in-session playback only (will not persist across reloads)
         const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
         const blobUrl = URL.createObjectURL(blob);
+        console.log("[voice_message] Using blob URL as fallback");
         return { audio_url: blobUrl };
       } catch (e) {
         console.error("[voice_message] Exception:", e);
