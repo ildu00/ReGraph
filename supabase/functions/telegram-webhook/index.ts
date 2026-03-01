@@ -77,53 +77,18 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-// Windows-1251 mapping for Cyrillic characters
-const WIN1251: Record<number, number> = {
-  0x0410:0xC0,0x0411:0xC1,0x0412:0xC2,0x0413:0xC3,0x0414:0xC4,0x0415:0xC5,0x0416:0xC6,0x0417:0xC7,
-  0x0418:0xC8,0x0419:0xC9,0x041A:0xCA,0x041B:0xCB,0x041C:0xCC,0x041D:0xCD,0x041E:0xCE,0x041F:0xCF,
-  0x0420:0xD0,0x0421:0xD1,0x0422:0xD2,0x0423:0xD3,0x0424:0xD4,0x0425:0xD5,0x0426:0xD6,0x0427:0xD7,
-  0x0428:0xD8,0x0429:0xD9,0x042A:0xDA,0x042B:0xDB,0x042C:0xDC,0x042D:0xDD,0x042E:0xDE,0x042F:0xDF,
-  0x0430:0xE0,0x0431:0xE1,0x0432:0xE2,0x0433:0xE3,0x0434:0xE4,0x0435:0xE5,0x0436:0xE6,0x0437:0xE7,
-  0x0438:0xE8,0x0439:0xE9,0x043A:0xEA,0x043B:0xEB,0x043C:0xEC,0x043D:0xED,0x043E:0xEE,0x043F:0xEF,
-  0x0440:0xF0,0x0441:0xF1,0x0442:0xF2,0x0443:0xF3,0x0444:0xF4,0x0445:0xF5,0x0446:0xF6,0x0447:0xF7,
-  0x0448:0xF8,0x0449:0xF9,0x044A:0xFA,0x044B:0xFB,0x044C:0xFC,0x044D:0xFD,0x044E:0xFE,0x044F:0xFF,
-  0x0401:0xA8,0x0451:0xB8,
-};
+async function buildPdfWithFont(content: string): Promise<Uint8Array> {
+  const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
+  const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
 
-function encodeWin1251(str: string): Uint8Array {
-  const bytes = new Uint8Array(str.length);
-  for (let i = 0; i < str.length; i++) {
-    const cp = str.charCodeAt(i);
-    if (cp < 128) bytes[i] = cp;
-    else bytes[i] = WIN1251[cp] ?? 0x3F; // '?' for unsupported
-  }
-  return bytes;
-}
+  // Fetch DejaVu Sans (supports Cyrillic)
+  const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
+  if (!fontRes.ok) throw new Error("Font fetch failed: " + fontRes.status);
+  const fontBytes = new Uint8Array(await fontRes.arrayBuffer());
 
-function pdfStr(encoded: Uint8Array): string {
-  let s = "(";
-  for (const b of encoded) {
-    if (b === 40 || b === 41 || b === 92) s += "\\" + String.fromCharCode(b);
-    else s += String.fromCharCode(b);
-  }
-  return s + ")";
-}
-
-function buildPdfWithCyrillic(content: string): Uint8Array {
-  // Split into lines, word-wrap at ~90 chars
-  const rawLines = content.split("\n");
-  const allLines: string[] = [];
-  for (const line of rawLines) {
-    if (line.trim() === "") { allLines.push(""); continue; }
-    // Simple wrap at 90 chars
-    let cur = line;
-    while (cur.length > 90) {
-      const idx = cur.lastIndexOf(" ", 90);
-      if (idx < 30) { allLines.push(cur.slice(0, 90)); cur = cur.slice(90); }
-      else { allLines.push(cur.slice(0, idx)); cur = cur.slice(idx + 1); }
-    }
-    if (cur.length > 0) allLines.push(cur);
-  }
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+  const font = await pdfDoc.embedFont(fontBytes);
 
   const fontSize = 11;
   const lineHeight = 16;
@@ -131,115 +96,42 @@ function buildPdfWithCyrillic(content: string): Uint8Array {
   const marginY = 50;
   const pageW = 595;
   const pageH = 842;
-  const linesPerPage = Math.floor((pageH - marginY * 2) / lineHeight);
+  const maxWidth = pageW - marginX * 2;
 
-  // Split into pages
-  const pages: string[][] = [];
-  for (let i = 0; i < Math.max(1, Math.ceil(allLines.length / linesPerPage)); i++) {
-    pages.push(allLines.slice(i * linesPerPage, (i + 1) * linesPerPage));
-  }
-
-  // Build PDF manually
-  const enc = new TextEncoder();
-  const parts: Uint8Array[] = [];
-  const offsets: number[] = [];
-  let offset = 0;
-
-  const add = (s: string) => {
-    const b = enc.encode(s);
-    parts.push(b);
-    offset += b.length;
-  };
-  const addRaw = (b: Uint8Array) => {
-    parts.push(b);
-    offset += b.length;
-  };
-
-  // Header
-  add("%PDF-1.4\n");
-
-  // Objects: 1=catalog, 2=pages, 3..N=page content+page for each page
-  // Page object pairs: content=3+2i, page=4+2i (i=0..n-1)
-  const nPages = pages.length;
-  const catalogId = 1;
-  const pagesId = 2;
-  const fontId = 3 + nPages * 2;
-  const firstPageContentId = 3;
-  // page content ids: 3,5,7...
-  // page ids: 4,6,8...
-
-  const pageIds: number[] = [];
-  const contentIds: number[] = [];
-  for (let i = 0; i < nPages; i++) {
-    contentIds.push(3 + i * 2);
-    pageIds.push(4 + i * 2);
-  }
-
-  // Write content streams
-  const streamLengthIds: number[] = [];
-  for (let i = 0; i < nPages; i++) {
-    const cid = contentIds[i];
-    offsets[cid] = offset;
-
-    // Build stream content
-    let stream = `BT\n/F1 ${fontSize} Tf\n`;
-    const pageLines = pages[i];
-    for (let j = 0; j < pageLines.length; j++) {
-      const y = pageH - marginY - j * lineHeight;
-      const encoded = encodeWin1251(pageLines[j]);
-      const ps = pdfStr(encoded);
-      stream += `${marginX} ${y} Td\n${ps} Tj\n`;
-      if (j < pageLines.length - 1) stream += `-${marginX} -${lineHeight} Td\n`;
+  // Word-wrap
+  const wrapped: string[] = [];
+  for (const rawLine of content.split("\n")) {
+    if (!rawLine.trim()) { wrapped.push(""); continue; }
+    const words = rawLine.split(" ");
+    let cur = "";
+    for (const w of words) {
+      const test = cur ? cur + " " + w : w;
+      if (font.widthOfTextAtSize(test, fontSize) > maxWidth && cur) {
+        wrapped.push(cur); cur = w;
+      } else {
+        cur = test;
+      }
     }
-    stream += "ET\n";
-
-    const streamBytes = enc.encode(stream);
-    const streamLenId = fontId + 1 + i * 2;
-    streamLengthIds.push(streamLenId);
-
-    add(`${cid} 0 obj\n<< /Length ${streamBytes.length} >>\nstream\n`);
-    addRaw(streamBytes);
-    add(`\nendstream\nendobj\n`);
+    if (cur) wrapped.push(cur);
   }
 
-  // Write page objects
-  for (let i = 0; i < nPages; i++) {
-    const pid = pageIds[i];
-    offsets[pid] = offset;
-    add(`${pid} 0 obj\n<< /Type /Page /Parent ${pagesId} 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Contents ${contentIds[i]} 0 R /Resources << /Font << /F1 ${fontId} 0 R >> >> >>\nendobj\n`);
+  const linesPerPage = Math.floor((pageH - marginY * 2) / lineHeight);
+  for (let p = 0; p < Math.max(1, Math.ceil(wrapped.length / linesPerPage)); p++) {
+    const page = pdfDoc.addPage([pageW, pageH]);
+    const slice = wrapped.slice(p * linesPerPage, (p + 1) * linesPerPage);
+    for (let j = 0; j < slice.length; j++) {
+      if (!slice[j]) continue;
+      page.drawText(slice[j], {
+        x: marginX,
+        y: pageH - marginY - j * lineHeight,
+        size: fontSize,
+        font,
+        color: rgb(0, 0, 0),
+      });
+    }
   }
 
-  // Font object (Helvetica with cp1251 encoding)
-  offsets[fontId] = offset;
-  add(`${fontId} 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n`);
-
-  // Pages object
-  offsets[pagesId] = offset;
-  const kidsStr = pageIds.map(id => `${id} 0 R`).join(" ");
-  add(`${pagesId} 0 obj\n<< /Type /Pages /Kids [${kidsStr}] /Count ${nPages} >>\nendobj\n`);
-
-  // Catalog
-  offsets[catalogId] = offset;
-  add(`${catalogId} 0 obj\n<< /Type /Catalog /Pages ${pagesId} 0 R >>\nendobj\n`);
-
-  // xref
-  const xrefOffset = offset;
-  const maxId = fontId + 1;
-  add(`xref\n0 ${maxId}\n`);
-  add(`0000000000 65535 f \n`);
-  for (let i = 1; i < maxId; i++) {
-    const o = offsets[i] ?? 0;
-    add(`${String(o).padStart(10, "0")} 00000 n \n`);
-  }
-  add(`trailer\n<< /Size ${maxId} /Root ${catalogId} 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
-
-  // Combine
-  let total = 0;
-  for (const p of parts) total += p.length;
-  const result = new Uint8Array(total);
-  let pos = 0;
-  for (const p of parts) { result.set(p, pos); pos += p.length; }
-  return result;
+  return new Uint8Array(await pdfDoc.save());
 }
 
 async function executeTool(name: string, input: any): Promise<string> {
@@ -411,8 +303,8 @@ async function executeTool(name: string, input: any): Promise<string> {
 
         if (format === "pdf") {
           mimeType = "application/pdf";
-          console.log("Generating PDF with built-in Cyrillic support...");
-          fileBytes = buildPdfWithCyrillic(content);
+          console.log("Generating PDF with npm:pdf-lib + DejaVu font...");
+          fileBytes = await buildPdfWithFont(content);
           console.log("PDF generated, bytes:", fileBytes.byteLength);
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
