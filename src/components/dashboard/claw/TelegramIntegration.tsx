@@ -129,7 +129,7 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
                       {bot.bot_username ? `@${bot.bot_username}` : "Telegram Bot"}
                     </span>
                     {bot.webhook_set && bot.is_active ? (
-                      <Badge variant="secondary" className="text-xs gap-1 bg-green-500/10 text-green-600 border-green-500/20">
+                      <Badge variant="secondary" className="text-xs gap-1 bg-primary/10 text-primary border-primary/20">
                         <CheckCircle2 className="h-2.5 w-2.5" />
                         Active
                       </Badge>
