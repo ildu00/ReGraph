@@ -566,7 +566,9 @@ serve(async (req) => {
     let generatedImageUrl: string | null = null;
     let generatedImageBase64: string | null = null;
     let generatedAudioUrl: string | null = null;
-    let generatedAudioBuffer: ArrayBuffer | null = null; // Store raw bytes to avoid base64 stack overflow
+    let generatedAudioBuffer: ArrayBuffer | null = null;
+    let generatedFileUrl: string | null = null;
+    let generatedFileName: string | null = null;
     let totalTokensUsed = 0;
     const startTime = Date.now();
 
