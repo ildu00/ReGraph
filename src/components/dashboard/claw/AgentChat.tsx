@@ -1195,19 +1195,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
                     (() => {
                       const raw = msg.content.slice(10);
-                      // Only full URLs (from web TTS upload) are playable in the browser.
-                      // Short filenames like "voice_xxx.ogg" are Telegram-only and not stored in web storage.
-                      if (!raw.startsWith("http")) {
-                        return (
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground italic px-1 py-2">
-                            <Volume2 className="w-4 h-4 shrink-0" />
-                            <span>Голосовое доступно только в Telegram</span>
-                          </div>
-                        );
-                      }
+                      const audioSrc = raw.startsWith("http")
+                        ? raw
+                        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
+                      const isOgg = audioSrc.includes(".ogg");
                       return (
                         <audio controls className="w-full rounded" preload="auto" style={{ minHeight: 54 }}>
-                          <source src={raw} type="audio/mpeg" />
+                          <source src={audioSrc} type={isOgg ? "audio/ogg" : "audio/mpeg"} />
                         </audio>
                       );
                     })()
