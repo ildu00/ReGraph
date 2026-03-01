@@ -579,6 +579,9 @@ async function executeTool(name: string, input: any): Promise<string> {
         if (format === "pdf") {
           bytes = await buildPdf(content);
           mimeType = "application/pdf";
+        } else if (format === "docx") {
+          bytes = await buildDocx(content);
+          mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         } else if (format === "csv") {
           bytes = new TextEncoder().encode(content);
           mimeType = "text/csv";
