@@ -818,7 +818,17 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) break;
-          if (hadFileGen) break;
+          if (hadFileGen) {
+            // Embed file URL in content so it survives DB round-trips (same pattern as audio)
+            const fileResult = toolResults["file_generator"];
+            if (fileResult?.file_url && !fileResult.file_url.startsWith("blob:")) {
+              const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
+              const fileMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: fileContent });
+            }
+            break;
+          }
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
@@ -980,7 +990,27 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
                     <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
-                  ) : precedingFileResult ? (
+                  ) : msg.content?.startsWith("__FILE__:") ? (() => {
+                    const parts = msg.content.slice(9).split("|");
+                    const [file_url, filename, format, sizeStr] = parts;
+                    const size = parseInt(sizeStr || "0");
+                    const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
+                    const sizeLabel = size > 1024 ? `${(size / 1024).toFixed(1)} KB` : size > 0 ? `${size} B` : "";
+                    return (
+                      <div className="flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+                        <span className="text-2xl">{formatIcons[format] || "📄"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{filename}</p>
+                          <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
+                        </div>
+                        <a href={file_url} download={filename} target="_blank" rel="noreferrer">
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        </a>
+                      </div>
+                    );
+                  })() : precedingFileResult ? (
                     <>
                       <div className={`markdown-response text-sm min-w-0 overflow-hidden`}>
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || ""}</ReactMarkdown>
@@ -1027,7 +1057,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     </div>
                   )}
                 </div>
-                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
