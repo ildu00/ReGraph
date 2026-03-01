@@ -1118,7 +1118,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       </div>
 
       {/* Messages */}
-      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 overflow-x-hidden ${messages.length > 0 || loadingHistory ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
+      <Card className={`flex-1 min-h-0 bg-card/50 border-border p-4 mb-2 ${messages.length > 0 || loadingHistory ? 'overflow-y-auto space-y-4' : 'overflow-hidden'}`}>
         {loadingHistory && (
           <div className="flex justify-center py-8">
             <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
