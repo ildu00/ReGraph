@@ -497,18 +497,24 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
-        if (parsed.audioUrl) {
+          if (parsed.audioUrl) {
             generatedAudioUrl = parsed.audioUrl;
-            finalReply = "🔊";
+            // Save proper __AUDIO__: prefix so web chat shows audio player
+            finalReply = `__AUDIO__:${parsed.audioUrl}`;
           }
           if (parsed.audioKey) {
-            // Fallback: retrieve raw buffer stored in memory
+            // Retrieve raw buffer for direct Telegram multipart send
             const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
             if (buf) {
               generatedAudioBuffer = buf;
               delete (globalThis as any).__audioBuffers[parsed.audioKey];
             }
-            finalReply = "🔊";
+            // If we also have a URL (from storage upload), use it
+            if (parsed.audioUrl) {
+              finalReply = `__AUDIO__:${parsed.audioUrl}`;
+            } else {
+              finalReply = "🔊";
+            }
           }
         } catch { /* */ }
 
