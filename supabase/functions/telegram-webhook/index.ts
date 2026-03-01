@@ -187,7 +187,32 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Return raw buffer reference — will be sent directly via multipart to Telegram
+
+        // Upload to storage so web chat can also show the player
+        try {
+          const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+          const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+            auth: { autoRefreshToken: false, persistSession: false },
+          });
+          const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+          const { data: uploadData, error: uploadErr } = await adminClient.storage
+            .from("claw-images")
+            .upload(fileName, new Uint8Array(audioBuffer), { contentType: "audio/mpeg", upsert: false });
+          if (!uploadErr && uploadData?.path) {
+            const { data: { publicUrl } } = adminClient.storage.from("claw-images").getPublicUrl(uploadData.path);
+            console.log("TTS uploaded to storage:", publicUrl);
+            // Store buffer for direct Telegram send AND return URL for web chat
+            const audioKey = `audio_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            if (!(globalThis as any).__audioBuffers) (globalThis as any).__audioBuffers = {};
+            (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
+            return JSON.stringify({ audioKey, audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
+          }
+          console.warn("Storage upload failed:", uploadErr);
+        } catch (uploadEx) {
+          console.warn("Storage upload exception:", uploadEx);
+        }
+
+        // Fallback: send via multipart only (no web chat URL)
         const audioKey = `audio_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         if (!(globalThis as any).__audioBuffers) (globalThis as any).__audioBuffers = {};
         (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
@@ -472,18 +497,24 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
-        if (parsed.audioUrl) {
+          if (parsed.audioUrl) {
             generatedAudioUrl = parsed.audioUrl;
-            finalReply = "🔊";
+            // Save proper __AUDIO__: prefix so web chat shows audio player
+            finalReply = `__AUDIO__:${parsed.audioUrl}`;
           }
           if (parsed.audioKey) {
-            // Fallback: retrieve raw buffer stored in memory
+            // Retrieve raw buffer for direct Telegram multipart send
             const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
             if (buf) {
               generatedAudioBuffer = buf;
               delete (globalThis as any).__audioBuffers[parsed.audioKey];
             }
-            finalReply = "🔊";
+            // If we also have a URL (from storage upload), use it
+            if (parsed.audioUrl) {
+              finalReply = `__AUDIO__:${parsed.audioUrl}`;
+            } else {
+              finalReply = "🔊";
+            }
           }
         } catch { /* */ }
 
