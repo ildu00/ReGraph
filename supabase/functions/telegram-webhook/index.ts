@@ -1154,13 +1154,21 @@ serve(async (req) => {
           // Stop loop immediately — no need for a follow-up AI response
           loopCount = MAX_LOOPS;
         } else if (toolResult.startsWith("__IMAGE__:")) {
-          // Send image immediately
+          // Send image immediately and stop loop
           const imgUrl = toolResult.replace("__IMAGE__:", "");
-          await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+          const sendPhotoRes = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ chat_id: chatId, photo: imgUrl }),
           });
+          const sendPhotoData = await sendPhotoRes.json();
+          console.log("sendPhoto result:", JSON.stringify(sendPhotoData));
+          // Save to DB
+          if (convId) {
+            await supabase.from("claw_messages").insert({ conversation_id: convId, role: "assistant", content: `__IMAGE__:${imgUrl}` });
+            await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", convId);
+          }
+          loopCount = MAX_LOOPS; // Stop loop — image sent, no text needed
         }
 
         messages.push({
