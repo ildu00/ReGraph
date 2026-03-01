@@ -153,8 +153,13 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
             body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
           }
         );
-        if (!res.ok) return { error: "TTS failed" };
+        if (!res.ok) {
+          const errText = await res.text().catch(() => "");
+          console.error("[voice_message] TTS failed:", res.status, errText);
+          return { error: `TTS failed (${res.status})` };
+        }
         const audioBuffer = await res.arrayBuffer();
+        console.log("[voice_message] Got audio buffer, size:", audioBuffer.byteLength);
         // Upload to claw-images storage bucket for stable URL
         const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
         const bytes = new Uint8Array(audioBuffer);
@@ -163,14 +168,16 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           .upload(fileName, bytes, { contentType: "audio/mpeg", upsert: false });
         if (uploadData?.path) {
           const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+          console.log("[voice_message] Uploaded to storage:", publicUrl);
           return { audio_url: publicUrl };
         }
-        if (uploadErr) console.warn("[voice_message] Storage upload failed:", uploadErr);
-        // Fallback: return blob URL for in-session playback
+        console.warn("[voice_message] Storage upload failed:", uploadErr);
+        // Fallback: return blob URL for in-session playback only
         const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
         const blobUrl = URL.createObjectURL(blob);
         return { audio_url: blobUrl };
-      } catch {
+      } catch (e) {
+        console.error("[voice_message] Exception:", e);
         return { error: "Voice generation failed" };
       }
     }
