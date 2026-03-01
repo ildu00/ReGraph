@@ -60,7 +60,7 @@ serve(async (req) => {
     }
 
     const audioBuffer = await response.arrayBuffer();
-    const contentType = response_format === "mp3" ? "audio/mpeg" : response_format === "wav" ? "audio/wav" : response_format === "opus" ? "audio/opus" : response_format === "aac" ? "audio/aac" : response_format === "flac" ? "audio/flac" : "audio/mpeg";
+    const contentType = response_format === "mp3" ? "audio/mpeg" : response_format === "wav" ? "audio/wav" : response_format === "opus" ? "audio/ogg; codecs=opus" : response_format === "aac" ? "audio/aac" : response_format === "flac" ? "audio/flac" : "audio/mpeg";
 
     logApiRequest({ method: req.method, endpoint: "/v1/audio/speech", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
     return new Response(audioBuffer, {
