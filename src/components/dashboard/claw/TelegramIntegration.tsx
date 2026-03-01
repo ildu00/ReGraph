@@ -51,10 +51,22 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
     if (!user) return;
     setLoading(true);
     try {
-      const res = await supabase.functions.invoke("telegram-bot-setup", {
-        body: { action: "list" },
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) { setLoading(false); return; }
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          "apikey": SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ action: "list" }),
       });
-      if (res.data?.bots) setBots(res.data.bots);
+      const result = await response.json();
+      if (result.bots) setBots(result.bots);
     } catch {
       // silent
     }
@@ -65,12 +77,24 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
 
   const handleDisconnect = async () => {
     if (!deleteTarget) return;
-    const res = await supabase.functions.invoke("telegram-bot-setup", {
-      body: { action: "disconnect", bot_id: deleteTarget.id },
+    const { data: sessionData } = await supabase.auth.getSession();
+    const accessToken = sessionData?.session?.access_token;
+    if (!accessToken) return;
+    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${accessToken}`,
+        "apikey": SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({ action: "disconnect", bot_id: deleteTarget.id }),
     });
-    if (res.data?.ok) {
+    const result = await response.json();
+    if (result.ok) {
       toast.success("Bot disconnected");
-      fetchBots();
+      await fetchBots();
     } else {
       toast.error("Failed to disconnect bot");
     }
