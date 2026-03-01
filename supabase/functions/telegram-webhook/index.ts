@@ -63,7 +63,7 @@ const TOOL_DEFINITIONS: Record<string, object> = {
     type: "function",
     function: {
       name: "file_generator",
-      description: "Generate and send a file (TXT, JSON, CSV, PDF) to the user. Use this tool when the user asks to create, generate, or save a file. NEVER use code_interpreter to generate files — always use this tool instead.",
+      description: "Generate and send a file (TXT, JSON, CSV, PDF, DOCX) to the user. Use this tool when the user asks to create, generate, or save a file. NEVER use code_interpreter to generate files — always use this tool instead. For PDF and DOCX, always format the content using Markdown: use # for titles, ## for sections, ### for subsections, **bold** for emphasis, - for bullet lists, numbered lists, and --- for dividers. This produces beautifully formatted documents.",
       parameters: {
         type: "object",
         properties: {
