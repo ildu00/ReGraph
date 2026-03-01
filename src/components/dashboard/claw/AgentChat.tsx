@@ -785,50 +785,34 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             : null
         );
 
-        // Fallback: if LLM didn't call image_generation but wrote text instead,
-        // force a second call with tool_choice required
+        // Fallback: if LLM didn't call image_generation but user clearly wants an image,
+        // directly execute the tool instead of relying on a forced LLM re-call
         if (
           assistantMsg &&
           (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) &&
           toolDefs.some((td: any) => td.function?.name === "image_generation") &&
           loopCount === 1
         ) {
-          const contentLower = (assistantMsg.content || "").toLowerCase();
           const userLower = fullUserText.toLowerCase();
-          const looksLikeImageRequest =
-            contentLower.includes("изображение") || contentLower.includes("image") ||
-            contentLower.includes("картинку") || contentLower.includes("нарисовал") ||
-            contentLower.includes("создал") || contentLower.includes("generated") ||
-            contentLower.includes("не могу создать") || contentLower.includes("cannot create") ||
-            contentLower.includes("к сожалению") || contentLower.includes("unfortunately");
           const userWantsImage =
             userLower.includes("нарисуй") || userLower.includes("draw") ||
             userLower.includes("generate image") || userLower.includes("создай картинку") ||
-            userLower.includes("сгенерируй") || userLower.includes("изображение") ||
-            userLower.includes("картинку") || userLower.includes("paint") || userLower.includes("image of");
-          if (looksLikeImageRequest || userWantsImage) {
-            console.log("[AgentChat] LLM skipped image tool, forcing image_generation...");
-            const forcedRes = await fetch(INFERENCE_URL, {
-              method: "POST",
-              headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}`, "x-api-key": apiKey },
-              body: JSON.stringify({
-                model: agent.model_id,
-                prompt: fullUserText,
-                messages: loopMessages,
-                category: "llm",
-                max_tokens: 512,
-                tools: toolDefs.filter((td: any) => td.function?.name === "image_generation"),
-                tool_choice: { type: "function", function: { name: "image_generation" } },
-              }),
-            });
-            if (forcedRes.ok) {
-              const forcedData = await forcedRes.json();
-              const forcedChoice = forcedData?.choices?.[0];
-              const forcedMsg = forcedChoice?.message ?? (forcedData?.response != null ? { role: "assistant", content: forcedData.response, tool_calls: forcedData.tool_calls } : null);
-              if (forcedMsg?.tool_calls?.length > 0) {
-                assistantMsg = forcedMsg;
-              }
+            userLower.includes("сгенерируй картинку") || userLower.includes("изображение") ||
+            userLower.includes("картинку") || userLower.includes("paint") || userLower.includes("image of") ||
+            userLower.includes("нарисовать") || userLower.includes("сгенерируй изображение");
+          if (userWantsImage) {
+            console.log("[AgentChat] User wants image but LLM didn't call tool — directly executing image_generation");
+            const directResult = await executeTool("image_generation", { prompt: fullUserText }, apiKey);
+            if (directResult?.image_url) {
+              const imgContent = `__IMAGE__:${directResult.image_url}`;
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: imgContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: imgContent });
+            } else {
+              const errMsg = directResult?.error || "Ошибка генерации изображения";
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ ${errMsg}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ ${errMsg}` });
             }
+            break;
           }
         }
 
