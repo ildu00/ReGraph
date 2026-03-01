@@ -77,61 +77,39 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-async function buildPdfWithFont(content: string): Promise<Uint8Array> {
-  const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
-  const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
-
-  // Fetch DejaVu Sans (supports Cyrillic)
-  const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
-  if (!fontRes.ok) throw new Error("Font fetch failed: " + fontRes.status);
-  const fontBytes = new Uint8Array(await fontRes.arrayBuffer());
-
-  const pdfDoc = await PDFDocument.create();
-  pdfDoc.registerFontkit(fontkit);
-  const font = await pdfDoc.embedFont(fontBytes);
-
-  const fontSize = 11;
-  const lineHeight = 16;
-  const marginX = 50;
-  const marginY = 50;
-  const pageW = 595;
-  const pageH = 842;
-  const maxWidth = pageW - marginX * 2;
-
-  // Word-wrap
-  const wrapped: string[] = [];
-  for (const rawLine of content.split("\n")) {
-    if (!rawLine.trim()) { wrapped.push(""); continue; }
-    const words = rawLine.split(" ");
-    let cur = "";
-    for (const w of words) {
-      const test = cur ? cur + " " + w : w;
-      if (font.widthOfTextAtSize(test, fontSize) > maxWidth && cur) {
-        wrapped.push(cur); cur = w;
+// Generate RTF with full Unicode/Cyrillic support — no external libraries needed
+function buildRtf(content: string): Uint8Array {
+  // RTF Unicode escape: \uN? where N is decimal codepoint, ? is fallback char
+  const escapeRtf = (text: string): string => {
+    let out = "";
+    for (const ch of text) {
+      const cp = ch.codePointAt(0)!;
+      if (cp < 128) {
+        // ASCII — escape special RTF chars
+        if (ch === "\\") out += "\\\\";
+        else if (ch === "{") out += "\\{";
+        else if (ch === "}") out += "\\}";
+        else out += ch;
       } else {
-        cur = test;
+        // Non-ASCII: use RTF Unicode escape \uN?
+        out += `\\u${cp}?`;
       }
     }
-    if (cur) wrapped.push(cur);
-  }
+    return out;
+  };
 
-  const linesPerPage = Math.floor((pageH - marginY * 2) / lineHeight);
-  for (let p = 0; p < Math.max(1, Math.ceil(wrapped.length / linesPerPage)); p++) {
-    const page = pdfDoc.addPage([pageW, pageH]);
-    const slice = wrapped.slice(p * linesPerPage, (p + 1) * linesPerPage);
-    for (let j = 0; j < slice.length; j++) {
-      if (!slice[j]) continue;
-      page.drawText(slice[j], {
-        x: marginX,
-        y: pageH - marginY - j * lineHeight,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
+  const lines = content.split("\n");
+  let body = "";
+  for (const line of lines) {
+    if (line.trim() === "") {
+      body += "\\par\n";
+    } else {
+      body += `\\par ${escapeRtf(line)}\n`;
     }
   }
 
-  return new Uint8Array(await pdfDoc.save());
+  const rtf = `{\\rtf1\\ansi\\ansicpg1251\\deff0\n{\\fonttbl{\\f0\\froman\\fcharset0 Times New Roman;}}\n{\\colortbl ;\\red0\\green0\\blue0;}\n\\f0\\fs22\\cf1\n${body}}\n`;
+  return new TextEncoder().encode(rtf);
 }
 
 async function executeTool(name: string, input: any): Promise<string> {
@@ -299,31 +277,26 @@ async function executeTool(name: string, input: any): Promise<string> {
       try {
         let fileBytes: Uint8Array;
         let mimeType: string;
-        let ext = format;
+        let outFilename = filename;
 
         if (format === "pdf") {
-          mimeType = "application/pdf";
-          console.log("Generating PDF with npm:pdf-lib + DejaVu font...");
-          fileBytes = await buildPdfWithFont(content);
-          console.log("PDF generated, bytes:", fileBytes.byteLength);
+          // PDF libraries hang in edge runtime — generate RTF instead (opens in Word/Pages, full Cyrillic support)
+          console.log("Generating RTF (Cyrillic-safe)...");
+          fileBytes = buildRtf(content);
+          mimeType = "application/rtf";
+          outFilename = filename.replace(/\.pdf$/i, ".rtf");
+          console.log("RTF generated, bytes:", fileBytes.byteLength);
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
           fileBytes = new TextEncoder().encode(content);
         }
 
-        // Upload to storage
-        const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        });
-        const storageFilename = `file_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { data: uploadData, error: uploadErr } = await adminClient.storage
-          .from("claw-images")
-          .upload(storageFilename, fileBytes, { contentType: mimeType, upsert: false });
+        // Store file bytes in global map and return key — main handler sends via multipart
+        const fileKey = `file_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        if (!(globalThis as any).__fileBuffers) (globalThis as any).__fileBuffers = {};
+        (globalThis as any).__fileBuffers[fileKey] = { bytes: fileBytes, filename: outFilename, mimeType };
 
-        if (uploadErr) return JSON.stringify({ error: "File upload failed: " + uploadErr.message });
-        const { data: { publicUrl } } = adminClient.storage.from("claw-images").getPublicUrl(uploadData.path);
-
-        return JSON.stringify({ fileUrl: publicUrl, filename, format, size: fileBytes.byteLength, message: "File generated successfully" });
+        return JSON.stringify({ fileKey, filename: outFilename, format, size: fileBytes.byteLength, message: "File generated successfully" });
       } catch (e) {
         return JSON.stringify({ error: "File generation failed: " + String(e) });
       }
@@ -532,8 +505,7 @@ serve(async (req) => {
     let generatedImageBase64: string | null = null;
     let generatedAudioUrl: string | null = null;
     let generatedAudioBuffer: ArrayBuffer | null = null;
-    let generatedFileUrl: string | null = null;
-    let generatedFileName: string | null = null;
+    let generatedFileKey: string | null = null;
     let totalTokensUsed = 0;
     const startTime = Date.now();
 
@@ -607,9 +579,11 @@ serve(async (req) => {
             finalReply = "🎨 Here's your image!";
           }
           if (parsed.fileUrl) {
-            generatedFileUrl = parsed.fileUrl;
-            generatedFileName = parsed.filename || "file";
-            finalReply = `📄 ${parsed.filename || "File"} ready`;
+            // legacy: URL-based (not used anymore)
+          }
+          if (parsed.fileKey) {
+            generatedFileKey = parsed.fileKey;
+            finalReply = `📄 ${parsed.filename || "File"} готов`;
           }
           if (parsed.audioUrl) {
             generatedAudioUrl = parsed.audioUrl;
@@ -639,8 +613,8 @@ serve(async (req) => {
         });
       }
 
-      // If image/audio was generated — no need for another LLM call, just exit loop
-      if (generatedImageUrl || generatedImageBase64 || generatedAudioBuffer || generatedAudioUrl || generatedFileUrl) break;
+      // If image/audio/file was generated — no need for another LLM call, just exit loop
+      if (generatedImageUrl || generatedImageBase64 || generatedAudioBuffer || generatedAudioUrl || generatedFileKey) break;
     }
 
     // Billing: charge user and log usage
@@ -671,26 +645,34 @@ serve(async (req) => {
     });
     await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
-    if (generatedFileUrl) {
-      // Send file via sendDocument
+    if (generatedFileKey) {
+      // Send file via multipart FormData (no URL — Telegram can't fetch from Supabase Storage)
       try {
-        const docRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            document: generatedFileUrl,
-            caption: `📄 ${generatedFileName || "File"}`,
-          }),
-        });
-        if (!docRes.ok) {
-          const err = await docRes.text();
-          console.error("sendDocument error:", docRes.status, err);
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const fileData = (globalThis as any).__fileBuffers?.[generatedFileKey];
+        if (fileData) {
+          delete (globalThis as any).__fileBuffers[generatedFileKey];
+          const blob = new Blob([fileData.bytes], { type: fileData.mimeType });
+          const formData = new FormData();
+          formData.append("chat_id", String(chatId));
+          formData.append("document", blob, fileData.filename);
+          formData.append("caption", `📄 ${fileData.filename}`);
+          const docRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: `📄 [${generatedFileName}](${generatedFileUrl})`, parse_mode: "Markdown" }),
+            body: formData,
           });
+          if (!docRes.ok) {
+            const err = await docRes.text();
+            console.error("sendDocument multipart error:", docRes.status, err);
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: chatId, text: "⚠️ Не удалось отправить файл." }),
+            });
+          } else {
+            console.log("sendDocument multipart success:", fileData.filename);
+          }
+        } else {
+          console.error("File buffer not found for key:", generatedFileKey);
         }
       } catch (e) {
         console.error("File send exception:", e);
