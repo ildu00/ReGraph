@@ -609,6 +609,109 @@ async function executeTool(name: string, input: any): Promise<string> {
         return "Voice error: " + e.message;
       }
     }
+// ─── XLSX generation ─────────────────────────────────────────────────────────
+
+async function buildXlsx(content: string): Promise<Uint8Array> {
+  const JSZip = (await import("npm:jszip@3.10.1")).default;
+
+  // Parse CSV-like content into rows/cells
+  const rows = content.trim().split("\n").map(row => {
+    // Handle markdown table rows like | col1 | col2 |
+    if (row.trim().startsWith("|")) {
+      return row.split("|").map(c => c.trim()).filter((c, i, a) => i > 0 && i < a.length - 1);
+    }
+    // Handle separator rows like |---|---|
+    return row.split(",").map(c => c.trim().replace(/^["']|["']$/g, ""));
+  }).filter(row => !row.every(c => /^[-:]+$/.test(c) || c === ""));
+
+  // Build shared strings
+  const allStrings: string[] = [];
+  const strIndex: Map<string, number> = new Map();
+  const getStrIdx = (s: string) => {
+    if (!strIndex.has(s)) { strIndex.set(s, allStrings.length); allStrings.push(s); }
+    return strIndex.get(s)!;
+  };
+
+  // Build sheet data XML
+  const sheetRows = rows.map((cols, ri) => {
+    const cells = cols.map((val, ci) => {
+      const colLetter = String.fromCharCode(65 + ci);
+      const ref = `${colLetter}${ri + 1}`;
+      const num = Number(val.replace(/,/g, "."));
+      if (!isNaN(num) && val.trim() !== "") {
+        return `<c r="${ref}"><v>${num}</v></c>`;
+      }
+      const si = getStrIdx(val);
+      return `<c r="${ref}" t="s"><v>${si}</v></c>`;
+    }).join("");
+    return `<row r="${ri + 1}">${cells}</row>`;
+  }).join("");
+
+  const sharedStringsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${allStrings.length}" uniqueCount="${allStrings.length}">
+${allStrings.map(s => `<si><t xml:space="preserve">${s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}</t></si>`).join("\n")}
+</sst>`;
+
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <sheetData>${sheetRows}</sheetData>
+</worksheet>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="2">
+    <font><sz val="11"/><name val="Calibri"/></font>
+    <font><b/><sz val="11"/><name val="Calibri"/></font>
+  </fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="2">
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+    <xf numFmtId="0" fontId="1" fillId="0" borderId="0" xfId="0"/>
+  </cellXfs>
+</styleSheet>`;
+
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const topRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", contentTypes);
+  zip.file("_rels/.rels", topRels);
+  zip.file("xl/workbook.xml", workbookXml);
+  zip.file("xl/_rels/workbook.xml.rels", workbookRels);
+  zip.file("xl/worksheets/sheet1.xml", sheetXml);
+  zip.file("xl/sharedStrings.xml", sharedStringsXml);
+  zip.file("xl/styles.xml", stylesXml);
+
+  const buffer = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+  return buffer;
+}
+
     case "file_generator": {
       const { filename, format, content } = input as { filename: string; format: string; content: string };
       try {
