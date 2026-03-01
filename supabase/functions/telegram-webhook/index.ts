@@ -633,7 +633,133 @@ async function buildXlsx(content: string): Promise<Uint8Array> {
   // Filter separator rows (e.g. |---|---|)
   const rows = rawRows.filter(r => r.length > 0 && !r.every(c => /^[-:]+$/.test(c) || c === ""));
 
+  const numCols = Math.max(...rows.map(r => r.length));
+  const isHeader = (ri: number) => ri === 0; // first row = header
+
+  // Calculate max char width per column for auto-fit
+  const colWidths = Array.from({ length: numCols }, (_, ci) =>
+    Math.max(10, ...rows.map(r => (r[ci] ?? "").length + 2))
+  );
+
   // Build shared strings
+  const allStrings: string[] = [];
+  const strIndex: Map<string, number> = new Map();
+  const getStrIdx = (s: string) => {
+    if (!strIndex.has(s)) { strIndex.set(s, allStrings.length); allStrings.push(s); }
+    return strIndex.get(s)!;
+  };
+
+  // Number-to-column letter (A, B, ..., Z, AA, ...)
+  const colLetter = (ci: number): string => {
+    let s = "";
+    let n = ci;
+    do { s = String.fromCharCode(65 + (n % 26)) + s; n = Math.floor(n / 26) - 1; } while (n >= 0);
+    return s;
+  };
+
+  // Build sheet rows XML — header row uses style 1 (bold)
+  const sheetRows = rows.map((cols, ri) => {
+    const cells = Array.from({ length: numCols }, (_, ci) => {
+      const val = cols[ci] ?? "";
+      const ref = `${colLetter(ci)}${ri + 1}`;
+      const styleAttr = isHeader(ri) ? ` s="1"` : "";
+      const num = Number(val.replace(/\s/g, "").replace(",", "."));
+      if (!isNaN(num) && val.trim() !== "" && !isHeader(ri)) {
+        return `<c r="${ref}"${styleAttr}><v>${num}</v></c>`;
+      }
+      const si = getStrIdx(val);
+      return `<c r="${ref}" t="s"${styleAttr}><v>${si}</v></c>`;
+    }).join("");
+    return `<row r="${ri + 1}">${cells}</row>`;
+  }).join("");
+
+  // Column widths XML
+  const colsXml = `<cols>${colWidths.map((w, ci) =>
+    `<col min="${ci + 1}" max="${ci + 1}" width="${w}" customWidth="1" bestFit="1"/>`
+  ).join("")}</cols>`;
+
+  const sharedStringsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<sst xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" count="${allStrings.length}" uniqueCount="${allStrings.length}">
+${allStrings.map(s => `<si><t xml:space="preserve">${s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}</t></si>`).join("\n")}
+</sst>`;
+
+  const sheetXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14ac" xmlns:x14ac="http://schemas.microsoft.com/office/spreadsheetml/2009/9/ac">
+  <sheetFormatPr defaultRowHeight="15" x14ac:dyDescent="0.25"/>
+  ${colsXml}
+  <sheetData>${sheetRows}</sheetData>
+  <autoFilter ref="A1:${colLetter(numCols - 1)}1"/>
+</worksheet>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="3">
+    <font><sz val="11"/><name val="Calibri"/><color theme="1"/></font>
+    <font><b/><sz val="11"/><name val="Calibri"/><color rgb="FFFFFFFF"/></font>
+    <font><sz val="11"/><name val="Calibri"/><color theme="1"/></font>
+  </fonts>
+  <fills count="4">
+    <fill><patternFill patternType="none"/></fill>
+    <fill><patternFill patternType="gray125"/></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FF2563EB"/><bgColor indexed="64"/></patternFill></fill>
+    <fill><patternFill patternType="solid"><fgColor rgb="FFF0F4FF"/><bgColor indexed="64"/></patternFill></fill>
+  </fills>
+  <borders count="2">
+    <border><left/><right/><top/><bottom/><diagonal/></border>
+    <border>
+      <left style="thin"><color rgb="FFBFDBFE"/></left>
+      <right style="thin"><color rgb="FFBFDBFE"/></right>
+      <top style="thin"><color rgb="FFBFDBFE"/></top>
+      <bottom style="thin"><color rgb="FFBFDBFE"/></bottom>
+      <diagonal/>
+    </border>
+  </borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="3">
+    <xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyFont="1"><alignment wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFill="1" applyBorder="1" applyFont="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf>
+    <xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>
+  </cellXfs>
+</styleSheet>`;
+
+  const workbookXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets><sheet name="Sheet1" sheetId="1" r:id="rId1"/></sheets>
+</workbook>`;
+
+  const workbookRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings" Target="sharedStrings.xml"/>
+  <Relationship Id="rId3" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+</Relationships>`;
+
+  const topRels = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>
+</Relationships>`;
+
+  const contentTypes = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
+  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
+  <Override PartName="/xl/sharedStrings.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml"/>
+  <Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>
+</Types>`;
+
+  const zip = new JSZip();
+  zip.file("[Content_Types].xml", contentTypes);
+  zip.file("_rels/.rels", topRels);
+  zip.file("xl/workbook.xml", workbookXml);
+  zip.file("xl/_rels/workbook.xml.rels", workbookRels);
+  zip.file("xl/worksheets/sheet1.xml", sheetXml);
+  zip.file("xl/sharedStrings.xml", sharedStringsXml);
+  zip.file("xl/styles.xml", stylesXml);
+
+  return await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
+}
   const allStrings: string[] = [];
   const strIndex: Map<string, number> = new Map();
   const getStrIdx = (s: string) => {
