@@ -491,12 +491,11 @@ async function executeTool(name: string, input: any): Promise<string> {
         let outFilename = filename;
 
         if (format === "pdf") {
-          // PDF libraries hang in edge runtime — generate RTF instead (opens in Word/Pages, full Cyrillic support)
-          console.log("Generating RTF (Cyrillic-safe)...");
-          fileBytes = buildRtf(content);
-          mimeType = "application/rtf";
-          outFilename = filename.replace(/\.pdf$/i, ".rtf");
-          console.log("RTF generated, bytes:", fileBytes.byteLength);
+          console.log("Generating PDF (native, Cyrillic-safe)...");
+          fileBytes = buildPdf(content);
+          mimeType = "application/pdf";
+          outFilename = filename.endsWith(".pdf") ? filename : filename.replace(/\.[^.]+$/, "") + ".pdf";
+          console.log("PDF generated, bytes:", fileBytes.byteLength);
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
           fileBytes = new TextEncoder().encode(content);
