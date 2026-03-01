@@ -843,9 +843,7 @@ ${allStrings.map(s => `<si><t xml:space="preserve">${s.replace(/&/g,"&amp;").rep
   zip.file("xl/sharedStrings.xml", sharedStringsXml);
   zip.file("xl/styles.xml", stylesXml);
 
-  const buffer = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE" });
-  return buffer;
-}
+
 
     case "file_generator": {
       const { filename, format, content } = input as { filename: string; format: string; content: string };
