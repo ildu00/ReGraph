@@ -506,50 +506,47 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           .order("created_at", { ascending: false })
           .limit(50);
 
-        // For image/audio/file messages, fetch tool_results that contain URLs (lightweight)
+        // Fetch tool_results for media/file tool calls
         if (msgs) {
-          const urlToolIds = msgs
+          const toolMsgIds = msgs
             .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message" || m.tool_name === "file_generator")
             .map((m: any) => m.id);
 
           let urlResults: Record<string, any> = {};
-          if (urlToolIds.length > 0) {
-            const { data: urlMsgs } = await supabase
+          if (toolMsgIds.length > 0) {
+            const { data: toolMsgs } = await supabase
               .from("claw_messages")
               .select("id, tool_result")
-              .in("id", urlToolIds);
-            if (urlMsgs) {
-              for (const im of urlMsgs) {
-                const imageUrl = (im.tool_result as any)?.image_url;
-                const audioUrl = (im.tool_result as any)?.audio_url;
-                const fileUrl = (im.tool_result as any)?.file_url;
-                if (imageUrl && typeof imageUrl === "string" && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") {
-                  urlResults[im.id] = im.tool_result;
-                } else if (audioUrl && typeof audioUrl === "string") {
-                  urlResults[im.id] = im.tool_result;
-                } else if (fileUrl && typeof fileUrl === "string" && !fileUrl.startsWith("blob:")) {
-                  urlResults[im.id] = im.tool_result;
-                }
+              .in("id", toolMsgIds);
+            if (toolMsgs) {
+              for (const tm of toolMsgs) {
+                if (!tm.tool_result) continue;
+                const r = tm.tool_result as any;
+                // Always store file_generator results (even without file_url — has filename/format)
+                if (r.filename || r.file_url) { urlResults[tm.id] = r; continue; }
+                const imageUrl = r.image_url;
+                const audioUrl = r.audio_url;
+                if (imageUrl && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") urlResults[tm.id] = r;
+                else if (audioUrl) urlResults[tm.id] = r;
               }
             }
           }
 
-          // Build a map: for each assistant "📄" message, find the preceding file_generator tool_result
-          // This handles OLD messages saved before the __FILE__: format was introduced
-          const msgsChron = [...msgs].reverse(); // chronological order
+          const msgsChron = [...msgs].reverse();
+
+          // For each assistant text message that mentions a file (old "📄" format or any text after file_generator),
+          // find the preceding file_generator tool result and attach it so we can render a download card
           const fileResultByAssistantId: Record<string, any> = {};
           for (let i = 0; i < msgsChron.length; i++) {
             const m = msgsChron[i];
-            if (m.role === "assistant" && m.content?.startsWith("📄") && !m.content?.startsWith("__FILE__:")) {
-              // Search backwards for the file_generator tool result
+            if (m.role === "assistant" && m.content && !m.content.startsWith("__FILE__:") && !m.content.startsWith("__AUDIO__:")) {
+              // Check if previous tool message in this turn was file_generator
               for (let j = i - 1; j >= 0; j--) {
                 const prev = msgsChron[j];
-                if (prev.role === "user") break; // don't cross user messages
+                if (prev.role === "user") break;
                 if (prev.role === "tool" && prev.tool_name === "file_generator") {
-                  const toolResult = urlResults[prev.id];
-                  if (toolResult?.file_url && !toolResult.file_url.startsWith("blob:")) {
-                    fileResultByAssistantId[m.id] = toolResult;
-                  }
+                  const tr = urlResults[prev.id];
+                  if (tr) fileResultByAssistantId[m.id] = tr;
                   break;
                 }
               }
@@ -992,25 +989,28 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (msg.role === "assistant" && !msg.content) return null;
           // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
           if (msg.role === "assistant" && msg.content === "🔊") return null;
-          // Find file result for "📄" assistant messages:
-          // 1) New messages: stored as __legacyFileResult in tool_result during history load
-          // 2) Live messages: scan backwards through messages for file_generator tool result
-          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄") && !msg.content?.startsWith("__FILE__:")
-            ? (() => {
-                // Check if we pre-resolved it during history loading
-                if ((msg.tool_result as any)?.__legacyFileResult) {
-                  return (msg.tool_result as any).__legacyFileResult as { file_url: string; filename: string; format: string; size?: number };
-                }
-                // Scan backwards for live messages
-                for (let i = msgIdx - 1; i >= 0; i--) {
-                  if (messages[i].role === "tool" && messages[i].tool_name === "file_generator" && messages[i].tool_result?.file_url) {
-                    return messages[i].tool_result as { file_url: string; filename: string; format: string; size?: number };
+
+          // Find file result for ANY assistant message that follows a file_generator tool call.
+          // Covers: old "📄 Файл отправлен:" format, new __legacyFileResult, or any text response after file_generator.
+          const precedingFileResult: { file_url?: string; filename?: string; format?: string; size?: number } | null =
+            msg.role === "assistant" && !msg.content?.startsWith("__FILE__:") && !msg.content?.startsWith("__AUDIO__:")
+              ? (() => {
+                  // Check if pre-resolved during history loading
+                  if ((msg.tool_result as any)?.__legacyFileResult) {
+                    return (msg.tool_result as any).__legacyFileResult;
                   }
-                  if (messages[i].role === "user") break;
-                }
-                return null;
-              })()
-            : null;
+                  // Scan backwards: find file_generator tool message in same turn
+                  for (let i = msgIdx - 1; i >= 0; i--) {
+                    if (messages[i].role === "user") break;
+                    if (messages[i].role === "tool" && messages[i].tool_name === "file_generator") {
+                      const tr = messages[i].tool_result;
+                      if (tr?.filename || tr?.file_url) return tr;
+                      break;
+                    }
+                  }
+                  return null;
+                })()
+              : null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -1059,43 +1059,40 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         </Button>
                       </div>
                     );
-                  })() : precedingFileResult ? (
-                    <>
-                      <div className={`markdown-response text-sm min-w-0 overflow-hidden`}>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || ""}</ReactMarkdown>
+                  })() : precedingFileResult ? (() => {
+                    const { file_url, filename, format, size } = precedingFileResult;
+                    const fmt = format || "";
+                    const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
+                    const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
+                    const doDownload = async () => {
+                      if (!file_url) return;
+                      try {
+                        const resp = await fetch(file_url);
+                        const blob = await resp.blob();
+                        const blobUrl = URL.createObjectURL(blob);
+                        const a = document.createElement("a");
+                        a.href = blobUrl; a.download = filename || "file";
+                        document.body.appendChild(a); a.click();
+                        document.body.removeChild(a); URL.revokeObjectURL(blobUrl);
+                      } catch { if (file_url) window.open(file_url, "_blank"); }
+                    };
+                    return (
+                      <div className="flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+                        <span className="text-2xl">{formatIcons[fmt] || "📄"}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-medium truncate">{filename || "file"}</p>
+                          <p className="text-xs text-muted-foreground">{fmt.toUpperCase()}{sizeStr && ` · ${sizeStr}`}</p>
+                        </div>
+                        {file_url ? (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={doDownload}>
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground italic">недоступен</span>
+                        )}
                       </div>
-                      {(() => {
-                        const { file_url, filename, format, size } = precedingFileResult;
-                        const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
-                        const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
-                        return (
-                          <div className="mt-2 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
-                            <span className="text-2xl">{formatIcons[format] || "📄"}</span>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-xs font-medium truncate">{filename}</p>
-                              <p className="text-xs text-muted-foreground">{format?.toUpperCase()} {sizeStr && `· ${sizeStr}`}</p>
-                            </div>
-                            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
-                              try {
-                                const resp = await fetch(file_url);
-                                const blob = await resp.blob();
-                                const url = URL.createObjectURL(blob);
-                                const a = document.createElement("a");
-                                a.href = url;
-                                a.download = filename;
-                                document.body.appendChild(a);
-                                a.click();
-                                document.body.removeChild(a);
-                                URL.revokeObjectURL(url);
-                              } catch { window.open(file_url, "_blank"); }
-                            }}>
-                              <Download className="h-3 w-3" /> Download
-                            </Button>
-                          </div>
-                        );
-                      })()}
-                    </>
-                  ) : (
+                    );
+                  })() : (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
