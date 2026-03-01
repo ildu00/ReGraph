@@ -789,7 +789,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         // Tool calls?
         if (assistantMsg.tool_calls?.length > 0) {
           // If model returned meaningful thinking content, show it
-          const thinkingContent = assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
+          // Suppress for file_generator / voice_message — we render a card instead of text
+          const isFileOrVoiceTurn = assistantMsg.tool_calls.some((tc: any) =>
+            tc.function?.name === "file_generator" || tc.function?.name === "voice_message"
+          );
+          const thinkingContent = !isFileOrVoiceTurn && assistantMsg.content && assistantMsg.content !== "No response generated" ? assistantMsg.content : null;
           if (thinkingContent) {
             setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: thinkingContent }]);
             await persistMessage(conversationId, { role: "assistant", content: thinkingContent });
