@@ -649,7 +649,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
           loopMessages.push({ role: "assistant", content: assistantMsg.content || "", tool_calls: assistantMsg.tool_calls } as any);
 
-          // Execute each tool call
+          // Execute each tool call, collecting results keyed by tool name
+          const toolResults: Record<string, any> = {};
           for (const tc of assistantMsg.tool_calls) {
             const toolName = tc.function?.name;
             const toolInput = JSON.parse(tc.function?.arguments || "{}");
@@ -665,6 +666,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             }]);
 
             const result = await executeTool(toolName, { ...toolInput, __attachedFiles: pendingFilesRef.current }, apiKey);
+            toolResults[toolName] = result;
 
             setMessages((prev) => prev.map((m) => m.id === toolCallMsgId
               ? { ...m, tool_result: result, isStreaming: false }
@@ -693,18 +695,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           if (hadImageGen) break;
           if (hadVoice) {
-            // Find the audio result and persist an assistant message with audio_url embedded
-            const voiceTc = assistantMsg.tool_calls.find((tc: any) => tc.function?.name === "voice_message");
-            if (voiceTc) {
-              const toolInput = JSON.parse(voiceTc.function?.arguments || "{}");
-              const audioResult = await executeTool("voice_message", toolInput, apiKey);
-              const audioUrl = audioResult?.audio_url;
-              // Embed audio_url in content so it survives DB round-trips
-              const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
-              const audioMsgId = crypto.randomUUID();
-              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
-              await persistMessage(conversationId, { role: "assistant", content: audioContent });
-            }
+            // Reuse the already-executed result — DO NOT call TTS a second time
+            const audioUrl = toolResults["voice_message"]?.audio_url;
+            // Embed audio_url in content so it survives DB round-trips
+            const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
+            const audioMsgId = crypto.randomUUID();
+            setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+            await persistMessage(conversationId, { role: "assistant", content: audioContent });
             break;
           }
 
