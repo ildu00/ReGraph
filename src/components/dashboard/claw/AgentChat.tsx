@@ -1242,30 +1242,40 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     if (!msg.tool_result) return null;
 
     // File generator — download button
-    if (msg.tool_result?.file_url) {
-      const { file_url, filename, format, size } = msg.tool_result;
-      const isPdfHtml = false;
+    if (msg.tool_name === "file_generator" || msg.tool_result?.file_url || msg.tool_result?.filename) {
+      const { file_url, filename, format, size } = msg.tool_result || {};
       const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
       const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
+      const downloadFile = async () => {
+        if (!file_url) return;
+        try {
+          const resp = await fetch(file_url);
+          const blob = await resp.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename || "file";
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch {
+          window.open(file_url, "_blank");
+        }
+      };
       return (
         <div className="mt-1 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
           <span className="text-2xl">{formatIcons[format] || "📄"}</span>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{filename}</p>
-            <p className="text-xs text-muted-foreground">{format?.toUpperCase().replace("_HTML", "")} {sizeStr && `· ${sizeStr}`}</p>
+            <p className="text-xs font-medium truncate">{filename || "file"}</p>
+            <p className="text-xs text-muted-foreground">{format?.toUpperCase()} {sizeStr && `· ${sizeStr}`}</p>
           </div>
-          {isPdfHtml ? (
-            <a href={file_url} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
-                <Download className="h-3 w-3" /> Open
-              </Button>
-            </a>
+          {file_url ? (
+            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={downloadFile}>
+              <Download className="h-3 w-3" /> Download
+            </Button>
           ) : (
-            <a href={file_url} download={filename}>
-              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
-                <Download className="h-3 w-3" /> Download
-              </Button>
-            </a>
+            <span className="text-xs text-muted-foreground">Expired</span>
           )}
         </div>
       );
