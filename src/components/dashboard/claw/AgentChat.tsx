@@ -771,10 +771,12 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
-          // If any tool was image_generation or voice_message — stop here, no need for a follow-up LLM call
+          // If any tool was image_generation, voice_message, or file_generator — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
+          const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) break;
+          if (hadFileGen) break;
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
