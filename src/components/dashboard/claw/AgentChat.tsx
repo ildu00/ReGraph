@@ -938,7 +938,19 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
-          if (hadImageGen) break;
+          if (hadImageGen) {
+            const imageResult = toolResults["image_generation"];
+            if (imageResult?.image_url) {
+              const imgContent = `__IMAGE__:${imageResult.image_url}`;
+              const imgMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: imgMsgId, role: "assistant", content: imgContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: imgContent });
+            } else if (imageResult?.error) {
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` });
+            }
+            break;
+          }
           if (hadFileGen) {
             // Embed file URL in content so it survives DB round-trips (same pattern as audio)
             const fileResult = toolResults["file_generator"];
@@ -1185,6 +1197,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 }`}>
           {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : msg.content?.startsWith("__IMAGE__:") ? (
+                    <img src={msg.content.slice(10)} alt="Generated image" className="max-w-full rounded-lg" style={{ maxHeight: 400 }} />
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
                     <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
                   ) : msg.content?.startsWith("__FILE__:") ? (() => {
@@ -1337,7 +1351,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                    })()
                    }
                 </div>
-                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && !msg.content.includes("📄") && !/файл отправлен|file sent/i.test(msg.content) && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && !msg.content.startsWith("__IMAGE__:") && !msg.content.includes("📄") && !/файл отправлен|file sent/i.test(msg.content) && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
