@@ -1084,6 +1084,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     const parts = msg.content.slice(9).split("|");
                     const [file_url, filename, format, sizeStr] = parts;
                     const size = parseInt(sizeStr || "0");
+                    const isExpired = !file_url || file_url === "EXPIRED";
                     const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
                     const sizeLabel = size > 1024 ? `${(size / 1024).toFixed(1)} KB` : size > 0 ? `${size} B` : "";
                     return (
@@ -1093,22 +1094,23 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                           <p className="text-xs font-medium truncate">{filename}</p>
                           <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
-                          try {
-                            const resp = await fetch(file_url);
-                            const blob = await resp.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = filename;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            URL.revokeObjectURL(url);
-                          } catch { window.open(file_url, "_blank"); }
-                        }}>
-                          <Download className="h-3 w-3" /> Download
-                        </Button>
+                        {isExpired ? (
+                          <span className="text-xs text-muted-foreground italic shrink-0">ссылка устарела</span>
+                        ) : (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
+                            try {
+                              const resp = await fetch(file_url);
+                              const blob = await resp.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url; a.download = filename;
+                              document.body.appendChild(a); a.click();
+                              document.body.removeChild(a); URL.revokeObjectURL(url);
+                            } catch { window.open(file_url, "_blank"); }
+                          }}>
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        )}
                       </div>
                     );
                   })() : precedingFileResult ? (() => {
