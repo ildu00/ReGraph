@@ -469,8 +469,16 @@ serve(async (req) => {
   while (loopCount < MAX_LOOPS) {
     loopCount++;
 
+    // Map internal model IDs to VseGPT-compatible ones
+    const MODEL_MAP: Record<string, string> = {
+      "regraph-llm": "openai/gpt-4o-mini",
+      "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
+    };
+    const rawModel = agent.model_id || "openai/gpt-4o-mini";
+    const resolvedModel = MODEL_MAP[rawModel] || rawModel;
+
     const reqBody: any = {
-      model: agent.model_id || "openai/gpt-4o-mini",
+      model: resolvedModel,
       messages,
       temperature: 0.7,
       max_tokens: 2048,
