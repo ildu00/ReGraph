@@ -259,6 +259,19 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         } else if (format === "pdf") {
           const { jsPDF } = await import("jspdf");
           const doc = new jsPDF();
+
+          // Load DejaVu Sans font which supports Cyrillic
+          try {
+            const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
+            const fontBuf = await fontRes.arrayBuffer();
+            const fontBase64 = btoa(Array.from(new Uint8Array(fontBuf), b => String.fromCharCode(b)).join(""));
+            doc.addFileToVFS("DejaVuSans.ttf", fontBase64);
+            doc.addFont("DejaVuSans.ttf", "DejaVuSans", "normal");
+            doc.setFont("DejaVuSans");
+          } catch {
+            // fallback to default font if fetch fails
+          }
+
           const pageWidth = doc.internal.pageSize.getWidth();
           const margin = 15;
           const maxWidth = pageWidth - margin * 2;
