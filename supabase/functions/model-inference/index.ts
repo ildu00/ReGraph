@@ -240,6 +240,8 @@ serve(async (req) => {
       "mathpix-ocr": "utils/extract-text-1.0",
       "autogpt": "openai/gpt-5-mini",
       "open-interpreter": "openai/gpt-5-mini",
+      "regraph-llm": "openai/gpt-4o-mini",
+      "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
       "llama-3.1-8b-ft": "meta-llama/llama-3.1-8b-instruct",
       "mistral-7b-ft": "mistralai/mistral-7b-instruct",
       "phi-2-ft": "microsoft/phi-3-mini-128k-instruct",
