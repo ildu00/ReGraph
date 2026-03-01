@@ -456,6 +456,31 @@ async function getOrCreateApiKey(userId: string): Promise<string | null> {
   return newKey;
 }
 
+// Stable audio player component — never re-mounts on re-render
+function AudioPlayer({ content }: { content: string }) {
+  const raw = content.slice(10);
+  const audioSrc = raw.startsWith("http")
+    ? raw
+    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
+  const isOgg = audioSrc.includes(".ogg");
+  console.log("[AudioPlayer] src:", audioSrc, "type:", isOgg ? "audio/ogg" : "audio/mpeg");
+  return (
+    <div style={{ width: "100%", minWidth: 240, padding: "4px 0" }}>
+      <audio
+        controls
+        preload="auto"
+        style={{ width: "100%", minHeight: 54, display: "block" }}
+        onError={(e) => console.error("[AudioPlayer] error", e)}
+        onCanPlay={() => console.log("[AudioPlayer] canplay")}
+      >
+        <source src={audioSrc} type={isOgg ? "audio/ogg; codecs=opus" : "audio/mpeg"} />
+        <source src={audioSrc} type="audio/ogg" />
+        <source src={audioSrc} type="audio/mpeg" />
+      </audio>
+    </div>
+  );
+}
+
 export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -1183,28 +1208,19 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 </div>
               )}
               <div className={`group min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end max-w-[80%]" : "items-start flex-1"}`}>
-                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 w-full ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/70"
+                <div className={`rounded-xl text-sm min-w-0 w-full ${
+                  msg.content?.startsWith("__AUDIO__:")
+                    ? "bg-secondary/70 p-2"
+                    : msg.role === "user"
+                    ? "bg-primary text-primary-foreground px-4 py-3"
+                    : "bg-secondary/70 px-4 py-3"
                 }`}>
           {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : msg.content?.startsWith("__IMAGE__:") ? (
                     <img src={msg.content.slice(10)} alt="Generated image" className="max-w-full rounded-lg" style={{ maxHeight: 400 }} />
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
-                    (() => {
-                      const raw = msg.content.slice(10);
-                      const audioSrc = raw.startsWith("http")
-                        ? raw
-                        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
-                      const isOgg = audioSrc.includes(".ogg");
-                      return (
-                        <audio controls className="w-full rounded" preload="auto" style={{ minHeight: 54 }}>
-                          <source src={audioSrc} type={isOgg ? "audio/ogg" : "audio/mpeg"} />
-                        </audio>
-                      );
-                    })()
+                    <AudioPlayer key={msg.id} content={msg.content} />
                   ) : msg.content?.startsWith("__FILE__:") ? (() => {
                     const parts = msg.content.slice(9).split("|");
                     const [file_url, filename, format, sizeStr] = parts;
