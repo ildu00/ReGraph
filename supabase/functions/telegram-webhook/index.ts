@@ -523,21 +523,15 @@ serve(async (req) => {
       content: finalReply,
     });
 
-    if (generatedAudioUrl) {
-      // Send audio via multipart/form-data using FormData (native Deno support)
+    if (generatedAudioBuffer) {
+      // Send raw ArrayBuffer directly as Blob — no base64 needed, no stack overflow
       try {
-        // Decode base64 in chunks to avoid call stack issues with large files
-        const b64 = generatedAudioUrl;
-        const binaryStr = atob(b64);
-        const audioBytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
-        
-        const blob = new Blob([audioBytes], { type: "audio/mpeg" });
+        const blob = new Blob([generatedAudioBuffer], { type: "audio/mpeg" });
         const formData = new FormData();
         formData.append("chat_id", String(chatId));
         formData.append("voice", blob, "voice.mp3");
         
-        console.log("Sending voice, size:", audioBytes.byteLength);
+        console.log("Sending voice buffer, size:", generatedAudioBuffer.byteLength);
         const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
           method: "POST",
           body: formData,
@@ -545,17 +539,30 @@ serve(async (req) => {
         const voiceResText = await voiceRes.text();
         if (!voiceRes.ok) {
           console.error("sendVoice error:", voiceRes.status, voiceResText);
-          // Fallback: send text message
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение. Попробуйте ещё раз." }),
+            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
           });
         } else {
-          console.log("sendVoice success:", voiceResText.slice(0, 100));
+          console.log("sendVoice success");
         }
       } catch (e) {
         console.error("Voice send exception:", e);
+      }
+    } else if (generatedAudioUrl) {
+      // Legacy fallback with base64 URL
+      try {
+        const binaryStr = atob(generatedAudioUrl);
+        const audioBytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
+        const blob = new Blob([audioBytes], { type: "audio/mpeg" });
+        const formData = new FormData();
+        formData.append("chat_id", String(chatId));
+        formData.append("voice", blob, "voice.mp3");
+        await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, { method: "POST", body: formData });
+      } catch (e) {
+        console.error("Voice legacy send exception:", e);
       }
     } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
