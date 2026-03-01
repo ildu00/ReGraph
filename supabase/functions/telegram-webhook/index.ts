@@ -1037,14 +1037,21 @@ serve(async (req) => {
     .limit(50) : { data: [] };
 
   // Only keep user/assistant messages — tool/function roles break OpenAI API without paired tool_calls
+  const sanitizeContentForLLM = (content: string): string => {
+    if (content.startsWith("__IMAGE__:data:")) return "[image generated]";
+    if (content.startsWith("__IMAGE__:")) return "[image generated]";
+    if (content.startsWith("__AUDIO__:")) return "[audio message]";
+    return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, "[attached image]");
+  };
+
   const historyMessages = (history || [])
     .reverse()
     .filter((m: any) => m.role === "user" || m.role === "assistant")
     .filter((m: any) => m.content && m.content.trim() !== "")
-    .slice(-20) // keep last 20 to avoid context overflow
+    .slice(-15) // keep last 15 to avoid context overflow
     .map((m: any) => ({
       role: m.role as "user" | "assistant",
-      content: m.content as string,
+      content: sanitizeContentForLLM(m.content as string),
     }));
 
   // Save user message
