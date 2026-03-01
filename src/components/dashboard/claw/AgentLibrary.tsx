@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import AgentFormModal, { ClawAgent, TOOLS } from "./AgentFormModal";
+import TelegramIntegration from "./TelegramIntegration";
 import {
   AlertDialog,
   AlertDialogAction,
