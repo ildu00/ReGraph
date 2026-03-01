@@ -628,7 +628,7 @@ serve(async (req) => {
 
         const toolResult = await executeTool(toolName, toolInput);
 
-        // Check for image/audio in tool result
+        // Check for image/audio/file in tool result
         try {
           const parsed = JSON.parse(toolResult);
           if (parsed.imageUrl) {
@@ -638,6 +638,11 @@ serve(async (req) => {
           if (parsed.imageBase64) {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
+          }
+          if (parsed.fileUrl) {
+            generatedFileUrl = parsed.fileUrl;
+            generatedFileName = parsed.filename || "file";
+            finalReply = `📄 ${parsed.filename || "File"} ready`;
           }
           if (parsed.audioUrl) {
             generatedAudioUrl = parsed.audioUrl;
