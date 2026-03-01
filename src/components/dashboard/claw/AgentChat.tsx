@@ -946,11 +946,23 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           </div>
         )}
 
-        {messages.map((msg) => {
+        {messages.map((msg, msgIdx) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} onImageLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })} />;
           if (msg.role === "assistant" && !msg.content) return null;
           // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
           if (msg.role === "assistant" && msg.content === "🔊") return null;
+          // Find closest preceding file_generator tool result for this assistant message
+          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄")
+            ? (() => {
+                for (let i = msgIdx - 1; i >= 0; i--) {
+                  if (messages[i].role === "tool" && messages[i].tool_name === "file_generator" && messages[i].tool_result?.file_url) {
+                    return messages[i].tool_result as { file_url: string; filename: string; format: string; size?: number };
+                  }
+                  if (messages[i].role === "user") break; // don't cross user messages
+                }
+                return null;
+              })()
+            : null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
