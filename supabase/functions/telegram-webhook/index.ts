@@ -6,12 +6,136 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY")!;
+
+// Build tool definitions from agent tools list (same as AgentFormModal TOOLS)
+const TOOL_DEFINITIONS: Record<string, object> = {
+  calculator: {
+    type: "function",
+    function: {
+      name: "calculator",
+      description: "Perform mathematical calculations. Use for any math operations.",
+      parameters: { type: "object", properties: { expression: { type: "string", description: "The mathematical expression to evaluate, e.g. '2 + 2 * 10'" } }, required: ["expression"] },
+    },
+  },
+  web_search: {
+    type: "function",
+    function: {
+      name: "web_search",
+      description: "Search the web for current information, news, facts, and URLs.",
+      parameters: { type: "object", properties: { query: { type: "string", description: "The search query" } }, required: ["query"] },
+    },
+  },
+  code_interpreter: {
+    type: "function",
+    function: {
+      name: "code_interpreter",
+      description: "Execute code in JavaScript, Python, or TypeScript and return the output.",
+      parameters: { type: "object", properties: { code: { type: "string", description: "The code to execute" }, language: { type: "string", enum: ["javascript", "python", "typescript"], description: "Programming language" } }, required: ["code"] },
+    },
+  },
+  image_generation: {
+    type: "function",
+    function: {
+      name: "image_generation",
+      description: "Generate an image from a text description.",
+      parameters: { type: "object", properties: { prompt: { type: "string", description: "Detailed description of the image to generate" } }, required: ["prompt"] },
+    },
+  },
+  document_reader: {
+    type: "function",
+    function: {
+      name: "document_reader",
+      description: "Read and extract text from documents or URLs.",
+      parameters: { type: "object", properties: { url: { type: "string", description: "The URL of the document or webpage to read" } }, required: ["url"] },
+    },
+  },
+};
+
+async function executeTool(name: string, input: any): Promise<string> {
+  switch (name) {
+    case "calculator": {
+      try {
+        const expr = String(input?.expression || "").replace(/[^0-9+\-*/().%\s]/g, "");
+        const result = Function('"use strict"; return (' + expr + ')')();
+        return JSON.stringify({ result: String(result) });
+      } catch {
+        return JSON.stringify({ error: "Invalid expression" });
+      }
+    }
+    case "web_search": {
+      const query = input?.query || "";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-web-search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ query }),
+        });
+        const data = await res.json();
+        if (data.results?.length) {
+          const formatted = data.results.map((r: any) => `${r.title}\n${r.url}\n${r.description || ""}`).join("\n\n");
+          return JSON.stringify({ results: formatted });
+        }
+        return JSON.stringify({ results: "No results found." });
+      } catch {
+        return JSON.stringify({ error: "Web search failed." });
+      }
+    }
+    case "code_interpreter": {
+      const code = input?.code || "";
+      const language = input?.language || "javascript";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-code-interpreter`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ code, language }),
+        });
+        const data = await res.json();
+        return JSON.stringify(data.error ? { error: data.error } : { output: data.output });
+      } catch {
+        return JSON.stringify({ error: "Code execution failed." });
+      }
+    }
+    case "image_generation": {
+      const prompt = input?.prompt || "";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ model: "sdxl-turbo", prompt, category: "image-gen" }),
+        });
+        const data = await res.json();
+        return JSON.stringify({ imageUrl: data.imageUrl, message: "Image generated successfully" });
+      } catch {
+        return JSON.stringify({ error: "Image generation failed." });
+      }
+    }
+    case "document_reader": {
+      const url = input?.url || "";
+      try {
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-document-reader`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        return JSON.stringify({ content: data.content || data.text || "No content extracted" });
+      } catch {
+        return JSON.stringify({ error: "Document reading failed." });
+      }
+    }
+    default:
+      return JSON.stringify({ error: `Unknown tool: ${name}` });
+  }
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const url = new URL(req.url);
-    // Path: /telegram-webhook/{botToken}
     const pathParts = url.pathname.split("/");
     const botToken = pathParts[pathParts.length - 1];
 
@@ -19,11 +143,9 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "Missing bot token" }), { status: 400, headers: corsHeaders });
     }
 
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Find the bot and its linked agent
+    // Find bot and linked agent
     const { data: bot, error: botError } = await supabase
       .from("claw_telegram_bots")
       .select("*, claw_agents(*)")
@@ -56,44 +178,135 @@ serve(async (req) => {
       body: JSON.stringify({ chat_id: chatId, action: "typing" }),
     });
 
-    // Call inference
-    const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
-    const inferenceRes = await fetch(`${SUPABASE_URL}/functions/v1/inference`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-        "x-api-key": `service-telegram`,
-      },
-      body: JSON.stringify({
-        model: agent.model_id || "openai/gpt-5-mini",
-        messages: [
-          { role: "system", content: agent.system_prompt || "You are a helpful assistant." },
-          { role: "user", content: userText },
-        ],
-        stream: false,
-      }),
-    });
+    // Build tools list from agent config
+    const agentTools: string[] = Array.isArray(agent.tools) ? agent.tools : [];
+    const toolDefs = agentTools
+      .filter((t: string) => TOOL_DEFINITIONS[t])
+      .map((t: string) => TOOL_DEFINITIONS[t]);
 
-    let replyText = "Sorry, I couldn't process your request.";
-    if (inferenceRes.ok) {
-      const inferenceData = await inferenceRes.json();
-      replyText = inferenceData?.choices?.[0]?.message?.content || replyText;
-    } else {
-      const errText = await inferenceRes.text();
-      console.error("Inference error:", inferenceRes.status, errText);
+    // Model mapping
+    const modelMapping: Record<string, string> = {
+      "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
+      "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
+      "mistral-large": "mistralai/mistral-large",
+      "qwen-72b": "qwen/qwen-2.5-72b-instruct",
+      "gpt-4-turbo": "openai/gpt-4-turbo",
+      "claude-3-sonnet": "anthropic/claude-sonnet-4",
+      "deepseek-r1": "deepseek/deepseek-r1",
+      "regraph-llm": "openai/gpt-4o-mini",
+    };
+    const vsegptModel = modelMapping[agent.model_id] || agent.model_id || "openai/gpt-4o-mini";
+
+    // Agentic loop
+    const messages: any[] = [
+      { role: "system", content: agent.system_prompt || "You are a helpful assistant." },
+      { role: "user", content: userText },
+    ];
+
+    let finalReply = "Sorry, I couldn't process your request.";
+    const MAX_ITERATIONS = 5;
+
+    for (let i = 0; i < MAX_ITERATIONS; i++) {
+      const reqBody: any = {
+        model: vsegptModel,
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048,
+      };
+      if (toolDefs.length > 0) {
+        reqBody.tools = toolDefs;
+        reqBody.tool_choice = "auto";
+      }
+
+      const inferenceRes = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${VSEGPT_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(reqBody),
+      });
+
+      if (!inferenceRes.ok) {
+        console.error("Inference error:", inferenceRes.status, await inferenceRes.text());
+        break;
+      }
+
+      const data = await inferenceRes.json();
+      const choice = data.choices?.[0];
+      const assistantMessage = choice?.message;
+
+      if (!assistantMessage) break;
+
+      messages.push(assistantMessage);
+
+      // No tool calls — we have a final answer
+      if (!assistantMessage.tool_calls || assistantMessage.tool_calls.length === 0) {
+        finalReply = assistantMessage.content || finalReply;
+        break;
+      }
+
+      // Execute all tool calls
+      await fetch(`https://api.telegram.org/bot${botToken}/sendChatAction`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, action: "typing" }),
+      });
+
+      for (const toolCall of assistantMessage.tool_calls) {
+        const toolName = toolCall.function?.name;
+        let toolInput: any = {};
+        try { toolInput = JSON.parse(toolCall.function?.arguments || "{}"); } catch { /* */ }
+
+        console.log(`Executing tool: ${toolName}`, toolInput);
+        const toolResult = await executeTool(toolName, toolInput);
+
+        messages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: toolResult,
+        });
+      }
     }
 
-    // Reply to user
-    await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text: replyText,
-        parse_mode: "Markdown",
-      }),
-    });
+    // Send reply to Telegram
+    // If the reply contains an imageUrl, send photo
+    let imageUrl: string | null = null;
+    try {
+      // Check last tool result for imageUrl
+      const lastToolMsg = [...messages].reverse().find(m => m.role === "tool");
+      if (lastToolMsg) {
+        const parsed = JSON.parse(lastToolMsg.content || "{}");
+        if (parsed.imageUrl) imageUrl = parsed.imageUrl;
+      }
+    } catch { /* */ }
+
+    if (imageUrl) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, photo: imageUrl, caption: finalReply.slice(0, 1024) }),
+      });
+    } else {
+      // Telegram Markdown can fail with special chars — use plain text fallback
+      const sendMsg = async (parseMode?: string) => {
+        return fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: finalReply,
+            ...(parseMode ? { parse_mode: parseMode } : {}),
+          }),
+        });
+      };
+
+      const msgRes = await sendMsg("Markdown");
+      if (!msgRes.ok) {
+        // Fallback: send without markdown
+        await sendMsg();
+      }
+    }
 
     return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
   } catch (err) {
