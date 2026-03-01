@@ -954,10 +954,20 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     code_interpreter: "Code Interpreter",
     image_generation: "Image Generation",
     document_reader: "Document Reader",
+    voice_message: "Voice Message",
   };
 
   const renderResult = () => {
     if (!msg.tool_result) return null;
+
+    // Voice message — audio player
+    if (msg.tool_result?.audio_url) {
+      return (
+        <div className="mt-1">
+          <audio controls src={msg.tool_result.audio_url} className="w-full h-10 rounded" preload="metadata" />
+        </div>
+      );
+    }
 
     // Image generation
     if (msg.tool_result?.image_url) {
