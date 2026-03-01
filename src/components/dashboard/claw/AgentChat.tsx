@@ -285,6 +285,23 @@ function buildToolDefs(toolIds: string[]) {
       },
     });
   }
+  if (toolIds.includes("voice_message")) {
+    defs.push({
+      type: "function",
+      function: {
+        name: "voice_message",
+        description: "Convert text to speech and send it as a voice message. Use when the user asks to speak, read aloud, or send a voice note.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: { type: "string", description: "The text to convert to speech" },
+            voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style (default: nova)" },
+          },
+          required: ["text"],
+        },
+      },
+    });
+  }
   return defs;
 }
 
