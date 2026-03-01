@@ -697,7 +697,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         return null; // never store blob URLs in DB (they expire)
       }
       if (typeof sanitized.file_url === "string" && sanitized.file_url.startsWith("blob:")) {
-        return null; // never store blob URLs in DB (they expire after session)
+        // Keep metadata but remove the blob URL (it expires after session)
+        const { file_url: _removed, ...rest } = sanitized;
+        return rest; // save filename/format/size so the card still renders
       }
       return sanitized;
     };
