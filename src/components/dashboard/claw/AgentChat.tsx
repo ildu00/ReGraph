@@ -1206,6 +1206,21 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                       );
                     })()
                   ) : msg.content?.startsWith("__FILE__:") ? (() => {
+                    <img src={msg.content.slice(10)} alt="Generated image" className="max-w-full rounded-lg" style={{ maxHeight: 400 }} />
+                  ) : msg.content?.startsWith("__AUDIO__:") ? (
+                    (() => {
+                      const raw = msg.content.slice(10);
+                      const audioSrc = raw.startsWith("http")
+                        ? raw
+                        : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
+                      const isOgg = audioSrc.includes(".ogg");
+                      return (
+                        <audio controls className="w-full rounded" preload="auto" style={{ minHeight: 54 }}>
+                          <source src={audioSrc} type={isOgg ? "audio/ogg" : "audio/mpeg"} />
+                        </audio>
+                      );
+                    })()
+                  ) : msg.content?.startsWith("__FILE__:") ? (() => {
                       return (
                         <audio controls className="w-full rounded" preload="auto" style={{ minHeight: 54 }}>
                           <source src={raw} type="audio/mpeg" />
