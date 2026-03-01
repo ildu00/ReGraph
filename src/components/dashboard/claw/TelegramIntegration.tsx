@@ -168,7 +168,7 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         agents={agents}
-        onConnected={() => { setModalOpen(false); fetchBots(); }}
+        onConnected={async () => { setModalOpen(false); await fetchBots(); }}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
@@ -233,7 +233,6 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
       });
 
       const result = await response.json();
-      console.log("telegram-bot-setup response:", response.status, result);
 
       if (!response.ok || result.error) {
         toast.error(result.error || "Failed to connect bot. Check your token.");
