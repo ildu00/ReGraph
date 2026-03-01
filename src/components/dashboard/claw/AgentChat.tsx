@@ -840,8 +840,10 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
                 }`}>
-                  {msg.isStreaming && !msg.content ? (
+          {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : msg.content?.startsWith("__AUDIO__:") ? (
+                    <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
                   ) : (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
