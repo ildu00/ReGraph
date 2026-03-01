@@ -1074,6 +1074,36 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
   const renderResult = () => {
     if (!msg.tool_result) return null;
 
+    // File generator — download button
+    if (msg.tool_result?.file_url) {
+      const { file_url, filename, format, size } = msg.tool_result;
+      const isPdfHtml = format === "pdf_html";
+      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕", pdf_html: "📕" };
+      const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
+      return (
+        <div className="mt-1 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+          <span className="text-2xl">{formatIcons[format] || "📄"}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate">{filename}</p>
+            <p className="text-xs text-muted-foreground">{format?.toUpperCase().replace("_HTML", "")} {sizeStr && `· ${sizeStr}`}</p>
+          </div>
+          {isPdfHtml ? (
+            <a href={file_url} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                <Download className="h-3 w-3" /> Open
+              </Button>
+            </a>
+          ) : (
+            <a href={file_url} download={filename}>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                <Download className="h-3 w-3" /> Download
+              </Button>
+            </a>
+          )}
+        </div>
+      );
+    }
+
     // Voice message — audio player
     if (msg.tool_result?.audio_url) {
       return (
