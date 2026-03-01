@@ -303,6 +303,50 @@ export type Database = {
           },
         ]
       }
+      claw_telegram_bots: {
+        Row: {
+          agent_id: string
+          bot_token: string
+          bot_username: string | null
+          created_at: string
+          id: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+          webhook_set: boolean
+        }
+        Insert: {
+          agent_id: string
+          bot_token: string
+          bot_username?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id: string
+          webhook_set?: boolean
+        }
+        Update: {
+          agent_id?: string
+          bot_token?: string
+          bot_username?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          user_id?: string
+          webhook_set?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "claw_telegram_bots_agent_id_fkey"
+            columns: ["agent_id"]
+            isOneToOne: false
+            referencedRelation: "claw_agents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gpu_pricing: {
         Row: {
           created_at: string
