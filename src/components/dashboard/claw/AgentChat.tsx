@@ -776,13 +776,58 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         }
 
         const data = await res.json();
+        console.log("[AgentChat] inference response:", JSON.stringify({ response: data.response?.slice?.(0,100), tool_calls: data.tool_calls, choices: data.choices?.length }));
 
         const choice = data?.choices?.[0];
-        const assistantMsg = choice?.message ?? (
+        let assistantMsg = choice?.message ?? (
           data?.response != null
             ? { role: "assistant", content: data.response, tool_calls: data.tool_calls }
             : null
         );
+
+        // Fallback: if LLM didn't call tool but wrote a file-related text response,
+        // and agent has file_generator — force a second call with tool_choice required
+        if (
+          assistantMsg &&
+          (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) &&
+          toolDefs.some((td: any) => td.function?.name === "file_generator") &&
+          loopCount === 1
+        ) {
+          const contentLower = (assistantMsg.content || "").toLowerCase();
+          const looksLikeFileRequest = contentLower.includes("файл") || contentLower.includes("file") || 
+            contentLower.includes(".txt") || contentLower.includes(".pdf") || contentLower.includes(".xlsx") || 
+            contentLower.includes(".csv") || contentLower.includes(".json") || contentLower.includes("📄");
+          const userMsgLower = fullUserText.toLowerCase();
+          const userWantsFile = userMsgLower.includes("файл") || userMsgLower.includes("file") || 
+            userMsgLower.includes(".txt") || userMsgLower.includes(".pdf") || userMsgLower.includes(".xlsx") || 
+            userMsgLower.includes(".csv") || userMsgLower.includes("excel") || userMsgLower.includes("эксель") ||
+            userMsgLower.includes("таблицу") || userMsgLower.includes("table") || userMsgLower.includes("generate");
+          if (looksLikeFileRequest || userWantsFile) {
+            console.log("[AgentChat] LLM skipped tool call, forcing file_generator...");
+            const forcedRes = await fetch(INFERENCE_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}`, "x-api-key": apiKey },
+              body: JSON.stringify({
+                model: agent.model_id,
+                prompt: fullUserText,
+                messages: loopMessages,
+                category: "llm",
+                max_tokens: 4096,
+                tools: toolDefs.filter((td: any) => td.function?.name === "file_generator"),
+                tool_choice: { type: "function", function: { name: "file_generator" } },
+              }),
+            });
+            if (forcedRes.ok) {
+              const forcedData = await forcedRes.json();
+              console.log("[AgentChat] forced tool_choice response:", JSON.stringify({ tool_calls: forcedData.tool_calls }));
+              const forcedChoice = forcedData?.choices?.[0];
+              const forcedMsg = forcedChoice?.message ?? (forcedData?.response != null ? { role: "assistant", content: forcedData.response, tool_calls: forcedData.tool_calls } : null);
+              if (forcedMsg?.tool_calls?.length > 0) {
+                assistantMsg = forcedMsg;
+              }
+            }
+          }
+        }
 
         if (!assistantMsg) break;
 
