@@ -24,11 +24,22 @@ serve(async (req) => {
     global: { headers: { Authorization: authHeader } },
   });
 
-  const { data, error: claimsError } = await anonClient.auth.getClaims(token);
-  if (claimsError || !data?.claims) {
+  let userId: string;
+  try {
+    const { data, error: claimsError } = await anonClient.auth.getClaims(token);
+    if (claimsError || !data?.claims) {
+      // Fallback: try getUser
+      const { data: userData, error: userError } = await anonClient.auth.getUser(token);
+      if (userError || !userData?.user) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
+      }
+      userId = userData.user.id;
+    } else {
+      userId = data.claims.sub;
+    }
+  } catch {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: corsHeaders });
   }
-  const userId = data.claims.sub;
 
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
