@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Code2, Image, Calculator, BookOpen } from "lucide-react";
+import { Globe, Code2, Image, Calculator, BookOpen, Mic, Volume2 } from "lucide-react";
 
 export interface ClawAgent {
   id?: string;
@@ -58,6 +58,8 @@ export const TOOLS = [
   { id: "web_search", label: "Web Search", description: "Search the internet", icon: Globe },
   { id: "image_generation", label: "Image Gen", description: "Generate images from text", icon: Image },
   { id: "document_reader", label: "Document Reader", description: "Read and analyze files", icon: BookOpen },
+  { id: "voice_transcription", label: "Voice Input", description: "Transcribe incoming voice messages", icon: Mic },
+  { id: "voice_message", label: "Voice Reply", description: "Reply with voice messages (TTS)", icon: Volume2 },
 ];
 
 const EMOJIS = ["🤖", "🦾", "🧠", "⚡", "🔬", "🎯", "🚀", "💡", "🦅", "🐉", "🌊", "🔥", "💎", "🎨", "🛡️", "⚙️"];
