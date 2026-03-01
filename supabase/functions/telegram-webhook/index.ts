@@ -246,54 +246,57 @@ async function executeTool(name: string, input: any): Promise<string> {
 
         if (format === "pdf") {
           mimeType = "application/pdf";
-          // Use pdf-lib + DejaVu Sans (Cyrillic support) for proper Unicode rendering
-          const { PDFDocument, rgb } = await import("https://esm.sh/pdf-lib@1.17.1");
-          const fontkit = (await import("https://esm.sh/@pdf-lib/fontkit@1.1.1")).default;
+          console.log("Starting PDF generation with font embedding...");
+
+          // Fetch DejaVu Sans TTF (supports Cyrillic) from jsDelivr
+          const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
+          if (!fontRes.ok) throw new Error("Font fetch failed: " + fontRes.status);
+          const fontBuf = new Uint8Array(await fontRes.arrayBuffer());
+          console.log("Font fetched, bytes:", fontBuf.byteLength);
+
+          // Import pdf-lib via esm.sh with bundle flag to avoid dependency issues
+          const pdfLibModule = await import("https://esm.sh/pdf-lib@1.17.1?bundle");
+          const { PDFDocument, rgb, StandardFonts } = pdfLibModule;
+          const fontkitModule = await import("https://esm.sh/@pdf-lib/fontkit@1.1.1?bundle");
+          const fontkit = fontkitModule.default ?? fontkitModule;
 
           const pdfDoc = await PDFDocument.create();
           pdfDoc.registerFontkit(fontkit);
+          const customFont = await pdfDoc.embedFont(fontBuf);
+          console.log("Font embedded successfully");
 
-          // Fetch DejaVu Sans which supports Cyrillic
-          const fontBytes = await fetch(
-            "https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf"
-          ).then(r => r.arrayBuffer());
-          const customFont = await pdfDoc.embedFont(fontBytes);
+          const pageW = 595, pageH = 842, marginX = 50, marginY = 50, lh = 16, fs = 11;
+          const maxW = pageW - marginX * 2;
 
-          const pageWidth = 595, pageHeight = 842, margin = 50, lineHeight = 16, fontSize = 11;
-          const maxLineWidth = pageWidth - margin * 2;
-
-          // Split content into lines and wrap
+          // Word-wrap
           const allLines: string[] = [];
           for (const line of content.split("\n")) {
             if (!line.trim()) { allLines.push(""); continue; }
-            // Simple word-wrap
             const words = line.split(" ");
-            let current = "";
-            for (const word of words) {
-              const test = current ? current + " " + word : word;
-              const testWidth = customFont.widthOfTextAtSize(test, fontSize);
-              if (testWidth > maxLineWidth && current) {
-                allLines.push(current);
-                current = word;
-              } else {
-                current = test;
-              }
+            let cur = "";
+            for (const w of words) {
+              const test = cur ? cur + " " + w : w;
+              const tw = customFont.widthOfTextAtSize(test, fs);
+              if (tw > maxW && cur) { allLines.push(cur); cur = w; }
+              else cur = test;
             }
-            if (current) allLines.push(current);
+            if (cur) allLines.push(cur);
           }
+          if (allLines.length === 0) allLines.push("");
 
-          const linesPerPage = Math.floor((pageHeight - margin * 2) / lineHeight);
-          for (let p = 0; p < Math.ceil(allLines.length / linesPerPage); p++) {
-            const page = pdfDoc.addPage([pageWidth, pageHeight]);
-            const chunk = allLines.slice(p * linesPerPage, (p + 1) * linesPerPage);
-            let y = pageHeight - margin;
+          const lpp = Math.floor((pageH - marginY * 2) / lh);
+          for (let p = 0; p < Math.max(1, Math.ceil(allLines.length / lpp)); p++) {
+            const page = pdfDoc.addPage([pageW, pageH]);
+            const chunk = allLines.slice(p * lpp, (p + 1) * lpp);
+            let y = pageH - marginY;
             for (const ln of chunk) {
-              page.drawText(ln, { x: margin, y, size: fontSize, font: customFont, color: rgb(0, 0, 0) });
-              y -= lineHeight;
+              if (ln) page.drawText(ln, { x: marginX, y, size: fs, font: customFont, color: rgb(0, 0, 0) });
+              y -= lh;
             }
           }
 
           fileBytes = new Uint8Array(await pdfDoc.save());
+          console.log("PDF generated, bytes:", fileBytes.byteLength);
 
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
