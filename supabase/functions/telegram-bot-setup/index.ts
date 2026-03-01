@@ -71,21 +71,31 @@ serve(async (req) => {
     const webhookData = await webhookRes.json();
     console.log("Webhook set response:", JSON.stringify(webhookData));
 
-    // Upsert bot record
-    const { error: upsertError } = await supabase
+    // Check if bot already exists for this user
+    const { data: existingBot } = await supabase
       .from("claw_telegram_bots")
-      .upsert({
-        user_id: userId,
-        agent_id,
-        bot_token,
-        bot_username: botUsername,
-        is_active: true,
-        webhook_set: webhookData.ok,
-      }, { onConflict: "bot_token" });
+      .select("id")
+      .eq("bot_token", bot_token)
+      .eq("user_id", userId)
+      .single();
 
-    if (upsertError) {
-      console.error("Upsert error:", upsertError);
-      return new Response(JSON.stringify({ error: "Failed to save bot" }), { status: 500, headers: corsHeaders });
+    let saveError;
+    if (existingBot) {
+      const { error } = await supabase
+        .from("claw_telegram_bots")
+        .update({ agent_id, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok })
+        .eq("id", existingBot.id);
+      saveError = error;
+    } else {
+      const { error } = await supabase
+        .from("claw_telegram_bots")
+        .insert({ user_id: userId, agent_id, bot_token, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok });
+      saveError = error;
+    }
+
+    if (saveError) {
+      console.error("Save error:", saveError);
+      return new Response(JSON.stringify({ error: "Failed to save bot: " + saveError.message }), { status: 500, headers: corsHeaders });
     }
 
     return new Response(JSON.stringify({ ok: true, bot_username: botUsername, webhook_set: webhookData.ok }), {
