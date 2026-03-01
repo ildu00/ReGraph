@@ -1227,6 +1227,29 @@ serve(async (req) => {
     __fileBuffers.delete(pendingVoiceKey);
     if (fileData) {
       try {
+        // Upload to storage first to get a persistent URL
+        const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+        const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.ogg`;
+        const uploadRes = await fetch(`${supabaseUrl}/storage/v1/object/claw-images/${fileName}`, {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${serviceRoleKey}`,
+            "Content-Type": "audio/ogg; codecs=opus",
+            "x-upsert": "false",
+          },
+          body: fileData.bytes,
+        });
+        let storedAudioUrl = "";
+        if (uploadRes.ok) {
+          storedAudioUrl = `${supabaseUrl}/storage/v1/object/public/claw-images/${fileName}`;
+          console.log("Voice uploaded to storage:", storedAudioUrl);
+        } else {
+          const errText = await uploadRes.text().catch(() => "");
+          console.error("Voice storage upload failed:", uploadRes.status, errText);
+        }
+
+        // Send to Telegram
         const formData = new FormData();
         const blob = new Blob([fileData.bytes], { type: fileData.mimeType });
         formData.append("voice", blob, "voice.ogg");
@@ -1237,12 +1260,13 @@ serve(async (req) => {
         });
         const voiceResData = await voiceRes.json();
         console.log("sendVoice result:", JSON.stringify(voiceResData));
-        // Save audio message to DB
-        if (convId) {
+
+        // Save audio message to DB with real storage URL
+        if (convId && storedAudioUrl) {
           await supabase.from("claw_messages").insert({
             conversation_id: convId,
             role: "assistant",
-            content: `__AUDIO__:voice_${Date.now()}.ogg`,
+            content: `__AUDIO__:${storedAudioUrl}`,
           });
         }
       } catch (e) {
