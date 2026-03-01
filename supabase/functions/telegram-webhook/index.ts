@@ -104,18 +104,44 @@ async function executeTool(name: string, input: any): Promise<string> {
       try {
         const lovableKey = Deno.env.get("LOVABLE_API_KEY");
         if (!lovableKey) return JSON.stringify({ error: "Image generation not configured" });
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+        // Use chat completions with gemini image model — returns base64 in content parts
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
-          body: JSON.stringify({ model: "black-forest-labs/flux-schnell", prompt, n: 1 }),
+          body: JSON.stringify({
+            model: "google/gemini-3-pro-image-preview",
+            messages: [{ role: "user", content: prompt }],
+          }),
         });
         const data = await res.json();
-        console.log("Image generation response:", JSON.stringify(data));
-        const imageUrl = data?.data?.[0]?.url;
+        console.log("Image generation response status:", res.status, JSON.stringify(data).slice(0, 300));
+        // Extract base64 image from content parts
+        const parts = data?.choices?.[0]?.message?.content;
+        if (Array.isArray(parts)) {
+          for (const part of parts) {
+            if (part?.type === "image_url" && part?.image_url?.url) {
+              const dataUrl: string = part.image_url.url;
+              if (dataUrl.startsWith("data:")) {
+                const b64 = dataUrl.split(",")[1];
+                if (b64) return JSON.stringify({ imageBase64: b64, message: "Image generated" });
+              }
+              return JSON.stringify({ imageUrl: dataUrl, message: "Image generated" });
+            }
+          }
+        }
+        // Fallback: /v1/images/generations with dall-e-3
+        const res2 = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
+          body: JSON.stringify({ model: "dall-e-3", prompt, n: 1, size: "1024x1024" }),
+        });
+        const data2 = await res2.json();
+        console.log("Image fallback response:", JSON.stringify(data2).slice(0, 300));
+        const imageUrl = data2?.data?.[0]?.url;
         if (imageUrl) return JSON.stringify({ imageUrl, message: "Image generated" });
-        const b64 = data?.data?.[0]?.b64_json;
+        const b64 = data2?.data?.[0]?.b64_json;
         if (b64) return JSON.stringify({ imageBase64: b64, message: "Image generated" });
-        return JSON.stringify({ error: "No image returned: " + JSON.stringify(data) });
+        return JSON.stringify({ error: "No image returned" });
       } catch (e) {
         return JSON.stringify({ error: "Image generation failed: " + String(e) });
       }
