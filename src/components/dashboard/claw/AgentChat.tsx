@@ -929,35 +929,63 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         let finalContent = assistantMsg.content || "";
         if (!finalContent || finalContent === "No response generated") break;
 
-        // Hard intercept: if the LLM wrote a file-announcement text instead of calling the tool,
-        // extract filename from the text and directly call file_generator ourselves.
-        const fileAnnouncementMatch =
-          toolDefs.some((td: any) => td.function?.name === "file_generator") &&
-          (finalContent.includes("📄") || /файл отправлен|file sent|файл создан|file created/i.test(finalContent));
-        
-        if (fileAnnouncementMatch) {
-          console.log("[AgentChat] LLM wrote file announcement text instead of calling tool. Intercepting...");
-          // Extract filename hint from content
-          const fnMatch = finalContent.match(/:\s*([\w\-\.]+\.\w+)/i);
+        // Hard intercept: if the LLM wrote a file-announcement text instead of calling the tool
+        // directly execute file_generator ourselves
+        const hasFileGenerator = toolDefs.some((td: any) => td.function?.name === "file_generator");
+        const isFileAnnouncement = hasFileGenerator && (
+          finalContent.includes("📄") ||
+          /файл отправлен|file sent|файл создан|file created|here is your file|here's your file/i.test(finalContent)
+        );
+
+        if (isFileAnnouncement) {
+          console.log("[AgentChat] Hard intercept: LLM described file instead of calling tool. Forcing file_generator...");
+          // Extract filename and format from the announced text
+          const fnMatch = finalContent.match(/:\s*([\w\-\.а-яё]+\.\w+)/i);
           const hintFilename = fnMatch?.[1] || "file";
-          const fmt = hintFilename.split(".").pop() || "txt";
-          // Directly execute file_generator with content extracted from user message
+          const ext = hintFilename.split(".").pop()?.toLowerCase() || "txt";
+          const supportedFormats = ["txt", "json", "csv", "xlsx", "pdf"];
+          const fmt = supportedFormats.includes(ext) ? ext : "txt";
+
+          // Make the LLM actually generate the content for the file
+          let fileTextContent = userText;
+          try {
+            const contentRes = await fetch(INFERENCE_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}`, "x-api-key": apiKey },
+              body: JSON.stringify({
+                model: agent.model_id,
+                prompt: userText,
+                messages: [
+                  { role: "system", content: "Generate ONLY the raw file content, no explanations, no preamble, no markdown formatting. Just the data/text that should go inside the file." },
+                  { role: "user", content: userText },
+                ],
+                category: "llm",
+                max_tokens: 4096,
+              }),
+            });
+            if (contentRes.ok) {
+              const contentData = await contentRes.json();
+              const generated = contentData?.response || contentData?.choices?.[0]?.message?.content;
+              if (generated && generated !== "No response generated") fileTextContent = generated;
+            }
+          } catch { /* use userText as fallback content */ }
+
           const directResult = await executeTool("file_generator", {
             filename: hintFilename,
             format: fmt,
-            content: userText,
+            content: fileTextContent,
           }, apiKey);
-          
+
           if (directResult?.file_url) {
             const fileContent = `__FILE__:${directResult.file_url}|${directResult.filename || hintFilename}|${directResult.format || fmt}|${directResult.size || 0}`;
-            const fileMsgId = crypto.randomUUID();
-            setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
+            setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: fileContent }]);
             const dbContent = directResult.file_url.startsWith("blob:")
               ? `__FILE__:EXPIRED|${directResult.filename || hintFilename}|${directResult.format || fmt}|${directResult.size || 0}`
               : fileContent;
             await persistMessage(conversationId, { role: "assistant", content: dbContent });
             break;
           }
+          // If file generation failed, fall through to show the text
         }
 
         setMessages((prev) => [...prev, { id: currentStreamingId, role: "assistant", content: finalContent }]);
@@ -1178,7 +1206,67 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         )}
                       </div>
                     );
-                  })() : (
+                  })() : (() => {
+                    // Check for legacy "📄 Файл отправлен:" text
+                    const isLegacyFile = msg.role === "assistant" && msg.content &&
+                      (msg.content.includes("📄") || /файл отправлен|file sent/i.test(msg.content));
+                    if (isLegacyFile) {
+                      const fnMatch = (msg.content || "").match(/:\s*([\w\-\.а-яё]+\.\w+)/i);
+                      const hintFilename = fnMatch?.[1] || "file.txt";
+                      const ext = hintFilename.split(".").pop()?.toLowerCase() || "txt";
+                      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
+                      let prevUserContent = "";
+                      for (let i = msgIdx - 1; i >= 0; i--) {
+                        if (messages[i].role === "user") { prevUserContent = messages[i].content || ""; break; }
+                      }
+                      const supportedFormats = ["txt", "json", "csv", "xlsx", "pdf"];
+                      const fmt = supportedFormats.includes(ext) ? ext : "txt";
+                      return (
+                        <div className="flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+                          <span className="text-2xl">{formatIcons[ext] || "📄"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{hintFilename}</p>
+                            <p className="text-xs text-muted-foreground">{ext.toUpperCase()} · regenerate to download</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
+                            const ak = await getOrCreateApiKey(user!.id);
+                            if (!ak) return;
+                            let fileTextContent = prevUserContent || `Create a ${fmt} file named ${hintFilename}`;
+                            try {
+                              const cr = await fetch(INFERENCE_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${ak}` },
+                                body: JSON.stringify({
+                                  model: agent.model_id,
+                                  prompt: fileTextContent,
+                                  messages: [
+                                    { role: "system", content: "Generate ONLY the raw file content. No explanations." },
+                                    { role: "user", content: fileTextContent },
+                                  ],
+                                  category: "llm", max_tokens: 4096,
+                                }),
+                              });
+                              if (cr.ok) { const cd = await cr.json(); const g = cd?.response; if (g && g !== "No response generated") fileTextContent = g; }
+                            } catch { /* fallback */ }
+                            const result = await executeTool("file_generator", { filename: hintFilename, format: fmt, content: fileTextContent }, ak);
+                            if (result?.file_url) {
+                              try {
+                                const resp = await fetch(result.file_url);
+                                const blob = await resp.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url; a.download = result.filename || hintFilename;
+                                document.body.appendChild(a); a.click();
+                                document.body.removeChild(a); URL.revokeObjectURL(url);
+                              } catch { window.open(result.file_url, "_blank"); }
+                            }
+                          }}>
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        </div>
+                      );
+                    }
+                    return (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
@@ -1198,9 +1286,11 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         {msg.content || ""}
                       </ReactMarkdown>
                     </div>
-                  )}
+                     );
+                   })()
+                   }
                 </div>
-                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && !msg.content.includes("📄") && !/файл отправлен|file sent/i.test(msg.content) && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
