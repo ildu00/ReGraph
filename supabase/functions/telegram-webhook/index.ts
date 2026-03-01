@@ -77,9 +77,95 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-// Generate PDF using pdfmake — full Unicode/Cyrillic support without external font fetching
+// Ensure NotoSans font is available in Storage (uploaded once)
+async function ensureFont(): Promise<Uint8Array> {
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+  const BUCKET = "claw-images";
+  const FONT_PATH = "fonts/NotoSans-Regular.ttf";
+
+  // Try to read from storage first
+  const { data: fileData, error: readErr } = await supabase.storage
+    .from(BUCKET)
+    .download(FONT_PATH);
+
+  if (!readErr && fileData) {
+    console.log("Font loaded from storage");
+    return new Uint8Array(await fileData.arrayBuffer());
+  }
+
+  // Not in storage yet — fetch from CDN and upload
+  console.log("Fetching font from CDN to upload to storage...");
+  const ttfUrl = "https://raw.githubusercontent.com/notofonts/latin-greek-cyrillic/main/fonts/NotoSans/unhinted/ttf/NotoSans-Regular.ttf";
+  const res = await fetch(ttfUrl, { signal: AbortSignal.timeout(15000) });
+  if (!res.ok) throw new Error("Font CDN error: " + res.status);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+
+  // Upload for future use
+  await supabase.storage.from(BUCKET).upload(FONT_PATH, bytes, {
+    contentType: "font/ttf",
+    upsert: true,
+  });
+  console.log("Font uploaded to storage, size:", bytes.byteLength);
+  return bytes;
+}
+
+// Generate PDF with pdf-lib + NotoSans from Storage (Cyrillic support)
 async function buildPdf(content: string): Promise<Uint8Array> {
-  console.log("Building PDF via pdfmake...");
+  console.log("Building PDF...");
+  const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
+  const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
+
+  const fontBytes = await ensureFont();
+
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+  const font = await pdfDoc.embedFont(fontBytes);
+
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 50;
+  const fontSize = 12;
+  const lineHeight = fontSize * 1.5;
+  const maxWidth = pageWidth - 2 * margin;
+
+  const wrapText = (text: string): string[] => {
+    const result: string[] = [];
+    for (const rawLine of text.split("\n")) {
+      if (!rawLine.trim()) { result.push(""); continue; }
+      // Strip markdown
+      const line = rawLine.replace(/^#{1,3}\s+/, "").replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+      let current = "";
+      for (const word of line.split(" ")) {
+        const test = current ? current + " " + word : word;
+        try {
+          const w = font.widthOfTextAtSize(test, fontSize);
+          if (w > maxWidth && current) { result.push(current); current = word; }
+          else current = test;
+        } catch { current = test; }
+      }
+      if (current) result.push(current);
+    }
+    return result;
+  };
+
+  const lines = wrapText(content);
+  const linesPerPage = Math.floor((pageHeight - 2 * margin) / lineHeight);
+
+  for (let p = 0; p < Math.max(lines.length, 1); p += linesPerPage) {
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    const pageLines = lines.slice(p, p + linesPerPage);
+    let y = pageHeight - margin - fontSize;
+    for (const line of pageLines) {
+      if (line) {
+        page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0, 0, 0) });
+      }
+      y -= lineHeight;
+    }
+  }
+
+  console.log("PDF built successfully, pages:", pdfDoc.getPageCount());
+  return new Uint8Array(await pdfDoc.save());
+}
 
   // Dynamic import of pdfmake for Deno
   const pdfMake = (await import("npm:pdfmake@0.2.10/build/pdfmake.js")).default;
