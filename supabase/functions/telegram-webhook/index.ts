@@ -370,6 +370,13 @@ serve(async (req) => {
     }
 
     // Send reply to Telegram
+    // Save assistant reply to history
+    await supabase.from("claw_messages").insert({
+      conversation_id: conversationId,
+      role: "assistant",
+      content: finalReply,
+    });
+
     if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: "POST",
