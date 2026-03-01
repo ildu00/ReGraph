@@ -304,8 +304,14 @@ serve(async (req) => {
         // Check for image in tool result
         try {
           const parsed = JSON.parse(toolResult);
-          if (parsed.imageUrl) generatedImageUrl = parsed.imageUrl;
-          if (parsed.imageBase64) generatedImageBase64 = parsed.imageBase64;
+          if (parsed.imageUrl) {
+            generatedImageUrl = parsed.imageUrl;
+            finalReply = "🎨 Here's your image!";
+          }
+          if (parsed.imageBase64) {
+            generatedImageBase64 = parsed.imageBase64;
+            finalReply = "🎨 Here's your image!";
+          }
         } catch { /* */ }
 
         messages.push({
@@ -314,6 +320,9 @@ serve(async (req) => {
           content: toolResult,
         });
       }
+
+      // If image was generated — no need for another LLM call, just exit loop
+      if (generatedImageUrl || generatedImageBase64) break;
     }
 
     // Send reply to Telegram
