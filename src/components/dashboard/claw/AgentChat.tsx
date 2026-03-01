@@ -688,9 +688,10 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
-          // If any tool was image_generation — stop here, no need for a follow-up LLM call
+          // If any tool was image_generation or voice_message — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
-          if (hadImageGen) break;
+          const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
+          if (hadImageGen || hadVoice) break;
 
           // Prepare new streaming placeholder for next iteration's final answer
           currentStreamingId = crypto.randomUUID();
