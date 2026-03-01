@@ -39,6 +39,49 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.1",
+    date: "March 1, 2026",
+    title: "Voice Message Playback Fix",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed voice messages received via Telegram not playing in the web chat — audio files are now correctly uploaded to cloud storage and the public URL is persisted to the database." },
+      { category: "fix", description: "Resolved 404 errors on voice message URLs caused by the webhook storing a placeholder filename instead of the actual uploaded file path." },
+      { category: "fix", description: "Fixed storage upload authentication in the Telegram webhook — switched to SDK-based upload to correctly handle service role credentials." },
+    ]
+  },
+  {
+    version: "3.6.0",
+    date: "February 28, 2026",
+    title: "File Generator Tool & Telegram Document Sending",
+    type: "major",
+    changes: [
+      { category: "feature", description: "New File Generator tool for Claw agents — generates PDF, XLSX, CSV, and JSON files from structured data with full Cyrillic (UTF-8) support via jsPDF and XLSX libraries." },
+      { category: "feature", description: "Agents can now send generated files directly to the user in Telegram as native document messages, not as text links." },
+      { category: "improvement", description: "PDF generation uses embedded Noto Sans font for reliable Unicode rendering including Russian, Arabic, and CJK characters." },
+    ]
+  },
+  {
+    version: "3.5.1",
+    date: "February 28, 2026",
+    title: "Voice Messages & PWA Auto-Update",
+    type: "patch",
+    changes: [
+      { category: "feature", description: "Voice message support in Claw — agents can receive voice messages from Telegram users, transcribe them via STT, and respond with audio via TTS." },
+      { category: "feature", description: "PWA auto-update via Service Worker — users now receive the latest version without needing to manually clear cache or refresh." },
+    ]
+  },
+  {
+    version: "3.5.0",
+    date: "February 28, 2026",
+    title: "Telegram Bot Integration & Billing",
+    type: "major",
+    changes: [
+      { category: "feature", description: "Claw agents can now be connected to a Telegram bot — users configure a bot token and the agent responds to messages via webhook." },
+      { category: "feature", description: "Telegram billing integration — API usage from Telegram interactions is tracked and deducted from the user's wallet balance." },
+      { category: "feature", description: "Full tool support in Telegram context — web search, code interpreter, document reader, and file generator all work when triggered via Telegram messages." },
+    ]
+  },
+  {
     version: "3.4.1",
     date: "February 28, 2026",
     title: "Claw Mobile Fixes & UX Improvements",
