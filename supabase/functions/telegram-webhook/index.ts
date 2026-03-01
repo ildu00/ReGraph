@@ -395,15 +395,10 @@ serve(async (req) => {
       // ~$0.001 per 1k tokens (approximate blended rate)
       const costUsd = Math.max(0.000001, (totalTokensUsed / 1000) * 0.001);
       const computeMs = Date.now() - startTime;
+      const newBalance = Math.max(0, wallet.balance_usd - costUsd);
 
       await Promise.all([
-        supabase.rpc("decrement_wallet_balance" as any, { p_user_id: bot.user_id, p_amount: costUsd }).catch(() => {
-          // Fallback: manual update
-          return supabase
-            .from("wallets")
-            .update({ balance_usd: Math.max(0, wallet.balance_usd - costUsd) })
-            .eq("user_id", bot.user_id);
-        }),
+        supabase.from("wallets").update({ balance_usd: newBalance }).eq("user_id", bot.user_id),
         supabase.from("usage_logs").insert({
           user_id: bot.user_id,
           endpoint: "telegram-bot",
