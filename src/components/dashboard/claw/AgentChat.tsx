@@ -847,11 +847,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (hadFileGen) {
             // Embed file URL in content so it survives DB round-trips (same pattern as audio)
             const fileResult = toolResults["file_generator"];
-            if (fileResult?.file_url && !fileResult.file_url.startsWith("blob:")) {
+            if (fileResult?.file_url) {
               const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               const fileMsgId = crypto.randomUUID();
               setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
-              await persistMessage(conversationId, { role: "assistant", content: fileContent });
+              // Only persist to DB if it's a permanent URL (not a blob URL that will expire)
+              if (!fileResult.file_url.startsWith("blob:")) {
+                await persistMessage(conversationId, { role: "assistant", content: fileContent });
+              }
             }
             break;
           }
