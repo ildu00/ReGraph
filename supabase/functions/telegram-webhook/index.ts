@@ -922,16 +922,21 @@ serve(async (req) => {
       if (filePath) {
         const audioRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
         const audioBytes = new Uint8Array(await audioRes.arrayBuffer());
-        const formData = new FormData();
-        formData.append("file", new Blob([audioBytes], { type: "audio/ogg" }), "voice.ogg");
-        const transcribeRes = await fetch(`${SUPABASE_URL}/functions/v1/claw-upload-audio`, {
+        const audioFormData = new FormData();
+        audioFormData.append("file", new Blob([audioBytes], { type: "audio/ogg" }), "voice.ogg");
+        audioFormData.append("model", "stt-openai/whisper-v3");
+        const transcribeRes = await fetch(`${SUPABASE_URL}/functions/v1/audio-transcriptions`, {
           method: "POST",
-          headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: formData,
+          headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+          body: audioFormData,
         });
         if (transcribeRes.ok) {
           const td = await transcribeRes.json();
           userText = td?.text || "";
+          console.log("Voice transcribed:", userText.slice(0, 100));
+        } else {
+          const errText = await transcribeRes.text();
+          console.error("Transcription error:", transcribeRes.status, errText);
         }
       }
     } catch (e) {
