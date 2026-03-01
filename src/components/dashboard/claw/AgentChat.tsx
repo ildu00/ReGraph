@@ -868,7 +868,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     </div>
                   )}
                 </div>
-                {msg.role === "assistant" && msg.content && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
