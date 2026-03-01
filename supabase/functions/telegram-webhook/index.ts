@@ -77,12 +77,74 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-// Generate a real PDF manually using PDF spec — no external libraries, full Unicode via UTF-16BE font encoding
-function buildPdf(content: string): Uint8Array {
-  // We embed text as UTF-8 in PDF using a simple approach:
-  // Encode each character as PDF hex string with PDFDocEncoding fallback for non-latin
-  // For Cyrillic, we use PDF literal strings with octal escapes
+// Generate PDF with pdf-lib + embedded NotoSans font (full Unicode/Cyrillic support)
+async function buildPdf(content: string): Promise<Uint8Array> {
+  const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
+  const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
 
+  // NotoSans supports Cyrillic; served via Google Fonts CDN
+  const fontUrl = "https://fonts.gstatic.com/s/notosans/v36/o-0bIpQlx3QUlC5A4PNjFhFfY-BqpsHh.woff2";
+  const fontRes = await fetch(fontUrl);
+  if (!fontRes.ok) throw new Error("Failed to fetch font: " + fontRes.status);
+
+  // woff2 is not supported by pdf-lib; fall back to a TTF from jsDelivr
+  const ttfUrl = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
+  const ttfRes = await fetch(ttfUrl);
+  if (!ttfRes.ok) throw new Error("Failed to fetch TTF font: " + ttfRes.status);
+  const fontBytes = new Uint8Array(await ttfRes.arrayBuffer());
+
+  const pdfDoc = await PDFDocument.create();
+  pdfDoc.registerFontkit(fontkit);
+  const font = await pdfDoc.embedFont(fontBytes);
+
+  const pageWidth = 595;
+  const pageHeight = 842;
+  const margin = 50;
+  const fontSize = 12;
+  const lineHeight = fontSize * 1.5;
+  const maxWidth = pageWidth - 2 * margin;
+
+  // Word-wrap using font metrics
+  const wrapText = (text: string): string[] => {
+    const result: string[] = [];
+    for (const rawLine of text.split("\n")) {
+      if (!rawLine.trim()) { result.push(""); continue; }
+      let current = "";
+      for (const word of rawLine.split(" ")) {
+        const test = current ? current + " " + word : word;
+        const w = font.widthOfTextAtSize(test, fontSize);
+        if (w > maxWidth && current) {
+          result.push(current);
+          current = word;
+        } else {
+          current = test;
+        }
+      }
+      if (current) result.push(current);
+    }
+    return result;
+  };
+
+  const lines = wrapText(content);
+  const linesPerPage = Math.floor((pageHeight - 2 * margin) / lineHeight);
+
+  for (let p = 0; p < lines.length || p === 0; p += linesPerPage) {
+    const page = pdfDoc.addPage([pageWidth, pageHeight]);
+    const pageLines = lines.slice(p, p + linesPerPage);
+    let y = pageHeight - margin - fontSize;
+    for (const line of pageLines) {
+      if (line !== "") {
+        page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0, 0, 0) });
+      }
+      y -= lineHeight;
+    }
+  }
+
+  return new Uint8Array(await pdfDoc.save());
+}
+
+// Legacy sync stub — kept for signature compatibility but not used
+function _buildPdfLegacy(content: string): Uint8Array {
   const enc = new TextEncoder();
 
   // Escape a string for PDF stream content (parentheses, backslash)
@@ -321,7 +383,7 @@ function buildPdf(content: string): Uint8Array {
   let off = 0;
   for (const p of parts) { result.set(p, off); off += p.length; }
   return result;
-}
+} // end _buildPdfLegacy
 
 async function executeTool(name: string, input: any): Promise<string> {
   console.log(`Executing tool: ${name}`, JSON.stringify(input));
@@ -491,8 +553,8 @@ async function executeTool(name: string, input: any): Promise<string> {
         let outFilename = filename;
 
         if (format === "pdf") {
-          console.log("Generating PDF (native, Cyrillic-safe)...");
-          fileBytes = buildPdf(content);
+          console.log("Generating PDF with pdf-lib + NotoSans (Cyrillic support)...");
+          fileBytes = await buildPdf(content);
           mimeType = "application/pdf";
           outFilename = filename.endsWith(".pdf") ? filename : filename.replace(/\.[^.]+$/, "") + ".pdf";
           console.log("PDF generated, bytes:", fileBytes.byteLength);
