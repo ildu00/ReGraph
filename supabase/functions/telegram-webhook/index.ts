@@ -178,24 +178,18 @@ async function executeTool(name: string, input: any): Promise<string> {
         const res = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "opus" }),
+          body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
         });
         if (!res.ok) {
           const err = await res.text();
           console.error("TTS error:", res.status, err);
           return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
         }
-        const audioBytes = new Uint8Array(await res.arrayBuffer());
-        const fileName = `tts-${Date.now()}.opus`;
-        const storageRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
-          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/opus", "x-upsert": "false" }, body: audioBytes }
-        );
-        if (storageRes.ok) {
-          const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
-          return JSON.stringify({ audioUrl, message: "Voice message generated" });
-        }
-        return JSON.stringify({ error: "Failed to upload audio" });
+        const audioBytes = await res.arrayBuffer();
+        console.log("TTS audio generated, bytes:", audioBytes.byteLength);
+        // Store audio bytes as base64 to pass back for direct Telegram upload
+        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBytes)));
+        return JSON.stringify({ audioBase64: base64Audio, audioFormat: "mp3", message: "Voice message generated" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
@@ -477,6 +471,10 @@ serve(async (req) => {
             generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
+          if (parsed.audioBase64) {
+            generatedAudioUrl = parsed.audioBase64; // reuse variable, mark as base64
+            finalReply = "🔊";
+          }
         } catch { /* */ }
 
         messages.push({
@@ -518,11 +516,31 @@ serve(async (req) => {
     });
 
     if (generatedAudioUrl) {
-      await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+      // Send audio via multipart/form-data directly to Telegram
+      const boundary = "----FormBoundary" + Math.random().toString(36).slice(2);
+      const audioBytes = Uint8Array.from(atob(generatedAudioUrl), c => c.charCodeAt(0));
+      const enc = new TextEncoder();
+      const parts: Uint8Array[] = [
+        enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`),
+        enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="voice"; filename="voice.mp3"\r\nContent-Type: audio/mpeg\r\n\r\n`),
+        audioBytes,
+        enc.encode(`\r\n--${boundary}--\r\n`),
+      ];
+      const totalLen = parts.reduce((s, p) => s + p.length, 0);
+      const body = new Uint8Array(totalLen);
+      let offset = 0;
+      for (const p of parts) { body.set(p, offset); offset += p.length; }
+      const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
+        headers: { "Content-Type": `multipart/form-data; boundary=${boundary}` },
+        body,
       });
+      if (!voiceRes.ok) {
+        const errText = await voiceRes.text();
+        console.error("sendVoice error:", voiceRes.status, errText);
+      } else {
+        console.log("sendVoice success");
+      }
     } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: "POST",
