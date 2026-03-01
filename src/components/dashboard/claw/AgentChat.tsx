@@ -776,13 +776,58 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         }
 
         const data = await res.json();
+        console.log("[AgentChat] inference response:", JSON.stringify({ response: data.response?.slice?.(0,100), tool_calls: data.tool_calls, choices: data.choices?.length }));
 
         const choice = data?.choices?.[0];
-        const assistantMsg = choice?.message ?? (
+        let assistantMsg = choice?.message ?? (
           data?.response != null
             ? { role: "assistant", content: data.response, tool_calls: data.tool_calls }
             : null
         );
+
+        // Fallback: if LLM didn't call tool but wrote a file-related text response,
+        // and agent has file_generator — force a second call with tool_choice required
+        if (
+          assistantMsg &&
+          (!assistantMsg.tool_calls || assistantMsg.tool_calls.length === 0) &&
+          toolDefs.some((td: any) => td.function?.name === "file_generator") &&
+          loopCount === 1
+        ) {
+          const contentLower = (assistantMsg.content || "").toLowerCase();
+          const looksLikeFileRequest = contentLower.includes("файл") || contentLower.includes("file") || 
+            contentLower.includes(".txt") || contentLower.includes(".pdf") || contentLower.includes(".xlsx") || 
+            contentLower.includes(".csv") || contentLower.includes(".json") || contentLower.includes("📄");
+          const userMsgLower = fullUserText.toLowerCase();
+          const userWantsFile = userMsgLower.includes("файл") || userMsgLower.includes("file") || 
+            userMsgLower.includes(".txt") || userMsgLower.includes(".pdf") || userMsgLower.includes(".xlsx") || 
+            userMsgLower.includes(".csv") || userMsgLower.includes("excel") || userMsgLower.includes("эксель") ||
+            userMsgLower.includes("таблицу") || userMsgLower.includes("table") || userMsgLower.includes("generate");
+          if (looksLikeFileRequest || userWantsFile) {
+            console.log("[AgentChat] LLM skipped tool call, forcing file_generator...");
+            const forcedRes = await fetch(INFERENCE_URL, {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken}`, "x-api-key": apiKey },
+              body: JSON.stringify({
+                model: agent.model_id,
+                prompt: fullUserText,
+                messages: loopMessages,
+                category: "llm",
+                max_tokens: 4096,
+                tools: toolDefs.filter((td: any) => td.function?.name === "file_generator"),
+                tool_choice: { type: "function", function: { name: "file_generator" } },
+              }),
+            });
+            if (forcedRes.ok) {
+              const forcedData = await forcedRes.json();
+              console.log("[AgentChat] forced tool_choice response:", JSON.stringify({ tool_calls: forcedData.tool_calls }));
+              const forcedChoice = forcedData?.choices?.[0];
+              const forcedMsg = forcedChoice?.message ?? (forcedData?.response != null ? { role: "assistant", content: forcedData.response, tool_calls: forcedData.tool_calls } : null);
+              if (forcedMsg?.tool_calls?.length > 0) {
+                assistantMsg = forcedMsg;
+              }
+            }
+          }
+        }
 
         if (!assistantMsg) break;
 
@@ -854,10 +899,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               const fileMsgId = crypto.randomUUID();
               setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
-              // Only persist to DB if it's a permanent URL (not a blob URL that will expire)
-              if (!fileResult.file_url.startsWith("blob:")) {
-                await persistMessage(conversationId, { role: "assistant", content: fileContent });
-              }
+              // Always persist to DB — for blob URLs store placeholder so history shows card
+              const dbContent = fileResult.file_url.startsWith("blob:")
+                ? `__FILE__:EXPIRED|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`
+                : fileContent;
+              await persistMessage(conversationId, { role: "assistant", content: dbContent });
+            } else if (fileResult?.error) {
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` }]);
             }
             break;
           }
@@ -1036,6 +1084,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     const parts = msg.content.slice(9).split("|");
                     const [file_url, filename, format, sizeStr] = parts;
                     const size = parseInt(sizeStr || "0");
+                    const isExpired = !file_url || file_url === "EXPIRED";
                     const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
                     const sizeLabel = size > 1024 ? `${(size / 1024).toFixed(1)} KB` : size > 0 ? `${size} B` : "";
                     return (
@@ -1045,22 +1094,23 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                           <p className="text-xs font-medium truncate">{filename}</p>
                           <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
                         </div>
-                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
-                          try {
-                            const resp = await fetch(file_url);
-                            const blob = await resp.blob();
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement("a");
-                            a.href = url;
-                            a.download = filename;
-                            document.body.appendChild(a);
-                            a.click();
-                            document.body.removeChild(a);
-                            URL.revokeObjectURL(url);
-                          } catch { window.open(file_url, "_blank"); }
-                        }}>
-                          <Download className="h-3 w-3" /> Download
-                        </Button>
+                        {isExpired ? (
+                          <span className="text-xs text-muted-foreground italic shrink-0">ссылка устарела</span>
+                        ) : (
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
+                            try {
+                              const resp = await fetch(file_url);
+                              const blob = await resp.blob();
+                              const url = URL.createObjectURL(blob);
+                              const a = document.createElement("a");
+                              a.href = url; a.download = filename;
+                              document.body.appendChild(a); a.click();
+                              document.body.removeChild(a); URL.revokeObjectURL(url);
+                            } catch { window.open(file_url, "_blank"); }
+                          }}>
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        )}
                       </div>
                     );
                   })() : precedingFileResult ? (() => {
