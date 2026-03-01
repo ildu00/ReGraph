@@ -533,12 +533,15 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
       return sanitized;
     };
-    // For DB persistence: save public URLs, discard base64
+    // For DB persistence: save public URLs, discard base64 and blob URLs
     const sanitizeForDb = (result: any): any => {
       if (!result || typeof result !== "object") return result;
       const sanitized = { ...result };
       if (typeof sanitized.image_url === "string" && sanitized.image_url.startsWith("data:")) {
         return null; // never store base64 in DB
+      }
+      if (typeof sanitized.audio_url === "string" && sanitized.audio_url.startsWith("blob:")) {
+        return null; // never store blob URLs in DB (they expire)
       }
       return sanitized;
     };
