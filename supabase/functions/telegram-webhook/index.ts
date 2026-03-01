@@ -232,12 +232,48 @@ serve(async (req) => {
 
     const update = await req.json();
     const message = update?.message || update?.edited_message;
-    if (!message?.text) {
+    const hasVoice = !!message?.voice;
+    if (!message?.text && !hasVoice) {
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
     }
 
     const chatId = message.chat.id;
-    const userText = message.text;
+    let userText = message.text || "";
+
+    // Transcribe incoming voice message via VseGPT Whisper
+    if (hasVoice) {
+      try {
+        const fileId = message.voice.file_id;
+        const fileInfoRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+        const fileInfo = await fileInfoRes.json();
+        const filePath = fileInfo?.result?.file_path;
+        if (filePath) {
+          const audioRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
+          const audioBlob = await audioRes.arrayBuffer();
+          const formData = new FormData();
+          formData.append("file", new Blob([audioBlob], { type: "audio/ogg" }), "voice.ogg");
+          formData.append("model", "openai/whisper-large-v3");
+          const transcribeRes = await fetch("https://api.vsegpt.ru/v1/audio/transcriptions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
+            body: formData,
+          });
+          const transcribeData = await transcribeRes.json();
+          userText = transcribeData?.text || "";
+          console.log("Transcribed voice:", userText.slice(0, 100));
+        }
+      } catch (e) {
+        console.error("Voice transcription failed:", e);
+      }
+      if (!userText) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: message.chat.id, text: "⚠️ Could not transcribe your voice message. Please try again." }),
+        });
+        return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      }
+    }
     const agent = (bot as any).claw_agents;
 
     if (!agent) {
