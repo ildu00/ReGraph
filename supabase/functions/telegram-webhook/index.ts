@@ -451,6 +451,10 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
+          if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
+            finalReply = "🔊";
+          }
         } catch { /* */ }
 
         messages.push({
