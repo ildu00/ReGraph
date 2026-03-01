@@ -342,6 +342,8 @@ serve(async (req) => {
       role: "user",
       content: userText,
     });
+    // Touch conversation so web chat sees it as latest
+    await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
     // Build tools list from agent config
     const agentTools: string[] = Array.isArray(agent.tools) ? agent.tools : [];
