@@ -187,32 +187,20 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Upload to Supabase Storage so Telegram can access a stable public URL
+        // Upload to Supabase Storage using supabase client (service role)
+        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
+        const storageClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
         const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
-        const storageRes = await fetch(
-          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
-          {
-            method: "POST",
-            headers: {
-              "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
-              "Content-Type": "audio/mpeg",
-              "x-upsert": "false",
-            },
-            body: new Uint8Array(audioBuffer),
-          }
-        );
-        if (storageRes.ok) {
-          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+        const { data: uploadData, error: uploadErr } = await storageClient.storage
+          .from("claw-images")
+          .upload(fileName, new Uint8Array(audioBuffer), { contentType: "audio/mpeg", upsert: false });
+        if (uploadData?.path) {
+          const { data: { publicUrl } } = storageClient.storage.from("claw-images").getPublicUrl(uploadData.path);
           console.log("Audio uploaded to storage:", publicUrl);
           return JSON.stringify({ audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
         }
-        const storageErr = await storageRes.text();
-        console.error("Audio storage upload failed:", storageRes.status, storageErr);
-        // Fallback: store raw buffer in memory
-        const audioKey = `audio_${Date.now()}`;
-        (globalThis as any).__audioBuffers = (globalThis as any).__audioBuffers || {};
-        (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
-        return JSON.stringify({ audioKey, audioFormat: "mp3", message: "Voice message generated" });
+        console.error("Audio storage upload failed:", uploadErr);
+        return JSON.stringify({ error: "Audio storage upload failed" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
