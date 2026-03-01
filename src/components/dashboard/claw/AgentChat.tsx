@@ -459,24 +459,20 @@ async function getOrCreateApiKey(userId: string): Promise<string | null> {
 // Stable audio player component — never re-mounts on re-render
 function AudioPlayer({ content }: { content: string }) {
   const raw = content.slice(10);
-  const audioSrc = raw.startsWith("http")
+  const audioSrc = raw.startsWith("http") || raw.startsWith("blob:")
     ? raw
     : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
-  const isOgg = audioSrc.includes(".ogg");
-  console.log("[AudioPlayer] src:", audioSrc, "type:", isOgg ? "audio/ogg" : "audio/mpeg");
+  console.log("[AudioPlayer] src:", audioSrc);
   return (
     <div style={{ width: "100%", minWidth: 240, padding: "4px 0" }}>
       <audio
         controls
         preload="auto"
+        src={audioSrc}
         style={{ width: "100%", minHeight: 54, display: "block" }}
-        onError={(e) => console.error("[AudioPlayer] error", e)}
-        onCanPlay={() => console.log("[AudioPlayer] canplay")}
-      >
-        <source src={audioSrc} type={isOgg ? "audio/ogg; codecs=opus" : "audio/mpeg"} />
-        <source src={audioSrc} type="audio/ogg" />
-        <source src={audioSrc} type="audio/mpeg" />
-      </audio>
+        onError={(e) => console.error("[AudioPlayer] error loading:", audioSrc, e)}
+        onCanPlay={() => console.log("[AudioPlayer] canplay:", audioSrc)}
+      />
     </div>
   );
 }
@@ -989,11 +985,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
-            // Embed audio_url in content so it survives DB round-trips
-            const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
             const audioMsgId = crypto.randomUUID();
-            setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
-            await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            if (audioUrl && !audioUrl.startsWith("blob:")) {
+              // Real persistent URL — show player and save to DB
+              const audioContent = `__AUDIO__:${audioUrl}`;
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            } else if (audioUrl && audioUrl.startsWith("blob:")) {
+              // Blob URL — show player in current session only, don't save to DB
+              const audioContent = `__AUDIO__:${audioUrl}`;
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              // Don't persist blob URLs — they expire
+            } else {
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: "🔊 (failed to generate audio)" }]);
+            }
             break;
           }
 
