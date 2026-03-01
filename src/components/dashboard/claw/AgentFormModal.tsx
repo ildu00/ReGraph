@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Globe, Code2, Image, Calculator, BookOpen } from "lucide-react";
+import { Globe, Code2, Image, Calculator, BookOpen, Mic, Volume2 } from "lucide-react";
 
 export interface ClawAgent {
   id?: string;
