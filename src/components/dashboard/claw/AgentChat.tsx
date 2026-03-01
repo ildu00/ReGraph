@@ -1205,7 +1205,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         </audio>
                       );
                     })()
-                  ) : msg.content?.startsWith("__FILE__:PLACEHOLDER_REMOVE") ? (
+                  ) : msg.content?.startsWith("__FILE__:") ? (() => {
                     (() => {
                       const raw = msg.content.slice(10);
                       // Only full URLs (from web TTS upload) are playable in the browser.
