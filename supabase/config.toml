@@ -74,3 +74,15 @@ verify_jwt = false
 
 [functions.model-compare]
 verify_jwt = false
+
+[functions.claw-upload-audio]
+verify_jwt = false
+
+[functions.claw-document-reader]
+verify_jwt = false
+
+[functions.claw-web-search]
+verify_jwt = false
+
+[functions.claw-code-interpreter]
+verify_jwt = false
