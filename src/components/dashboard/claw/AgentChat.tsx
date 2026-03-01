@@ -983,14 +983,21 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (msg.role === "assistant" && !msg.content) return null;
           // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
           if (msg.role === "assistant" && msg.content === "🔊") return null;
-          // Find closest preceding file_generator tool result for this assistant message
-          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄")
+          // Find file result for "📄" assistant messages:
+          // 1) New messages: stored as __legacyFileResult in tool_result during history load
+          // 2) Live messages: scan backwards through messages for file_generator tool result
+          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄") && !msg.content?.startsWith("__FILE__:")
             ? (() => {
+                // Check if we pre-resolved it during history loading
+                if ((msg.tool_result as any)?.__legacyFileResult) {
+                  return (msg.tool_result as any).__legacyFileResult as { file_url: string; filename: string; format: string; size?: number };
+                }
+                // Scan backwards for live messages
                 for (let i = msgIdx - 1; i >= 0; i--) {
                   if (messages[i].role === "tool" && messages[i].tool_name === "file_generator" && messages[i].tool_result?.file_url) {
                     return messages[i].tool_result as { file_url: string; filename: string; format: string; size?: number };
                   }
-                  if (messages[i].role === "user") break; // don't cross user messages
+                  if (messages[i].role === "user") break;
                 }
                 return null;
               })()
