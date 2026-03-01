@@ -171,6 +171,35 @@ async function executeTool(name: string, input: any): Promise<string> {
         return JSON.stringify({ error: "Document reading failed: " + String(e) });
       }
     }
+    case "voice_message": {
+      const text = input?.text || "";
+      const voice = input?.voice || "nova";
+      try {
+        const res = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "tts-1", input: text, voice, response_format: "ogg_opus" }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          console.error("TTS error:", res.status, err);
+          return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
+        }
+        const audioBytes = new Uint8Array(await res.arrayBuffer());
+        const fileName = `tts-${Date.now()}.ogg`;
+        const storageRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/ogg", "x-upsert": "false" }, body: audioBytes }
+        );
+        if (storageRes.ok) {
+          const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+          return JSON.stringify({ audioUrl, message: "Voice message generated" });
+        }
+        return JSON.stringify({ error: "Failed to upload audio" });
+      } catch (e) {
+        return JSON.stringify({ error: "TTS failed: " + String(e) });
+      }
+    }
     default:
       return JSON.stringify({ error: `Unknown tool: ${name}` });
   }
