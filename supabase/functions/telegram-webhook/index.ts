@@ -187,7 +187,28 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Store raw buffer in a module-level map keyed by timestamp to avoid base64 encoding
+        // Upload to Supabase Storage so Telegram can access a stable public URL
+        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+        const storageRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              "Content-Type": "audio/mpeg",
+              "x-upsert": "false",
+            },
+            body: new Uint8Array(audioBuffer),
+          }
+        );
+        if (storageRes.ok) {
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+          console.log("Audio uploaded to storage:", publicUrl);
+          return JSON.stringify({ audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
+        }
+        const storageErr = await storageRes.text();
+        console.error("Audio storage upload failed:", storageRes.status, storageErr);
+        // Fallback: store raw buffer in memory
         const audioKey = `audio_${Date.now()}`;
         (globalThis as any).__audioBuffers = (globalThis as any).__audioBuffers || {};
         (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
