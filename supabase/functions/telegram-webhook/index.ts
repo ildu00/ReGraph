@@ -51,6 +51,14 @@ const TOOL_DEFINITIONS: Record<string, object> = {
       parameters: { type: "object", properties: { url: { type: "string", description: "The URL of the webpage to read" } }, required: ["url"] },
     },
   },
+  voice_message: {
+    type: "function",
+    function: {
+      name: "voice_message",
+      description: "Convert text to speech and send it as a voice message to the user. Use when the user asks to speak, read aloud, or send a voice note.",
+      parameters: { type: "object", properties: { text: { type: "string", description: "The text to convert to speech" }, voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style to use (default: nova)" } }, required: ["text"] },
+    },
+  },
 };
 
 async function executeTool(name: string, input: any): Promise<string> {
