@@ -1208,10 +1208,12 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 </div>
               )}
               <div className={`group min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end max-w-[80%]" : "items-start flex-1"}`}>
-                <div className={`rounded-xl px-4 py-3 text-sm min-w-0 w-full ${
-                  msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-secondary/70"
+                <div className={`rounded-xl text-sm min-w-0 w-full ${
+                  msg.content?.startsWith("__AUDIO__:")
+                    ? "bg-secondary/70 p-2"
+                    : msg.role === "user"
+                    ? "bg-primary text-primary-foreground px-4 py-3"
+                    : "bg-secondary/70 px-4 py-3"
                 }`}>
           {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
