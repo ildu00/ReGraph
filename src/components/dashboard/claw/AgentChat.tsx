@@ -1197,6 +1197,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 }`}>
           {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : msg.content?.startsWith("__IMAGE__:") ? (
+                    <img src={msg.content.slice(10)} alt="Generated image" className="max-w-full rounded-lg" style={{ maxHeight: 400 }} />
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
                     <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
                   ) : msg.content?.startsWith("__FILE__:") ? (() => {
