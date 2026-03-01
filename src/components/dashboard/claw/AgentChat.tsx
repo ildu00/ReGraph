@@ -946,11 +946,23 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           </div>
         )}
 
-        {messages.map((msg) => {
+        {messages.map((msg, msgIdx) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} onImageLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })} />;
           if (msg.role === "assistant" && !msg.content) return null;
           // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
           if (msg.role === "assistant" && msg.content === "🔊") return null;
+          // Find closest preceding file_generator tool result for this assistant message
+          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄")
+            ? (() => {
+                for (let i = msgIdx - 1; i >= 0; i--) {
+                  if (messages[i].role === "tool" && messages[i].tool_name === "file_generator" && messages[i].tool_result?.file_url) {
+                    return messages[i].tool_result as { file_url: string; filename: string; format: string; size?: number };
+                  }
+                  if (messages[i].role === "user") break; // don't cross user messages
+                }
+                return null;
+              })()
+            : null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -968,6 +980,31 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                   ) : msg.content?.startsWith("__AUDIO__:") ? (
                     <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
+                  ) : precedingFileResult ? (
+                    <>
+                      <div className={`markdown-response text-sm min-w-0 overflow-hidden`}>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content || ""}</ReactMarkdown>
+                      </div>
+                      {(() => {
+                        const { file_url, filename, format, size } = precedingFileResult;
+                        const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
+                        const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
+                        return (
+                          <div className="mt-2 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+                            <span className="text-2xl">{formatIcons[format] || "📄"}</span>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-medium truncate">{filename}</p>
+                              <p className="text-xs text-muted-foreground">{format?.toUpperCase()} {sizeStr && `· ${sizeStr}`}</p>
+                            </div>
+                            <a href={file_url} download={filename}>
+                              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                                <Download className="h-3 w-3" /> Download
+                              </Button>
+                            </a>
+                          </div>
+                        );
+                      })()}
+                    </>
                   ) : (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
