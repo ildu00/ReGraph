@@ -505,7 +505,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         // For image/audio messages, fetch tool_results that contain URLs (lightweight)
         if (msgs) {
           const urlToolIds = msgs
-            .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message")
+            .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message" || m.tool_name === "file_generator")
             .map((m: any) => m.id);
 
           let urlResults: Record<string, any> = {};
@@ -518,9 +518,12 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               for (const im of urlMsgs) {
                 const imageUrl = (im.tool_result as any)?.image_url;
                 const audioUrl = (im.tool_result as any)?.audio_url;
+                const fileUrl = (im.tool_result as any)?.file_url;
                 if (imageUrl && typeof imageUrl === "string" && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") {
                   urlResults[im.id] = im.tool_result;
                 } else if (audioUrl && typeof audioUrl === "string") {
+                  urlResults[im.id] = im.tool_result;
+                } else if (fileUrl && typeof fileUrl === "string" && !fileUrl.startsWith("blob:")) {
                   urlResults[im.id] = im.tool_result;
                 }
               }
