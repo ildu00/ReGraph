@@ -257,6 +257,7 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
           finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
         } else if (format === "pdf") {
+          const { jsPDF } = await import("jspdf");
           const doc = new jsPDF();
           const pageWidth = doc.internal.pageSize.getWidth();
           const margin = 15;
