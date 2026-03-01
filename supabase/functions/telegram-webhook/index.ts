@@ -285,10 +285,28 @@ serve(async (req) => {
       { role: "user", content: userText },
     ];
 
+    // Check balance before inference
+    const { data: wallet } = await supabase
+      .from("wallets")
+      .select("id, balance_usd")
+      .eq("user_id", bot.user_id)
+      .single();
+
+    if (!wallet || wallet.balance_usd <= 0) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: "⚠️ Insufficient balance. Please top up your ReGraph wallet." }),
+      });
+      return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+    }
+
     let finalReply = "Sorry, I couldn't process your request.";
     const MAX_ITERATIONS = 5;
     let generatedImageUrl: string | null = null;
     let generatedImageBase64: string | null = null;
+    let totalTokensUsed = 0;
+    const startTime = Date.now();
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const reqBody: any = {
@@ -320,6 +338,9 @@ serve(async (req) => {
       const data = await inferenceRes.json();
       const choice = data.choices?.[0];
       const assistantMessage = choice?.message;
+
+      // Accumulate token usage
+      if (data.usage?.total_tokens) totalTokensUsed += data.usage.total_tokens;
 
       if (!assistantMessage) break;
 
@@ -367,6 +388,30 @@ serve(async (req) => {
 
       // If image was generated — no need for another LLM call, just exit loop
       if (generatedImageUrl || generatedImageBase64) break;
+    }
+
+    // Billing: charge user and log usage
+    if (totalTokensUsed > 0) {
+      // ~$0.001 per 1k tokens (approximate blended rate)
+      const costUsd = Math.max(0.000001, (totalTokensUsed / 1000) * 0.001);
+      const computeMs = Date.now() - startTime;
+
+      await Promise.all([
+        supabase.rpc("decrement_wallet_balance" as any, { p_user_id: bot.user_id, p_amount: costUsd }).catch(() => {
+          // Fallback: manual update
+          return supabase
+            .from("wallets")
+            .update({ balance_usd: Math.max(0, wallet.balance_usd - costUsd) })
+            .eq("user_id", bot.user_id);
+        }),
+        supabase.from("usage_logs").insert({
+          user_id: bot.user_id,
+          endpoint: "telegram-bot",
+          tokens_used: totalTokensUsed,
+          compute_time_ms: computeMs,
+          cost_usd: costUsd,
+        }),
+      ]);
     }
 
     // Send reply to Telegram
