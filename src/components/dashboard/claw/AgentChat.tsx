@@ -989,11 +989,20 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
-            // Embed audio_url in content so it survives DB round-trips
-            const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
             const audioMsgId = crypto.randomUUID();
-            setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
-            await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            if (audioUrl && !audioUrl.startsWith("blob:")) {
+              // Real persistent URL — show player and save to DB
+              const audioContent = `__AUDIO__:${audioUrl}`;
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            } else if (audioUrl && audioUrl.startsWith("blob:")) {
+              // Blob URL — show player in current session only, don't save to DB
+              const audioContent = `__AUDIO__:${audioUrl}`;
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              // Don't persist blob URLs — they expire
+            } else {
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: "🔊 (failed to generate audio)" }]);
+            }
             break;
           }
 
