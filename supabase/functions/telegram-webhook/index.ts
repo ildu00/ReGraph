@@ -579,9 +579,11 @@ serve(async (req) => {
             finalReply = "🎨 Here's your image!";
           }
           if (parsed.fileUrl) {
-            generatedFileUrl = parsed.fileUrl;
-            generatedFileName = parsed.filename || "file";
-            finalReply = `📄 ${parsed.filename || "File"} ready`;
+            // legacy: URL-based (not used anymore)
+          }
+          if (parsed.fileKey) {
+            generatedFileKey = parsed.fileKey;
+            finalReply = `📄 ${parsed.filename || "File"} готов`;
           }
           if (parsed.audioUrl) {
             generatedAudioUrl = parsed.audioUrl;
