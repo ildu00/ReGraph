@@ -926,8 +926,40 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         }
 
         // Final answer
-        const finalContent = assistantMsg.content || "";
+        let finalContent = assistantMsg.content || "";
         if (!finalContent || finalContent === "No response generated") break;
+
+        // Hard intercept: if the LLM wrote a file-announcement text instead of calling the tool,
+        // extract filename from the text and directly call file_generator ourselves.
+        const fileAnnouncementMatch =
+          toolDefs.some((td: any) => td.function?.name === "file_generator") &&
+          (finalContent.includes("📄") || /файл отправлен|file sent|файл создан|file created/i.test(finalContent));
+        
+        if (fileAnnouncementMatch) {
+          console.log("[AgentChat] LLM wrote file announcement text instead of calling tool. Intercepting...");
+          // Extract filename hint from content
+          const fnMatch = finalContent.match(/:\s*([\w\-\.]+\.\w+)/i);
+          const hintFilename = fnMatch?.[1] || "file";
+          const fmt = hintFilename.split(".").pop() || "txt";
+          // Directly execute file_generator with content extracted from user message
+          const directResult = await executeTool("file_generator", {
+            filename: hintFilename,
+            format: fmt,
+            content: userText,
+          }, apiKey);
+          
+          if (directResult?.file_url) {
+            const fileContent = `__FILE__:${directResult.file_url}|${directResult.filename || hintFilename}|${directResult.format || fmt}|${directResult.size || 0}`;
+            const fileMsgId = crypto.randomUUID();
+            setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
+            const dbContent = directResult.file_url.startsWith("blob:")
+              ? `__FILE__:EXPIRED|${directResult.filename || hintFilename}|${directResult.format || fmt}|${directResult.size || 0}`
+              : fileContent;
+            await persistMessage(conversationId, { role: "assistant", content: dbContent });
+            break;
+          }
+        }
+
         setMessages((prev) => [...prev, { id: currentStreamingId, role: "assistant", content: finalContent }]);
         await persistMessage(conversationId, { role: "assistant", content: finalContent });
         break;
