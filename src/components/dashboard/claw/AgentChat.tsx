@@ -899,10 +899,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               const fileMsgId = crypto.randomUUID();
               setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
-              // Only persist to DB if it's a permanent URL (not a blob URL that will expire)
-              if (!fileResult.file_url.startsWith("blob:")) {
-                await persistMessage(conversationId, { role: "assistant", content: fileContent });
-              }
+              // Always persist to DB — for blob URLs store placeholder so history shows card
+              const dbContent = fileResult.file_url.startsWith("blob:")
+                ? `__FILE__:EXPIRED|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`
+                : fileContent;
+              await persistMessage(conversationId, { role: "assistant", content: dbContent });
+            } else if (fileResult?.error) {
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` }]);
             }
             break;
           }
