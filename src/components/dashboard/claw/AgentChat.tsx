@@ -1351,7 +1351,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                    })()
                    }
                 </div>
-                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && !msg.content.includes("📄") && !/файл отправлен|file sent/i.test(msg.content) && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && !msg.content.startsWith("__IMAGE__:") && !msg.content.includes("📄") && !/файл отправлен|file sent/i.test(msg.content) && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
