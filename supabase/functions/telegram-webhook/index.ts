@@ -927,7 +927,7 @@ serve(async (req) => {
         audioFormData.append("model", "stt-openai/whisper-v3");
         const transcribeRes = await fetch(`${SUPABASE_URL}/functions/v1/audio-transcriptions`, {
           method: "POST",
-          headers: { "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
+          headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
           body: audioFormData,
         });
         if (transcribeRes.ok) {
