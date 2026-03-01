@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X, Volume2
+  ImagePlus, FileUp, X, Volume2, Download, FileText
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
