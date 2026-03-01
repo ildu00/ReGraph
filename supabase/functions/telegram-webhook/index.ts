@@ -557,51 +557,49 @@ serve(async (req) => {
     });
     await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
-    if (generatedAudioUrl) {
-      // Send voice via public Storage URL directly
-      try {
-        console.log("Sending voice via URL:", generatedAudioUrl);
-        const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
-        });
-        const voiceResText = await voiceRes.text();
-        if (!voiceRes.ok) {
-          console.error("sendVoice error:", voiceRes.status, voiceResText);
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    if (generatedAudioBuffer || generatedAudioUrl) {
+      // Always send raw buffer via multipart for proper Telegram voice message
+      // generatedAudioBuffer is the raw mp3, generatedAudioUrl is stored for web chat
+      const bufferToSend = generatedAudioBuffer;
+      if (bufferToSend) {
+        try {
+          const blob = new Blob([bufferToSend], { type: "audio/mpeg" });
+          const formData = new FormData();
+          formData.append("chat_id", String(chatId));
+          formData.append("voice", blob, "voice.mp3");
+          const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+            method: "POST",
+            body: formData,
+          });
+          const voiceResText = await voiceRes.text();
+          if (!voiceRes.ok) {
+            console.error("sendVoice buffer error:", voiceRes.status, voiceResText);
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
+            });
+          } else {
+            console.log("sendVoice success via multipart buffer");
+          }
+        } catch (e) {
+          console.error("Voice buffer send exception:", e);
+        }
+      } else {
+        // No buffer available, fallback to URL (may arrive as file in some clients)
+        try {
+          const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
+            body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
           });
-        } else {
-          console.log("sendVoice success via URL");
+          if (!voiceRes.ok) {
+            const voiceResText = await voiceRes.text();
+            console.error("sendVoice URL error:", voiceRes.status, voiceResText);
+          }
+        } catch (e) {
+          console.error("Voice URL send exception:", e);
         }
-      } catch (e) {
-        console.error("Voice send exception:", e);
-      }
-    } else if (generatedAudioBuffer) {
-      // Fallback: send raw buffer via multipart
-      try {
-        const blob = new Blob([generatedAudioBuffer], { type: "audio/mpeg" });
-        const formData = new FormData();
-        formData.append("chat_id", String(chatId));
-        formData.append("voice", blob, "voice.mp3");
-        const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
-          method: "POST",
-          body: formData,
-        });
-        const voiceResText = await voiceRes.text();
-        if (!voiceRes.ok) {
-          console.error("sendVoice buffer error:", voiceRes.status, voiceResText);
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
-          });
-        }
-      } catch (e) {
-        console.error("Voice buffer send exception:", e);
       }
     } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
