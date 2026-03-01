@@ -1207,6 +1207,65 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                       </div>
                     );
                   })() : (
+                    {msg.role === "assistant" && msg.content && (msg.content.includes("📄") || /файл отправлен|file sent/i.test(msg.content)) ? (() => {
+                      // Legacy file announcement - extract filename and show re-download card
+                      const fnMatch = msg.content.match(/:\s*([\w\-\.а-яё]+\.\w+)/i);
+                      const hintFilename = fnMatch?.[1] || "file.txt";
+                      const ext = hintFilename.split(".").pop()?.toLowerCase() || "txt";
+                      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
+                      // Find preceding user message to get content for regeneration
+                      let prevUserContent = "";
+                      for (let i = msgIdx - 1; i >= 0; i--) {
+                        if (messages[i].role === "user") { prevUserContent = messages[i].content || ""; break; }
+                      }
+                      return (
+                        <div className="flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+                          <span className="text-2xl">{formatIcons[ext] || "📄"}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium truncate">{hintFilename}</p>
+                            <p className="text-xs text-muted-foreground">{ext.toUpperCase()} · link expired</p>
+                          </div>
+                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
+                            const supportedFormats = ["txt", "json", "csv", "xlsx", "pdf"];
+                            const fmt = supportedFormats.includes(ext) ? ext : "txt";
+                            const apiKey = await getOrCreateApiKey(user!.id);
+                            if (!apiKey) return;
+                            // Get file content from LLM
+                            let fileTextContent = prevUserContent || hintFilename;
+                            try {
+                              const cr = await fetch(INFERENCE_URL, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+                                body: JSON.stringify({
+                                  model: agent.model_id,
+                                  prompt: prevUserContent || `Create a ${fmt} file named ${hintFilename}`,
+                                  messages: [
+                                    { role: "system", content: "Generate ONLY the raw file content. No explanations." },
+                                    { role: "user", content: prevUserContent || `Create a ${fmt} file named ${hintFilename}` },
+                                  ],
+                                  category: "llm", max_tokens: 4096,
+                                }),
+                              });
+                              if (cr.ok) { const cd = await cr.json(); const g = cd?.response; if (g) fileTextContent = g; }
+                            } catch { /* fallback */ }
+                            const result = await executeTool("file_generator", { filename: hintFilename, format: fmt, content: fileTextContent }, apiKey);
+                            if (result?.file_url) {
+                              try {
+                                const resp = await fetch(result.file_url);
+                                const blob = await resp.blob();
+                                const url = URL.createObjectURL(blob);
+                                const a = document.createElement("a");
+                                a.href = url; a.download = result.filename || hintFilename;
+                                document.body.appendChild(a); a.click();
+                                document.body.removeChild(a); URL.revokeObjectURL(url);
+                              } catch { window.open(result.file_url, "_blank"); }
+                            }
+                          }}>
+                            <Download className="h-3 w-3" /> Download
+                          </Button>
+                        </div>
+                      );
+                    })() : (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
                         remarkPlugins={[remarkGfm]}
@@ -1226,6 +1285,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                         {msg.content || ""}
                       </ReactMarkdown>
                     </div>
+                    )}
                   )}
                 </div>
                 {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && !msg.content.startsWith("__FILE__:") && (
