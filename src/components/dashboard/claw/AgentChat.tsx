@@ -456,6 +456,31 @@ async function getOrCreateApiKey(userId: string): Promise<string | null> {
   return newKey;
 }
 
+// Stable audio player component — never re-mounts on re-render
+function AudioPlayer({ content }: { content: string }) {
+  const raw = content.slice(10);
+  const audioSrc = raw.startsWith("http")
+    ? raw
+    : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
+  const isOgg = audioSrc.includes(".ogg");
+  console.log("[AudioPlayer] src:", audioSrc, "type:", isOgg ? "audio/ogg" : "audio/mpeg");
+  return (
+    <div style={{ width: "100%", minWidth: 240, padding: "4px 0" }}>
+      <audio
+        controls
+        preload="auto"
+        style={{ width: "100%", minHeight: 54, display: "block" }}
+        onError={(e) => console.error("[AudioPlayer] error", e)}
+        onCanPlay={() => console.log("[AudioPlayer] canplay")}
+      >
+        <source src={audioSrc} type={isOgg ? "audio/ogg; codecs=opus" : "audio/mpeg"} />
+        <source src={audioSrc} type="audio/ogg" />
+        <source src={audioSrc} type="audio/mpeg" />
+      </audio>
+    </div>
+  );
+}
+
 export default function AgentChat({ agent, onBack }: AgentChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
