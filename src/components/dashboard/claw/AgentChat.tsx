@@ -1196,7 +1196,12 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     (() => {
                       const raw = msg.content.slice(10);
                       const audioSrc = raw.startsWith("http") ? raw : `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/claw-images/${raw}`;
-                      return <audio controls src={audioSrc} className="w-full h-10 rounded" preload="metadata" />;
+                      const isOgg = audioSrc.endsWith(".ogg");
+                      return (
+                        <audio controls className="w-full rounded" preload="auto" style={{ minHeight: 54 }}>
+                          <source src={audioSrc} type={isOgg ? "audio/ogg" : "audio/mpeg"} />
+                        </audio>
+                      );
                     })()
                   ) : msg.content?.startsWith("__FILE__:") ? (() => {
                     const parts = msg.content.slice(9).split("|");
