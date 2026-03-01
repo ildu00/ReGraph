@@ -145,7 +145,8 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
       const text = input?.text || "";
       const voice = input?.voice || "nova";
       try {
-        const res = await fetch(
+        // Step 1: Generate audio
+        const ttsRes = await fetch(
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-speech`,
           {
             method: "POST",
@@ -153,35 +154,39 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
             body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
           }
         );
-        if (!res.ok) {
-          const errText = await res.text().catch(() => "");
-          console.error("[voice_message] TTS failed:", res.status, errText);
-          return { error: `TTS failed (${res.status})` };
+        if (!ttsRes.ok) {
+          const errText = await ttsRes.text().catch(() => "");
+          console.error("[voice_message] TTS failed:", ttsRes.status, errText);
+          return { error: `TTS failed (${ttsRes.status})` };
         }
-        const audioBuffer = await res.arrayBuffer();
+        const audioBuffer = await ttsRes.arrayBuffer();
         console.log("[voice_message] Got audio buffer, size:", audioBuffer.byteLength);
 
-        // Upload via Supabase SDK (uses authenticated session automatically)
-        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+        // Step 2: Upload via service-role edge function (bypasses RLS)
         try {
-          const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
-          const { data: uploadData, error: uploadErr } = await supabase.storage
-            .from("claw-images")
-            .upload(fileName, blob, { contentType: "audio/mpeg", upsert: false });
-          if (uploadData?.path) {
-            const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
-            console.log("[voice_message] Uploaded to storage:", publicUrl);
-            return { audio_url: publicUrl };
+          const uploadRes = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claw-upload-audio`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "audio/mpeg", Authorization: `Bearer ${apiKey}` },
+              body: audioBuffer,
+            }
+          );
+          if (uploadRes.ok) {
+            const uploadData = await uploadRes.json();
+            if (uploadData.audio_url) {
+              console.log("[voice_message] Uploaded to storage:", uploadData.audio_url);
+              return { audio_url: uploadData.audio_url };
+            }
           }
-          if (uploadErr) console.warn("[voice_message] Storage upload failed:", uploadErr);
+          console.warn("[voice_message] Upload function failed:", await uploadRes.text().catch(() => ""));
         } catch (uploadErr) {
-          console.warn("[voice_message] Storage upload exception:", uploadErr);
+          console.warn("[voice_message] Upload exception:", uploadErr);
         }
 
-        // Fallback: blob URL for in-session playback only
-        const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
-        const blobUrl = URL.createObjectURL(blob);
-        console.log("[voice_message] Using blob URL as fallback");
+        // Fallback: blob URL (works only in current session, won't persist)
+        const blobUrl = URL.createObjectURL(new Blob([audioBuffer], { type: "audio/mpeg" }));
+        console.warn("[voice_message] Using blob URL as fallback (won't persist)");
         return { audio_url: blobUrl };
       } catch (e) {
         console.error("[voice_message] Exception:", e);
