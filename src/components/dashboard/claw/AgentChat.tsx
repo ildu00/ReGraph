@@ -667,6 +667,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       if (typeof sanitized.audio_url === "string" && sanitized.audio_url.startsWith("blob:")) {
         return null; // never store blob URLs in DB (they expire)
       }
+      if (typeof sanitized.file_url === "string" && sanitized.file_url.startsWith("blob:")) {
+        return null; // never store blob URLs in DB (they expire after session)
+      }
       return sanitized;
     };
     const sanitizeToolResult = sanitizeForApi;
