@@ -214,6 +214,49 @@ serve(async (req) => {
       body: JSON.stringify({ chat_id: chatId, action: "typing" }),
     });
 
+    // Find or create conversation for this Telegram chat
+    const telegramConvTitle = `Telegram ${chatId}`;
+    let conversationId: string;
+    const { data: existingConv } = await supabase
+      .from("claw_conversations")
+      .select("id")
+      .eq("agent_id", agent.id)
+      .eq("user_id", bot.user_id)
+      .eq("title", telegramConvTitle)
+      .single();
+
+    if (existingConv) {
+      conversationId = existingConv.id;
+    } else {
+      const { data: newConv } = await supabase
+        .from("claw_conversations")
+        .insert({ agent_id: agent.id, user_id: bot.user_id, title: telegramConvTitle })
+        .select("id")
+        .single();
+      conversationId = newConv!.id;
+    }
+
+    // Load last 50 messages from history
+    const { data: historyRows } = await supabase
+      .from("claw_messages")
+      .select("role, content")
+      .eq("conversation_id", conversationId)
+      .in("role", ["user", "assistant"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    const historyMessages = (historyRows || []).reverse().map((m: any) => ({
+      role: m.role,
+      content: m.content || "",
+    }));
+
+    // Save incoming user message
+    await supabase.from("claw_messages").insert({
+      conversation_id: conversationId,
+      role: "user",
+      content: userText,
+    });
+
     // Build tools list from agent config
     const agentTools: string[] = Array.isArray(agent.tools) ? agent.tools : [];
     const toolDefs = agentTools
