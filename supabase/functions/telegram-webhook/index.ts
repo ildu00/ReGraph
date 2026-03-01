@@ -1155,7 +1155,33 @@ serve(async (req) => {
           loopCount = MAX_LOOPS;
         } else if (toolResult.startsWith("__IMAGE__:")) {
           // Send image immediately and stop loop
-          const imgUrl = toolResult.replace("__IMAGE__:", "");
+          let imgUrl = toolResult.replace("__IMAGE__:", "");
+
+          // If it's a base64 data URL — upload to storage first (Telegram 413 error otherwise)
+          if (imgUrl.startsWith("data:")) {
+            try {
+              const [meta, base64] = imgUrl.split(",");
+              const mimeMatch = meta.match(/data:([^;]+);/);
+              const mimeType = mimeMatch?.[1] || "image/png";
+              const ext = mimeType.split("/")[1] || "png";
+              const binary = atob(base64);
+              const bytes = new Uint8Array(binary.length);
+              for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+              const fileName = `tg_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+              const { data: uploadData, error: uploadErr } = await supabase.storage
+                .from("claw-images")
+                .upload(fileName, bytes, { contentType: mimeType, upsert: false });
+              if (uploadData?.path) {
+                const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+                imgUrl = publicUrl;
+              } else {
+                console.error("Image upload to storage failed:", uploadErr);
+              }
+            } catch (uploadErr) {
+              console.error("Image base64 upload error:", uploadErr);
+            }
+          }
+
           const sendPhotoRes = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
