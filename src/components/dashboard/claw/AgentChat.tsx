@@ -1032,11 +1032,22 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                           <p className="text-xs font-medium truncate">{filename}</p>
                           <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
                         </div>
-                        <a href={file_url} download={filename} target="_blank" rel="noreferrer">
-                          <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
-                            <Download className="h-3 w-3" /> Download
-                          </Button>
-                        </a>
+                        <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
+                          try {
+                            const resp = await fetch(file_url);
+                            const blob = await resp.blob();
+                            const url = URL.createObjectURL(blob);
+                            const a = document.createElement("a");
+                            a.href = url;
+                            a.download = filename;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                          } catch { window.open(file_url, "_blank"); }
+                        }}>
+                          <Download className="h-3 w-3" /> Download
+                        </Button>
                       </div>
                     );
                   })() : precedingFileResult ? (
