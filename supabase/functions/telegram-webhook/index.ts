@@ -614,15 +614,24 @@ async function executeTool(name: string, input: any): Promise<string> {
 async function buildXlsx(content: string): Promise<Uint8Array> {
   const JSZip = (await import("npm:jszip@3.10.1")).default;
 
-  // Parse CSV-like content into rows/cells
-  const rows = content.trim().split("\n").map(row => {
-    // Handle markdown table rows like | col1 | col2 |
-    if (row.trim().startsWith("|")) {
-      return row.split("|").map(c => c.trim()).filter((c, i, a) => i > 0 && i < a.length - 1);
+  // Parse content into rows: supports markdown tables, CSV, and plain lines
+  const rawRows = content.trim().split("\n").map(line => {
+    const t = line.trim();
+    if (t.startsWith("|")) {
+      return t.split("|").map(c => c.trim()).filter((_, i, a) => i > 0 && i < a.length - 1);
     }
-    // Handle separator rows like |---|---|
-    return row.split(",").map(c => c.trim().replace(/^["']|["']$/g, ""));
-  }).filter(row => !row.every(c => /^[-:]+$/.test(c) || c === ""));
+    // CSV row — handle quoted values
+    const cells: string[] = [];
+    let cur = "", inQ = false;
+    for (const ch of t + ",") {
+      if (ch === '"') { inQ = !inQ; }
+      else if (ch === "," && !inQ) { cells.push(cur.trim()); cur = ""; }
+      else cur += ch;
+    }
+    return cells;
+  });
+  // Filter separator rows (e.g. |---|---|)
+  const rows = rawRows.filter(r => r.length > 0 && !r.every(c => /^[-:]+$/.test(c) || c === ""));
 
   // Build shared strings
   const allStrings: string[] = [];
