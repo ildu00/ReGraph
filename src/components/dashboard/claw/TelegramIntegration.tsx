@@ -212,16 +212,36 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
     if (!botToken.trim() || !agentId) return;
     setSaving(true);
     try {
-      const res = await supabase.functions.invoke("telegram-bot-setup", {
-        body: { action: "connect", bot_token: botToken.trim(), agent_id: agentId },
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData?.session?.access_token;
+      if (!accessToken) {
+        toast.error("No active session. Please sign in again.");
+        setSaving(false);
+        return;
+      }
+
+      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${accessToken}`,
+          "apikey": SUPABASE_ANON_KEY,
+        },
+        body: JSON.stringify({ action: "connect", bot_token: botToken.trim(), agent_id: agentId }),
       });
-      if (res.error) {
-        toast.error(res.error.message || "Failed to connect bot");
-      } else if (res.data?.ok) {
-        toast.success(`Bot @${res.data.bot_username} connected!`);
+
+      const result = await response.json();
+      console.log("telegram-bot-setup response:", response.status, result);
+
+      if (!response.ok || result.error) {
+        toast.error(result.error || "Failed to connect bot. Check your token.");
+      } else if (result.ok) {
+        toast.success(`Bot @${result.bot_username} connected!`);
         onConnected();
       } else {
-        toast.error(res.data?.error || "Failed to connect bot. Check your token.");
+        toast.error("Failed to connect bot. Check your token.");
       }
     } catch (e: any) {
       toast.error(e?.message || "Connection failed");
