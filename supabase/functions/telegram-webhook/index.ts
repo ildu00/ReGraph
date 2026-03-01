@@ -187,20 +187,28 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Upload to Supabase Storage using supabase client (service role)
-        const { createClient } = await import("https://esm.sh/@supabase/supabase-js@2");
-        const storageClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        // Upload to Supabase Storage via REST API with service role key
         const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
-        const { data: uploadData, error: uploadErr } = await storageClient.storage
-          .from("claw-images")
-          .upload(fileName, new Uint8Array(audioBuffer), { contentType: "audio/mpeg", upsert: false });
-        if (uploadData?.path) {
-          const { data: { publicUrl } } = storageClient.storage.from("claw-images").getPublicUrl(uploadData.path);
+        const uploadRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              "Content-Type": "audio/mpeg",
+              "x-upsert": "false",
+            },
+            body: new Uint8Array(audioBuffer),
+          }
+        );
+        if (uploadRes.ok) {
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
           console.log("Audio uploaded to storage:", publicUrl);
           return JSON.stringify({ audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
         }
-        console.error("Audio storage upload failed:", uploadErr);
-        return JSON.stringify({ error: "Audio storage upload failed" });
+        const uploadErrText = await uploadRes.text().catch(() => "");
+        console.error("Audio storage upload failed:", uploadRes.status, uploadErrText);
+        return JSON.stringify({ error: "Audio storage upload failed: " + uploadErrText.slice(0, 200) });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
