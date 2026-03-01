@@ -77,61 +77,39 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-async function buildPdfWithFont(content: string): Promise<Uint8Array> {
-  const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
-  const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
-
-  // Fetch DejaVu Sans (supports Cyrillic)
-  const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
-  if (!fontRes.ok) throw new Error("Font fetch failed: " + fontRes.status);
-  const fontBytes = new Uint8Array(await fontRes.arrayBuffer());
-
-  const pdfDoc = await PDFDocument.create();
-  pdfDoc.registerFontkit(fontkit);
-  const font = await pdfDoc.embedFont(fontBytes);
-
-  const fontSize = 11;
-  const lineHeight = 16;
-  const marginX = 50;
-  const marginY = 50;
-  const pageW = 595;
-  const pageH = 842;
-  const maxWidth = pageW - marginX * 2;
-
-  // Word-wrap
-  const wrapped: string[] = [];
-  for (const rawLine of content.split("\n")) {
-    if (!rawLine.trim()) { wrapped.push(""); continue; }
-    const words = rawLine.split(" ");
-    let cur = "";
-    for (const w of words) {
-      const test = cur ? cur + " " + w : w;
-      if (font.widthOfTextAtSize(test, fontSize) > maxWidth && cur) {
-        wrapped.push(cur); cur = w;
+// Generate RTF with full Unicode/Cyrillic support — no external libraries needed
+function buildRtf(content: string): Uint8Array {
+  // RTF Unicode escape: \uN? where N is decimal codepoint, ? is fallback char
+  const escapeRtf = (text: string): string => {
+    let out = "";
+    for (const ch of text) {
+      const cp = ch.codePointAt(0)!;
+      if (cp < 128) {
+        // ASCII — escape special RTF chars
+        if (ch === "\\") out += "\\\\";
+        else if (ch === "{") out += "\\{";
+        else if (ch === "}") out += "\\}";
+        else out += ch;
       } else {
-        cur = test;
+        // Non-ASCII: use RTF Unicode escape \uN?
+        out += `\\u${cp}?`;
       }
     }
-    if (cur) wrapped.push(cur);
-  }
+    return out;
+  };
 
-  const linesPerPage = Math.floor((pageH - marginY * 2) / lineHeight);
-  for (let p = 0; p < Math.max(1, Math.ceil(wrapped.length / linesPerPage)); p++) {
-    const page = pdfDoc.addPage([pageW, pageH]);
-    const slice = wrapped.slice(p * linesPerPage, (p + 1) * linesPerPage);
-    for (let j = 0; j < slice.length; j++) {
-      if (!slice[j]) continue;
-      page.drawText(slice[j], {
-        x: marginX,
-        y: pageH - marginY - j * lineHeight,
-        size: fontSize,
-        font,
-        color: rgb(0, 0, 0),
-      });
+  const lines = content.split("\n");
+  let body = "";
+  for (const line of lines) {
+    if (line.trim() === "") {
+      body += "\\par\n";
+    } else {
+      body += `\\par ${escapeRtf(line)}\n`;
     }
   }
 
-  return new Uint8Array(await pdfDoc.save());
+  const rtf = `{\\rtf1\\ansi\\ansicpg1251\\deff0\n{\\fonttbl{\\f0\\froman\\fcharset0 Times New Roman;}}\n{\\colortbl ;\\red0\\green0\\blue0;}\n\\f0\\fs22\\cf1\n${body}}\n`;
+  return new TextEncoder().encode(rtf);
 }
 
 async function executeTool(name: string, input: any): Promise<string> {
