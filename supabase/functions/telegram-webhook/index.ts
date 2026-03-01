@@ -604,12 +604,12 @@ async function executeTool(name: string, input: any): Promise<string> {
         const res = await fetch(`${SUPABASE_URL}/functions/v1/audio-speech`, {
           method: "POST",
           headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ input: text, voice, model: "tts-1" }),
+          body: JSON.stringify({ input: text, voice, model: "tts-1", response_format: "opus" }),
         });
         if (!res.ok) return "Voice generation failed: " + res.status;
         const audioBytes = new Uint8Array(await res.arrayBuffer());
         const key = `voice_${Date.now()}`;
-        __fileBuffers.set(key, { bytes: audioBytes, filename: "voice.ogg", mimeType: "audio/ogg" });
+        __fileBuffers.set(key, { bytes: audioBytes, filename: "voice.ogg", mimeType: "audio/ogg; codecs=opus" });
         return `__VOICE__:${key}`;
       } catch (e: any) {
         return "Voice error: " + e.message;
