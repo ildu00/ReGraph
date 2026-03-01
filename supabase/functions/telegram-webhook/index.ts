@@ -531,8 +531,12 @@ serve(async (req) => {
         // Handle special file/voice results
         if (toolResult.startsWith("__FILE__:")) {
           pendingFileKey = toolResult.replace("__FILE__:", "");
+          // Stop loop immediately — no need for a follow-up AI response
+          loopCount = MAX_LOOPS;
         } else if (toolResult.startsWith("__VOICE__:")) {
           pendingVoiceKey = toolResult.replace("__VOICE__:", "");
+          // Stop loop immediately — no need for a follow-up AI response
+          loopCount = MAX_LOOPS;
         } else if (toolResult.startsWith("__IMAGE__:")) {
           // Send image immediately
           const imgUrl = toolResult.replace("__IMAGE__:", "");
