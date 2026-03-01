@@ -38,6 +38,7 @@ const TOOL_ICONS: Record<string, any> = {
   web_search: Globe,
   image_generation: Image,
   document_reader: BookOpen,
+  voice_message: Volume2,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
