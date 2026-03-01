@@ -68,7 +68,7 @@ const TOOL_DEFINITIONS: Record<string, object> = {
         type: "object",
         properties: {
           filename: { type: "string", description: "The file name including extension, e.g. resume.pdf" },
-          format: { type: "string", enum: ["txt", "json", "csv", "pdf", "docx"], description: "File format" },
+          format: { type: "string", enum: ["txt", "json", "csv", "xlsx", "pdf", "docx"], description: "File format. For tabular data use xlsx. For xlsx, content must be CSV text with comma-separated values and newline-separated rows." },
           content: { type: "string", description: "The full text content of the file. For PDF, use plain text with newlines. For CSV, use comma-separated rows." },
         },
         required: ["filename", "format", "content"],
