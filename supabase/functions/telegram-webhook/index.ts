@@ -185,11 +185,13 @@ async function executeTool(name: string, input: any): Promise<string> {
           console.error("TTS error:", res.status, err);
           return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
         }
-        const audioBytes = await res.arrayBuffer();
-        console.log("TTS audio generated, bytes:", audioBytes.byteLength);
-        // Store audio bytes as base64 to pass back for direct Telegram upload
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBytes)));
-        return JSON.stringify({ audioBase64: base64Audio, audioFormat: "mp3", message: "Voice message generated" });
+        const audioBuffer = await res.arrayBuffer();
+        console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
+        // Store raw buffer in a module-level map keyed by timestamp to avoid base64 encoding
+        const audioKey = `audio_${Date.now()}`;
+        (globalThis as any).__audioBuffers = (globalThis as any).__audioBuffers || {};
+        (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
+        return JSON.stringify({ audioKey, audioFormat: "mp3", message: "Voice message generated" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
@@ -395,6 +397,7 @@ serve(async (req) => {
     let generatedImageUrl: string | null = null;
     let generatedImageBase64: string | null = null;
     let generatedAudioUrl: string | null = null;
+    let generatedAudioBuffer: ArrayBuffer | null = null; // Store raw bytes to avoid base64 stack overflow
     let totalTokensUsed = 0;
     const startTime = Date.now();
 
@@ -456,7 +459,7 @@ serve(async (req) => {
 
         const toolResult = await executeTool(toolName, toolInput);
 
-        // Check for image in tool result
+        // Check for image/audio in tool result
         try {
           const parsed = JSON.parse(toolResult);
           if (parsed.imageUrl) {
@@ -467,12 +470,17 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
-          if (parsed.audioUrl) {
-            generatedAudioUrl = parsed.audioUrl;
+          if (parsed.audioKey) {
+            // Retrieve raw buffer stored by voice_message tool
+            const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
+            if (buf) {
+              generatedAudioBuffer = buf;
+              delete (globalThis as any).__audioBuffers[parsed.audioKey];
+            }
             finalReply = "🔊";
           }
-          if (parsed.audioBase64) {
-            generatedAudioUrl = parsed.audioBase64; // reuse variable, mark as base64
+          if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
         } catch { /* */ }
@@ -484,8 +492,8 @@ serve(async (req) => {
         });
       }
 
-      // If image was generated — no need for another LLM call, just exit loop
-      if (generatedImageUrl || generatedImageBase64 || generatedAudioUrl) break;
+      // If image/audio was generated — no need for another LLM call, just exit loop
+      if (generatedImageUrl || generatedImageBase64 || generatedAudioBuffer || generatedAudioUrl) break;
     }
 
     // Billing: charge user and log usage
@@ -515,21 +523,15 @@ serve(async (req) => {
       content: finalReply,
     });
 
-    if (generatedAudioUrl) {
-      // Send audio via multipart/form-data using FormData (native Deno support)
+    if (generatedAudioBuffer) {
+      // Send raw ArrayBuffer directly as Blob — no base64 needed, no stack overflow
       try {
-        // Decode base64 in chunks to avoid call stack issues with large files
-        const b64 = generatedAudioUrl;
-        const binaryStr = atob(b64);
-        const audioBytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
-        
-        const blob = new Blob([audioBytes], { type: "audio/mpeg" });
+        const blob = new Blob([generatedAudioBuffer], { type: "audio/mpeg" });
         const formData = new FormData();
         formData.append("chat_id", String(chatId));
         formData.append("voice", blob, "voice.mp3");
         
-        console.log("Sending voice, size:", audioBytes.byteLength);
+        console.log("Sending voice buffer, size:", generatedAudioBuffer.byteLength);
         const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
           method: "POST",
           body: formData,
@@ -537,17 +539,30 @@ serve(async (req) => {
         const voiceResText = await voiceRes.text();
         if (!voiceRes.ok) {
           console.error("sendVoice error:", voiceRes.status, voiceResText);
-          // Fallback: send text message
           await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение. Попробуйте ещё раз." }),
+            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
           });
         } else {
-          console.log("sendVoice success:", voiceResText.slice(0, 100));
+          console.log("sendVoice success");
         }
       } catch (e) {
         console.error("Voice send exception:", e);
+      }
+    } else if (generatedAudioUrl) {
+      // Legacy fallback with base64 URL
+      try {
+        const binaryStr = atob(generatedAudioUrl);
+        const audioBytes = new Uint8Array(binaryStr.length);
+        for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
+        const blob = new Blob([audioBytes], { type: "audio/mpeg" });
+        const formData = new FormData();
+        formData.append("chat_id", String(chatId));
+        formData.append("voice", blob, "voice.mp3");
+        await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, { method: "POST", body: formData });
+      } catch (e) {
+        console.error("Voice legacy send exception:", e);
       }
     } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
