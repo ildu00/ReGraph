@@ -379,6 +379,7 @@ serve(async (req) => {
     let generatedImageUrl: string | null = null;
     let generatedImageBase64: string | null = null;
     let generatedAudioUrl: string | null = null;
+    let totalTokensUsed = 0;
     const startTime = Date.now();
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
