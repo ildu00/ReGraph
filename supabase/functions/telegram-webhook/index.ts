@@ -383,7 +383,7 @@ function _buildPdfLegacy(content: string): Uint8Array {
   let off = 0;
   for (const p of parts) { result.set(p, off); off += p.length; }
   return result;
-}
+} // end _buildPdfLegacy
 
 async function executeTool(name: string, input: any): Promise<string> {
   console.log(`Executing tool: ${name}`, JSON.stringify(input));
