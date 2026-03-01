@@ -284,14 +284,17 @@ serve(async (req) => {
     }
 
     // Send reply to Telegram
-    // If the reply contains an imageUrl, send photo
+    // If the reply contains an imageUrl or imageBase64, send photo
     let imageUrl: string | null = null;
+    let imageBase64: string | null = null;
     try {
-      // Check last tool result for imageUrl
-      const lastToolMsg = [...messages].reverse().find(m => m.role === "tool");
-      if (lastToolMsg) {
-        const parsed = JSON.parse(lastToolMsg.content || "{}");
-        if (parsed.imageUrl) imageUrl = parsed.imageUrl;
+      // Check all tool results for imageUrl
+      for (const msg of [...messages].reverse()) {
+        if (msg.role === "tool") {
+          const parsed = JSON.parse(msg.content || "{}");
+          if (parsed.imageUrl) { imageUrl = parsed.imageUrl; break; }
+          if (parsed.imageBase64) { imageBase64 = parsed.imageBase64; break; }
+        }
       }
     } catch { /* */ }
 
@@ -300,6 +303,30 @@ serve(async (req) => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ chat_id: chatId, photo: imageUrl, caption: finalReply.slice(0, 1024) }),
+      });
+    } else if (imageBase64) {
+      // Send base64 image via multipart form
+      const boundary = "----FormBoundary" + Math.random().toString(36).slice(2);
+      const caption = finalReply.slice(0, 1024);
+      const imgBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
+      const parts: Uint8Array[] = [];
+      const enc = new TextEncoder();
+      const addField = (name: string, value: string) => {
+        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
+      };
+      addField("chat_id", String(chatId));
+      addField("caption", caption);
+      parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n`));
+      parts.push(imgBytes);
+      parts.push(enc.encode(`\r\n--${boundary}--\r\n`));
+      const totalLen = parts.reduce((s, p) => s + p.length, 0);
+      const body = new Uint8Array(totalLen);
+      let offset = 0;
+      for (const p of parts) { body.set(p, offset); offset += p.length; }
+      await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+        method: "POST",
+        headers: { "Content-Type": `multipart/form-data; boundary=${boundary}` },
+        body,
       });
     } else {
       // Telegram Markdown can fail with special chars — use plain text fallback
