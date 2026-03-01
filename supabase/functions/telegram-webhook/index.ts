@@ -237,6 +237,132 @@ async function executeTool(name: string, input: any): Promise<string> {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
     }
+    case "file_generator": {
+      const { filename, format, content } = input as { filename: string; format: string; content: string };
+      try {
+        let fileBytes: Uint8Array;
+        let mimeType: string;
+        let ext = format;
+
+        if (format === "pdf") {
+          // Build a minimal valid PDF in pure Deno/TypeScript
+          mimeType = "application/pdf";
+          const lines = content.split("\n");
+          const pageWidth = 595, pageHeight = 842, margin = 50, lineHeight = 14, fontSize = 11;
+          let y = pageHeight - margin;
+          const contentLines: string[] = [];
+          for (const line of lines) {
+            // Wrap long lines ~80 chars
+            const chunks = line.match(/.{1,90}/g) || [""];
+            for (const chunk of chunks) contentLines.push(chunk);
+          }
+
+          const textOps: string[] = [];
+          let pageContents: string[] = [];
+          let pages: string[] = [];
+
+          const encoder = new TextEncoder();
+          let pdfParts: Uint8Array[] = [];
+          let offset = 0;
+          const offsets: number[] = [];
+
+          const addPart = (s: string) => {
+            const b = encoder.encode(s);
+            pdfParts.push(b);
+            offset += b.byteLength;
+          };
+
+          addPart("%PDF-1.4\n");
+          // obj 1: catalog (will set after)
+          // obj 2: pages (will set after)
+          // obj 3: font
+          offsets[3] = offset;
+          addPart("3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>\nendobj\n");
+
+          // Build page content streams
+          const LINES_PER_PAGE = Math.floor((pageHeight - 2 * margin) / lineHeight);
+          const pageChunks: string[][] = [];
+          for (let i = 0; i < contentLines.length; i += LINES_PER_PAGE) {
+            pageChunks.push(contentLines.slice(i, i + LINES_PER_PAGE));
+          }
+          if (pageChunks.length === 0) pageChunks.push([""]);
+
+          const pageObjNums: number[] = [];
+          let nextObj = 4;
+
+          for (const chunk of pageChunks) {
+            // Content stream
+            let stream = `BT\n/F1 ${fontSize} Tf\n`;
+            let cy = pageHeight - margin;
+            for (const ln of chunk) {
+              // Escape special PDF chars
+              const safe = ln.replace(/\\/g, "\\\\").replace(/\(/g, "\\(").replace(/\)/g, "\\)");
+              stream += `${margin} ${cy} Td\n(${safe}) Tj\n0 ${-lineHeight} Td\n`;
+              cy -= lineHeight;
+            }
+            stream += "ET\n";
+            const streamBytes = encoder.encode(stream);
+
+            // Content stream object
+            const contentObjNum = nextObj++;
+            offsets[contentObjNum] = offset;
+            addPart(`${contentObjNum} 0 obj\n<< /Length ${streamBytes.byteLength} >>\nstream\n`);
+            pdfParts.push(streamBytes);
+            offset += streamBytes.byteLength;
+            addPart("\nendstream\nendobj\n");
+
+            // Page object
+            const pageObjNum = nextObj++;
+            pageObjNums.push(pageObjNum);
+            offsets[pageObjNum] = offset;
+            addPart(`${pageObjNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageWidth} ${pageHeight}] /Contents ${contentObjNum} 0 R /Resources << /Font << /F1 3 0 R >> >> >>\nendobj\n`);
+          }
+
+          // obj 2: pages
+          offsets[2] = offset;
+          addPart(`2 0 obj\n<< /Type /Pages /Kids [${pageObjNums.map(n => `${n} 0 R`).join(" ")}] /Count ${pageObjNums.length} >>\nendobj\n`);
+
+          // obj 1: catalog
+          offsets[1] = offset;
+          addPart("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
+
+          const xrefOffset = offset;
+          const totalObjs = nextObj;
+          let xref = `xref\n0 ${totalObjs}\n0000000000 65535 f \n`;
+          for (let i = 1; i < totalObjs; i++) {
+            xref += String(offsets[i] || 0).padStart(10, "0") + " 00000 n \n";
+          }
+          addPart(xref);
+          addPart(`trailer\n<< /Size ${totalObjs} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+
+          // Merge all parts
+          const totalLen = pdfParts.reduce((s, b) => s + b.byteLength, 0);
+          fileBytes = new Uint8Array(totalLen);
+          let pos = 0;
+          for (const part of pdfParts) { fileBytes.set(part, pos); pos += part.byteLength; }
+
+        } else {
+          mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
+          fileBytes = new TextEncoder().encode(content);
+        }
+
+        // Upload to storage
+        const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+          auth: { autoRefreshToken: false, persistSession: false },
+        });
+        const storageFilename = `file_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+        const { data: uploadData, error: uploadErr } = await adminClient.storage
+          .from("claw-images")
+          .upload(storageFilename, fileBytes, { contentType: mimeType, upsert: false });
+
+        if (uploadErr) return JSON.stringify({ error: "File upload failed: " + uploadErr.message });
+        const { data: { publicUrl } } = adminClient.storage.from("claw-images").getPublicUrl(uploadData.path);
+
+        return JSON.stringify({ fileUrl: publicUrl, filename, format, size: fileBytes.byteLength, message: "File generated successfully" });
+      } catch (e) {
+        return JSON.stringify({ error: "File generation failed: " + String(e) });
+      }
+    }
     default:
       return JSON.stringify({ error: `Unknown tool: ${name}` });
   }
