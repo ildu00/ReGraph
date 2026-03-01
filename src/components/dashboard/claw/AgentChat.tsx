@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X
+  ImagePlus, FileUp, X, Volume2
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
