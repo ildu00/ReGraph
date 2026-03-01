@@ -517,7 +517,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
-      ...pairedMessages.map((m) => ({
+      ...pairedMessages.slice(-50).map((m) => ({
         role: m.role,
         content: m.content || "",
       })),

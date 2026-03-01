@@ -297,12 +297,23 @@ const ChatTab = () => {
         headers["X-API-Key"] = userApiKey;
       }
 
+      // Build conversation history (last 50 messages) for context
+      const historyMessages = messages.slice(-50).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      const messagesForApi = [
+        ...historyMessages,
+        { role: "user", content: fullPrompt },
+      ];
+
       const resp = await fetch(INFERENCE_URL, {
         method: "POST",
         headers,
         body: JSON.stringify({
           model: selectedModel,
           prompt: fullPrompt,
+          messages: messagesForApi,
           temperature: 0.7,
           maxTokens: 2048,
           category: modelInfo?.category || "chat",
