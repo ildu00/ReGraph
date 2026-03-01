@@ -1068,6 +1068,7 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     image_generation: "Image Generation",
     document_reader: "Document Reader",
     voice_message: "Voice Message",
+    file_generator: "File Generator",
   };
 
   const renderResult = () => {
