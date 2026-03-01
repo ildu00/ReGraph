@@ -281,6 +281,7 @@ serve(async (req) => {
     // Agentic loop
     const messages: any[] = [
       { role: "system", content: agent.system_prompt || "You are a helpful assistant." },
+      ...historyMessages,
       { role: "user", content: userText },
     ];
 
