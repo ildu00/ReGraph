@@ -645,26 +645,34 @@ serve(async (req) => {
     });
     await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
-    if (generatedFileUrl) {
-      // Send file via sendDocument
+    if (generatedFileKey) {
+      // Send file via multipart FormData (no URL — Telegram can't fetch from Supabase Storage)
       try {
-        const docRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            document: generatedFileUrl,
-            caption: `📄 ${generatedFileName || "File"}`,
-          }),
-        });
-        if (!docRes.ok) {
-          const err = await docRes.text();
-          console.error("sendDocument error:", docRes.status, err);
-          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        const fileData = (globalThis as any).__fileBuffers?.[generatedFileKey];
+        if (fileData) {
+          delete (globalThis as any).__fileBuffers[generatedFileKey];
+          const blob = new Blob([fileData.bytes], { type: fileData.mimeType });
+          const formData = new FormData();
+          formData.append("chat_id", String(chatId));
+          formData.append("document", blob, fileData.filename);
+          formData.append("caption", `📄 ${fileData.filename}`);
+          const docRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: chatId, text: `📄 [${generatedFileName}](${generatedFileUrl})`, parse_mode: "Markdown" }),
+            body: formData,
           });
+          if (!docRes.ok) {
+            const err = await docRes.text();
+            console.error("sendDocument multipart error:", docRes.status, err);
+            await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ chat_id: chatId, text: "⚠️ Не удалось отправить файл." }),
+            });
+          } else {
+            console.log("sendDocument multipart success:", fileData.filename);
+          }
+        } else {
+          console.error("File buffer not found for key:", generatedFileKey);
         }
       } catch (e) {
         console.error("File send exception:", e);
