@@ -691,7 +691,22 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           // If any tool was image_generation or voice_message — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
-          if (hadImageGen || hadVoice) break;
+          if (hadImageGen) break;
+          if (hadVoice) {
+            // Find the audio result and persist an assistant message with audio_url embedded
+            const voiceTc = assistantMsg.tool_calls.find((tc: any) => tc.function?.name === "voice_message");
+            if (voiceTc) {
+              const toolInput = JSON.parse(voiceTc.function?.arguments || "{}");
+              const audioResult = await executeTool("voice_message", toolInput, apiKey);
+              const audioUrl = audioResult?.audio_url;
+              // Embed audio_url in content so it survives DB round-trips
+              const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
+              const audioMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            }
+            break;
+          }
 
           // Prepare new streaming placeholder for next iteration's final answer
           currentStreamingId = crypto.randomUUID();
