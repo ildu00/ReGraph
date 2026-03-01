@@ -724,6 +724,9 @@ ${allStrings.map(s => `<si><t xml:space="preserve">${s.replace(/&/g,"&amp;").rep
         } else if (format === "docx") {
           bytes = await buildDocx(content);
           mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        } else if (format === "xlsx") {
+          bytes = await buildXlsx(content);
+          mimeType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
         } else if (format === "csv") {
           bytes = new TextEncoder().encode(content);
           mimeType = "text/csv";
