@@ -491,17 +491,17 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
+        if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
+            finalReply = "🔊";
+          }
           if (parsed.audioKey) {
-            // Retrieve raw buffer stored by voice_message tool
+            // Fallback: retrieve raw buffer stored in memory
             const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
             if (buf) {
               generatedAudioBuffer = buf;
               delete (globalThis as any).__audioBuffers[parsed.audioKey];
             }
-            finalReply = "🔊";
-          }
-          if (parsed.audioUrl) {
-            generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
         } catch { /* */ }
