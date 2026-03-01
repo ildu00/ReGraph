@@ -1128,7 +1128,8 @@ serve(async (req) => {
 
     // Check for tool calls
     if (assistantMsg.tool_calls && assistantMsg.tool_calls.length > 0) {
-      messages.push({ role: "assistant", content: assistantMsg.content || "" });
+      // MUST push full assistant message with tool_calls, otherwise tool role messages fail validation
+      messages.push({ role: "assistant", content: assistantMsg.content || "", tool_calls: assistantMsg.tool_calls } as any);
 
       for (const toolCall of assistantMsg.tool_calls) {
         const toolName = toolCall.function.name;
