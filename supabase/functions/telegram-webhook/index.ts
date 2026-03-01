@@ -102,30 +102,43 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "image_generation": {
       const prompt = input?.prompt || "";
       try {
-        const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-        if (!lovableKey) return JSON.stringify({ error: "Image generation not configured" });
-        // Use the same model as the website Claw agent
-        const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        // Call model-inference exactly like the website Claw agent does
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
-          body: JSON.stringify({
-            model: "google/gemini-2.5-flash-image",
-            messages: [{ role: "user", content: prompt }],
-            modalities: ["image", "text"],
-          }),
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ model: "sdxl-turbo", prompt, category: "image-gen" }),
         });
         const data = await res.json();
         console.log("Image generation status:", res.status, JSON.stringify(data).slice(0, 400));
-        // Extract image URL from images array (same path as model-inference)
-        const imageUrl = data?.choices?.[0]?.message?.images?.[0]?.image_url?.url ?? null;
-        if (imageUrl) {
-          if (imageUrl.startsWith("data:")) {
-            const b64 = imageUrl.split(",")[1];
-            if (b64) return JSON.stringify({ imageBase64: b64, message: "Image generated" });
+        const rawUrl: string | undefined = data?.imageUrl || data?.data?.[0]?.url || data?.url;
+        if (!rawUrl) return JSON.stringify({ error: data?.error || "Image generation failed" });
+        // If base64 — upload to claw-images storage bucket and return public URL
+        if (rawUrl.startsWith("data:")) {
+          try {
+            const [meta, base64] = rawUrl.split(",");
+            const mimeMatch = meta.match(/data:([^;]+);/);
+            const mimeType = mimeMatch?.[1] || "image/png";
+            const ext = mimeType.split("/")[1] || "png";
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+            const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+            const storageRes = await fetch(
+              `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+              { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": mimeType, "x-upsert": "false" }, body: bytes }
+            );
+            if (storageRes.ok) {
+              const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+              return JSON.stringify({ imageUrl: publicUrl, message: "Image generated" });
+            }
+          } catch (e) {
+            console.warn("Storage upload failed:", e);
           }
-          return JSON.stringify({ imageUrl, message: "Image generated" });
+          // Fallback: send raw base64
+          const b64 = rawUrl.split(",")[1];
+          return JSON.stringify({ imageBase64: b64, message: "Image generated" });
         }
-        return JSON.stringify({ error: "Image generation failed: " + JSON.stringify(data).slice(0, 300) });
+        return JSON.stringify({ imageUrl: rawUrl, message: "Image generated" });
       } catch (e) {
         return JSON.stringify({ error: "Image generation failed: " + String(e) });
       }
