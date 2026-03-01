@@ -727,11 +727,21 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       }
     }
 
+    // Sanitize content for LLM: strip large base64/binary data, replace with placeholder
+    const sanitizeContentForLLM = (content: string | null): string => {
+      if (!content) return "";
+      // Replace base64 image data with placeholder
+      if (content.startsWith("__IMAGE__:data:")) return "[image generated]";
+      if (content.startsWith("__AUDIO__:")) return "[audio message]";
+      // Strip inline base64 images from content (e.g. attached images)
+      return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, "[attached image]");
+    };
+
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
-      ...pairedMessages.slice(-50).map((m) => ({
+      ...pairedMessages.slice(-20).map((m) => ({
         role: m.role,
-        content: m.content || "",
+        content: sanitizeContentForLLM(m.content),
       })),
       { role: "user", content: fullUserText },
     ];
