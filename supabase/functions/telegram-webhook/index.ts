@@ -186,10 +186,10 @@ async function executeTool(name: string, input: any): Promise<string> {
           return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
         }
         const audioBytes = new Uint8Array(await res.arrayBuffer());
-        const fileName = `tts-${Date.now()}.ogg`;
+        const fileName = `tts-${Date.now()}.opus`;
         const storageRes = await fetch(
           `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
-          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/ogg", "x-upsert": "false" }, body: audioBytes }
+          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/opus", "x-upsert": "false" }, body: audioBytes }
         );
         if (storageRes.ok) {
           const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
