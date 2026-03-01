@@ -187,7 +187,28 @@ async function executeTool(name: string, input: any): Promise<string> {
         }
         const audioBuffer = await res.arrayBuffer();
         console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
-        // Store raw buffer in a module-level map keyed by timestamp to avoid base64 encoding
+        // Upload to Supabase Storage so Telegram can access a stable public URL
+        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+        const storageRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+              "Content-Type": "audio/mpeg",
+              "x-upsert": "false",
+            },
+            body: new Uint8Array(audioBuffer),
+          }
+        );
+        if (storageRes.ok) {
+          const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+          console.log("Audio uploaded to storage:", publicUrl);
+          return JSON.stringify({ audioUrl: publicUrl, audioFormat: "mp3", message: "Voice message generated" });
+        }
+        const storageErr = await storageRes.text();
+        console.error("Audio storage upload failed:", storageRes.status, storageErr);
+        // Fallback: store raw buffer in memory
         const audioKey = `audio_${Date.now()}`;
         (globalThis as any).__audioBuffers = (globalThis as any).__audioBuffers || {};
         (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
@@ -470,17 +491,17 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
+        if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
+            finalReply = "🔊";
+          }
           if (parsed.audioKey) {
-            // Retrieve raw buffer stored by voice_message tool
+            // Fallback: retrieve raw buffer stored in memory
             const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
             if (buf) {
               generatedAudioBuffer = buf;
               delete (globalThis as any).__audioBuffers[parsed.audioKey];
             }
-            finalReply = "🔊";
-          }
-          if (parsed.audioUrl) {
-            generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
         } catch { /* */ }
@@ -523,18 +544,14 @@ serve(async (req) => {
       content: finalReply,
     });
 
-    if (generatedAudioBuffer) {
-      // Send raw ArrayBuffer directly as Blob — no base64 needed, no stack overflow
+    if (generatedAudioUrl) {
+      // Send voice via public Storage URL directly
       try {
-        const blob = new Blob([generatedAudioBuffer], { type: "audio/mpeg" });
-        const formData = new FormData();
-        formData.append("chat_id", String(chatId));
-        formData.append("voice", blob, "voice.mp3");
-        
-        console.log("Sending voice buffer, size:", generatedAudioBuffer.byteLength);
+        console.log("Sending voice via URL:", generatedAudioUrl);
         const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
           method: "POST",
-          body: formData,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
         });
         const voiceResText = await voiceRes.text();
         if (!voiceRes.ok) {
@@ -545,24 +562,33 @@ serve(async (req) => {
             body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
           });
         } else {
-          console.log("sendVoice success");
+          console.log("sendVoice success via URL");
         }
       } catch (e) {
         console.error("Voice send exception:", e);
       }
-    } else if (generatedAudioUrl) {
-      // Legacy fallback with base64 URL
+    } else if (generatedAudioBuffer) {
+      // Fallback: send raw buffer via multipart
       try {
-        const binaryStr = atob(generatedAudioUrl);
-        const audioBytes = new Uint8Array(binaryStr.length);
-        for (let i = 0; i < binaryStr.length; i++) audioBytes[i] = binaryStr.charCodeAt(i);
-        const blob = new Blob([audioBytes], { type: "audio/mpeg" });
+        const blob = new Blob([generatedAudioBuffer], { type: "audio/mpeg" });
         const formData = new FormData();
         formData.append("chat_id", String(chatId));
         formData.append("voice", blob, "voice.mp3");
-        await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, { method: "POST", body: formData });
+        const voiceRes = await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+          method: "POST",
+          body: formData,
+        });
+        const voiceResText = await voiceRes.text();
+        if (!voiceRes.ok) {
+          console.error("sendVoice buffer error:", voiceRes.status, voiceResText);
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: "🔊 Не удалось отправить голосовое сообщение." }),
+          });
+        }
       } catch (e) {
-        console.error("Voice legacy send exception:", e);
+        console.error("Voice buffer send exception:", e);
       }
     } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {

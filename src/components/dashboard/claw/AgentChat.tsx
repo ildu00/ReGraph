@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X
+  ImagePlus, FileUp, X, Volume2
 } from "lucide-react";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
@@ -38,6 +38,7 @@ const TOOL_ICONS: Record<string, any> = {
   web_search: Globe,
   image_generation: Image,
   document_reader: BookOpen,
+  voice_message: Volume2,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
@@ -138,6 +139,39 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         return { image_url: rawUrl };
       } catch {
         return { error: "Image generation failed" };
+      }
+    }
+    case "voice_message": {
+      const text = input?.text || "";
+      const voice = input?.voice || "nova";
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-speech`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
+          }
+        );
+        if (!res.ok) return { error: "TTS failed" };
+        const audioBuffer = await res.arrayBuffer();
+        // Upload to claw-images storage bucket for stable URL
+        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+        const bytes = new Uint8Array(audioBuffer);
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from("claw-images")
+          .upload(fileName, bytes, { contentType: "audio/mpeg", upsert: false });
+        if (uploadData?.path) {
+          const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+          return { audio_url: publicUrl };
+        }
+        if (uploadErr) console.warn("[voice_message] Storage upload failed:", uploadErr);
+        // Fallback: return blob URL for in-session playback
+        const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
+        const blobUrl = URL.createObjectURL(blob);
+        return { audio_url: blobUrl };
+      } catch {
+        return { error: "Voice generation failed" };
       }
     }
     case "document_reader": {
@@ -247,6 +281,23 @@ function buildToolDefs(toolIds: string[]) {
           type: "object",
           properties: { filename: { type: "string" } },
           required: ["filename"],
+        },
+      },
+    });
+  }
+  if (toolIds.includes("voice_message")) {
+    defs.push({
+      type: "function",
+      function: {
+        name: "voice_message",
+        description: "Convert text to speech and send it as a voice message. Use when the user asks to speak, read aloud, or send a voice note.",
+        parameters: {
+          type: "object",
+          properties: {
+            text: { type: "string", description: "The text to convert to speech" },
+            voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style (default: nova)" },
+          },
+          required: ["text"],
         },
       },
     });
@@ -903,10 +954,20 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     code_interpreter: "Code Interpreter",
     image_generation: "Image Generation",
     document_reader: "Document Reader",
+    voice_message: "Voice Message",
   };
 
   const renderResult = () => {
     if (!msg.tool_result) return null;
+
+    // Voice message — audio player
+    if (msg.tool_result?.audio_url) {
+      return (
+        <div className="mt-1">
+          <audio controls src={msg.tool_result.audio_url} className="w-full h-10 rounded" preload="metadata" />
+        </div>
+      );
+    }
 
     // Image generation
     if (msg.tool_result?.image_url) {
