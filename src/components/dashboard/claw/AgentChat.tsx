@@ -10,7 +10,6 @@ import {
   ImagePlus, FileUp, X, Volume2, Download, FileText
 } from "lucide-react";
 import * as XLSX from "xlsx";
-import { jsPDF } from "jspdf";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
