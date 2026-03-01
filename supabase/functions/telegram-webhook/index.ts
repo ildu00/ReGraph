@@ -178,7 +178,7 @@ async function executeTool(name: string, input: any): Promise<string> {
         const res = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ model: "tts-1", input: text, voice, response_format: "opus" }),
+          body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "opus" }),
         });
         if (!res.ok) {
           const err = await res.text();
