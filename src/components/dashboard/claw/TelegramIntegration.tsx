@@ -51,10 +51,8 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
     if (!user) return;
     setLoading(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("telegram-bot-setup", {
         body: { action: "list" },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
       if (res.data?.bots) setBots(res.data.bots);
     } catch {
@@ -67,10 +65,8 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
 
   const handleDisconnect = async () => {
     if (!deleteTarget) return;
-    const { data: { session } } = await supabase.auth.getSession();
     const res = await supabase.functions.invoke("telegram-bot-setup", {
       body: { action: "disconnect", bot_id: deleteTarget.id },
-      headers: { Authorization: `Bearer ${session?.access_token}` },
     });
     if (res.data?.ok) {
       toast.success("Bot disconnected");
@@ -216,19 +212,19 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
     if (!botToken.trim() || !agentId) return;
     setSaving(true);
     try {
-      const { data: { session } } = await supabase.auth.getSession();
       const res = await supabase.functions.invoke("telegram-bot-setup", {
         body: { action: "connect", bot_token: botToken.trim(), agent_id: agentId },
-        headers: { Authorization: `Bearer ${session?.access_token}` },
       });
-      if (res.data?.ok) {
+      if (res.error) {
+        toast.error(res.error.message || "Failed to connect bot");
+      } else if (res.data?.ok) {
         toast.success(`Bot @${res.data.bot_username} connected!`);
         onConnected();
       } else {
         toast.error(res.data?.error || "Failed to connect bot. Check your token.");
       }
-    } catch {
-      toast.error("Connection failed");
+    } catch (e: any) {
+      toast.error(e?.message || "Connection failed");
     }
     setSaving(false);
   };
@@ -249,17 +245,16 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
             <ol className="list-decimal list-inside space-y-0.5">
               <li>Open Telegram and search for <span className="font-mono">@BotFather</span></li>
               <li>Send <span className="font-mono">/newbot</span> and follow the instructions</li>
-              <li>Copy the API token provided by BotFather</li>
+              <li>Copy the API token (format: <span className="font-mono">1234567890:AAF...</span>)</li>
             </ol>
           </div>
 
           <div className="space-y-1.5">
             <Label>Bot Token</Label>
             <Input
-              placeholder="123456789:AAFxxxx..."
+              placeholder="1234567890:AAFxxxx..."
               value={botToken}
               onChange={(e) => setBotToken(e.target.value)}
-              type="password"
             />
           </div>
 
