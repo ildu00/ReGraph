@@ -1088,8 +1088,8 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     // File generator — download button
     if (msg.tool_result?.file_url) {
       const { file_url, filename, format, size } = msg.tool_result;
-      const isPdfHtml = format === "pdf_html";
-      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕", pdf_html: "📕" };
+      const isPdfHtml = false;
+      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
       const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
       return (
         <div className="mt-1 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
