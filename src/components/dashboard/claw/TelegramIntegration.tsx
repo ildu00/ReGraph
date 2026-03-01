@@ -168,7 +168,7 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
         open={modalOpen}
         onClose={() => setModalOpen(false)}
         agents={agents}
-        onConnected={() => { setModalOpen(false); fetchBots(); }}
+        onConnected={async () => { setModalOpen(false); await fetchBots(); }}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
