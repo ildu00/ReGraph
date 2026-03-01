@@ -82,16 +82,32 @@ async function buildPdf(content: string): Promise<Uint8Array> {
   const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
   const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
 
-  // NotoSans supports Cyrillic; served via Google Fonts CDN
-  const fontUrl = "https://fonts.gstatic.com/s/notosans/v36/o-0bIpQlx3QUlC5A4PNjFhFfY-BqpsHh.woff2";
-  const fontRes = await fetch(fontUrl);
-  if (!fontRes.ok) throw new Error("Failed to fetch font: " + fontRes.status);
+  // Try multiple CDN sources for the TTF font with Cyrillic support
+  const fontUrls = [
+    "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans-Regular.ttf",
+    "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.1/files/noto-sans-cyrillic-400-normal.woff2",
+    "https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNjKhZJADs.ttf",
+  ];
 
-  // woff2 is not supported by pdf-lib; fall back to a TTF from jsDelivr
-  const ttfUrl = "https://cdn.jsdelivr.net/gh/notofonts/notofonts.github.io@main/fonts/NotoSans/hinted/ttf/NotoSans-Regular.ttf";
-  const ttfRes = await fetch(ttfUrl);
-  if (!ttfRes.ok) throw new Error("Failed to fetch TTF font: " + ttfRes.status);
-  const fontBytes = new Uint8Array(await ttfRes.arrayBuffer());
+  let fontBytes: Uint8Array | null = null;
+  for (const url of fontUrls) {
+    try {
+      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      if (res.ok) {
+        const buf = await res.arrayBuffer();
+        if (buf.byteLength > 10000) { // sanity check - real font file
+          fontBytes = new Uint8Array(buf);
+          break;
+        }
+      }
+    } catch {
+      // try next
+    }
+  }
+
+  if (!fontBytes) {
+    throw new Error("Could not load font from any CDN source");
+  }
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
