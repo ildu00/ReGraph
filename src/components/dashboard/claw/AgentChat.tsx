@@ -818,7 +818,17 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) break;
-          if (hadFileGen) break;
+          if (hadFileGen) {
+            // Embed file URL in content so it survives DB round-trips (same pattern as audio)
+            const fileResult = toolResults["file_generator"];
+            if (fileResult?.file_url && !fileResult.file_url.startsWith("blob:")) {
+              const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
+              const fileMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: fileContent });
+            }
+            break;
+          }
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
