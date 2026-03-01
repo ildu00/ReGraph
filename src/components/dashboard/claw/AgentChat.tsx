@@ -938,7 +938,19 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
-          if (hadImageGen) break;
+          if (hadImageGen) {
+            const imageResult = toolResults["image_generation"];
+            if (imageResult?.image_url) {
+              const imgContent = `__IMAGE__:${imageResult.image_url}`;
+              const imgMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: imgMsgId, role: "assistant", content: imgContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: imgContent });
+            } else if (imageResult?.error) {
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` });
+            }
+            break;
+          }
           if (hadFileGen) {
             // Embed file URL in content so it survives DB round-trips (same pattern as audio)
             const fileResult = toolResults["file_generator"];
