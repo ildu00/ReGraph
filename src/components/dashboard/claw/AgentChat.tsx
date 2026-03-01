@@ -140,6 +140,39 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         return { error: "Image generation failed" };
       }
     }
+    case "voice_message": {
+      const text = input?.text || "";
+      const voice = input?.voice || "nova";
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/audio-speech`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+            body: JSON.stringify({ model: "tts-openai/tts-1", input: text, voice, response_format: "mp3" }),
+          }
+        );
+        if (!res.ok) return { error: "TTS failed" };
+        const audioBuffer = await res.arrayBuffer();
+        // Upload to claw-images storage bucket for stable URL
+        const fileName = `voice_${Date.now()}_${Math.random().toString(36).slice(2)}.mp3`;
+        const bytes = new Uint8Array(audioBuffer);
+        const { data: uploadData, error: uploadErr } = await supabase.storage
+          .from("claw-images")
+          .upload(fileName, bytes, { contentType: "audio/mpeg", upsert: false });
+        if (uploadData?.path) {
+          const { data: { publicUrl } } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
+          return { audio_url: publicUrl };
+        }
+        if (uploadErr) console.warn("[voice_message] Storage upload failed:", uploadErr);
+        // Fallback: return blob URL for in-session playback
+        const blob = new Blob([audioBuffer], { type: "audio/mpeg" });
+        const blobUrl = URL.createObjectURL(blob);
+        return { audio_url: blobUrl };
+      } catch {
+        return { error: "Voice generation failed" };
+      }
+    }
     case "document_reader": {
       const attachedFiles: File[] = (input as any)?.__attachedFiles || [];
       const fileToRead = attachedFiles.find(f => !f.type.startsWith("image/")) || attachedFiles[0];
