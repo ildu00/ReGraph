@@ -1,5 +1,11 @@
 project_id = "rwzyvgralronyuzqwyhu"
 
+[functions.telegram-bot-setup]
+verify_jwt = false
+
+[functions.telegram-webhook]
+verify_jwt = false
+
 [functions.api-playground]
 verify_jwt = false
 
