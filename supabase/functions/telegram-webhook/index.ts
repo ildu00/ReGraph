@@ -10,14 +10,13 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY")!;
 
-// Build tool definitions from agent tools list (same as AgentFormModal TOOLS)
 const TOOL_DEFINITIONS: Record<string, object> = {
   calculator: {
     type: "function",
     function: {
       name: "calculator",
-      description: "Perform mathematical calculations. Use for any math operations.",
-      parameters: { type: "object", properties: { expression: { type: "string", description: "The mathematical expression to evaluate, e.g. '2 + 2 * 10'" } }, required: ["expression"] },
+      description: "Perform mathematical calculations.",
+      parameters: { type: "object", properties: { expression: { type: "string" } }, required: ["expression"] },
     },
   },
   web_search: {
@@ -33,7 +32,7 @@ const TOOL_DEFINITIONS: Record<string, object> = {
     function: {
       name: "code_interpreter",
       description: "Execute code in JavaScript, Python, or TypeScript and return the output.",
-      parameters: { type: "object", properties: { code: { type: "string", description: "The code to execute" }, language: { type: "string", enum: ["javascript", "python", "typescript"], description: "Programming language" } }, required: ["code"] },
+      parameters: { type: "object", properties: { code: { type: "string" }, language: { type: "string", enum: ["javascript", "python", "typescript"] } }, required: ["code"] },
     },
   },
   image_generation: {
@@ -48,13 +47,14 @@ const TOOL_DEFINITIONS: Record<string, object> = {
     type: "function",
     function: {
       name: "document_reader",
-      description: "Read and extract text from documents or URLs.",
-      parameters: { type: "object", properties: { url: { type: "string", description: "The URL of the document or webpage to read" } }, required: ["url"] },
+      description: "Read and extract text content from a URL or webpage.",
+      parameters: { type: "object", properties: { url: { type: "string", description: "The URL of the webpage to read" } }, required: ["url"] },
     },
   },
 };
 
 async function executeTool(name: string, input: any): Promise<string> {
+  console.log(`Executing tool: ${name}`, JSON.stringify(input));
   switch (name) {
     case "calculator": {
       try {
@@ -68,19 +68,20 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "web_search": {
       const query = input?.query || "";
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-web-search`, {
+        const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
+        if (!apiKey) return JSON.stringify({ error: "Search not configured" });
+        const res = await fetch("https://api.firecrawl.dev/v1/search", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ query }),
+          headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ query, limit: 5 }),
         });
         const data = await res.json();
-        if (data.results?.length) {
-          const formatted = data.results.map((r: any) => `${r.title}\n${r.url}\n${r.description || ""}`).join("\n\n");
-          return JSON.stringify({ results: formatted });
-        }
-        return JSON.stringify({ results: "No results found." });
-      } catch {
-        return JSON.stringify({ error: "Web search failed." });
+        console.log("Web search response status:", res.status, "ok:", res.ok);
+        if (!res.ok) return JSON.stringify({ error: `Search failed: ${data.error || res.status}` });
+        const results = (data.data || []).map((r: any) => `${r.title}\n${r.url}\n${r.description || ""}`).join("\n\n");
+        return JSON.stringify({ results: results || "No results found." });
+      } catch (e) {
+        return JSON.stringify({ error: "Web search failed: " + String(e) });
       }
     }
     case "code_interpreter": {
@@ -110,10 +111,8 @@ async function executeTool(name: string, input: any): Promise<string> {
         });
         const data = await res.json();
         console.log("Image generation response:", JSON.stringify(data));
-        const imageUrl = data?.data?.[0]?.url || data?.data?.[0]?.b64_json ? null : null;
-        const url = data?.data?.[0]?.url;
-        if (url) return JSON.stringify({ imageUrl: url, message: "Image generated" });
-        // b64 fallback
+        const imageUrl = data?.data?.[0]?.url;
+        if (imageUrl) return JSON.stringify({ imageUrl, message: "Image generated" });
         const b64 = data?.data?.[0]?.b64_json;
         if (b64) return JSON.stringify({ imageBase64: b64, message: "Image generated" });
         return JSON.stringify({ error: "No image returned: " + JSON.stringify(data) });
@@ -124,17 +123,17 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "document_reader": {
       const url = input?.url || "";
       try {
-        // Use Firecrawl to scrape the URL content
         const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
-        if (!firecrawlKey) return JSON.stringify({ error: "Firecrawl not configured" });
+        if (!firecrawlKey) return JSON.stringify({ error: "Document reader not configured" });
         const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
           headers: { "Authorization": `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
           body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
         });
         const data = await res.json();
+        console.log("Document reader response status:", res.status, "ok:", res.ok);
         const content = data?.data?.markdown || data?.markdown || "";
-        if (!content) return JSON.stringify({ error: "Could not extract content from URL" });
+        if (!content) return JSON.stringify({ error: "Could not extract content from URL. Response: " + JSON.stringify(data).slice(0, 200) });
         return JSON.stringify({ content: content.slice(0, 8000) });
       } catch (e) {
         return JSON.stringify({ error: "Document reading failed: " + String(e) });
@@ -159,7 +158,6 @@ serve(async (req) => {
 
     const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
-    // Find bot and linked agent
     const { data: bot, error: botError } = await supabase
       .from("claw_telegram_bots")
       .select("*, claw_agents(*)")
@@ -198,6 +196,8 @@ serve(async (req) => {
       .filter((t: string) => TOOL_DEFINITIONS[t])
       .map((t: string) => TOOL_DEFINITIONS[t]);
 
+    console.log(`Agent tools: ${agentTools.join(", ")}, toolDefs count: ${toolDefs.length}`);
+
     // Model mapping
     const modelMapping: Record<string, string> = {
       "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
@@ -219,6 +219,8 @@ serve(async (req) => {
 
     let finalReply = "Sorry, I couldn't process your request.";
     const MAX_ITERATIONS = 5;
+    let generatedImageUrl: string | null = null;
+    let generatedImageBase64: string | null = null;
 
     for (let i = 0; i < MAX_ITERATIONS; i++) {
       const reqBody: any = {
@@ -242,7 +244,8 @@ serve(async (req) => {
       });
 
       if (!inferenceRes.ok) {
-        console.error("Inference error:", inferenceRes.status, await inferenceRes.text());
+        const errText = await inferenceRes.text();
+        console.error("Inference error:", inferenceRes.status, errText);
         break;
       }
 
@@ -272,8 +275,14 @@ serve(async (req) => {
         let toolInput: any = {};
         try { toolInput = JSON.parse(toolCall.function?.arguments || "{}"); } catch { /* */ }
 
-        console.log(`Executing tool: ${toolName}`, toolInput);
         const toolResult = await executeTool(toolName, toolInput);
+
+        // Check for image in tool result
+        try {
+          const parsed = JSON.parse(toolResult);
+          if (parsed.imageUrl) generatedImageUrl = parsed.imageUrl;
+          if (parsed.imageBase64) generatedImageBase64 = parsed.imageBase64;
+        } catch { /* */ }
 
         messages.push({
           role: "tool",
@@ -284,41 +293,25 @@ serve(async (req) => {
     }
 
     // Send reply to Telegram
-    // If the reply contains an imageUrl or imageBase64, send photo
-    let imageUrl: string | null = null;
-    let imageBase64: string | null = null;
-    try {
-      // Check all tool results for imageUrl
-      for (const msg of [...messages].reverse()) {
-        if (msg.role === "tool") {
-          const parsed = JSON.parse(msg.content || "{}");
-          if (parsed.imageUrl) { imageUrl = parsed.imageUrl; break; }
-          if (parsed.imageBase64) { imageBase64 = parsed.imageBase64; break; }
-        }
-      }
-    } catch { /* */ }
-
-    if (imageUrl) {
+    if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, photo: imageUrl, caption: finalReply.slice(0, 1024) }),
+        body: JSON.stringify({ chat_id: chatId, photo: generatedImageUrl, caption: finalReply.slice(0, 1024) }),
       });
-    } else if (imageBase64) {
-      // Send base64 image via multipart form
+    } else if (generatedImageBase64) {
+      // Send base64 image via multipart
       const boundary = "----FormBoundary" + Math.random().toString(36).slice(2);
       const caption = finalReply.slice(0, 1024);
-      const imgBytes = Uint8Array.from(atob(imageBase64), c => c.charCodeAt(0));
-      const parts: Uint8Array[] = [];
+      const imgBytes = Uint8Array.from(atob(generatedImageBase64), c => c.charCodeAt(0));
       const enc = new TextEncoder();
-      const addField = (name: string, value: string) => {
-        parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`));
-      };
-      addField("chat_id", String(chatId));
-      addField("caption", caption);
-      parts.push(enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n`));
-      parts.push(imgBytes);
-      parts.push(enc.encode(`\r\n--${boundary}--\r\n`));
+      const parts: Uint8Array[] = [
+        enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="chat_id"\r\n\r\n${chatId}\r\n`),
+        enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="caption"\r\n\r\n${caption}\r\n`),
+        enc.encode(`--${boundary}\r\nContent-Disposition: form-data; name="photo"; filename="image.png"\r\nContent-Type: image/png\r\n\r\n`),
+        imgBytes,
+        enc.encode(`\r\n--${boundary}--\r\n`),
+      ];
       const totalLen = parts.reduce((s, p) => s + p.length, 0);
       const body = new Uint8Array(totalLen);
       let offset = 0;
@@ -329,7 +322,7 @@ serve(async (req) => {
         body,
       });
     } else {
-      // Telegram Markdown can fail with special chars — use plain text fallback
+      // Send text message with Markdown fallback to plain text
       const sendMsg = async (parseMode?: string) => {
         return fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST",
@@ -344,7 +337,6 @@ serve(async (req) => {
 
       const msgRes = await sendMsg("Markdown");
       if (!msgRes.ok) {
-        // Fallback: send without markdown
         await sendMsg();
       }
     }
