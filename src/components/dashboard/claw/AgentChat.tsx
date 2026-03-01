@@ -923,13 +923,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) {
+            // ToolCallMessage already renders the image from tool_result.image_url — no duplicate message needed
             const imageResult = toolResults["image_generation"];
-            if (imageResult?.image_url) {
-              const imgContent = `__IMAGE__:${imageResult.image_url}`;
-              const imgMsgId = crypto.randomUUID();
-              setMessages((prev) => [...prev, { id: imgMsgId, role: "assistant", content: imgContent }]);
-              await persistMessage(conversationId, { role: "assistant", content: imgContent });
-            } else if (imageResult?.error) {
+            if (!imageResult?.image_url && imageResult?.error) {
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` }]);
               await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` });
             }
