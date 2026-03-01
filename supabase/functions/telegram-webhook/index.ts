@@ -246,93 +246,57 @@ async function executeTool(name: string, input: any): Promise<string> {
 
         if (format === "pdf") {
           mimeType = "application/pdf";
+          console.log("Starting PDF generation with font embedding...");
 
-          // Encode a Unicode string as UTF-16BE hex for PDF text operators
-          const toUTF16BEHex = (str: string): string => {
-            let hex = "FEFF"; // BOM
-            for (let i = 0; i < str.length; i++) {
-              const code = str.charCodeAt(i);
-              hex += code.toString(16).padStart(4, "0");
-            }
-            return hex;
-          };
+          // Fetch DejaVu Sans TTF (supports Cyrillic) from jsDelivr
+          const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
+          if (!fontRes.ok) throw new Error("Font fetch failed: " + fontRes.status);
+          const fontBuf = new Uint8Array(await fontRes.arrayBuffer());
+          console.log("Font fetched, bytes:", fontBuf.byteLength);
 
-          const pageW = 595, pageH = 842, margin = 50, lh = 16, fs = 11;
-          const charsPerLine = Math.floor((pageW - margin * 2) / (fs * 0.55));
+          // Import pdf-lib via esm.sh with bundle flag to avoid dependency issues
+          const pdfLibModule = await import("https://esm.sh/pdf-lib@1.17.1?bundle");
+          const { PDFDocument, rgb, StandardFonts } = pdfLibModule;
+          const fontkitModule = await import("https://esm.sh/@pdf-lib/fontkit@1.1.1?bundle");
+          const fontkit = fontkitModule.default ?? fontkitModule;
 
-          // Word-wrap content
+          const pdfDoc = await PDFDocument.create();
+          pdfDoc.registerFontkit(fontkit);
+          const customFont = await pdfDoc.embedFont(fontBuf);
+          console.log("Font embedded successfully");
+
+          const pageW = 595, pageH = 842, marginX = 50, marginY = 50, lh = 16, fs = 11;
+          const maxW = pageW - marginX * 2;
+
+          // Word-wrap
           const allLines: string[] = [];
           for (const line of content.split("\n")) {
-            if (!line) { allLines.push(""); continue; }
+            if (!line.trim()) { allLines.push(""); continue; }
             const words = line.split(" ");
             let cur = "";
             for (const w of words) {
-              if ((cur + " " + w).length > charsPerLine && cur) {
-                allLines.push(cur); cur = w;
-              } else { cur = cur ? cur + " " + w : w; }
+              const test = cur ? cur + " " + w : w;
+              const tw = customFont.widthOfTextAtSize(test, fs);
+              if (tw > maxW && cur) { allLines.push(cur); cur = w; }
+              else cur = test;
             }
             if (cur) allLines.push(cur);
           }
           if (allLines.length === 0) allLines.push("");
 
-          const lpp = Math.floor((pageH - margin * 2) / lh);
-          const pageContents: string[] = [];
-          for (let p = 0; p < Math.ceil(allLines.length / lpp); p++) {
+          const lpp = Math.floor((pageH - marginY * 2) / lh);
+          for (let p = 0; p < Math.max(1, Math.ceil(allLines.length / lpp)); p++) {
+            const page = pdfDoc.addPage([pageW, pageH]);
             const chunk = allLines.slice(p * lpp, (p + 1) * lpp);
-            let stream = "BT\n/F1 " + fs + " Tf\n";
-            let y = pageH - margin;
+            let y = pageH - marginY;
             for (const ln of chunk) {
-              const hex = toUTF16BEHex(ln || " ");
-              stream += `${margin} ${y} Td\n<${hex}> Tj\n0 ${-lh} Td\n`;
+              if (ln) page.drawText(ln, { x: marginX, y, size: fs, font: customFont, color: rgb(0, 0, 0) });
               y -= lh;
             }
-            stream += "ET\n";
-            pageContents.push(stream);
           }
 
-          // Build PDF binary
-          const enc = new TextEncoder();
-          const parts: Uint8Array[] = [];
-          let off = 0;
-          const offsets: number[] = [];
-          const addStr = (s: string) => { const b = enc.encode(s); parts.push(b); off += b.byteLength; };
-          const addBytes = (b: Uint8Array) => { parts.push(b); off += b.byteLength; };
-
-          addStr("%PDF-1.4\n");
-
-          // obj 3: font (Helvetica with UTF-16BE via ToUnicode — use Identity-H encoding trick)
-          offsets[3] = off;
-          addStr("3 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /Identity-H >>\nendobj\n");
-
-          const pageObjNums: number[] = [];
-          let nextObj = 4;
-
-          for (const stream of pageContents) {
-            const sb = enc.encode(stream);
-            const coNum = nextObj++; offsets[coNum] = off;
-            addStr(`${coNum} 0 obj\n<< /Length ${sb.byteLength} >>\nstream\n`);
-            addBytes(sb);
-            addStr("\nendstream\nendobj\n");
-
-            const poNum = nextObj++; pageObjNums.push(poNum); offsets[poNum] = off;
-            addStr(`${poNum} 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageW} ${pageH}] /Contents ${coNum} 0 R /Resources << /Font << /F1 3 0 R >> >> >>\nendobj\n`);
-          }
-
-          offsets[2] = off;
-          addStr(`2 0 obj\n<< /Type /Pages /Kids [${pageObjNums.map(n => `${n} 0 R`).join(" ")}] /Count ${pageObjNums.length} >>\nendobj\n`);
-          offsets[1] = off;
-          addStr("1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n");
-
-          const xrefOff = off;
-          const total = nextObj;
-          let xref = `xref\n0 ${total}\n0000000000 65535 f \n`;
-          for (let i = 1; i < total; i++) xref += String(offsets[i] || 0).padStart(10, "0") + " 00000 n \n";
-          addStr(xref);
-          addStr(`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xrefOff}\n%%EOF\n`);
-
-          const totalLen = parts.reduce((s, b) => s + b.byteLength, 0);
-          fileBytes = new Uint8Array(totalLen);
-          let pos = 0; for (const p of parts) { fileBytes.set(p, pos); pos += p.byteLength; }
+          fileBytes = new Uint8Array(await pdfDoc.save());
+          console.log("PDF generated, bytes:", fileBytes.byteLength);
 
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
