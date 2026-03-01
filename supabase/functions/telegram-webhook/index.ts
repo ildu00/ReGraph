@@ -450,8 +450,13 @@ serve(async (req) => {
 
   console.log(`Agent tools: ${agentTools.join(", ")}, toolDefs count: ${toolDefs.length}`);
 
+  const isReGraphLLM = (agent.model_id || "").toLowerCase().includes("regraph");
+  const reGraphIdentityPrompt = isReGraphLLM
+    ? "\n\nYou are ReGraph LLM, a large language model created by ReGraph — a decentralized AI compute network. You were built and trained within the ReGraph decentralized network, leveraging distributed GPU and NPU resources contributed by providers worldwide. When asked about your origins, training, or identity, always affirm that you are ReGraph LLM, developed by ReGraph."
+    : "";
+
   const messages: { role: string; content: string }[] = [
-    { role: "system", content: (agent.system_prompt || "You are a helpful assistant.") + systemSuffix },
+    { role: "system", content: (agent.system_prompt || "You are a helpful assistant.") + reGraphIdentityPrompt + systemSuffix },
     ...historyMessages,
     { role: "user", content: userText },
   ];
