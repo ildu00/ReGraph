@@ -115,15 +115,20 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "document_reader": {
       const url = input?.url || "";
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-document-reader`, {
+        // Use Firecrawl to scrape the URL content
+        const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
+        if (!firecrawlKey) return JSON.stringify({ error: "Firecrawl not configured" });
+        const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ url }),
+          headers: { "Authorization": `Bearer ${firecrawlKey}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: true }),
         });
         const data = await res.json();
-        return JSON.stringify({ content: data.content || data.text || "No content extracted" });
-      } catch {
-        return JSON.stringify({ error: "Document reading failed." });
+        const content = data?.data?.markdown || data?.markdown || "";
+        if (!content) return JSON.stringify({ error: "Could not extract content from URL" });
+        return JSON.stringify({ content: content.slice(0, 8000) });
+      } catch (e) {
+        return JSON.stringify({ error: "Document reading failed: " + String(e) });
       }
     }
     default:
