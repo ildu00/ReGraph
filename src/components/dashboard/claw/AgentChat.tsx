@@ -989,25 +989,28 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           if (msg.role === "assistant" && !msg.content) return null;
           // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
           if (msg.role === "assistant" && msg.content === "🔊") return null;
-          // Find file result for "📄" assistant messages:
-          // 1) New messages: stored as __legacyFileResult in tool_result during history load
-          // 2) Live messages: scan backwards through messages for file_generator tool result
-          const precedingFileResult = msg.role === "assistant" && msg.content?.startsWith("📄") && !msg.content?.startsWith("__FILE__:")
-            ? (() => {
-                // Check if we pre-resolved it during history loading
-                if ((msg.tool_result as any)?.__legacyFileResult) {
-                  return (msg.tool_result as any).__legacyFileResult as { file_url: string; filename: string; format: string; size?: number };
-                }
-                // Scan backwards for live messages
-                for (let i = msgIdx - 1; i >= 0; i--) {
-                  if (messages[i].role === "tool" && messages[i].tool_name === "file_generator" && messages[i].tool_result?.file_url) {
-                    return messages[i].tool_result as { file_url: string; filename: string; format: string; size?: number };
+
+          // Find file result for ANY assistant message that follows a file_generator tool call.
+          // Covers: old "📄 Файл отправлен:" format, new __legacyFileResult, or any text response after file_generator.
+          const precedingFileResult: { file_url?: string; filename?: string; format?: string; size?: number } | null =
+            msg.role === "assistant" && !msg.content?.startsWith("__FILE__:") && !msg.content?.startsWith("__AUDIO__:")
+              ? (() => {
+                  // Check if pre-resolved during history loading
+                  if ((msg.tool_result as any)?.__legacyFileResult) {
+                    return (msg.tool_result as any).__legacyFileResult;
                   }
-                  if (messages[i].role === "user") break;
-                }
-                return null;
-              })()
-            : null;
+                  // Scan backwards: find file_generator tool message in same turn
+                  for (let i = msgIdx - 1; i >= 0; i--) {
+                    if (messages[i].role === "user") break;
+                    if (messages[i].role === "tool" && messages[i].tool_name === "file_generator") {
+                      const tr = messages[i].tool_result;
+                      if (tr?.filename || tr?.file_url) return tr;
+                      break;
+                    }
+                  }
+                  return null;
+                })()
+              : null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
