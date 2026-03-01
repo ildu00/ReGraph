@@ -225,6 +225,55 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         return { error: "Could not read file." };
       }
     }
+    case "file_generator": {
+      const filename: string = input?.filename || "file";
+      const format: string = (input?.format || "txt").toLowerCase();
+      const content: string = input?.content || "";
+
+      try {
+        let blob: Blob;
+        let finalFilename = filename;
+
+        if (format === "txt") {
+          blob = new Blob([content], { type: "text/plain" });
+          if (!finalFilename.endsWith(".txt")) finalFilename += ".txt";
+        } else if (format === "json") {
+          let jsonContent = content;
+          try { jsonContent = JSON.stringify(JSON.parse(content), null, 2); } catch { /* keep as-is */ }
+          blob = new Blob([jsonContent], { type: "application/json" });
+          if (!finalFilename.endsWith(".json")) finalFilename += ".json";
+        } else if (format === "csv") {
+          blob = new Blob([content], { type: "text/csv" });
+          if (!finalFilename.endsWith(".csv")) finalFilename += ".csv";
+        } else if (format === "xlsx" || format === "xls") {
+          // Parse CSV or JSON-like content into worksheet
+          const rows: string[][] = content.split("\n").filter(Boolean).map((row) =>
+            row.split(",").map((cell) => cell.trim().replace(/^"|"$/g, ""))
+          );
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+          const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+          finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
+        } else if (format === "pdf") {
+          // Generate a simple HTML-based PDF via print-to-pdf approach using a data URL
+          const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:40px;line-height:1.6;white-space:pre-wrap}</style></head><body>${content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body></html>`;
+          blob = new Blob([htmlContent], { type: "text/html" });
+          finalFilename = finalFilename.replace(/\.(txt|csv|json)$/i, "") + ".html";
+          // Return special PDF type for UI to show print dialog
+          const blobUrl = URL.createObjectURL(blob);
+          return { file_url: blobUrl, filename: finalFilename, format: "pdf_html", size: blob.size };
+        } else {
+          return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        return { file_url: blobUrl, filename: finalFilename, format, size: blob.size };
+      } catch (e: any) {
+        return { error: `File generation failed: ${e.message}` };
+      }
+    }
     default:
       return { error: `Unknown tool: ${name}` };
   }
