@@ -249,28 +249,44 @@ serve(async (req) => {
         const filePath = fileInfo?.result?.file_path;
         if (filePath) {
           const audioRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
-          const audioBlob = await audioRes.arrayBuffer();
-          const formData = new FormData();
-          formData.append("file", new Blob([audioBlob], { type: "audio/ogg" }), "voice.ogg");
-          formData.append("model", "openai/whisper-large-v3");
-          const transcribeRes = await fetch("https://api.vsegpt.ru/v1/audio/transcriptions", {
-            method: "POST",
-            headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
-            body: formData,
-          });
-          const rawText = await transcribeRes.text();
-          console.log("Transcribe response status:", transcribeRes.status, "body:", rawText.slice(0, 200));
-          if (transcribeRes.ok) {
+          const audioBuffer = await audioRes.arrayBuffer();
+          console.log("Audio buffer size:", audioBuffer.byteLength, "file_path:", filePath);
+
+          // Try multiple models/mime types as fallback
+          const attempts = [
+            { model: "openai/whisper-large-v3", mime: "audio/ogg", filename: "voice.ogg" },
+            { model: "whisper-1", mime: "audio/ogg", filename: "voice.ogg" },
+            { model: "openai/whisper-large-v3", mime: "audio/mpeg", filename: "voice.mp3" },
+          ];
+
+          for (const attempt of attempts) {
             try {
-              const transcribeData = JSON.parse(rawText);
-              userText = transcribeData?.text || "";
-            } catch {
-              // Some providers return plain text
-              userText = rawText.trim();
+              const formData = new FormData();
+              formData.append("file", new Blob([audioBuffer], { type: attempt.mime }), attempt.filename);
+              formData.append("model", attempt.model);
+              console.log("Trying transcription with model:", attempt.model, "mime:", attempt.mime);
+              const transcribeRes = await fetch("https://api.vsegpt.ru/v1/audio/transcriptions", {
+                method: "POST",
+                headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
+                body: formData,
+              });
+              const rawText = await transcribeRes.text();
+              console.log("Transcribe status:", transcribeRes.status, "body preview:", rawText.slice(0, 300));
+              if (transcribeRes.ok) {
+                try {
+                  const transcribeData = JSON.parse(rawText);
+                  userText = transcribeData?.text || rawText.trim();
+                } catch {
+                  userText = rawText.trim();
+                }
+                if (userText) {
+                  console.log("Transcription success:", userText.slice(0, 100));
+                  break;
+                }
+              }
+            } catch (attemptErr) {
+              console.error("Transcription attempt failed:", attempt.model, attemptErr);
             }
-            console.log("Transcribed voice:", userText.slice(0, 100));
-          } else {
-            console.error("Transcription API error:", transcribeRes.status, rawText.slice(0, 200));
           }
         }
       } catch (e) {
