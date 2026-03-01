@@ -706,7 +706,31 @@ serve(async (req) => {
     });
     await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
-    if (generatedAudioBuffer || generatedAudioUrl) {
+    if (generatedFileUrl) {
+      // Send file via sendDocument
+      try {
+        const docRes = await fetch(`https://api.telegram.org/bot${botToken}/sendDocument`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            chat_id: chatId,
+            document: generatedFileUrl,
+            caption: `📄 ${generatedFileName || "File"}`,
+          }),
+        });
+        if (!docRes.ok) {
+          const err = await docRes.text();
+          console.error("sendDocument error:", docRes.status, err);
+          await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: chatId, text: `📄 [${generatedFileName}](${generatedFileUrl})`, parse_mode: "Markdown" }),
+          });
+        }
+      } catch (e) {
+        console.error("File send exception:", e);
+      }
+    } else if (generatedAudioBuffer || generatedAudioUrl) {
       // Always send raw buffer via multipart for proper Telegram voice message
       // generatedAudioBuffer is the raw mp3, generatedAudioUrl is stored for web chat
       const bufferToSend = generatedAudioBuffer;
