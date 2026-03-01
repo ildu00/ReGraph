@@ -63,12 +63,12 @@ const TOOL_DEFINITIONS: Record<string, object> = {
     type: "function",
     function: {
       name: "file_generator",
-      description: "Generate and send a file (TXT, JSON, CSV, PDF) to the user. Use this tool when the user asks to create, generate, or save a file. NEVER use code_interpreter to generate files — always use this tool instead.",
+      description: "Generate and send a file (TXT, JSON, CSV, PDF, DOCX) to the user. Use this tool when the user asks to create, generate, or save a file. NEVER use code_interpreter to generate files — always use this tool instead. For PDF and DOCX, always format the content using Markdown: use # for titles, ## for sections, ### for subsections, **bold** for emphasis, - for bullet lists, numbered lists, and --- for dividers. This produces beautifully formatted documents.",
       parameters: {
         type: "object",
         properties: {
           filename: { type: "string", description: "The file name including extension, e.g. resume.pdf" },
-          format: { type: "string", enum: ["txt", "json", "csv", "pdf"], description: "File format" },
+          format: { type: "string", enum: ["txt", "json", "csv", "pdf", "docx"], description: "File format" },
           content: { type: "string", description: "The full text content of the file. For PDF, use plain text with newlines. For CSV, use comma-separated rows." },
         },
         required: ["filename", "format", "content"],
@@ -78,25 +78,60 @@ const TOOL_DEFINITIONS: Record<string, object> = {
 };
 
 // ─── PDF generation ────────────────────────────────────────────────────────────
-// Strategy: cache NotoSans TTF in Supabase Storage so we only fetch from CDN once.
-// pdf-lib with an embedded Unicode font is the most reliable way to get Cyrillic in PDFs.
 
 async function getNotoSansFont(): Promise<Uint8Array> {
-  // Font is pre-uploaded to our Storage — fast internal fetch, no external CDN needed
   const FONT_URL = `${SUPABASE_URL}/storage/v1/object/public/claw-images/fonts%2FNotoSans-Regular.ttf`;
-  console.log("Fetching font from Storage:", FONT_URL);
   const res = await fetch(FONT_URL, { signal: AbortSignal.timeout(10000) });
   if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
-  const bytes = new Uint8Array(await res.arrayBuffer());
-  console.log("Font loaded, size:", bytes.byteLength);
-  return bytes;
+  return new Uint8Array(await res.arrayBuffer());
+}
+
+type ParsedLine = {
+  text: string;
+  type: "h1" | "h2" | "h3" | "bullet" | "numbered" | "code" | "hr" | "blank" | "body";
+  indent: number;
+};
+
+function parseMarkdownLines(content: string): ParsedLine[] {
+  const result: ParsedLine[] = [];
+  for (const raw of content.split("\n")) {
+    const line = raw;
+    if (/^---+$/.test(line.trim()) || /^\*\*\*+$/.test(line.trim())) {
+      result.push({ text: "", type: "hr", indent: 0 });
+    } else if (/^# (.+)/.test(line)) {
+      result.push({ text: line.replace(/^# /, ""), type: "h1", indent: 0 });
+    } else if (/^## (.+)/.test(line)) {
+      result.push({ text: line.replace(/^## /, ""), type: "h2", indent: 0 });
+    } else if (/^### (.+)/.test(line)) {
+      result.push({ text: line.replace(/^### /, ""), type: "h3", indent: 0 });
+    } else if (/^(\s*)[*\-+] (.+)/.test(line)) {
+      const m = line.match(/^(\s*)[*\-+] (.+)/);
+      const indentLevel = m ? Math.floor(m[1].length / 2) : 0;
+      result.push({ text: m ? m[2] : line, type: "bullet", indent: indentLevel });
+    } else if (/^(\s*)\d+\. (.+)/.test(line)) {
+      const m = line.match(/^(\s*)\d+\. (.+)/);
+      result.push({ text: m ? m[2] : line, type: "numbered", indent: 0 });
+    } else if (/^`{3}/.test(line.trim())) {
+      result.push({ text: "", type: "code", indent: 0 });
+    } else if (/^\s*$/.test(line)) {
+      result.push({ text: "", type: "blank", indent: 0 });
+    } else {
+      // Strip inline markdown for plain rendering
+      const cleaned = line
+        .replace(/\*\*(.*?)\*\*/g, "$1")
+        .replace(/__(.*?)__/g, "$1")
+        .replace(/\*(.*?)\*/g, "$1")
+        .replace(/`(.*?)`/g, "$1")
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1");
+      result.push({ text: cleaned, type: "body", indent: 0 });
+    }
+  }
+  return result;
 }
 
 async function buildPdf(content: string): Promise<Uint8Array> {
-  console.log("Building PDF with pdf-lib + NotoSans...");
   const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
   const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
-
   const fontBytes = await getNotoSansFont();
 
   const pdfDoc = await PDFDocument.create();
@@ -105,57 +140,339 @@ async function buildPdf(content: string): Promise<Uint8Array> {
 
   const pageWidth = 595;
   const pageHeight = 842;
-  const margin = 50;
-  const fontSize = 12;
-  const lineHeight = fontSize * 1.5;
-  const maxWidth = pageWidth - 2 * margin;
+  const marginX = 55;
+  const marginY = 55;
+  const bodySize = 11;
+  const h1Size = 20;
+  const h2Size = 16;
+  const h3Size = 13;
+  const lineHeightBody = bodySize * 1.6;
+  const maxWidth = pageWidth - 2 * marginX;
 
-  // Word-wrap using font metrics
-  const wrapLine = (rawLine: string): string[] => {
-    if (!rawLine.trim()) return [""];
-    const clean = rawLine
-      .replace(/^#{1,3}\s+/, "")
-      .replace(/\*\*(.*?)\*\*/g, "$1")
-      .replace(/\*(.*?)\*/g, "$1")
-      .replace(/`(.*?)`/g, "$1");
-    const words = clean.split(" ");
-    const result: string[] = [];
-    let current = "";
-    for (const word of words) {
-      const test = current ? current + " " + word : word;
-      let w = 0;
-      try { w = font.widthOfTextAtSize(test, fontSize); } catch { w = test.length * 7; }
-      if (w > maxWidth && current) { result.push(current); current = word; }
-      else current = test;
+  // Colors
+  const colorBlack = rgb(0.08, 0.08, 0.08);
+  const colorGray = rgb(0.45, 0.45, 0.45);
+  const colorAccent = rgb(0.12, 0.29, 0.69); // dark blue for headings
+  const colorRule = rgb(0.8, 0.8, 0.8);
+  const colorCode = rgb(0.95, 0.95, 0.95);
+
+  const wrapText = (text: string, maxW: number, size: number): string[] => {
+    if (!text.trim()) return [""];
+    const words = text.split(" ");
+    const lines: string[] = [];
+    let cur = "";
+    for (const w of words) {
+      const test = cur ? cur + " " + w : w;
+      let width = 0;
+      try { width = font.widthOfTextAtSize(test, size); } catch { width = test.length * size * 0.55; }
+      if (width > maxW && cur) { lines.push(cur); cur = w; }
+      else cur = test;
     }
-    if (current) result.push(current);
-    return result;
+    if (cur) lines.push(cur);
+    return lines.length ? lines : [""];
   };
 
-  const lines: string[] = [];
-  for (const rawLine of content.split("\n")) {
-    for (const l of wrapLine(rawLine)) lines.push(l);
-  }
+  let currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+  let y = pageHeight - marginY;
 
-  const linesPerPage = Math.floor((pageHeight - 2 * margin) / lineHeight);
+  const ensureSpace = (needed: number) => {
+    if (y - needed < marginY) {
+      // Draw page number
+      const pageNum = pdfDoc.getPageCount();
+      currentPage.drawText(`— ${pageNum} —`, {
+        x: pageWidth / 2 - 15, y: marginY / 2,
+        size: 9, font, color: colorGray,
+      });
+      currentPage = pdfDoc.addPage([pageWidth, pageHeight]);
+      y = pageHeight - marginY;
+    }
+  };
 
-  for (let p = 0; p < Math.max(lines.length, 1); p += linesPerPage) {
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    const pageLines = lines.slice(p, p + linesPerPage);
-    let y = pageHeight - margin - fontSize;
-    for (const line of pageLines) {
-      if (line.trim()) {
-        page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0, 0, 0) });
+  const parsedLines = parseMarkdownLines(content);
+
+  for (const parsed of parsedLines) {
+    if (parsed.type === "blank") {
+      y -= lineHeightBody * 0.4;
+      continue;
+    }
+
+    if (parsed.type === "hr") {
+      ensureSpace(20);
+      y -= 6;
+      currentPage.drawLine({
+        start: { x: marginX, y },
+        end: { x: pageWidth - marginX, y },
+        thickness: 0.8,
+        color: colorRule,
+      });
+      y -= 12;
+      continue;
+    }
+
+    if (parsed.type === "h1") {
+      ensureSpace(h1Size * 2.5);
+      y -= 14;
+      // Background accent bar
+      currentPage.drawRectangle({
+        x: marginX - 5, y: y - 4,
+        width: pageWidth - 2 * marginX + 10, height: h1Size + 10,
+        color: rgb(0.92, 0.95, 1.0),
+      });
+      currentPage.drawRectangle({
+        x: marginX - 5, y: y - 4,
+        width: 4, height: h1Size + 10,
+        color: colorAccent,
+      });
+      const wrapped = wrapText(parsed.text, maxWidth - 20, h1Size);
+      for (const line of wrapped) {
+        ensureSpace(h1Size * 1.5);
+        currentPage.drawText(line, { x: marginX + 8, y, size: h1Size, font, color: colorAccent });
+        y -= h1Size * 1.5;
       }
-      y -= lineHeight;
+      y -= 6;
+      continue;
+    }
+
+    if (parsed.type === "h2") {
+      ensureSpace(h2Size * 2.2);
+      y -= 10;
+      const wrapped = wrapText(parsed.text, maxWidth, h2Size);
+      for (const line of wrapped) {
+        ensureSpace(h2Size * 1.4);
+        currentPage.drawText(line, { x: marginX, y, size: h2Size, font, color: colorAccent });
+        y -= h2Size * 1.4;
+      }
+      // Underline
+      currentPage.drawLine({
+        start: { x: marginX, y: y + 4 },
+        end: { x: pageWidth - marginX, y: y + 4 },
+        thickness: 0.6, color: colorAccent,
+      });
+      y -= 6;
+      continue;
+    }
+
+    if (parsed.type === "h3") {
+      ensureSpace(h3Size * 2);
+      y -= 8;
+      const wrapped = wrapText(parsed.text, maxWidth, h3Size);
+      for (const line of wrapped) {
+        ensureSpace(h3Size * 1.3);
+        currentPage.drawText(line, { x: marginX, y, size: h3Size, font, color: colorBlack });
+        y -= h3Size * 1.3;
+      }
+      y -= 4;
+      continue;
+    }
+
+    if (parsed.type === "bullet") {
+      const indentOffset = parsed.indent * 16;
+      const bulletX = marginX + indentOffset;
+      const textX = bulletX + 14;
+      const availW = maxWidth - indentOffset - 14;
+      const wrapped = wrapText(parsed.text, availW, bodySize);
+      for (let i = 0; i < wrapped.length; i++) {
+        ensureSpace(lineHeightBody);
+        if (i === 0) {
+          // Bullet dot
+          currentPage.drawCircle({ x: bulletX + 3, y: y + 3, size: 2.5, color: colorAccent });
+        }
+        currentPage.drawText(wrapped[i], { x: textX, y, size: bodySize, font, color: colorBlack });
+        y -= lineHeightBody;
+      }
+      continue;
+    }
+
+    if (parsed.type === "numbered") {
+      const wrapped = wrapText(parsed.text, maxWidth - 20, bodySize);
+      for (let i = 0; i < wrapped.length; i++) {
+        ensureSpace(lineHeightBody);
+        currentPage.drawText(wrapped[i], { x: marginX + 16, y, size: bodySize, font, color: colorBlack });
+        y -= lineHeightBody;
+      }
+      continue;
+    }
+
+    if (parsed.type === "code") {
+      // Code block marker — draw a subtle bg strip
+      ensureSpace(lineHeightBody);
+      currentPage.drawRectangle({
+        x: marginX - 4, y: y - 2, width: maxWidth + 8, height: lineHeightBody,
+        color: colorCode,
+      });
+      y -= lineHeightBody * 0.5;
+      continue;
+    }
+
+    // body
+    const wrapped = wrapText(parsed.text, maxWidth, bodySize);
+    for (const line of wrapped) {
+      ensureSpace(lineHeightBody);
+      currentPage.drawText(line, { x: marginX, y, size: bodySize, font, color: colorBlack });
+      y -= lineHeightBody;
     }
   }
 
+  // Last page number
+  const pageNum = pdfDoc.getPageCount();
+  currentPage.drawText(`— ${pageNum} —`, {
+    x: pageWidth / 2 - 15, y: marginY / 2, size: 9, font, color: colorGray,
+  });
+
   const bytes = await pdfDoc.save();
-  console.log(`PDF built: ${pdfDoc.getPageCount()} pages, ${bytes.byteLength} bytes`);
   return new Uint8Array(bytes);
 }
-// ─── End PDF generation ────────────────────────────────────────────────────────
+
+// ─── DOCX generation ────────────────────────────────────────────────────────────
+
+async function buildDocx(content: string): Promise<Uint8Array> {
+  // Build a minimal .docx (Open XML) with markdown-aware formatting
+  // DOCX = ZIP with word/document.xml inside
+  const JSZip = (await import("npm:jszip@3.10.1")).default;
+
+  const parseInline = (text: string): string => {
+    // Convert inline markdown to plain text for XML (we'll use runs with styles)
+    return text
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  };
+
+  const boldRun = (text: string) =>
+    `<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${parseInline(text)}</w:t></w:r>`;
+  const normalRun = (text: string) =>
+    `<w:r><w:t xml:space="preserve">${parseInline(text)}</w:t></w:r>`;
+
+  const parseInlineRuns = (text: string): string => {
+    // Handle **bold**, *italic*, `code`
+    const parts: string[] = [];
+    const regex = /\*\*(.*?)\*\*|\*(.*?)\*|`(.*?)`|([^*`]+)/g;
+    let m: RegExpExecArray | null;
+    while ((m = regex.exec(text)) !== null) {
+      if (m[1]) parts.push(`<w:r><w:rPr><w:b/></w:rPr><w:t xml:space="preserve">${parseInline(m[1])}</w:t></w:r>`);
+      else if (m[2]) parts.push(`<w:r><w:rPr><w:i/></w:rPr><w:t xml:space="preserve">${parseInline(m[2])}</w:t></w:r>`);
+      else if (m[3]) parts.push(`<w:r><w:rPr><w:rFonts w:ascii="Courier New" w:hAnsi="Courier New"/><w:sz w:val="18"/><w:shd w:val="clear" w:fill="F0F0F0"/></w:rPr><w:t xml:space="preserve">${parseInline(m[3])}</w:t></w:r>`);
+      else if (m[4]) parts.push(normalRun(m[4]));
+    }
+    return parts.join("");
+  };
+
+  const paragraphs: string[] = [];
+  const lines = content.split("\n");
+
+  for (const raw of lines) {
+    if (/^# (.+)/.test(raw)) {
+      const text = raw.replace(/^# /, "");
+      paragraphs.push(`<w:p><w:pPr><w:pStyle w:val="Heading1"/><w:spacing w:before="240" w:after="120"/></w:pPr>${boldRun(text)}</w:p>`);
+    } else if (/^## (.+)/.test(raw)) {
+      const text = raw.replace(/^## /, "");
+      paragraphs.push(`<w:p><w:pPr><w:pStyle w:val="Heading2"/><w:spacing w:before="180" w:after="80"/></w:pPr>${boldRun(text)}</w:p>`);
+    } else if (/^### (.+)/.test(raw)) {
+      const text = raw.replace(/^### /, "");
+      paragraphs.push(`<w:p><w:pPr><w:pStyle w:val="Heading3"/><w:spacing w:before="120" w:after="60"/></w:pPr>${boldRun(text)}</w:p>`);
+    } else if (/^[*\-+] (.+)/.test(raw)) {
+      const text = raw.replace(/^[*\-+] /, "");
+      paragraphs.push(`<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="1"/></w:numPr></w:pPr>${parseInlineRuns(text)}</w:p>`);
+    } else if (/^\d+\. (.+)/.test(raw)) {
+      const text = raw.replace(/^\d+\. /, "");
+      paragraphs.push(`<w:p><w:pPr><w:pStyle w:val="ListParagraph"/><w:numPr><w:ilvl w:val="0"/><w:numId w:val="2"/></w:numPr></w:pPr>${parseInlineRuns(text)}</w:p>`);
+    } else if (/^---+$/.test(raw.trim())) {
+      paragraphs.push(`<w:p><w:pPr><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="AAAAAA"/></w:pBdr></w:pPr></w:p>`);
+    } else if (/^\s*$/.test(raw)) {
+      paragraphs.push(`<w:p><w:pPr><w:spacing w:after="80"/></w:pPr></w:p>`);
+    } else {
+      paragraphs.push(`<w:p><w:pPr><w:spacing w:after="80"/></w:pPr>${parseInlineRuns(raw)}</w:p>`);
+    }
+  }
+
+  const documentXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas"
+  xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+  xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+<w:body>
+${paragraphs.join("\n")}
+<w:sectPr>
+  <w:pgSz w:w="12240" w:h="15840"/>
+  <w:pgMar w:top="1134" w:right="1134" w:bottom="1134" w:left="1134" w:header="709" w:footer="709" w:gutter="0"/>
+</w:sectPr>
+</w:body>
+</w:document>`;
+
+  const stylesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:styles xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:style w:type="paragraph" w:default="1" w:styleId="Normal">
+    <w:name w:val="Normal"/>
+    <w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:sz w:val="22"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading1">
+    <w:name w:val="heading 1"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr><w:keepNext/></w:pPr>
+    <w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:b/><w:sz w:val="36"/><w:color w:val="1F4DB7"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading2">
+    <w:name w:val="heading 2"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr><w:keepNext/></w:pPr>
+    <w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:b/><w:sz w:val="28"/><w:color w:val="1F4DB7"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="Heading3">
+    <w:name w:val="heading 3"/>
+    <w:basedOn w:val="Normal"/>
+    <w:rPr><w:rFonts w:ascii="Calibri" w:hAnsi="Calibri"/><w:b/><w:sz w:val="24"/><w:color w:val="374151"/></w:rPr>
+  </w:style>
+  <w:style w:type="paragraph" w:styleId="ListParagraph">
+    <w:name w:val="List Paragraph"/>
+    <w:basedOn w:val="Normal"/>
+    <w:pPr><w:ind w:left="720"/></w:pPr>
+  </w:style>
+</w:styles>`;
+
+  const numberingXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:numbering xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+  <w:abstractNum w:abstractNumId="0">
+    <w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="bullet"/><w:lvlText w:val="•"/><w:lvlJc w:val="left"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl>
+  </w:abstractNum>
+  <w:abstractNum w:abstractNumId="1">
+    <w:lvl w:ilvl="0"><w:start w:val="1"/><w:numFmt w:val="decimal"/><w:lvlText w:val="%1."/><w:lvlJc w:val="left"/><w:pPr><w:ind w:left="720" w:hanging="360"/></w:pPr></w:lvl>
+  </w:abstractNum>
+  <w:num w:numId="1"><w:abstractNumId w:val="0"/></w:num>
+  <w:num w:numId="2"><w:abstractNumId w:val="1"/></w:num>
+</w:numbering>`;
+
+  const relsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>
+  <Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>
+</Relationships>`;
+
+  const contentTypesXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+  <Override PartName="/word/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.styles+xml"/>
+  <Override PartName="/word/numbering.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.numbering+xml"/>
+</Types>`;
+
+  const appRelsXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/>
+</Relationships>`;
+
+  const zip = new JSZip();
+  zip.file("word/document.xml", documentXml);
+  zip.file("word/styles.xml", stylesXml);
+  zip.file("word/numbering.xml", numberingXml);
+  zip.file("word/_rels/document.xml.rels", relsXml);
+  zip.file("[Content_Types].xml", contentTypesXml);
+  zip.file("_rels/.rels", appRelsXml);
+
+  const blob = await zip.generateAsync({ type: "uint8array", compression: "DEFLATE", compressionOptions: { level: 6 } });
+  return blob;
+}
+
+// ─── End document generation ───────────────────────────────────────────────────
 
 // In-memory buffer for file tool results (per-request)
 const __fileBuffers: Map<string, { bytes: Uint8Array; filename: string; mimeType: string }> = new Map();
@@ -262,6 +579,9 @@ async function executeTool(name: string, input: any): Promise<string> {
         if (format === "pdf") {
           bytes = await buildPdf(content);
           mimeType = "application/pdf";
+        } else if (format === "docx") {
+          bytes = await buildDocx(content);
+          mimeType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
         } else if (format === "csv") {
           bytes = new TextEncoder().encode(content);
           mimeType = "text/csv";
