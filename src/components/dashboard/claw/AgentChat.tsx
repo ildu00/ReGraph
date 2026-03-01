@@ -292,6 +292,18 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
         }
 
+        // Upload to storage for a permanent URL
+        try {
+          const storagePath = `files/${crypto.randomUUID()}_${finalFilename}`;
+          const { error: uploadErr } = await supabase.storage
+            .from("claw-images")
+            .upload(storagePath, blob, { contentType: blob.type, upsert: false });
+          if (!uploadErr) {
+            const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(storagePath);
+            return { file_url: urlData.publicUrl, filename: finalFilename, format, size: blob.size };
+          }
+        } catch { /* fallback to blob URL */ }
+        // Fallback: blob URL (works only in current session)
         const blobUrl = URL.createObjectURL(blob);
         return { file_url: blobUrl, filename: finalFilename, format, size: blob.size };
       } catch (e: any) {
