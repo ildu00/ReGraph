@@ -277,31 +277,26 @@ async function executeTool(name: string, input: any): Promise<string> {
       try {
         let fileBytes: Uint8Array;
         let mimeType: string;
-        let ext = format;
+        let outFilename = filename;
 
         if (format === "pdf") {
-          mimeType = "application/pdf";
-          console.log("Generating PDF with npm:pdf-lib + DejaVu font...");
-          fileBytes = await buildPdfWithFont(content);
-          console.log("PDF generated, bytes:", fileBytes.byteLength);
+          // PDF libraries hang in edge runtime — generate RTF instead (opens in Word/Pages, full Cyrillic support)
+          console.log("Generating RTF (Cyrillic-safe)...");
+          fileBytes = buildRtf(content);
+          mimeType = "application/rtf";
+          outFilename = filename.replace(/\.pdf$/i, ".rtf");
+          console.log("RTF generated, bytes:", fileBytes.byteLength);
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
           fileBytes = new TextEncoder().encode(content);
         }
 
-        // Upload to storage
-        const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-          auth: { autoRefreshToken: false, persistSession: false },
-        });
-        const storageFilename = `file_${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-        const { data: uploadData, error: uploadErr } = await adminClient.storage
-          .from("claw-images")
-          .upload(storageFilename, fileBytes, { contentType: mimeType, upsert: false });
+        // Store file bytes in global map and return key — main handler sends via multipart
+        const fileKey = `file_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        if (!(globalThis as any).__fileBuffers) (globalThis as any).__fileBuffers = {};
+        (globalThis as any).__fileBuffers[fileKey] = { bytes: fileBytes, filename: outFilename, mimeType };
 
-        if (uploadErr) return JSON.stringify({ error: "File upload failed: " + uploadErr.message });
-        const { data: { publicUrl } } = adminClient.storage.from("claw-images").getPublicUrl(uploadData.path);
-
-        return JSON.stringify({ fileUrl: publicUrl, filename, format, size: fileBytes.byteLength, message: "File generated successfully" });
+        return JSON.stringify({ fileKey, filename: outFilename, format, size: fileBytes.byteLength, message: "File generated successfully" });
       } catch (e) {
         return JSON.stringify({ error: "File generation failed: " + String(e) });
       }
