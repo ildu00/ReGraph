@@ -303,8 +303,8 @@ async function executeTool(name: string, input: any): Promise<string> {
 
         if (format === "pdf") {
           mimeType = "application/pdf";
-          console.log("Generating PDF with built-in Cyrillic support...");
-          fileBytes = buildPdfWithCyrillic(content);
+          console.log("Generating PDF with npm:pdf-lib + DejaVu font...");
+          fileBytes = await buildPdfWithFont(content);
           console.log("PDF generated, bytes:", fileBytes.byteLength);
         } else {
           mimeType = format === "json" ? "application/json" : "text/plain;charset=utf-8";
