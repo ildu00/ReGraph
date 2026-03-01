@@ -258,13 +258,23 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
           blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
           finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
         } else if (format === "pdf") {
-          // Generate a simple HTML-based PDF via print-to-pdf approach using a data URL
-          const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:40px;line-height:1.6;white-space:pre-wrap}</style></head><body>${content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body></html>`;
-          blob = new Blob([htmlContent], { type: "text/html" });
-          finalFilename = finalFilename.replace(/\.(txt|csv|json)$/i, "") + ".html";
-          // Return special PDF type for UI to show print dialog
-          const blobUrl = URL.createObjectURL(blob);
-          return { file_url: blobUrl, filename: finalFilename, format: "pdf_html", size: blob.size };
+          const doc = new jsPDF();
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const margin = 15;
+          const maxWidth = pageWidth - margin * 2;
+          const lineHeight = 7;
+          let y = 20;
+          for (const line of content.split("\n")) {
+            const wrapped = doc.splitTextToSize(line || " ", maxWidth);
+            for (const wl of wrapped) {
+              if (y > 275) { doc.addPage(); y = 20; }
+              doc.text(wl, margin, y);
+              y += lineHeight;
+            }
+          }
+          const pdfBuf = doc.output("arraybuffer");
+          blob = new Blob([pdfBuf], { type: "application/pdf" });
+          finalFilename = finalFilename.replace(/\.(txt|csv|json|html)$/i, "") + ".pdf";
         } else {
           return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
         }
