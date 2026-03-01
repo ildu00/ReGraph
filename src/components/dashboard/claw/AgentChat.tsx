@@ -7,8 +7,9 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X, Volume2
+  ImagePlus, FileUp, X, Volume2, Download, FileText
 } from "lucide-react";
+import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -39,6 +40,7 @@ const TOOL_ICONS: Record<string, any> = {
   image_generation: Image,
   document_reader: BookOpen,
   voice_message: Volume2,
+  file_generator: FileText,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
@@ -223,6 +225,55 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         return { error: "Could not read file." };
       }
     }
+    case "file_generator": {
+      const filename: string = input?.filename || "file";
+      const format: string = (input?.format || "txt").toLowerCase();
+      const content: string = input?.content || "";
+
+      try {
+        let blob: Blob;
+        let finalFilename = filename;
+
+        if (format === "txt") {
+          blob = new Blob([content], { type: "text/plain" });
+          if (!finalFilename.endsWith(".txt")) finalFilename += ".txt";
+        } else if (format === "json") {
+          let jsonContent = content;
+          try { jsonContent = JSON.stringify(JSON.parse(content), null, 2); } catch { /* keep as-is */ }
+          blob = new Blob([jsonContent], { type: "application/json" });
+          if (!finalFilename.endsWith(".json")) finalFilename += ".json";
+        } else if (format === "csv") {
+          blob = new Blob([content], { type: "text/csv" });
+          if (!finalFilename.endsWith(".csv")) finalFilename += ".csv";
+        } else if (format === "xlsx" || format === "xls") {
+          // Parse CSV or JSON-like content into worksheet
+          const rows: string[][] = content.split("\n").filter(Boolean).map((row) =>
+            row.split(",").map((cell) => cell.trim().replace(/^"|"$/g, ""))
+          );
+          const wb = XLSX.utils.book_new();
+          const ws = XLSX.utils.aoa_to_sheet(rows);
+          XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+          const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+          finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
+        } else if (format === "pdf") {
+          // Generate a simple HTML-based PDF via print-to-pdf approach using a data URL
+          const htmlContent = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:sans-serif;padding:40px;line-height:1.6;white-space:pre-wrap}</style></head><body>${content.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</body></html>`;
+          blob = new Blob([htmlContent], { type: "text/html" });
+          finalFilename = finalFilename.replace(/\.(txt|csv|json)$/i, "") + ".html";
+          // Return special PDF type for UI to show print dialog
+          const blobUrl = URL.createObjectURL(blob);
+          return { file_url: blobUrl, filename: finalFilename, format: "pdf_html", size: blob.size };
+        } else {
+          return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
+        }
+
+        const blobUrl = URL.createObjectURL(blob);
+        return { file_url: blobUrl, filename: finalFilename, format, size: blob.size };
+      } catch (e: any) {
+        return { error: `File generation failed: ${e.message}` };
+      }
+    }
     default:
       return { error: `Unknown tool: ${name}` };
   }
@@ -317,6 +368,24 @@ function buildToolDefs(toolIds: string[]) {
             voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style (default: nova)" },
           },
           required: ["text"],
+        },
+      },
+    });
+  }
+  if (toolIds.includes("file_generator")) {
+    defs.push({
+      type: "function",
+      function: {
+        name: "file_generator",
+        description: "Generate and download a file. Use when the user asks to create, export, or save a file in any format: TXT (plain text), JSON (structured data), CSV (spreadsheet/table data), XLSX (Excel spreadsheet), or PDF (document). Always use this tool when asked to 'create a file', 'export as', 'save as', or 'generate a [format] file'.",
+        parameters: {
+          type: "object",
+          properties: {
+            filename: { type: "string", description: "Name of the file without extension, e.g. 'report' or 'data'" },
+            format: { type: "string", enum: ["txt", "json", "csv", "xlsx", "pdf"], description: "File format to generate" },
+            content: { type: "string", description: "The full content of the file. For CSV/XLSX: comma-separated rows with newlines. For JSON: valid JSON string. For PDF/TXT: plain text." },
+          },
+          required: ["filename", "format", "content"],
         },
       },
     });
@@ -702,10 +771,12 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
-          // If any tool was image_generation or voice_message — stop here, no need for a follow-up LLM call
+          // If any tool was image_generation, voice_message, or file_generator — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
+          const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) break;
+          if (hadFileGen) break;
           if (hadVoice) {
             // Reuse the already-executed result — DO NOT call TTS a second time
             const audioUrl = toolResults["voice_message"]?.audio_url;
@@ -997,10 +1068,41 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
     image_generation: "Image Generation",
     document_reader: "Document Reader",
     voice_message: "Voice Message",
+    file_generator: "File Generator",
   };
 
   const renderResult = () => {
     if (!msg.tool_result) return null;
+
+    // File generator — download button
+    if (msg.tool_result?.file_url) {
+      const { file_url, filename, format, size } = msg.tool_result;
+      const isPdfHtml = format === "pdf_html";
+      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕", pdf_html: "📕" };
+      const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
+      return (
+        <div className="mt-1 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
+          <span className="text-2xl">{formatIcons[format] || "📄"}</span>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-medium truncate">{filename}</p>
+            <p className="text-xs text-muted-foreground">{format?.toUpperCase().replace("_HTML", "")} {sizeStr && `· ${sizeStr}`}</p>
+          </div>
+          {isPdfHtml ? (
+            <a href={file_url} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                <Download className="h-3 w-3" /> Open
+              </Button>
+            </a>
+          ) : (
+            <a href={file_url} download={filename}>
+              <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0">
+                <Download className="h-3 w-3" /> Download
+              </Button>
+            </a>
+          )}
+        </div>
+      );
+    }
 
     // Voice message — audio player
     if (msg.tool_result?.audio_url) {
