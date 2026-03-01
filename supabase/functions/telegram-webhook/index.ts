@@ -82,58 +82,14 @@ const TOOL_DEFINITIONS: Record<string, object> = {
 // pdf-lib with an embedded Unicode font is the most reliable way to get Cyrillic in PDFs.
 
 async function getNotoSansFont(): Promise<Uint8Array> {
-  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-  const BUCKET = "claw-images";
-  const FONT_PATH = "fonts/NotoSans-Regular.ttf";
-
-  // Try to read cached font from storage
-  const { data: fileData, error: readErr } = await supabase.storage
-    .from(BUCKET)
-    .download(FONT_PATH);
-
-  if (!readErr && fileData) {
-    console.log("Font loaded from storage cache");
-    return new Uint8Array(await fileData.arrayBuffer());
-  }
-
-  // Not cached yet — fetch from CDN and save to storage
-  console.log("Fetching NotoSans font from CDN...");
-  const CDN_URLS = [
-    "https://raw.githubusercontent.com/notofonts/latin-greek-cyrillic/main/fonts/NotoSans/unhinted/ttf/NotoSans-Regular.ttf",
-    "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans-Regular.ttf",
-  ];
-
-  let fontBytes: Uint8Array | null = null;
-  for (const url of CDN_URLS) {
-    try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
-      if (res.ok) {
-        const buf = await res.arrayBuffer();
-        if (buf.byteLength > 50000) {
-          fontBytes = new Uint8Array(buf);
-          console.log(`Font fetched from ${url}, size: ${fontBytes.byteLength}`);
-          break;
-        }
-      }
-    } catch (e) {
-      console.log("CDN fetch failed:", url, e);
-    }
-  }
-
-  if (!fontBytes) throw new Error("Failed to fetch NotoSans font from all CDN sources");
-
-  // Cache in storage for next time
-  try {
-    await supabase.storage.from(BUCKET).upload(FONT_PATH, fontBytes, {
-      contentType: "font/ttf",
-      upsert: true,
-    });
-    console.log("Font cached in storage");
-  } catch (e) {
-    console.log("Failed to cache font in storage (non-fatal):", e);
-  }
-
-  return fontBytes;
+  // Font is pre-uploaded to our Storage — fast internal fetch, no external CDN needed
+  const FONT_URL = `${SUPABASE_URL}/storage/v1/object/public/claw-images/fonts%2FNotoSans-Regular.ttf`;
+  console.log("Fetching font from Storage:", FONT_URL);
+  const res = await fetch(FONT_URL, { signal: AbortSignal.timeout(10000) });
+  if (!res.ok) throw new Error(`Font fetch failed: ${res.status}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  console.log("Font loaded, size:", bytes.byteLength);
+  return bytes;
 }
 
 async function buildPdf(content: string): Promise<Uint8Array> {
