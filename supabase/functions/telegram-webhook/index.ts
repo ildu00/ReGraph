@@ -1025,10 +1025,16 @@ serve(async (req) => {
     .order("created_at", { ascending: false })
     .limit(50) : { data: [] };
 
-  const historyMessages = (history || []).reverse().map((m: any) => ({
-    role: m.role as "user" | "assistant",
-    content: m.content || "",
-  }));
+  // Only keep user/assistant messages — tool/function roles break OpenAI API without paired tool_calls
+  const historyMessages = (history || [])
+    .reverse()
+    .filter((m: any) => m.role === "user" || m.role === "assistant")
+    .filter((m: any) => m.content && m.content.trim() !== "")
+    .slice(-20) // keep last 20 to avoid context overflow
+    .map((m: any) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content as string,
+    }));
 
   // Save user message
   if (convId) {
