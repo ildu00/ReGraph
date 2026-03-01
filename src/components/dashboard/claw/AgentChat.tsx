@@ -40,6 +40,7 @@ const TOOL_ICONS: Record<string, any> = {
   image_generation: Image,
   document_reader: BookOpen,
   voice_message: Volume2,
+  file_generator: FileText,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
