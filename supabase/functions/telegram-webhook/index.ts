@@ -877,21 +877,20 @@ serve(async (req) => {
       });
     } else {
       // Send text message with Markdown fallback to plain text
-      const sendMsg = async (parseMode?: string) => {
-        return fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+      // Sanitize text for Markdown: escape special chars to avoid parse errors
+      const safeText = finalReply.replace(/[_*[\]()~`>#+\-=|{}.!\\]/g, "\\$&");
+      const msgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: safeText, parse_mode: "MarkdownV2" }),
+      });
+      if (!msgRes.ok) {
+        // Fallback: send as plain text (NO retry with Markdown to avoid duplicates)
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: finalReply,
-            ...(parseMode ? { parse_mode: parseMode } : {}),
-          }),
+          body: JSON.stringify({ chat_id: chatId, text: finalReply }),
         });
-      };
-
-      const msgRes = await sendMsg("Markdown");
-      if (!msgRes.ok) {
-        await sendMsg();
       }
     }
 
