@@ -68,18 +68,19 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "web_search": {
       const query = input?.query || "";
       try {
-        const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
-        if (!apiKey) return JSON.stringify({ error: "Search not configured" });
-        const res = await fetch("https://api.firecrawl.dev/v1/search", {
+        // Call claw-web-search exactly like the website does
+        const res = await fetch(`${SUPABASE_URL}/functions/v1/claw-web-search`, {
           method: "POST",
-          headers: { "Authorization": `Bearer ${apiKey}`, "Content-Type": "application/json" },
-          body: JSON.stringify({ query, limit: 5 }),
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
+          body: JSON.stringify({ query }),
         });
         const data = await res.json();
-        console.log("Web search response status:", res.status, "ok:", res.ok);
-        if (!res.ok) return JSON.stringify({ error: `Search failed: ${data.error || res.status}` });
-        const results = (data.data || []).map((r: any) => `${r.title}\n${r.url}\n${r.description || ""}`).join("\n\n");
-        return JSON.stringify({ results: results || "No results found." });
+        console.log("Web search status:", res.status);
+        if (data.results?.length) {
+          const formatted = data.results.map((r: any) => `${r.title}\n${r.url}\n${r.description || ""}`).join("\n\n");
+          return JSON.stringify({ results: formatted });
+        }
+        return JSON.stringify({ results: "No results found." });
       } catch (e) {
         return JSON.stringify({ error: "Web search failed: " + String(e) });
       }
