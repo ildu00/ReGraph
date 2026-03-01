@@ -378,23 +378,26 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           .order("created_at", { ascending: false })
           .limit(50);
 
-        // For image messages, fetch only those tool_results that look like URLs (lightweight)
+        // For image/audio messages, fetch tool_results that contain URLs (lightweight)
         if (msgs) {
-          const imageToolIds = msgs
-            .filter((m: any) => m.tool_name === "image_generation")
+          const urlToolIds = msgs
+            .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message")
             .map((m: any) => m.id);
 
-          let imageResults: Record<string, any> = {};
-          if (imageToolIds.length > 0) {
-            const { data: imgMsgs } = await supabase
+          let urlResults: Record<string, any> = {};
+          if (urlToolIds.length > 0) {
+            const { data: urlMsgs } = await supabase
               .from("claw_messages")
               .select("id, tool_result")
-              .in("id", imageToolIds);
-            if (imgMsgs) {
-              for (const im of imgMsgs) {
-                const url = (im.tool_result as any)?.image_url;
-                if (url && typeof url === "string" && !url.startsWith("data:") && url !== "[image generated]") {
-                  imageResults[im.id] = im.tool_result;
+              .in("id", urlToolIds);
+            if (urlMsgs) {
+              for (const im of urlMsgs) {
+                const imageUrl = (im.tool_result as any)?.image_url;
+                const audioUrl = (im.tool_result as any)?.audio_url;
+                if (imageUrl && typeof imageUrl === "string" && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") {
+                  urlResults[im.id] = im.tool_result;
+                } else if (audioUrl && typeof audioUrl === "string") {
+                  urlResults[im.id] = im.tool_result;
                 }
               }
             }
@@ -406,7 +409,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             content: m.content,
             tool_name: m.tool_name,
             tool_input: m.tool_input,
-            tool_result: imageResults[m.id] ?? null,
+            tool_result: urlResults[m.id] ?? null,
           })));
         }
       } catch (e) {
