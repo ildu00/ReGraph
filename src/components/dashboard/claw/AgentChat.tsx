@@ -506,50 +506,47 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           .order("created_at", { ascending: false })
           .limit(50);
 
-        // For image/audio/file messages, fetch tool_results that contain URLs (lightweight)
+        // Fetch tool_results for media/file tool calls
         if (msgs) {
-          const urlToolIds = msgs
+          const toolMsgIds = msgs
             .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message" || m.tool_name === "file_generator")
             .map((m: any) => m.id);
 
           let urlResults: Record<string, any> = {};
-          if (urlToolIds.length > 0) {
-            const { data: urlMsgs } = await supabase
+          if (toolMsgIds.length > 0) {
+            const { data: toolMsgs } = await supabase
               .from("claw_messages")
               .select("id, tool_result")
-              .in("id", urlToolIds);
-            if (urlMsgs) {
-              for (const im of urlMsgs) {
-                const imageUrl = (im.tool_result as any)?.image_url;
-                const audioUrl = (im.tool_result as any)?.audio_url;
-                const fileUrl = (im.tool_result as any)?.file_url;
-                if (imageUrl && typeof imageUrl === "string" && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") {
-                  urlResults[im.id] = im.tool_result;
-                } else if (audioUrl && typeof audioUrl === "string") {
-                  urlResults[im.id] = im.tool_result;
-                } else if (fileUrl && typeof fileUrl === "string" && !fileUrl.startsWith("blob:")) {
-                  urlResults[im.id] = im.tool_result;
-                }
+              .in("id", toolMsgIds);
+            if (toolMsgs) {
+              for (const tm of toolMsgs) {
+                if (!tm.tool_result) continue;
+                const r = tm.tool_result as any;
+                // Always store file_generator results (even without file_url — has filename/format)
+                if (r.filename || r.file_url) { urlResults[tm.id] = r; continue; }
+                const imageUrl = r.image_url;
+                const audioUrl = r.audio_url;
+                if (imageUrl && !imageUrl.startsWith("data:") && imageUrl !== "[image generated]") urlResults[tm.id] = r;
+                else if (audioUrl) urlResults[tm.id] = r;
               }
             }
           }
 
-          // Build a map: for each assistant "📄" message, find the preceding file_generator tool_result
-          // This handles OLD messages saved before the __FILE__: format was introduced
-          const msgsChron = [...msgs].reverse(); // chronological order
+          const msgsChron = [...msgs].reverse();
+
+          // For each assistant text message that mentions a file (old "📄" format or any text after file_generator),
+          // find the preceding file_generator tool result and attach it so we can render a download card
           const fileResultByAssistantId: Record<string, any> = {};
           for (let i = 0; i < msgsChron.length; i++) {
             const m = msgsChron[i];
-            if (m.role === "assistant" && m.content?.startsWith("📄") && !m.content?.startsWith("__FILE__:")) {
-              // Search backwards for the file_generator tool result
+            if (m.role === "assistant" && m.content && !m.content.startsWith("__FILE__:") && !m.content.startsWith("__AUDIO__:")) {
+              // Check if previous tool message in this turn was file_generator
               for (let j = i - 1; j >= 0; j--) {
                 const prev = msgsChron[j];
-                if (prev.role === "user") break; // don't cross user messages
+                if (prev.role === "user") break;
                 if (prev.role === "tool" && prev.tool_name === "file_generator") {
-                  const toolResult = urlResults[prev.id];
-                  if (toolResult?.file_url && !toolResult.file_url.startsWith("blob:")) {
-                    fileResultByAssistantId[m.id] = toolResult;
-                  }
+                  const tr = urlResults[prev.id];
+                  if (tr) fileResultByAssistantId[m.id] = tr;
                   break;
                 }
               }
