@@ -518,12 +518,13 @@ serve(async (req) => {
     }
 
     // Send reply to Telegram
-    // Save assistant reply to history
+    // Save assistant reply to history and touch conversation timestamp
     await supabase.from("claw_messages").insert({
       conversation_id: conversationId,
       role: "assistant",
       content: finalReply,
     });
+    await supabase.from("claw_conversations").update({ updated_at: new Date().toISOString() }).eq("id", conversationId);
 
     if (generatedAudioUrl) {
       // Send voice via public Storage URL directly
