@@ -101,15 +101,24 @@ async function executeTool(name: string, input: any): Promise<string> {
     case "image_generation": {
       const prompt = input?.prompt || "";
       try {
-        const res = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
+        const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+        if (!lovableKey) return JSON.stringify({ error: "Image generation not configured" });
+        const res = await fetch("https://ai.gateway.lovable.dev/v1/images/generations", {
           method: "POST",
-          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}` },
-          body: JSON.stringify({ model: "sdxl-turbo", prompt, category: "image-gen" }),
+          headers: { "Content-Type": "application/json", "Authorization": `Bearer ${lovableKey}` },
+          body: JSON.stringify({ model: "black-forest-labs/flux-schnell", prompt, n: 1 }),
         });
         const data = await res.json();
-        return JSON.stringify({ imageUrl: data.imageUrl, message: "Image generated successfully" });
-      } catch {
-        return JSON.stringify({ error: "Image generation failed." });
+        console.log("Image generation response:", JSON.stringify(data));
+        const imageUrl = data?.data?.[0]?.url || data?.data?.[0]?.b64_json ? null : null;
+        const url = data?.data?.[0]?.url;
+        if (url) return JSON.stringify({ imageUrl: url, message: "Image generated" });
+        // b64 fallback
+        const b64 = data?.data?.[0]?.b64_json;
+        if (b64) return JSON.stringify({ imageBase64: b64, message: "Image generated" });
+        return JSON.stringify({ error: "No image returned: " + JSON.stringify(data) });
+      } catch (e) {
+        return JSON.stringify({ error: "Image generation failed: " + String(e) });
       }
     }
     case "document_reader": {
