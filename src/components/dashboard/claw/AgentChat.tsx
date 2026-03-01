@@ -502,7 +502,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           .order("created_at", { ascending: false })
           .limit(50);
 
-        // For image/audio messages, fetch tool_results that contain URLs (lightweight)
+        // For image/audio/file messages, fetch tool_results that contain URLs (lightweight)
         if (msgs) {
           const urlToolIds = msgs
             .filter((m: any) => m.tool_name === "image_generation" || m.tool_name === "voice_message" || m.tool_name === "file_generator")
@@ -530,13 +530,35 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             }
           }
 
-          setMessages(msgs.reverse().map((m: any) => ({
+          // Build a map: for each assistant "📄" message, find the preceding file_generator tool_result
+          // This handles OLD messages saved before the __FILE__: format was introduced
+          const msgsChron = [...msgs].reverse(); // chronological order
+          const fileResultByAssistantId: Record<string, any> = {};
+          for (let i = 0; i < msgsChron.length; i++) {
+            const m = msgsChron[i];
+            if (m.role === "assistant" && m.content?.startsWith("📄") && !m.content?.startsWith("__FILE__:")) {
+              // Search backwards for the file_generator tool result
+              for (let j = i - 1; j >= 0; j--) {
+                const prev = msgsChron[j];
+                if (prev.role === "user") break; // don't cross user messages
+                if (prev.role === "tool" && prev.tool_name === "file_generator") {
+                  const toolResult = urlResults[prev.id];
+                  if (toolResult?.file_url && !toolResult.file_url.startsWith("blob:")) {
+                    fileResultByAssistantId[m.id] = toolResult;
+                  }
+                  break;
+                }
+              }
+            }
+          }
+
+          setMessages(msgsChron.map((m: any) => ({
             id: m.id,
             role: m.role,
             content: m.content,
             tool_name: m.tool_name,
             tool_input: m.tool_input,
-            tool_result: urlResults[m.id] ?? null,
+            tool_result: urlResults[m.id] ?? (fileResultByAssistantId[m.id] ? { __legacyFileResult: fileResultByAssistantId[m.id] } : null),
           })));
         }
       } catch (e) {
