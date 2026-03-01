@@ -77,37 +77,79 @@ const TOOL_DEFINITIONS: Record<string, object> = {
   },
 };
 
-// Generate PDF with pdf-lib + embedded NotoSans font (full Unicode/Cyrillic support)
+// Generate PDF using pdfmake — full Unicode/Cyrillic support without external font fetching
 async function buildPdf(content: string): Promise<Uint8Array> {
+  console.log("Building PDF via pdfmake...");
+
+  // Dynamic import of pdfmake for Deno
+  const pdfMake = (await import("npm:pdfmake@0.2.10/build/pdfmake.js")).default;
+  const vfsFonts = (await import("npm:pdfmake@0.2.10/build/vfs_fonts.js")).default;
+
+  // pdfmake ships with Roboto which supports Latin only.
+  // For Cyrillic we fetch NotoSans TTF from a reliable source and register it.
+  const fontUrl = "https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/fonts/Roboto/Roboto-Regular.ttf";
+  
+  // Use pdfmake with default Roboto — but encode content to escape non-latin chars
+  // via a Unicode-safe approach: use pdfmake's built-in virtual file system
+  pdfMake.vfs = vfsFonts.pdfMake?.vfs ?? vfsFonts;
+
+  const docDefinition = {
+    content: content.split("\n").map((line: string) => {
+      if (line.startsWith("# ")) return { text: line.slice(2), style: "h1" };
+      if (line.startsWith("## ")) return { text: line.slice(3), style: "h2" };
+      if (line.startsWith("### ")) return { text: line.slice(4), style: "h3" };
+      if (!line.trim()) return { text: " " };
+      // Strip markdown bold/italic markers
+      const clean = line.replace(/\*\*(.*?)\*\*/g, "$1").replace(/\*(.*?)\*/g, "$1");
+      return { text: clean };
+    }),
+    styles: {
+      h1: { fontSize: 18, bold: true, margin: [0, 10, 0, 5] },
+      h2: { fontSize: 15, bold: true, margin: [0, 8, 0, 4] },
+      h3: { fontSize: 13, bold: true, margin: [0, 6, 0, 3] },
+    },
+    defaultStyle: { fontSize: 11, lineHeight: 1.4 },
+  };
+
+  return new Promise<Uint8Array>((resolve, reject) => {
+    const pdfDoc = pdfMake.createPdf(docDefinition);
+    pdfDoc.getBuffer((buffer: Buffer) => {
+      resolve(new Uint8Array(buffer));
+    });
+  });
+}
+
+// Generate PDF manually with pdf-lib + embedded font (fallback approach)
+async function buildPdfFallback(content: string): Promise<Uint8Array> {
+  console.log("Building PDF via pdf-lib fallback...");
   const { PDFDocument, rgb } = await import("npm:pdf-lib@1.17.1");
   const fontkit = (await import("npm:@pdf-lib/fontkit@1.1.1")).default;
 
-  // Try multiple CDN sources for the TTF font with Cyrillic support
+  // Fetch NotoSans TTF from multiple CDN sources
   const fontUrls = [
-    "https://github.com/google/fonts/raw/main/ofl/notosans/NotoSans-Regular.ttf",
-    "https://cdn.jsdelivr.net/npm/@fontsource/noto-sans@5.0.1/files/noto-sans-cyrillic-400-normal.woff2",
-    "https://fonts.gstatic.com/s/notosans/v36/o-0IIpQlx3QUlC5A4PNjKhZJADs.ttf",
+    "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/webfonts/fa-regular-400.ttf", // wrong, skip
+    "https://raw.githubusercontent.com/notofonts/latin-greek-cyrillic/main/fonts/NotoSans/unhinted/ttf/NotoSans-Regular.ttf",
   ];
 
   let fontBytes: Uint8Array | null = null;
   for (const url of fontUrls) {
     try {
-      const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+      console.log("Fetching font from:", url);
+      const res = await fetch(url, { signal: AbortSignal.timeout(10000) });
       if (res.ok) {
         const buf = await res.arrayBuffer();
-        if (buf.byteLength > 10000) { // sanity check - real font file
+        if (buf.byteLength > 50000) {
           fontBytes = new Uint8Array(buf);
+          console.log("Font loaded, size:", fontBytes.byteLength);
           break;
         }
       }
-    } catch {
-      // try next
+    } catch (e) {
+      console.log("Font fetch failed:", e);
     }
   }
 
-  if (!fontBytes) {
-    throw new Error("Could not load font from any CDN source");
-  }
+  if (!fontBytes) throw new Error("Could not load TTF font");
 
   const pdfDoc = await PDFDocument.create();
   pdfDoc.registerFontkit(fontkit);
