@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import AgentFormModal, { ClawAgent, TOOLS } from "./AgentFormModal";
+import TelegramIntegration from "./TelegramIntegration";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -129,6 +130,11 @@ export default function AgentLibrary({ onOpenChat }: AgentLibraryProps) {
           ))}
         </div>
       )}
+
+      {/* Telegram Integration */}
+      <div className="border-t border-border pt-6">
+        <TelegramIntegration agents={agents} />
+      </div>
 
       {/* Modal */}
       <AgentFormModal
