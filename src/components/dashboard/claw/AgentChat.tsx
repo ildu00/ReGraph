@@ -171,7 +171,7 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
             {
               method: "POST",
               headers: { "Content-Type": "audio/mpeg", Authorization: `Bearer ${apiKey}` },
-              body: audioBuffer,
+              body: audioBuffer.slice(0),
             }
           );
           if (uploadRes.ok) {
@@ -180,8 +180,11 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
               console.log("[voice_message] Uploaded to storage:", uploadData.audio_url);
               return { audio_url: uploadData.audio_url };
             }
+            console.warn("[voice_message] Upload ok but no audio_url:", uploadData);
+          } else {
+            const errText = await uploadRes.text().catch(() => "");
+            console.warn("[voice_message] Upload function failed:", uploadRes.status, errText);
           }
-          console.warn("[voice_message] Upload function failed:", await uploadRes.text().catch(() => ""));
         } catch (uploadErr) {
           console.warn("[voice_message] Upload exception:", uploadErr);
         }
