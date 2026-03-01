@@ -553,8 +553,8 @@ async function executeTool(name: string, input: any): Promise<string> {
         let outFilename = filename;
 
         if (format === "pdf") {
-          console.log("Generating PDF (native, Cyrillic-safe)...");
-          fileBytes = buildPdf(content);
+          console.log("Generating PDF with pdf-lib + NotoSans (Cyrillic support)...");
+          fileBytes = await buildPdf(content);
           mimeType = "application/pdf";
           outFilename = filename.endsWith(".pdf") ? filename : filename.replace(/\.[^.]+$/, "") + ".pdf";
           console.log("PDF generated, bytes:", fileBytes.byteLength);
