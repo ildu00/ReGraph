@@ -51,6 +51,14 @@ const TOOL_DEFINITIONS: Record<string, object> = {
       parameters: { type: "object", properties: { url: { type: "string", description: "The URL of the webpage to read" } }, required: ["url"] },
     },
   },
+  voice_message: {
+    type: "function",
+    function: {
+      name: "voice_message",
+      description: "Convert text to speech and send it as a voice message to the user. Use when the user asks to speak, read aloud, or send a voice note.",
+      parameters: { type: "object", properties: { text: { type: "string", description: "The text to convert to speech" }, voice: { type: "string", enum: ["alloy", "echo", "fable", "onyx", "nova", "shimmer"], description: "Voice style to use (default: nova)" } }, required: ["text"] },
+    },
+  },
 };
 
 async function executeTool(name: string, input: any): Promise<string> {
@@ -163,6 +171,35 @@ async function executeTool(name: string, input: any): Promise<string> {
         return JSON.stringify({ error: "Document reading failed: " + String(e) });
       }
     }
+    case "voice_message": {
+      const text = input?.text || "";
+      const voice = input?.voice || "nova";
+      try {
+        const res = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "tts-1", input: text, voice, response_format: "ogg_opus" }),
+        });
+        if (!res.ok) {
+          const err = await res.text();
+          console.error("TTS error:", res.status, err);
+          return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
+        }
+        const audioBytes = new Uint8Array(await res.arrayBuffer());
+        const fileName = `tts-${Date.now()}.ogg`;
+        const storageRes = await fetch(
+          `${SUPABASE_URL}/storage/v1/object/claw-images/${fileName}`,
+          { method: "POST", headers: { "Authorization": `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`, "Content-Type": "audio/ogg", "x-upsert": "false" }, body: audioBytes }
+        );
+        if (storageRes.ok) {
+          const audioUrl = `${SUPABASE_URL}/storage/v1/object/public/claw-images/${fileName}`;
+          return JSON.stringify({ audioUrl, message: "Voice message generated" });
+        }
+        return JSON.stringify({ error: "Failed to upload audio" });
+      } catch (e) {
+        return JSON.stringify({ error: "TTS failed: " + String(e) });
+      }
+    }
     default:
       return JSON.stringify({ error: `Unknown tool: ${name}` });
   }
@@ -195,12 +232,48 @@ serve(async (req) => {
 
     const update = await req.json();
     const message = update?.message || update?.edited_message;
-    if (!message?.text) {
+    const hasVoice = !!message?.voice;
+    if (!message?.text && !hasVoice) {
       return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
     }
 
     const chatId = message.chat.id;
-    const userText = message.text;
+    let userText = message.text || "";
+
+    // Transcribe incoming voice message via VseGPT Whisper
+    if (hasVoice) {
+      try {
+        const fileId = message.voice.file_id;
+        const fileInfoRes = await fetch(`https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`);
+        const fileInfo = await fileInfoRes.json();
+        const filePath = fileInfo?.result?.file_path;
+        if (filePath) {
+          const audioRes = await fetch(`https://api.telegram.org/file/bot${botToken}/${filePath}`);
+          const audioBlob = await audioRes.arrayBuffer();
+          const formData = new FormData();
+          formData.append("file", new Blob([audioBlob], { type: "audio/ogg" }), "voice.ogg");
+          formData.append("model", "openai/whisper-large-v3");
+          const transcribeRes = await fetch("https://api.vsegpt.ru/v1/audio/transcriptions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
+            body: formData,
+          });
+          const transcribeData = await transcribeRes.json();
+          userText = transcribeData?.text || "";
+          console.log("Transcribed voice:", userText.slice(0, 100));
+        }
+      } catch (e) {
+        console.error("Voice transcription failed:", e);
+      }
+      if (!userText) {
+        await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ chat_id: message.chat.id, text: "⚠️ Could not transcribe your voice message. Please try again." }),
+        });
+        return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+      }
+    }
     const agent = (bot as any).claw_agents;
 
     if (!agent) {
@@ -305,6 +378,7 @@ serve(async (req) => {
     const MAX_ITERATIONS = 5;
     let generatedImageUrl: string | null = null;
     let generatedImageBase64: string | null = null;
+    let generatedAudioUrl: string | null = null;
     let totalTokensUsed = 0;
     const startTime = Date.now();
 
@@ -377,6 +451,10 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
+          if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
+            finalReply = "🔊";
+          }
         } catch { /* */ }
 
         messages.push({
@@ -387,7 +465,7 @@ serve(async (req) => {
       }
 
       // If image was generated — no need for another LLM call, just exit loop
-      if (generatedImageUrl || generatedImageBase64) break;
+      if (generatedImageUrl || generatedImageBase64 || generatedAudioUrl) break;
     }
 
     // Billing: charge user and log usage
@@ -417,7 +495,13 @@ serve(async (req) => {
       content: finalReply,
     });
 
-    if (generatedImageUrl) {
+    if (generatedAudioUrl) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendVoice`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, voice: generatedAudioUrl }),
+      });
+    } else if (generatedImageUrl) {
       await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
