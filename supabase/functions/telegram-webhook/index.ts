@@ -459,7 +459,7 @@ serve(async (req) => {
 
         const toolResult = await executeTool(toolName, toolInput);
 
-        // Check for image in tool result
+        // Check for image/audio in tool result
         try {
           const parsed = JSON.parse(toolResult);
           if (parsed.imageUrl) {
@@ -470,12 +470,17 @@ serve(async (req) => {
             generatedImageBase64 = parsed.imageBase64;
             finalReply = "🎨 Here's your image!";
           }
-          if (parsed.audioUrl) {
-            generatedAudioUrl = parsed.audioUrl;
+          if (parsed.audioKey) {
+            // Retrieve raw buffer stored by voice_message tool
+            const buf = (globalThis as any).__audioBuffers?.[parsed.audioKey];
+            if (buf) {
+              generatedAudioBuffer = buf;
+              delete (globalThis as any).__audioBuffers[parsed.audioKey];
+            }
             finalReply = "🔊";
           }
-          if (parsed.audioBase64) {
-            generatedAudioUrl = parsed.audioBase64; // reuse variable, mark as base64
+          if (parsed.audioUrl) {
+            generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
         } catch { /* */ }
