@@ -505,8 +505,7 @@ serve(async (req) => {
     let generatedImageBase64: string | null = null;
     let generatedAudioUrl: string | null = null;
     let generatedAudioBuffer: ArrayBuffer | null = null;
-    let generatedFileUrl: string | null = null;
-    let generatedFileName: string | null = null;
+    let generatedFileKey: string | null = null;
     let totalTokensUsed = 0;
     const startTime = Date.now();
 
