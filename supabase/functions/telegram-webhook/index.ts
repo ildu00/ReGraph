@@ -369,8 +369,13 @@ serve(async (req) => {
     const vsegptModel = modelMapping[agent.model_id] || agent.model_id || "openai/gpt-4o-mini";
 
     // Agentic loop
+    const toolCapabilities: string[] = [];
+    if (agentTools.includes("voice_message")) toolCapabilities.push("You CAN send voice messages using the voice_message tool. When the user asks you to speak, read aloud, reply with audio, or send a voice note — you MUST call the voice_message tool with the text.");
+    if (agentTools.includes("voice_transcription")) toolCapabilities.push("You can receive and understand voice messages from the user (they are transcribed automatically).");
+    const systemSuffix = toolCapabilities.length > 0 ? "\n\n" + toolCapabilities.join("\n") : "";
+
     const messages: any[] = [
-      { role: "system", content: agent.system_prompt || "You are a helpful assistant." },
+      { role: "system", content: (agent.system_prompt || "You are a helpful assistant.") + systemSuffix },
       ...historyMessages,
       { role: "user", content: userText },
     ];
