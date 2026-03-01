@@ -471,6 +471,10 @@ serve(async (req) => {
             generatedAudioUrl = parsed.audioUrl;
             finalReply = "🔊";
           }
+          if (parsed.audioBase64) {
+            generatedAudioUrl = parsed.audioBase64; // reuse variable, mark as base64
+            finalReply = "🔊";
+          }
         } catch { /* */ }
 
         messages.push({
