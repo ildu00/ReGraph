@@ -185,11 +185,13 @@ async function executeTool(name: string, input: any): Promise<string> {
           console.error("TTS error:", res.status, err);
           return JSON.stringify({ error: "TTS failed: " + err.slice(0, 200) });
         }
-        const audioBytes = await res.arrayBuffer();
-        console.log("TTS audio generated, bytes:", audioBytes.byteLength);
-        // Store audio bytes as base64 to pass back for direct Telegram upload
-        const base64Audio = btoa(String.fromCharCode(...new Uint8Array(audioBytes)));
-        return JSON.stringify({ audioBase64: base64Audio, audioFormat: "mp3", message: "Voice message generated" });
+        const audioBuffer = await res.arrayBuffer();
+        console.log("TTS audio generated, bytes:", audioBuffer.byteLength);
+        // Store raw buffer in a module-level map keyed by timestamp to avoid base64 encoding
+        const audioKey = `audio_${Date.now()}`;
+        (globalThis as any).__audioBuffers = (globalThis as any).__audioBuffers || {};
+        (globalThis as any).__audioBuffers[audioKey] = audioBuffer;
+        return JSON.stringify({ audioKey, audioFormat: "mp3", message: "Voice message generated" });
       } catch (e) {
         return JSON.stringify({ error: "TTS failed: " + String(e) });
       }
