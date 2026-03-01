@@ -131,6 +131,11 @@ export default function AgentLibrary({ onOpenChat }: AgentLibraryProps) {
         </div>
       )}
 
+      {/* Telegram Integration */}
+      <div className="border-t border-border pt-6">
+        <TelegramIntegration agents={agents} />
+      </div>
+
       {/* Modal */}
       <AgentFormModal
         open={modalOpen}
