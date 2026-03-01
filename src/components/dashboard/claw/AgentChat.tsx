@@ -688,9 +688,25 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             } as any);
           }
 
-          // If any tool was image_generation — stop here, no need for a follow-up LLM call
+          // If any tool was image_generation or voice_message — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
+          const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
           if (hadImageGen) break;
+          if (hadVoice) {
+            // Find the audio result and persist an assistant message with audio_url embedded
+            const voiceTc = assistantMsg.tool_calls.find((tc: any) => tc.function?.name === "voice_message");
+            if (voiceTc) {
+              const toolInput = JSON.parse(voiceTc.function?.arguments || "{}");
+              const audioResult = await executeTool("voice_message", toolInput, apiKey);
+              const audioUrl = audioResult?.audio_url;
+              // Embed audio_url in content so it survives DB round-trips
+              const audioContent = audioUrl ? `__AUDIO__:${audioUrl}` : "🔊 (failed to generate audio)";
+              const audioMsgId = crypto.randomUUID();
+              setMessages((prev) => [...prev, { id: audioMsgId, role: "assistant", content: audioContent }]);
+              await persistMessage(conversationId, { role: "assistant", content: audioContent });
+            }
+            break;
+          }
 
           // Prepare new streaming placeholder for next iteration's final answer
           currentStreamingId = crypto.randomUUID();
@@ -811,6 +827,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         {messages.map((msg) => {
           if (msg.role === "tool") return <ToolCallMessage key={msg.id} msg={msg} onImageLoad={() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })} />;
           if (msg.role === "assistant" && !msg.content) return null;
+          // Don't show old 🔊 messages — they have no audio URL (pre-fix data)
+          if (msg.role === "assistant" && msg.content === "🔊") return null;
           return (
             <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
               {msg.role === "assistant" && (
@@ -824,8 +842,10 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     ? "bg-primary text-primary-foreground"
                     : "bg-secondary/70"
                 }`}>
-                  {msg.isStreaming && !msg.content ? (
+          {msg.isStreaming && !msg.content ? (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  ) : msg.content?.startsWith("__AUDIO__:") ? (
+                    <audio controls src={msg.content.slice(10)} className="w-full h-10 rounded" preload="metadata" />
                   ) : (
                     <div className={`markdown-response text-sm min-w-0 overflow-hidden ${msg.role === "user" ? "text-primary-foreground" : ""}`}>
                       <ReactMarkdown
@@ -848,7 +868,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                     </div>
                   )}
                 </div>
-                {msg.role === "assistant" && msg.content && (
+                {msg.role === "assistant" && msg.content && !msg.content.startsWith("__AUDIO__:") && (
                   <div className="flex justify-end">
                     <Button
                       variant="ghost"
