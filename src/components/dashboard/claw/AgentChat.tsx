@@ -295,17 +295,21 @@ async function executeTool(name: string, input: any, apiKey: string): Promise<an
         // Upload to storage for a permanent URL
         try {
           const storagePath = `files/${crypto.randomUUID()}_${finalFilename}`;
-          const { error: uploadErr } = await supabase.storage
+          const { data: uploadData, error: uploadErr } = await supabase.storage
             .from("claw-images")
             .upload(storagePath, blob, { contentType: blob.type, upsert: false });
-          if (!uploadErr) {
-            const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(storagePath);
+          if (uploadErr) {
+            console.error("[file_generator] Storage upload error:", uploadErr);
+          } else if (uploadData?.path) {
+            const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(uploadData.path);
             return { file_url: urlData.publicUrl, filename: finalFilename, format, size: blob.size };
           }
-        } catch { /* fallback to blob URL */ }
-        // Fallback: blob URL (works only in current session)
+        } catch (uploadErr) {
+          console.error("[file_generator] Storage upload exception:", uploadErr);
+        }
+        // Fallback: blob URL (works only in current session, no persistence)
         const blobUrl = URL.createObjectURL(blob);
-        return { file_url: blobUrl, filename: finalFilename, format, size: blob.size };
+        return { file_url: blobUrl, filename: finalFilename, format, size: blob.size, isBlobUrl: true };
       } catch (e: any) {
         return { error: `File generation failed: ${e.message}` };
       }
