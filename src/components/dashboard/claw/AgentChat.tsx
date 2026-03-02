@@ -388,11 +388,13 @@ function buildToolDefs(toolIds: string[]) {
       type: "function",
       function: {
         name: "document_reader",
-        description: "Read and analyze a document.",
+        description: "Read and extract text from a document. Supports attached files (PDF, DOCX, TXT) OR a remote URL (http/https) to download and parse the document. Use the 'url' parameter when the user provides a link.",
         parameters: {
           type: "object",
-          properties: { filename: { type: "string" } },
-          required: ["filename"],
+          properties: {
+            url: { type: "string", description: "A direct URL to a PDF, DOCX, or text file to download and parse." },
+            filename: { type: "string", description: "Name hint if using an attached file (optional)." },
+          },
         },
       },
     });
