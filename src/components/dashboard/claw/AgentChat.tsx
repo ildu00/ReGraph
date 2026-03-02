@@ -1137,14 +1137,14 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           {enabledTools.slice(0, 3).map((t) => {
             const Icon = t.icon;
             return (
-              <Badge key={t.id} variant="secondary" className="text-xs gap-1 hidden md:flex">
+              <Badge key={t.id} variant="secondary" className="text-xs gap-1 hidden lg:flex">
                 <Icon className="h-2.5 w-2.5" />
                 {t.label}
               </Badge>
             );
           })}
           {enabledTools.length > 3 && (
-            <Badge variant="secondary" className="text-xs hidden md:flex">+{enabledTools.length - 3}</Badge>
+            <Badge variant="secondary" className="text-xs hidden lg:flex">+{enabledTools.length - 3}</Badge>
           )}
           <Button variant="ghost" size="sm" onMouseDown={(e) => e.preventDefault()} onClick={startNewConversation} className="text-muted-foreground h-8 px-2">
             <Plus className="h-4 w-4" />
