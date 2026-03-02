@@ -973,7 +973,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           // If any tool was image_generation, voice_message, or file_generator — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
-          const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
+          hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) {
             // ToolCallMessage already renders the image from tool_result.image_url — no duplicate message needed
             const imageResult = toolResults["image_generation"];
