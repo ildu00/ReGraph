@@ -308,8 +308,13 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
         }
 
         // Upload to storage for a permanent URL
+        // Transliterate filename to ASCII to avoid Storage "InvalidKey" errors with Cyrillic
+        const safeFilename = finalFilename.replace(/[а-яё]/gi, (c) => {
+          const map: Record<string, string> = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'yo',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+          return map[c.toLowerCase()] ?? c;
+        });
         try {
-          const storagePath = `files/${crypto.randomUUID()}_${finalFilename}`;
+          const storagePath = `files/${crypto.randomUUID()}_${safeFilename}`;
           const { data: uploadData, error: uploadErr } = await supabase.storage
             .from("claw-images")
             .upload(storagePath, blob, { contentType: blob.type, upsert: false });
@@ -908,6 +913,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         if (!assistantMsg) break;
 
+        let hadFileGen = false;
         // Tool calls?
         if (assistantMsg.tool_calls?.length > 0) {
           // If model returned meaningful thinking content, show it
@@ -967,7 +973,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
           // If any tool was image_generation, voice_message, or file_generator — stop here, no need for a follow-up LLM call
           const hadImageGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "image_generation");
           const hadVoice = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "voice_message");
-          const hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
+          hadFileGen = assistantMsg.tool_calls.some((tc: any) => tc.function?.name === "file_generator");
           if (hadImageGen) {
             // ToolCallMessage already renders the image from tool_result.image_url — no duplicate message needed
             const imageResult = toolResults["image_generation"];
@@ -1022,6 +1028,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         // Final answer
         let finalContent = assistantMsg.content || "";
         if (!finalContent || finalContent === "No response generated") break;
+
+        // If file was already generated via tool call, skip hard intercept to avoid duplicate card
+        if (hadFileGen) break;
 
         // Hard intercept: if the LLM wrote a file-announcement text instead of calling the tool
         // directly execute file_generator ourselves
