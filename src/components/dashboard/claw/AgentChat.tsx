@@ -44,7 +44,7 @@ const TOOL_ICONS: Record<string, any> = {
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
-async function executeTool(name: string, input: any, apiKey: string): Promise<any> {
+async function executeTool(name: string, input: any, apiKey: string, jwtToken?: string): Promise<any> {
   switch (name) {
     case "calculator": {
       try {
