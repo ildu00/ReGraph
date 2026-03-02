@@ -1162,6 +1162,25 @@ serve(async (req) => {
     const MODEL_MAP: Record<string, string> = {
       "regraph-llm": "openai/gpt-4o-mini",
       "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
+      // Claude mappings
+      "anthropic/claude-opus-4-5": "anthropic/claude-opus-4",
+      "claude-opus-4.5": "anthropic/claude-opus-4",
+      "claude-opus-4-5": "anthropic/claude-opus-4",
+      "anthropic/claude-sonnet-4-5": "anthropic/claude-sonnet-4",
+      "claude-sonnet-4.5": "anthropic/claude-sonnet-4",
+      "anthropic/claude-haiku-3-5": "anthropic/claude-haiku-3",
+      "claude-haiku-3.5": "anthropic/claude-haiku-3",
+      // OpenAI
+      "openai/gpt-4o": "openai/gpt-4o",
+      "openai/gpt-4o-mini": "openai/gpt-4o-mini",
+      "openai/gpt-5": "openai/gpt-5",
+      "openai/gpt-5-mini": "openai/gpt-5-mini",
+      // Gemini
+      "google/gemini-2.5-pro": "google/gemini-2.5-pro",
+      "google/gemini-2.5-flash": "google/gemini-2.5-flash",
+      // DeepSeek
+      "deepseek/deepseek-r1": "deepseek/deepseek-r1",
+      "deepseek/deepseek-chat": "deepseek/deepseek-chat",
     };
     const rawModel = agent.model_id || "openai/gpt-4o-mini";
     const resolvedModel = MODEL_MAP[rawModel] || rawModel;
