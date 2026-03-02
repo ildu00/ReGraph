@@ -267,5 +267,5 @@ export async function buildPdf(content: string): Promise<Uint8Array> {
   const pageNum = pdfDoc.getPageCount();
   currentPage.drawText(`— ${pageNum} —`, { x: pageWidth / 2 - 15, y: marginY / 2, size: 9, font, color: colorGray });
 
-  return pdfDoc.save();
+  return new Uint8Array(await pdfDoc.save());
 }
