@@ -835,7 +835,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             userLower.includes("нарисовать") || userLower.includes("сгенерируй изображение");
           if (userWantsImage) {
             console.log("[AgentChat] User wants image but LLM didn't call tool — directly executing image_generation");
-            const directResult = await executeTool("image_generation", { prompt: fullUserText }, apiKey);
+            const directResult = await executeTool("image_generation", { prompt: fullUserText }, apiKey, jwtToken);
             if (directResult?.image_url) {
               const imgContent = `__IMAGE__:${directResult.image_url}`;
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: imgContent }]);
@@ -926,7 +926,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               isStreaming: true,
             }]);
 
-            const result = await executeTool(toolName, { ...toolInput, __attachedFiles: pendingFilesRef.current }, apiKey);
+            const result = await executeTool(toolName, { ...toolInput, __attachedFiles: pendingFilesRef.current }, apiKey, jwtToken);
             toolResults[toolName] = result;
 
             setMessages((prev) => prev.map((m) => m.id === toolCallMsgId
