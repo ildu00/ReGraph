@@ -26,6 +26,15 @@ interface Message {
   tool_input?: any;
   tool_result?: any;
   isStreaming?: boolean;
+  imagePreview?: string; // base64 data URL for attached image preview
+}
+  id: string;
+  role: "user" | "assistant" | "tool";
+  content: string | null;
+  tool_name?: string | null;
+  tool_input?: any;
+  tool_result?: any;
+  isStreaming?: boolean;
 }
 
 interface AgentChatProps {
