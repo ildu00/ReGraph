@@ -993,8 +993,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 : `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               await persistMessage(conversationId, { role: "assistant", content: dbContent });
             } else if (fileResult?.error) {
-              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` }]);
-              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` });
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ File generation failed: ${fileResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ File generation failed: ${fileResult.error}` });
             }
             break;
           }
