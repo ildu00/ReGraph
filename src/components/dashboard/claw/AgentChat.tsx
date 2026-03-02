@@ -688,8 +688,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
     // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
-    const userContent = imageBase64 ? `${fullUserText}\n\n![attached](${imageBase64})` : fullUserText;
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userContent }]);
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: fullUserText, imagePreview: imageBase64 }]);
     await persistMessage(conversationId, { role: "user", content: fullUserText });
 
     const apiKey = await getOrCreateApiKey(user.id);
