@@ -859,7 +859,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: imgContent }]);
               await persistMessage(conversationId, { role: "assistant", content: imgContent });
             } else {
-              const errMsg = directResult?.error || "Ошибка генерации изображения";
+              const errMsg = directResult?.error || "Image generation failed";
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ ${errMsg}` }]);
               await persistMessage(conversationId, { role: "assistant", content: `❌ ${errMsg}` });
             }
@@ -978,8 +978,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             // ToolCallMessage already renders the image from tool_result.image_url — no duplicate message needed
             const imageResult = toolResults["image_generation"];
             if (!imageResult?.image_url && imageResult?.error) {
-              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` }]);
-              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` });
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Image generation failed: ${imageResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ Image generation failed: ${imageResult.error}` });
             }
             break;
           }
@@ -993,8 +993,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 : `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               await persistMessage(conversationId, { role: "assistant", content: dbContent });
             } else if (fileResult?.error) {
-              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` }]);
-              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` });
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ File generation failed: ${fileResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ File generation failed: ${fileResult.error}` });
             }
             break;
           }
@@ -1260,7 +1260,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                           <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
                         </div>
                         {isExpired ? (
-                          <span className="text-xs text-muted-foreground italic shrink-0">ссылка устарела</span>
+                          <span className="text-xs text-muted-foreground italic shrink-0">link expired</span>
                         ) : (
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
                             try {
