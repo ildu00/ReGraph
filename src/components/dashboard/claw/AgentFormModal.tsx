@@ -61,6 +61,7 @@ export const TOOLS = [
   { id: "file_generator", label: "File Generator", description: "Generate TXT, JSON, CSV, XLSX, PDF files", icon: FileText },
   { id: "voice_transcription", label: "Voice Input", description: "Transcribe incoming voice messages", icon: Mic },
   { id: "voice_message", label: "Voice Reply", description: "Reply with voice messages (TTS)", icon: Volume2 },
+  { id: "commands", label: "Commands", description: "Handle /help /model /verbose /new /usage slash commands", icon: Terminal },
 ];
 
 const EMOJIS = ["🤖", "🦾", "🧠", "⚡", "🔬", "🎯", "🚀", "💡", "🦅", "🐉", "🌊", "🔥", "💎", "🎨", "🛡️", "⚙️"];
