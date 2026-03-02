@@ -796,7 +796,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             prompt: promptText,
             messages: loopMessages,
             category: "llm",
-            max_tokens: 4096,
+            maxTokens: 40000,
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
           }),
         });
@@ -877,7 +877,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 prompt: fullUserText,
                 messages: loopMessages,
                 category: "llm",
-                max_tokens: 4096,
+                maxTokens: 40000,
                 tools: toolDefs.filter((td: any) => td.function?.name === "file_generator"),
                 tool_choice: { type: "function", function: { name: "file_generator" } },
               }),
@@ -1042,7 +1042,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                   { role: "user", content: userText },
                 ],
                 category: "llm",
-                max_tokens: 4096,
+                maxTokens: 40000,
               }),
             });
             if (contentRes.ok) {
@@ -1329,7 +1329,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                                     { role: "system", content: "Generate ONLY the raw file content. No explanations." },
                                     { role: "user", content: fileTextContent },
                                   ],
-                                  category: "llm", max_tokens: 4096,
+                                  category: "llm", maxTokens: 40000,
                                 }),
                               });
                               if (cr.ok) { const cd = await cr.json(); const g = cd?.response; if (g && g !== "No response generated") fileTextContent = g; }
