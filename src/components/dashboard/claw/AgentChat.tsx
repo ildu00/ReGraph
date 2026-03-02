@@ -796,7 +796,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             prompt: promptText,
             messages: loopMessages,
             category: "llm",
-            max_tokens: 4096,
+            maxTokens: 40000,
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
           }),
         });
