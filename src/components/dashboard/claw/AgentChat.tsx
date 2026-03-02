@@ -260,48 +260,9 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
           finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
         } else if (format === "pdf") {
-          const { jsPDF } = await import("jspdf");
-          const doc = new jsPDF();
-
-          // Load NotoSans from public folder (avoids CORS issues with CDN)
-          let fontLoaded = false;
-          try {
-            const fontRes = await fetch("/fonts/NotoSans-Regular.ttf");
-            if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
-            const fontBuf = await fontRes.arrayBuffer();
-            const bytes = new Uint8Array(fontBuf);
-            let binary = "";
-            const chunkSize = 8192;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-            }
-            const fontBase64 = btoa(binary);
-            doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64);
-            doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
-            doc.setFont("NotoSans");
-            fontLoaded = true;
-          } catch (fontErr) {
-            console.warn("[file_generator] Font load failed, using default:", fontErr);
-          }
-          if (!fontLoaded) {
-            doc.setFont("helvetica");
-          }
-
-          const pageWidth = doc.internal.pageSize.getWidth();
-          const margin = 15;
-          const maxWidth = pageWidth - margin * 2;
-          const lineHeight = 7;
-          let y = 20;
-          for (const line of content.split("\n")) {
-            const wrapped = doc.splitTextToSize(line || " ", maxWidth);
-            for (const wl of wrapped) {
-              if (y > 275) { doc.addPage(); y = 20; }
-              doc.text(wl, margin, y);
-              y += lineHeight;
-            }
-          }
-          const pdfBuf = doc.output("arraybuffer");
-          blob = new Blob([pdfBuf], { type: "application/pdf" });
+          const { buildPdf } = await import("@/lib/buildPdf");
+          const pdfBytes = await buildPdf(content);
+          blob = new Blob([pdfBytes], { type: "application/pdf" });
           finalFilename = finalFilename.replace(/\.(txt|csv|json|html)$/i, "") + ".pdf";
         } else {
           return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
