@@ -1122,7 +1122,7 @@ serve(async (req) => {
     await supabase.from("claw_messages").insert({ conversation_id: convId, role: "user", content: msgContent });
   }
 
-  const agentTools: string[] = Array.isArray(agent.tools) ? agent.tools : [];
+  const agentTools: string[] = agentToolsList;
   const toolCapabilities: string[] = [];
   if (agentTools.includes("voice_message")) toolCapabilities.push("You CAN send voice messages using the voice_message tool. When the user asks you to speak, read aloud, reply with audio, or send a voice note — you MUST call the voice_message tool with the text.");
   if (agentTools.includes("voice_transcription")) toolCapabilities.push("You can receive and understand voice messages from the user (they are transcribed automatically).");
