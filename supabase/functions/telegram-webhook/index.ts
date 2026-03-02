@@ -1162,6 +1162,25 @@ serve(async (req) => {
     const MODEL_MAP: Record<string, string> = {
       "regraph-llm": "openai/gpt-4o-mini",
       "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
+      // Claude mappings
+      "anthropic/claude-opus-4-5": "anthropic/claude-opus-4",
+      "claude-opus-4.5": "anthropic/claude-opus-4",
+      "claude-opus-4-5": "anthropic/claude-opus-4",
+      "anthropic/claude-sonnet-4-5": "anthropic/claude-sonnet-4",
+      "claude-sonnet-4.5": "anthropic/claude-sonnet-4",
+      "anthropic/claude-haiku-3-5": "anthropic/claude-haiku-3",
+      "claude-haiku-3.5": "anthropic/claude-haiku-3",
+      // OpenAI
+      "openai/gpt-4o": "openai/gpt-4o",
+      "openai/gpt-4o-mini": "openai/gpt-4o-mini",
+      "openai/gpt-5": "openai/gpt-5",
+      "openai/gpt-5-mini": "openai/gpt-5-mini",
+      // Gemini
+      "google/gemini-2.5-pro": "google/gemini-2.5-pro",
+      "google/gemini-2.5-flash": "google/gemini-2.5-flash",
+      // DeepSeek
+      "deepseek/deepseek-r1": "deepseek/deepseek-r1",
+      "deepseek/deepseek-chat": "deepseek/deepseek-chat",
     };
     const rawModel = agent.model_id || "openai/gpt-4o-mini";
     const resolvedModel = MODEL_MAP[rawModel] || rawModel;
@@ -1189,7 +1208,15 @@ serve(async (req) => {
     if (!aiRes.ok) {
       const errText = await aiRes.text();
       console.error("AI API error:", errText);
-      finalText = "Ошибка при обращении к AI.";
+      let errMsg = "An error occurred while contacting the AI model. Please try again later.";
+      try {
+        const errJson = JSON.parse(errText);
+        const detail = errJson?.error?.message || "";
+        if (aiRes.status === 429) errMsg = "Rate limit exceeded. Please try again in a moment.";
+        else if (aiRes.status === 402) errMsg = "Insufficient AI credits. Please contact support.";
+        else if (detail.toLowerCase().includes("not found")) errMsg = `AI model not found: ${resolvedModel}. Please update the agent's model in settings.`;
+      } catch { /* use default message */ }
+      finalText = errMsg;
       break;
     }
 
@@ -1199,7 +1226,7 @@ serve(async (req) => {
     const choice = aiData?.choices?.[0];
     const assistantMsg = choice?.message;
 
-    if (!assistantMsg) { finalText = "Нет ответа от AI."; break; }
+    if (!assistantMsg) { finalText = "No response received from AI. Please try again."; break; }
 
     // Check for tool calls
     if (assistantMsg.tool_calls && assistantMsg.tool_calls.length > 0) {
