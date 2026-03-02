@@ -1260,7 +1260,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                           <p className="text-xs text-muted-foreground">{format?.toUpperCase()}{sizeLabel && ` · ${sizeLabel}`}</p>
                         </div>
                         {isExpired ? (
-                          <span className="text-xs text-muted-foreground italic shrink-0">ссылка устарела</span>
+                          <span className="text-xs text-muted-foreground italic shrink-0">link expired</span>
                         ) : (
                           <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={async () => {
                             try {
