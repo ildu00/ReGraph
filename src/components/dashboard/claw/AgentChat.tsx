@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X, Volume2, Download, FileText
+  ImagePlus, FileUp, X, Volume2, Download, FileText, Terminal
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
