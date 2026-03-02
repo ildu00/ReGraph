@@ -40,7 +40,7 @@ async function extractUserId(req: Request): Promise<string | null> {
   } catch { /* not a JWT */ }
 
   // Try API key lookup (full_key stored in api_keys table)
-  if (token.startsWith("rg-")) {
+  if (token.startsWith("rg-") || token.startsWith("rg_")) {
     try {
       const adminClient = createClient(
         Deno.env.get("SUPABASE_URL")!,
