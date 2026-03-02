@@ -26,6 +26,7 @@ interface Message {
   tool_input?: any;
   tool_result?: any;
   isStreaming?: boolean;
+  imagePreview?: string; // base64 data URL for attached image preview
 }
 
 interface AgentChatProps {
@@ -687,8 +688,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
     // Add user message (show image preview if attached)
     const userMsgId = crypto.randomUUID();
-    const userContent = imageBase64 ? `${fullUserText}\n\n![attached](${imageBase64})` : fullUserText;
-    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: userContent }]);
+    setMessages((prev) => [...prev, { id: userMsgId, role: "user", content: fullUserText, imagePreview: imageBase64 }]);
     await persistMessage(conversationId, { role: "user", content: fullUserText });
 
     const apiKey = await getOrCreateApiKey(user.id);
@@ -762,13 +762,24 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, "[attached image]");
     };
 
+    // Build the last user message — use vision format if image attached
+    const lastUserMessage: any = imageBase64
+      ? {
+          role: "user",
+          content: [
+            { type: "text", text: fullUserText || "What's in this image?" },
+            { type: "image_url", image_url: { url: imageBase64 } },
+          ],
+        }
+      : { role: "user", content: fullUserText };
+
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
       ...pairedMessages.slice(-20).map((m) => ({
         role: m.role,
         content: sanitizeContentForLLM(m.content),
       })),
-      { role: "user", content: fullUserText },
+      lastUserMessage,
     ];
 
     const toolDefs = buildToolDefs(agent.tools || []);
@@ -787,7 +798,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       loopCount++;
       try {
         const lastUserMsg = [...loopMessages].reverse().find((m) => m.role === "user" || m.role === "tool");
-        const promptText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : userText;
+        const promptText = typeof lastUserMsg?.content === "string"
+          ? lastUserMsg.content
+          : (Array.isArray(lastUserMsg?.content)
+            ? lastUserMsg.content.find((c: any) => c.type === "text")?.text || userText
+            : userText);
+        // Use vision category on first loop if image attached
+        const inferCategory = loopCount === 1 && imageBase64 ? "vision" : "llm";
 
         const res = await fetch(INFERENCE_URL, {
           method: "POST",
@@ -796,7 +813,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             model: agent.model_id,
             prompt: promptText,
             messages: loopMessages,
-            category: "llm",
+            category: inferCategory,
             maxTokens: 40000,
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
           }),
@@ -1219,6 +1236,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 </div>
               )}
               <div className={`group min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end max-w-[80%]" : "items-start flex-1"}`}>
+                {msg.imagePreview && (
+                  <img src={msg.imagePreview} alt="attached" className="max-w-[260px] rounded-xl border border-border/30 object-cover" />
+                )}
                 <div className={`rounded-xl text-sm min-w-0 w-full ${
                   msg.content?.startsWith("__AUDIO__:")
                     ? "bg-secondary/70 p-2"
