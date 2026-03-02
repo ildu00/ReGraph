@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import {
   ArrowLeft, Send, Loader2, Bot, User, Copy, Check,
   Calculator, Code2, Globe, Image, BookOpen, Wrench, Plus,
-  ImagePlus, FileUp, X, Volume2, Download, FileText
+  ImagePlus, FileUp, X, Volume2, Download, FileText, Terminal
 } from "lucide-react";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
@@ -42,6 +42,7 @@ const TOOL_ICONS: Record<string, any> = {
   document_reader: BookOpen,
   voice_message: Volume2,
   file_generator: FileText,
+  commands: Terminal,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
@@ -656,6 +657,71 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       reader.readAsDataURL(file);
     });
 
+  // Handle slash commands when commands skill is enabled
+  const handleCommand = async (cmd: string): Promise<boolean> => {
+    if (!agent.tools?.includes("commands")) return false;
+    const normalized = cmd.trim().toLowerCase().split(/\s+/)[0];
+    if (!normalized.startsWith("/")) return false;
+
+    const addMsg = (content: string) => {
+      const id = crypto.randomUUID();
+      setMessages((prev) => [...prev, { id, role: "assistant", content }]);
+      if (conversationId) persistMessage(conversationId, { role: "assistant", content });
+    };
+
+    if (normalized === "/help") {
+      addMsg(
+        "**Available commands:**\n\n" +
+        "- `/help` — show this help message\n" +
+        "- `/model` — show the current model name\n" +
+        "- `/verbose` — toggle verbose mode (show tool calls in chat)\n" +
+        "- `/new` — start a new conversation\n" +
+        "- `/usage` — show your current balance and usage stats"
+      );
+      return true;
+    }
+    if (normalized === "/model") {
+      addMsg(`**Current model:** \`${agent.model_id}\``);
+      return true;
+    }
+    if (normalized === "/verbose") {
+      // Toggle is visual only — store in sessionStorage per agent
+      const key = `claw-verbose-${agent.id}`;
+      const current = sessionStorage.getItem(key) === "1";
+      sessionStorage.setItem(key, current ? "0" : "1");
+      addMsg(current ? "Verbose mode **disabled**." : "Verbose mode **enabled** — tool calls will be shown in detail.");
+      return true;
+    }
+    if (normalized === "/new") {
+      await startNewConversation();
+      return true;
+    }
+    if (normalized === "/usage") {
+      if (!user) return true;
+      try {
+        const { data: wallet } = await supabase.from("wallets").select("balance_usd").eq("user_id", user.id).single();
+        const { data: logs } = await supabase
+          .from("usage_logs")
+          .select("cost_usd, tokens_used")
+          .eq("user_id", user.id)
+          .gte("created_at", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString());
+        const totalCost = (logs || []).reduce((s: number, l: any) => s + Number(l.cost_usd), 0);
+        const totalTokens = (logs || []).reduce((s: number, l: any) => s + Number(l.tokens_used), 0);
+        addMsg(
+          `**Billing & Usage (last 30 days)**\n\n` +
+          `💰 **Balance:** $${Number(wallet?.balance_usd ?? 0).toFixed(4)}\n` +
+          `📊 **Spent:** $${totalCost.toFixed(4)}\n` +
+          `🔢 **Tokens used:** ${totalTokens.toLocaleString()}\n` +
+          `📅 **Requests:** ${(logs || []).length}`
+        );
+      } catch {
+        addMsg("❌ Failed to fetch usage data.");
+      }
+      return true;
+    }
+    return false;
+  };
+
   const handleSend = () => {
     if ((!input.trim() && attachedFiles.length === 0) || isLoading || !user || !conversationId) return;
     const userText = input.trim();
@@ -666,6 +732,15 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       textareaRef.current.style.height = "40px";
     }
     setAttachedFiles([]);
+
+    // Handle slash commands without going through LLM
+    if (userText.startsWith("/") && agent.tools?.includes("commands")) {
+      setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "user", content: userText }]);
+      if (conversationId) persistMessage(conversationId, { role: "user", content: userText });
+      handleCommand(userText);
+      return;
+    }
+
     setIsLoading(true);
     // Defer async work so the browser finishes the touch/click event first (keeps keyboard open on iOS)
     setTimeout(() => { doSend(userText, filesToProcess); }, 0);
