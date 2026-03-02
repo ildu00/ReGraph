@@ -1485,8 +1485,10 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
   const renderResult = () => {
     if (!msg.tool_result) return null;
 
-    // File generator — download button
+    // File generator — no download card here; the assistant __FILE__: message below renders it.
     if (msg.tool_name === "file_generator" || msg.tool_result?.file_url || msg.tool_result?.filename) {
+      return null;
+    }
       const { file_url, filename, format, size } = msg.tool_result || {};
       const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
       const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
