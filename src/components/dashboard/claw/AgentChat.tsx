@@ -762,13 +762,24 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       return content.replace(/data:image\/[^;]+;base64,[A-Za-z0-9+/=]{100,}/g, "[attached image]");
     };
 
+    // Build the last user message — use vision format if image attached
+    const lastUserMessage: any = imageBase64
+      ? {
+          role: "user",
+          content: [
+            { type: "text", text: fullUserText || "What's in this image?" },
+            { type: "image_url", image_url: { url: imageBase64 } },
+          ],
+        }
+      : { role: "user", content: fullUserText };
+
     const historyForApi = [
       { role: "system", content: agent.system_prompt || "You are a helpful AI assistant." },
       ...pairedMessages.slice(-20).map((m) => ({
         role: m.role,
         content: sanitizeContentForLLM(m.content),
       })),
-      { role: "user", content: fullUserText },
+      lastUserMessage,
     ];
 
     const toolDefs = buildToolDefs(agent.tools || []);
