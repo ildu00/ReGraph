@@ -308,8 +308,13 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
         }
 
         // Upload to storage for a permanent URL
+        // Transliterate filename to ASCII to avoid Storage "InvalidKey" errors with Cyrillic
+        const safeFilename = finalFilename.replace(/[а-яё]/gi, (c) => {
+          const map: Record<string, string> = {а:'a',б:'b',в:'v',г:'g',д:'d',е:'e',ё:'yo',ж:'zh',з:'z',и:'i',й:'y',к:'k',л:'l',м:'m',н:'n',о:'o',п:'p',р:'r',с:'s',т:'t',у:'u',ф:'f',х:'h',ц:'ts',ч:'ch',ш:'sh',щ:'sch',ъ:'',ы:'y',ь:'',э:'e',ю:'yu',я:'ya'};
+          return map[c.toLowerCase()] ?? c;
+        });
         try {
-          const storagePath = `files/${crypto.randomUUID()}_${finalFilename}`;
+          const storagePath = `files/${crypto.randomUUID()}_${safeFilename}`;
           const { data: uploadData, error: uploadErr } = await supabase.storage
             .from("claw-images")
             .upload(storagePath, blob, { contentType: blob.type, upsert: false });
