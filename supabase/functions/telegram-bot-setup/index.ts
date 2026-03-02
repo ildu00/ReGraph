@@ -44,7 +44,7 @@ serve(async (req) => {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
   const body = await req.json();
-  const { action, bot_token, agent_id, bot_id } = body;
+  const { action, bot_token, agent_id, bot_id, allowed_user_ids } = body;
 
   const webhookUrl = `${SUPABASE_URL}/functions/v1/telegram-webhook/${bot_token}`;
 
@@ -83,13 +83,13 @@ serve(async (req) => {
     if (existingBot) {
       const { error } = await supabase
         .from("claw_telegram_bots")
-        .update({ agent_id, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok })
+        .update({ agent_id, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok, allowed_user_ids: allowed_user_ids ?? null })
         .eq("id", existingBot.id);
       saveError = error;
     } else {
       const { error } = await supabase
         .from("claw_telegram_bots")
-        .insert({ user_id: userId, agent_id, bot_token, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok });
+        .insert({ user_id: userId, agent_id, bot_token, bot_username: botUsername, is_active: true, webhook_set: webhookData.ok, allowed_user_ids: allowed_user_ids ?? null });
       saveError = error;
     }
 
@@ -116,6 +116,23 @@ serve(async (req) => {
       await supabase.from("claw_telegram_bots").delete().eq("id", bot_id).eq("user_id", userId);
     }
 
+    return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
+  }
+
+  if (action === "update") {
+    const updateData: Record<string, unknown> = {};
+    if (agent_id !== undefined) updateData.agent_id = agent_id;
+    if (allowed_user_ids !== undefined) updateData.allowed_user_ids = allowed_user_ids || null;
+
+    const { error } = await supabase
+      .from("claw_telegram_bots")
+      .update(updateData)
+      .eq("id", bot_id)
+      .eq("user_id", userId);
+
+    if (error) {
+      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+    }
     return new Response(JSON.stringify({ ok: true }), { headers: corsHeaders });
   }
 

@@ -962,7 +962,7 @@ serve(async (req) => {
   // Find bot configuration in DB
   const { data: botConfig } = await supabase
     .from("claw_telegram_bots")
-    .select("agent_id, user_id")
+    .select("agent_id, user_id, allowed_user_ids")
     .eq("bot_token", botToken)
     .eq("is_active", true)
     .single();
@@ -976,7 +976,21 @@ serve(async (req) => {
     return new Response("OK");
   }
 
-  const { agent_id, user_id } = botConfig;
+  const { agent_id, user_id, allowed_user_ids } = botConfig;
+
+  // Check allowed user IDs restriction
+  if (allowed_user_ids && allowed_user_ids.trim()) {
+    const allowedIds = allowed_user_ids.split(",").map((id: string) => id.trim()).filter(Boolean);
+    const tgUserId = String(message?.from?.id ?? "");
+    if (allowedIds.length > 0 && !allowedIds.includes(tgUserId)) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: "⛔ Access denied. You are not authorized to use this bot." }),
+      });
+      return new Response("OK");
+    }
+  }
 
   // Get agent config
   const { data: agent } = await supabase
