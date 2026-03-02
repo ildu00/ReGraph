@@ -262,7 +262,7 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
         } else if (format === "pdf") {
           const { buildPdf } = await import("@/lib/buildPdf");
           const pdfBytes = await buildPdf(content);
-          blob = new Blob([pdfBytes], { type: "application/pdf" });
+          blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
           finalFilename = finalFilename.replace(/\.(txt|csv|json|html)$/i, "") + ".pdf";
         } else {
           return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
