@@ -1236,6 +1236,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
                 </div>
               )}
               <div className={`group min-w-0 flex flex-col gap-1 ${msg.role === "user" ? "items-end max-w-[80%]" : "items-start flex-1"}`}>
+                {msg.imagePreview && (
+                  <img src={msg.imagePreview} alt="attached" className="max-w-[260px] rounded-xl border border-border/30 object-cover" />
+                )}
                 <div className={`rounded-xl text-sm min-w-0 w-full ${
                   msg.content?.startsWith("__AUDIO__:")
                     ? "bg-secondary/70 p-2"
