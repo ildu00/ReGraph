@@ -42,6 +42,7 @@ const TOOL_ICONS: Record<string, any> = {
   document_reader: BookOpen,
   voice_message: Volume2,
   file_generator: FileText,
+  commands: Terminal,
 };
 
 // ── Tool executor ──────────────────────────────────────────────────────────
