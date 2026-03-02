@@ -263,9 +263,11 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           const { jsPDF } = await import("jspdf");
           const doc = new jsPDF();
 
-          // Load DejaVu Sans font which supports Cyrillic
+          // Load NotoSans from public folder (avoids CORS issues with CDN)
+          let fontLoaded = false;
           try {
-            const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
+            const fontRes = await fetch("/fonts/NotoSans-Regular.ttf");
+            if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
             const fontBuf = await fontRes.arrayBuffer();
             const bytes = new Uint8Array(fontBuf);
             let binary = "";
@@ -274,11 +276,15 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
               binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
             }
             const fontBase64 = btoa(binary);
-            doc.addFileToVFS("DejaVuSans.ttf", fontBase64);
-            doc.addFont("DejaVuSans.ttf", "DejaVuSans", "normal");
-            doc.setFont("DejaVuSans");
+            doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64);
+            doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
+            doc.setFont("NotoSans");
+            fontLoaded = true;
           } catch (fontErr) {
             console.warn("[file_generator] Font load failed, using default:", fontErr);
+          }
+          if (!fontLoaded) {
+            doc.setFont("helvetica");
           }
 
           const pageWidth = doc.internal.pageSize.getWidth();
