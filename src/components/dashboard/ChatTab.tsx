@@ -315,7 +315,7 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          maxTokens: 2048,
+          maxTokens: 8192,
           category: modelInfo?.category || "chat",
         }),
       });

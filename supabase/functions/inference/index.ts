@@ -133,7 +133,7 @@ serve(async (req) => {
         prompt: finalPrompt,
         messages: messages || undefined,
         temperature: temperature ?? 0.7,
-        max_tokens: max_tokens ?? 256,
+        max_tokens: max_tokens ?? 8192,
         category,
         tools: tools || undefined,
         tool_choice: tool_choice || undefined,
@@ -222,7 +222,7 @@ serve(async (req) => {
       forwardHeaders["X-API-Key"] = userApiKey;
     }
 
-    const inferenceBody: Record<string, unknown> = { model: model || (isImageGenEndpoint ? "dall-e-3" : "llama-3.1-70b"), prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 256, category };
+    const inferenceBody: Record<string, unknown> = { model: model || (isImageGenEndpoint ? "dall-e-3" : "llama-3.1-70b"), prompt: finalPrompt, temperature: temperature ?? 0.7, maxTokens: max_tokens ?? 8192, category };
     if (encoding_format) inferenceBody.encoding_format = encoding_format;
     if (dimensions) inferenceBody.dimensions = dimensions;
     if (input) inferenceBody.input = input;
