@@ -984,19 +984,17 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             break;
           }
           if (hadFileGen) {
-            // Embed file URL in content so it survives DB round-trips (same pattern as audio)
+            // ToolCallMessage (role:"tool") already renders the download card — no duplicate assistant message needed.
+            // Only persist a __FILE__ marker to DB so history can reconstruct the card on reload.
             const fileResult = toolResults["file_generator"];
             if (fileResult?.file_url) {
-              const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
-              const fileMsgId = crypto.randomUUID();
-              setMessages((prev) => [...prev, { id: fileMsgId, role: "assistant", content: fileContent }]);
-              // Always persist to DB — for blob URLs store placeholder so history shows card
               const dbContent = fileResult.file_url.startsWith("blob:")
                 ? `__FILE__:EXPIRED|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`
-                : fileContent;
+                : `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
               await persistMessage(conversationId, { role: "assistant", content: dbContent });
             } else if (fileResult?.error) {
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации файла: ${fileResult.error}` });
             }
             break;
           }
