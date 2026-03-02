@@ -39,6 +39,19 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.2",
+    date: "March 2, 2026",
+    title: "Telegram Bot Access Control & Editing",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Bot editing — existing Telegram bots can now be updated from the dashboard: change the assigned agent or update access restrictions without reconnecting." },
+      { category: "feature", description: "Access control for Telegram bots — optional comma-separated list of Telegram user IDs restricts who can interact with the bot; unauthorized users receive an access denied message." },
+      { category: "improvement", description: "Connected skills (tool badges) in the Claw agent chat header are now hidden on tablet screens to prevent overflow — visible only on large desktop viewports." },
+      { category: "fix", description: "Attached images in Claw chat now display correctly in the message bubble and are forwarded to the model using the vision API format (image_url content parts)." },
+      { category: "improvement", description: "Telegram webhook enforces allowed_user_ids restriction at the edge — requests from unlisted senders are rejected before reaching the agent reasoning loop." },
+    ]
+  },
+  {
     version: "3.6.1",
     date: "March 1, 2026",
     title: "Voice Message Playback Fix",
