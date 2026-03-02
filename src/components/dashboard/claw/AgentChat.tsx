@@ -103,6 +103,7 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           {
             method: "POST",
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken || apiKey}` },
+            body: JSON.stringify({ model: "sdxl-1.0", prompt, category: "image-gen", maxTokens: 40000 }),
           }
         );
         const data = await res.json();
