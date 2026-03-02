@@ -20,8 +20,37 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
   try {
-    const formData = await req.formData();
-    const file = formData.get('file') as File | null;
+    const contentType = req.headers.get('content-type') || '';
+    let file: File | null = null;
+    let urlToFetch: string | null = null;
+
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      urlToFetch = body?.url || null;
+    } else {
+      const formData = await req.formData();
+      file = formData.get('file') as File | null;
+    }
+
+    // ── URL mode: fetch remote file ─────────────────────────────────────
+    if (urlToFetch) {
+      let fetchRes: Response;
+      try {
+        fetchRes = await fetch(urlToFetch, { headers: { 'User-Agent': 'Mozilla/5.0 ReGraph-Agent/1.0' } });
+      } catch (e) {
+        return new Response(JSON.stringify({ error: `Failed to fetch URL: ${e instanceof Error ? e.message : String(e)}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      if (!fetchRes.ok) {
+        return new Response(JSON.stringify({ error: `URL returned HTTP ${fetchRes.status}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      }
+      const mime = fetchRes.headers.get('content-type') || '';
+      const urlPath = new URL(urlToFetch).pathname;
+      const ext = urlPath.split('.').pop()?.toLowerCase() || '';
+      const arrayBuffer = await fetchRes.arrayBuffer();
+      const guessedExt = ext || (mime.includes('pdf') ? 'pdf' : mime.includes('word') ? 'docx' : 'txt');
+      file = new File([arrayBuffer], `document.${guessedExt}`, { type: mime });
+    }
+
     if (!file) return new Response(JSON.stringify({ error: 'No file provided' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
 
     const ext = file.name.split('.').pop()?.toLowerCase() || '';
