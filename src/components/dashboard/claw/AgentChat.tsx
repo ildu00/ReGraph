@@ -200,8 +200,29 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
     }
     case "document_reader": {
       const attachedFiles: File[] = (input as any)?.__attachedFiles || [];
+      const urlInput: string = input?.url || input?.filename || input?.query || "";
+
+      // ── URL mode: download and parse remote document ───────────────────
+      const isUrl = /^https?:\/\//i.test(urlInput);
+      if (isUrl) {
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/claw-document-reader`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+              body: JSON.stringify({ url: urlInput }),
+            }
+          );
+          const data = await res.json();
+          return { content: data.content || data.error || "Could not fetch or parse the URL." };
+        } catch {
+          return { error: "Failed to fetch URL." };
+        }
+      }
+
       const fileToRead = attachedFiles.find(f => !f.type.startsWith("image/")) || attachedFiles[0];
-      if (!fileToRead) return { content: "No file attached. Please attach a document file in your message." };
+      if (!fileToRead) return { content: "No file attached. Please attach a document file or provide a URL." };
       const ext = fileToRead.name.split('.').pop()?.toLowerCase() || '';
       try {
         // PDF and DOCX — send to edge function
@@ -367,11 +388,13 @@ function buildToolDefs(toolIds: string[]) {
       type: "function",
       function: {
         name: "document_reader",
-        description: "Read and analyze a document.",
+        description: "Read and extract text from a document. Supports attached files (PDF, DOCX, TXT) OR a remote URL (http/https) to download and parse the document. Use the 'url' parameter when the user provides a link.",
         parameters: {
           type: "object",
-          properties: { filename: { type: "string" } },
-          required: ["filename"],
+          properties: {
+            url: { type: "string", description: "A direct URL to a PDF, DOCX, or text file to download and parse." },
+            filename: { type: "string", description: "Name hint if using an attached file (optional)." },
+          },
         },
       },
     });
