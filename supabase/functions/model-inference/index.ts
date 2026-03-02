@@ -166,7 +166,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { model, prompt, temperature = 0.7, maxTokens = 256, category, messages: originalMessages, tools, tool_choice, stream = false } = parsedBody;
+    const { model, prompt, temperature = 0.7, maxTokens = 8192, category, messages: originalMessages, tools, tool_choice, stream = false } = parsedBody;
     const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
