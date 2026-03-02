@@ -1026,7 +1026,7 @@ serve(async (req) => {
       await supabase.from("claw_conversations").insert({ agent_id, user_id, title: newTitle });
       replyText = "✅ New conversation started.";
     } else if (cmd === "/usage") {
-      const { data: wallet: walletUsage } = await supabase.from("wallets").select("balance_usd").eq("user_id", user_id).single();
+      const { data: walletUsage } = await supabase.from("wallets").select("balance_usd").eq("user_id", user_id).single();
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const { data: logs } = await supabase.from("usage_logs").select("cost_usd, tokens_used").eq("user_id", user_id).gte("created_at", thirtyDaysAgo);
       const totalCost = (logs || []).reduce((s: number, l: any) => s + Number(l.cost_usd), 0);
