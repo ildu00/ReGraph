@@ -16,6 +16,23 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+async function scrapeWithFirecrawl(url: string): Promise<string> {
+  const apiKey = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!apiKey) throw new Error('Firecrawl not configured');
+
+  const res = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, formats: ['markdown'], onlyMainContent: true }),
+  });
+
+  if (!res.ok) throw new Error(`Firecrawl error: ${res.status}`);
+  const data = await res.json();
+  const md = data?.data?.markdown || data?.markdown || '';
+  if (!md) throw new Error('No content extracted');
+  return md;
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response(null, { headers: corsHeaders });
 
@@ -32,23 +49,40 @@ Deno.serve(async (req) => {
       file = formData.get('file') as File | null;
     }
 
-    // ── URL mode: fetch remote file ─────────────────────────────────────
+    // ── URL mode ────────────────────────────────────────────────────────
     if (urlToFetch) {
-      let fetchRes: Response;
-      try {
-        fetchRes = await fetch(urlToFetch, { headers: { 'User-Agent': 'Mozilla/5.0 ReGraph-Agent/1.0' } });
-      } catch (e) {
-        return new Response(JSON.stringify({ error: `Failed to fetch URL: ${e instanceof Error ? e.message : String(e)}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      if (!fetchRes.ok) {
-        return new Response(JSON.stringify({ error: `URL returned HTTP ${fetchRes.status}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
-      }
-      const mime = fetchRes.headers.get('content-type') || '';
       const urlPath = new URL(urlToFetch).pathname;
       const ext = urlPath.split('.').pop()?.toLowerCase() || '';
-      const arrayBuffer = await fetchRes.arrayBuffer();
-      const guessedExt = ext || (mime.includes('pdf') ? 'pdf' : mime.includes('word') ? 'docx' : 'txt');
-      file = new File([arrayBuffer], `document.${guessedExt}`, { type: mime });
+      const isPdf = ext === 'pdf' || urlToFetch.includes('.pdf');
+      const isDocx = ext === 'docx' || urlToFetch.includes('.docx');
+
+      // For PDF/DOCX: download and parse as binary
+      if (isPdf || isDocx) {
+        let fetchRes: Response;
+        try {
+          fetchRes = await fetch(urlToFetch, { headers: { 'User-Agent': 'Mozilla/5.0 ReGraph-Agent/1.0' } });
+        } catch (e) {
+          return new Response(JSON.stringify({ error: `Failed to fetch URL: ${e instanceof Error ? e.message : String(e)}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        if (!fetchRes.ok) {
+          return new Response(JSON.stringify({ error: `URL returned HTTP ${fetchRes.status}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+        const mime = fetchRes.headers.get('content-type') || '';
+        const arrayBuffer = await fetchRes.arrayBuffer();
+        const guessedExt = isPdf ? 'pdf' : 'docx';
+        file = new File([arrayBuffer], `document.${guessedExt}`, { type: mime });
+      } else {
+        // For web pages: use Firecrawl to get clean markdown
+        try {
+          const markdown = await scrapeWithFirecrawl(urlToFetch);
+          const truncated = markdown.slice(0, 12000) + (markdown.length > 12000 ? '\n\n[Truncated]' : '');
+          return new Response(JSON.stringify({ content: `URL: ${urlToFetch}\n\n${truncated}` }), {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          });
+        } catch (e) {
+          return new Response(JSON.stringify({ error: `Failed to scrape page: ${e instanceof Error ? e.message : String(e)}` }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+        }
+      }
     }
 
     if (!file) return new Response(JSON.stringify({ error: 'No file provided' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -65,7 +99,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // PDF — use Lovable AI gateway (Gemini multimodal via OpenAI-compatible API)
+    // PDF — use Lovable AI gateway (Gemini multimodal)
     if (ext === 'pdf') {
       const apiKey = Deno.env.get('LOVABLE_API_KEY');
       if (!apiKey) return new Response(JSON.stringify({ error: 'AI not configured' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
@@ -75,27 +109,10 @@ Deno.serve(async (req) => {
 
       const res = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`,
-        },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: 'google/gemini-2.5-flash',
-          messages: [
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: 'Extract all the text content from this PDF document. Return only the extracted text content, preserving structure as much as possible.',
-                },
-                {
-                  type: 'image_url',
-                  image_url: { url: dataUrl },
-                },
-              ],
-            },
-          ],
+          messages: [{ role: 'user', content: [{ type: 'text', text: 'Extract all the text content from this PDF document. Return only the extracted text content, preserving structure as much as possible.' }, { type: 'image_url', image_url: { url: dataUrl } }] }],
           max_tokens: 8192,
         }),
       });
@@ -115,7 +132,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: `Unsupported format: .${ext}. Supported: PDF, DOCX` }), {
+    return new Response(JSON.stringify({ error: `Unsupported format: .${ext}. Supported: PDF, DOCX, or any web URL` }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
