@@ -306,6 +306,7 @@ export type Database = {
       claw_telegram_bots: {
         Row: {
           agent_id: string
+          allowed_user_ids: string | null
           bot_token: string
           bot_username: string | null
           created_at: string
@@ -317,6 +318,7 @@ export type Database = {
         }
         Insert: {
           agent_id: string
+          allowed_user_ids?: string | null
           bot_token: string
           bot_username?: string | null
           created_at?: string
@@ -328,6 +330,7 @@ export type Database = {
         }
         Update: {
           agent_id?: string
+          allowed_user_ids?: string | null
           bot_token?: string
           bot_username?: string | null
           created_at?: string

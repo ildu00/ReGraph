@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { Bot, Plus, Trash2, CheckCircle2, XCircle, Loader2, ExternalLink } from "lucide-react";
+import { Bot, Plus, Trash2, CheckCircle2, XCircle, Loader2, ExternalLink, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -34,10 +34,29 @@ interface TelegramBot {
   is_active: boolean;
   webhook_set: boolean;
   created_at: string;
+  allowed_user_ids: string | null;
 }
 
 interface TelegramIntegrationProps {
   agents: ClawAgent[];
+}
+
+async function callBotSetup(action: string, payload: Record<string, unknown>) {
+  const { data: sessionData } = await supabase.auth.getSession();
+  const accessToken = sessionData?.session?.access_token;
+  if (!accessToken) throw new Error("No active session");
+  const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${accessToken}`,
+      "apikey": SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify({ action, ...payload }),
+  });
+  return response.json();
 }
 
 export default function TelegramIntegration({ agents }: TelegramIntegrationProps) {
@@ -45,31 +64,16 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
   const [bots, setBots] = useState<TelegramBot[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [editTarget, setEditTarget] = useState<TelegramBot | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<TelegramBot | null>(null);
 
   const fetchBots = async () => {
     if (!user) return;
     setLoading(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) { setLoading(false); return; }
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-          "apikey": SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ action: "list" }),
-      });
-      const result = await response.json();
+      const result = await callBotSetup("list", {});
       if (result.bots) setBots(result.bots);
-    } catch {
-      // silent
-    }
+    } catch { /* silent */ }
     setLoading(false);
   };
 
@@ -77,21 +81,7 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
 
   const handleDisconnect = async () => {
     if (!deleteTarget) return;
-    const { data: sessionData } = await supabase.auth.getSession();
-    const accessToken = sessionData?.session?.access_token;
-    if (!accessToken) return;
-    const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-    const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-    const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${accessToken}`,
-        "apikey": SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({ action: "disconnect", bot_id: deleteTarget.id }),
-    });
-    const result = await response.json();
+    const result = await callBotSetup("disconnect", { bot_id: deleteTarget.id });
     if (result.ok) {
       toast.success("Bot disconnected");
       await fetchBots();
@@ -162,6 +152,9 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
                   </div>
                   <div className="text-xs text-muted-foreground truncate">
                     Agent: {agentName(bot.agent_id)}
+                    {bot.allowed_user_ids && (
+                      <span className="ml-2 opacity-70">• Restricted</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
@@ -175,6 +168,12 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
+                  <button
+                    onClick={() => setEditTarget(bot)}
+                    className="p-1.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
                   <button
                     onClick={() => setDeleteTarget(bot)}
                     className="p-1.5 rounded hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive"
@@ -193,6 +192,14 @@ export default function TelegramIntegration({ agents }: TelegramIntegrationProps
         onClose={() => setModalOpen(false)}
         agents={agents}
         onConnected={async () => { setModalOpen(false); await fetchBots(); }}
+      />
+
+      <EditBotModal
+        open={!!editTarget}
+        bot={editTarget}
+        onClose={() => setEditTarget(null)}
+        agents={agents}
+        onSaved={async () => { setEditTarget(null); await fetchBots(); }}
       />
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(v) => !v && setDeleteTarget(null)}>
@@ -223,12 +230,14 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
 }) {
   const [botToken, setBotToken] = useState("");
   const [agentId, setAgentId] = useState(agents[0]?.id ?? "");
+  const [allowedUserIds, setAllowedUserIds] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (open) {
       setBotToken("");
       setAgentId(agents[0]?.id ?? "");
+      setAllowedUserIds("");
     }
   }, [open, agents]);
 
@@ -236,30 +245,13 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
     if (!botToken.trim() || !agentId) return;
     setSaving(true);
     try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      const accessToken = sessionData?.session?.access_token;
-      if (!accessToken) {
-        toast.error("No active session. Please sign in again.");
-        setSaving(false);
-        return;
-      }
-
-      const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-      const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      const response = await fetch(`${SUPABASE_URL}/functions/v1/telegram-bot-setup`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken}`,
-          "apikey": SUPABASE_ANON_KEY,
-        },
-        body: JSON.stringify({ action: "connect", bot_token: botToken.trim(), agent_id: agentId }),
+      const result = await callBotSetup("connect", {
+        bot_token: botToken.trim(),
+        agent_id: agentId,
+        allowed_user_ids: allowedUserIds.trim() || null,
       });
-
-      const result = await response.json();
-
-      if (!response.ok || result.error) {
-        toast.error(result.error || "Failed to connect bot. Check your token.");
+      if (result.error) {
+        toast.error(result.error);
       } else if (result.ok) {
         toast.success(`Bot @${result.bot_username} connected!`);
         onConnected();
@@ -294,27 +286,31 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
 
           <div className="space-y-1.5">
             <Label>Bot Token</Label>
-            <Input
-              placeholder="1234567890:AAFxxxx..."
-              value={botToken}
-              onChange={(e) => setBotToken(e.target.value)}
-            />
+            <Input placeholder="1234567890:AAFxxxx..." value={botToken} onChange={(e) => setBotToken(e.target.value)} />
           </div>
 
           <div className="space-y-1.5">
             <Label>Assign to Agent</Label>
             <Select value={agentId} onValueChange={setAgentId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select agent" />
-              </SelectTrigger>
+              <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
               <SelectContent>
                 {agents.map((a) => (
-                  <SelectItem key={a.id} value={a.id!}>
-                    {a.name}
-                  </SelectItem>
+                  <SelectItem key={a.id} value={a.id!}>{a.name}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Allowed Telegram User IDs <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              placeholder="123456789, 987654321"
+              value={allowedUserIds}
+              onChange={(e) => setAllowedUserIds(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Comma-separated Telegram user IDs. Leave empty for unrestricted access. Use <span className="font-mono">@userinfobot</span> to find your ID.
+            </p>
           </div>
         </div>
 
@@ -322,6 +318,94 @@ function ConnectBotModal({ open, onClose, agents, onConnected }: {
           <Button variant="outline" onClick={onClose}>Cancel</Button>
           <Button onClick={handleConnect} disabled={saving || !botToken.trim() || !agentId}>
             {saving ? <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />Connecting...</> : "Connect Bot"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EditBotModal({ open, bot, onClose, agents, onSaved }: {
+  open: boolean;
+  bot: TelegramBot | null;
+  onClose: () => void;
+  agents: ClawAgent[];
+  onSaved: () => void;
+}) {
+  const [agentId, setAgentId] = useState("");
+  const [allowedUserIds, setAllowedUserIds] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (bot) {
+      setAgentId(bot.agent_id);
+      setAllowedUserIds(bot.allowed_user_ids ?? "");
+    }
+  }, [bot]);
+
+  const handleSave = async () => {
+    if (!bot || !agentId) return;
+    setSaving(true);
+    try {
+      const result = await callBotSetup("update", {
+        bot_id: bot.id,
+        agent_id: agentId,
+        allowed_user_ids: allowedUserIds.trim() || null,
+      });
+      if (result.ok) {
+        toast.success("Bot updated");
+        onSaved();
+      } else {
+        toast.error(result.error || "Failed to update bot");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Update failed");
+    }
+    setSaving(false);
+  };
+
+  if (!bot) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Edit Bot — @{bot.bot_username ?? "bot"}</DialogTitle>
+          <DialogDescription>
+            Change the assigned agent or update access restrictions.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Assign to Agent</Label>
+            <Select value={agentId} onValueChange={setAgentId}>
+              <SelectTrigger><SelectValue placeholder="Select agent" /></SelectTrigger>
+              <SelectContent>
+                {agents.map((a) => (
+                  <SelectItem key={a.id} value={a.id!}>{a.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>Allowed Telegram User IDs <span className="text-muted-foreground font-normal">(optional)</span></Label>
+            <Input
+              placeholder="123456789, 987654321"
+              value={allowedUserIds}
+              onChange={(e) => setAllowedUserIds(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Comma-separated Telegram user IDs. Leave empty for unrestricted access. Use <span className="font-mono">@userinfobot</span> to find your ID.
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose}>Cancel</Button>
+          <Button onClick={handleSave} disabled={saving || !agentId}>
+            {saving ? <><Loader2 className="h-3.5 w-3.5 mr-2 animate-spin" />Saving...</> : "Save Changes"}
           </Button>
         </DialogFooter>
       </DialogContent>
