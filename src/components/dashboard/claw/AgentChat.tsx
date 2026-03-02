@@ -267,12 +267,18 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           try {
             const fontRes = await fetch("https://cdn.jsdelivr.net/gh/dejavu-fonts/dejavu-fonts@2.37/ttf/DejaVuSans.ttf");
             const fontBuf = await fontRes.arrayBuffer();
-            const fontBase64 = btoa(Array.from(new Uint8Array(fontBuf), b => String.fromCharCode(b)).join(""));
+            const bytes = new Uint8Array(fontBuf);
+            let binary = "";
+            const chunkSize = 8192;
+            for (let i = 0; i < bytes.length; i += chunkSize) {
+              binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+            }
+            const fontBase64 = btoa(binary);
             doc.addFileToVFS("DejaVuSans.ttf", fontBase64);
             doc.addFont("DejaVuSans.ttf", "DejaVuSans", "normal");
             doc.setFont("DejaVuSans");
-          } catch {
-            // fallback to default font if fetch fails
+          } catch (fontErr) {
+            console.warn("[file_generator] Font load failed, using default:", fontErr);
           }
 
           const pageWidth = doc.internal.pageSize.getWidth();
