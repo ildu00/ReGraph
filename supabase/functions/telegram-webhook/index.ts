@@ -1001,6 +1001,54 @@ serve(async (req) => {
 
   if (!agent) return new Response("OK");
 
+  const agentToolsList: string[] = Array.isArray(agent.tools) ? agent.tools : [];
+
+  // Handle slash commands if the commands skill is enabled
+  if (agentToolsList.includes("commands") && userText.startsWith("/")) {
+    const cmd = userText.trim().toLowerCase().split(/\s+/)[0];
+    let replyText = "";
+
+    if (cmd === "/help") {
+      replyText =
+        "Available commands:\n\n" +
+        "/help — show this help message\n" +
+        "/model — show the current model\n" +
+        "/verbose — toggle verbose mode\n" +
+        "/new — start a new conversation\n" +
+        "/usage — show balance & usage stats";
+    } else if (cmd === "/model") {
+      replyText = `Current model: ${agent.model_id}`;
+    } else if (cmd === "/verbose") {
+      replyText = "Verbose mode toggle is available in the web interface.";
+    } else if (cmd === "/new") {
+      // Create a new conversation for this Telegram chat
+      const newTitle = `Telegram ${chatId} ${Date.now()}`;
+      await supabase.from("claw_conversations").insert({ agent_id, user_id, title: newTitle });
+      replyText = "✅ New conversation started.";
+    } else if (cmd === "/usage") {
+      const { data: wallet: walletUsage } = await supabase.from("wallets").select("balance_usd").eq("user_id", user_id).single();
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: logs } = await supabase.from("usage_logs").select("cost_usd, tokens_used").eq("user_id", user_id).gte("created_at", thirtyDaysAgo);
+      const totalCost = (logs || []).reduce((s: number, l: any) => s + Number(l.cost_usd), 0);
+      const totalTokens = (logs || []).reduce((s: number, l: any) => s + Number(l.tokens_used), 0);
+      replyText =
+        `Billing & Usage (last 30 days)\n\n` +
+        `💰 Balance: $${Number(walletUsage?.balance_usd ?? 0).toFixed(4)}\n` +
+        `📊 Spent: $${totalCost.toFixed(4)}\n` +
+        `🔢 Tokens: ${totalTokens.toLocaleString()}\n` +
+        `📅 Requests: ${(logs || []).length}`;
+    }
+
+    if (replyText) {
+      await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chat_id: chatId, text: replyText }),
+      });
+      return new Response("OK");
+    }
+  }
+
   // Check wallet balance
   const { data: wallet } = await supabase
     .from("wallets")
