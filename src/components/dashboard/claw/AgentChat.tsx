@@ -1028,6 +1028,9 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
         let finalContent = assistantMsg.content || "";
         if (!finalContent || finalContent === "No response generated") break;
 
+        // If file was already generated via tool call, skip hard intercept to avoid duplicate card
+        if (hadFileGen) break;
+
         // Hard intercept: if the LLM wrote a file-announcement text instead of calling the tool
         // directly execute file_generator ourselves
         const hasFileGenerator = toolDefs.some((td: any) => td.function?.name === "file_generator");
