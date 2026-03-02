@@ -102,8 +102,7 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
-            body: JSON.stringify({ model: "sdxl-turbo", prompt, category: "image-gen" }),
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${jwtToken || apiKey}` },
           }
         );
         const data = await res.json();
