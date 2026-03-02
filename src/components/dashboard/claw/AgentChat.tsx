@@ -978,8 +978,8 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             // ToolCallMessage already renders the image from tool_result.image_url — no duplicate message needed
             const imageResult = toolResults["image_generation"];
             if (!imageResult?.image_url && imageResult?.error) {
-              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` }]);
-              await persistMessage(conversationId, { role: "assistant", content: `❌ Ошибка генерации изображения: ${imageResult.error}` });
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ Image generation failed: ${imageResult.error}` }]);
+              await persistMessage(conversationId, { role: "assistant", content: `❌ Image generation failed: ${imageResult.error}` });
             }
             break;
           }
