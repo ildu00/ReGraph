@@ -859,7 +859,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: imgContent }]);
               await persistMessage(conversationId, { role: "assistant", content: imgContent });
             } else {
-              const errMsg = directResult?.error || "Ошибка генерации изображения";
+              const errMsg = directResult?.error || "Image generation failed";
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ ${errMsg}` }]);
               await persistMessage(conversationId, { role: "assistant", content: `❌ ${errMsg}` });
             }
