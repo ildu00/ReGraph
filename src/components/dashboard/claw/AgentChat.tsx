@@ -913,6 +913,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
 
         if (!assistantMsg) break;
 
+        let hadFileGen = false;
         // Tool calls?
         if (assistantMsg.tool_calls?.length > 0) {
           // If model returned meaningful thinking content, show it
