@@ -798,7 +798,13 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
       loopCount++;
       try {
         const lastUserMsg = [...loopMessages].reverse().find((m) => m.role === "user" || m.role === "tool");
-        const promptText = typeof lastUserMsg?.content === "string" ? lastUserMsg.content : userText;
+        const promptText = typeof lastUserMsg?.content === "string"
+          ? lastUserMsg.content
+          : (Array.isArray(lastUserMsg?.content)
+            ? lastUserMsg.content.find((c: any) => c.type === "text")?.text || userText
+            : userText);
+        // Use vision category on first loop if image attached
+        const inferCategory = loopCount === 1 && imageBase64 ? "vision" : "llm";
 
         const res = await fetch(INFERENCE_URL, {
           method: "POST",
@@ -807,7 +813,7 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             model: agent.model_id,
             prompt: promptText,
             messages: loopMessages,
-            category: "llm",
+            category: inferCategory,
             maxTokens: 40000,
             ...(toolDefs.length > 0 ? { tools: toolDefs, tool_choice: "auto" } : {}),
           }),
