@@ -260,48 +260,9 @@ async function executeTool(name: string, input: any, apiKey: string, jwtToken?: 
           blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
           finalFilename = finalFilename.replace(/\.(xls|csv|txt)$/i, "") + ".xlsx";
         } else if (format === "pdf") {
-          const { jsPDF } = await import("jspdf");
-          const doc = new jsPDF();
-
-          // Load NotoSans from public folder (avoids CORS issues with CDN)
-          let fontLoaded = false;
-          try {
-            const fontRes = await fetch("/fonts/NotoSans-Regular.ttf");
-            if (!fontRes.ok) throw new Error(`Font fetch failed: ${fontRes.status}`);
-            const fontBuf = await fontRes.arrayBuffer();
-            const bytes = new Uint8Array(fontBuf);
-            let binary = "";
-            const chunkSize = 8192;
-            for (let i = 0; i < bytes.length; i += chunkSize) {
-              binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
-            }
-            const fontBase64 = btoa(binary);
-            doc.addFileToVFS("NotoSans-Regular.ttf", fontBase64);
-            doc.addFont("NotoSans-Regular.ttf", "NotoSans", "normal");
-            doc.setFont("NotoSans");
-            fontLoaded = true;
-          } catch (fontErr) {
-            console.warn("[file_generator] Font load failed, using default:", fontErr);
-          }
-          if (!fontLoaded) {
-            doc.setFont("helvetica");
-          }
-
-          const pageWidth = doc.internal.pageSize.getWidth();
-          const margin = 15;
-          const maxWidth = pageWidth - margin * 2;
-          const lineHeight = 7;
-          let y = 20;
-          for (const line of content.split("\n")) {
-            const wrapped = doc.splitTextToSize(line || " ", maxWidth);
-            for (const wl of wrapped) {
-              if (y > 275) { doc.addPage(); y = 20; }
-              doc.text(wl, margin, y);
-              y += lineHeight;
-            }
-          }
-          const pdfBuf = doc.output("arraybuffer");
-          blob = new Blob([pdfBuf], { type: "application/pdf" });
+          const { buildPdf } = await import("@/lib/buildPdf");
+          const pdfBytes = await buildPdf(content);
+          blob = new Blob([pdfBytes.buffer as ArrayBuffer], { type: "application/pdf" });
           finalFilename = finalFilename.replace(/\.(txt|csv|json|html)$/i, "") + ".pdf";
         } else {
           return { error: `Unsupported format: ${format}. Supported: txt, json, csv, xlsx, pdf` };
@@ -984,13 +945,16 @@ export default function AgentChat({ agent, onBack }: AgentChatProps) {
             break;
           }
           if (hadFileGen) {
-            // ToolCallMessage (role:"tool") already renders the download card — no duplicate assistant message needed.
-            // Only persist a __FILE__ marker to DB so history can reconstruct the card on reload.
+            // Persist __FILE__: assistant message to DB AND add to live state.
+            // ToolCallMessage does NOT show a download card for file_generator —
+            // the card is rendered only by the assistant __FILE__: message below.
             const fileResult = toolResults["file_generator"];
             if (fileResult?.file_url) {
+              const fileContent = `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
+              setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: fileContent }]);
               const dbContent = fileResult.file_url.startsWith("blob:")
                 ? `__FILE__:EXPIRED|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`
-                : `__FILE__:${fileResult.file_url}|${fileResult.filename || "file"}|${fileResult.format || "txt"}|${fileResult.size || 0}`;
+                : fileContent;
               await persistMessage(conversationId, { role: "assistant", content: dbContent });
             } else if (fileResult?.error) {
               setMessages((prev) => [...prev, { id: crypto.randomUUID(), role: "assistant", content: `❌ File generation failed: ${fileResult.error}` }]);
@@ -1521,44 +1485,9 @@ function ToolCallMessage({ msg, onImageLoad }: { msg: Message; onImageLoad?: () 
   const renderResult = () => {
     if (!msg.tool_result) return null;
 
-    // File generator — download button
+    // File generator — no download card here; the assistant __FILE__: message below renders it.
     if (msg.tool_name === "file_generator" || msg.tool_result?.file_url || msg.tool_result?.filename) {
-      const { file_url, filename, format, size } = msg.tool_result || {};
-      const formatIcons: Record<string, string> = { txt: "📄", json: "📋", csv: "📊", xlsx: "📗", pdf: "📕" };
-      const sizeStr = size ? (size > 1024 ? `${(size / 1024).toFixed(1)} KB` : `${size} B`) : "";
-      const downloadFile = async () => {
-        if (!file_url) return;
-        try {
-          const resp = await fetch(file_url);
-          const blob = await resp.blob();
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement("a");
-          a.href = url;
-          a.download = filename || "file";
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        } catch {
-          window.open(file_url, "_blank");
-        }
-      };
-      return (
-        <div className="mt-1 flex items-center gap-3 p-2 bg-background/40 border border-border/50 rounded-lg">
-          <span className="text-2xl">{formatIcons[format] || "📄"}</span>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium truncate">{filename || "file"}</p>
-            <p className="text-xs text-muted-foreground">{format?.toUpperCase()} {sizeStr && `· ${sizeStr}`}</p>
-          </div>
-          {file_url ? (
-            <Button size="sm" variant="outline" className="h-7 text-xs gap-1 shrink-0" onClick={downloadFile}>
-              <Download className="h-3 w-3" /> Download
-            </Button>
-          ) : (
-            <span className="text-xs text-muted-foreground">Expired</span>
-          )}
-        </div>
-      );
+      return null;
     }
 
     // Voice message — audio player
