@@ -62,7 +62,7 @@ function parseMarkdownLines(content: string): ParsedLine[] {
   return result;
 }
 
-export async function buildPdf(content: string): Promise<ArrayBuffer> {
+export async function buildPdf(content: string): Promise<Uint8Array> {
   const { PDFDocument, rgb } = await import("pdf-lib");
   const fontkit = (await import("@pdf-lib/fontkit")).default;
 
