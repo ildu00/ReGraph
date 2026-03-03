@@ -39,6 +39,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.3",
+    date: "March 3, 2026",
+    title: "Open WebUI Integration & Commands Skill",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Open WebUI integration — added Docker Compose setup and automated install script for running Open WebUI pre-configured with ReGraph as the AI provider. Supports chat, RAG, voice I/O, and multi-user out of the box." },
+      { category: "feature", description: "Integrations section in Docs — new dedicated page section covering Open WebUI, Bifrost, LangChain, Dify, Haystack, and Semantic Kernel with code snippets and setup instructions." },
+      { category: "feature", description: "Commands skill for Claw agents — new tool that handles /help, /model, /verbose, /new, and /usage slash commands in both web chat and Telegram bots." },
+      { category: "feature", description: "/usage command returns current wallet balance and 30-day spending summary directly in chat." },
+      { category: "fix", description: "Telegram bot errors now returned in English instead of Russian; model IDs are mapped to VseGPT-compatible identifiers before inference calls." },
+      { category: "improvement", description: "Telegram webhook provides descriptive error messages for rate limit (429), insufficient credits (402), and model-not-found scenarios." },
+    ]
+  },
+  {
     version: "3.6.2",
     date: "March 2, 2026",
     title: "Telegram Bot Access Control & Editing",

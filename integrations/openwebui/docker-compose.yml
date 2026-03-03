@@ -1,0 +1,50 @@
+version: "3.8"
+
+# Open WebUI pre-configured with ReGraph as AI provider
+# Usage:
+#   export REGRAPH_API_KEY="rg_your_api_key_here"
+#   docker compose up -d
+#   Open http://localhost:3000
+
+services:
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui-regraph
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+    environment:
+      # ReGraph as the primary OpenAI-compatible provider
+      - OPENAI_API_BASE_URLS=https://api.regraph.tech/v1
+      - OPENAI_API_KEYS=${REGRAPH_API_KEY}
+      # Disable Ollama (not needed when using ReGraph)
+      - ENABLE_OLLAMA_API=false
+      # Optional: pre-set default model
+      - DEFAULT_MODELS=gpt-5
+      # Optional: allow all users to select models
+      - USER_PERMISSIONS_WORKSPACE_MODELS_ACCESS=true
+    restart: always
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # Optional: Open WebUI Pipelines for middleware / cost monitoring
+  # Uncomment to enable
+  # pipelines:
+  #   image: ghcr.io/open-webui/pipelines:main
+  #   container_name: open-webui-pipelines
+  #   ports:
+  #     - "9099:9099"
+  #   extra_hosts:
+  #     - "host.docker.internal:host-gateway"
+  #   volumes:
+  #     - pipelines-data:/app/pipelines
+  #   restart: always
+
+volumes:
+  open-webui-data:
+  # pipelines-data:

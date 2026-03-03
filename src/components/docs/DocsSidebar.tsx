@@ -10,7 +10,8 @@ import {
   Database,
   PlayCircle,
   Radio,
-  Wrench
+  Wrench,
+  Puzzle
 } from "lucide-react";
 import {
   Sidebar,
@@ -59,6 +60,10 @@ const resourceItems = [
   { id: "provider-api", label: "Provider API", icon: Webhook },
   { id: "api-playground", label: "API Playground", icon: PlayCircle },
   { id: "security", label: "Security", icon: Shield },
+];
+
+const integrationItems = [
+  { id: "integrations", label: "Integrations Overview", icon: Puzzle },
 ];
 
 const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
@@ -187,6 +192,17 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
           )}
           <SidebarGroupContent>
             {renderMenuItems(resourceItems)}
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+              Integrations
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            {renderMenuItems(integrationItems)}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
