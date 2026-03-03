@@ -358,7 +358,8 @@ export const AdminUsers = () => {
             </Table>
           </div>
 
-          {/* Pagination */}
+          )}
+          <div className="p-4 sm:p-6">
           {totalPages > 1 && (
             <div className="flex items-center justify-between mt-4">
               <p className="text-sm text-muted-foreground">
