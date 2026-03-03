@@ -59,8 +59,8 @@ async function extractUserId(req: Request): Promise<string | null> {
   return null;
 }
 
-/** Process billing: log usage + deduct balance for authenticated users */
-async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number) {
+/** Process billing: log usage + deduct balance for authenticated users (atomic update to prevent race conditions) */
+async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number, apiKeyId?: string | null) {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -71,19 +71,25 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
     const computeCost = (computeTimeMs / 1000) * 0.0001;
     const totalCost = Math.max(tokenCost + computeCost, 0.0001);
 
+    // Atomic balance deduction using SQL to prevent race conditions
     const { data: wallet } = await supabase
       .from("wallets")
-      .select("*")
+      .select("id, balance_usd")
       .eq("user_id", userId)
       .single();
 
     if (wallet) {
-      const newBalance = Math.max(parseFloat(wallet.balance_usd) - totalCost, 0);
-      
-      await supabase
-        .from("wallets")
-        .update({ balance_usd: newBalance, updated_at: new Date().toISOString() })
-        .eq("id", wallet.id);
+      // Use SQL expression for atomic decrement — prevents race condition where
+      // concurrent requests read the same balance and overwrite each other
+      const { error: updateError } = await supabase.rpc("deduct_wallet_balance", {
+        p_wallet_id: wallet.id,
+        p_amount: totalCost,
+      });
+
+      if (updateError) {
+        // Fallback: log but don't fail — balance may go slightly off
+        console.error("Atomic balance deduct failed:", updateError.message);
+      }
 
       await supabase
         .from("wallet_transactions")
@@ -101,6 +107,7 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
       .from("usage_logs")
       .insert({
         user_id: userId,
+        api_key_id: apiKeyId ?? null,
         endpoint: endpoint || "/v1/model-inference",
         tokens_used: tokensUsed,
         compute_time_ms: computeTimeMs,
