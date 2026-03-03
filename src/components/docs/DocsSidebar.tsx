@@ -194,6 +194,17 @@ const DocsSidebar = ({ activeSection, onSectionChange }: DocsSidebarProps) => {
             {renderMenuItems(resourceItems)}
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <SidebarGroup>
+          {!isCollapsed && (
+            <SidebarGroupLabel className="text-xs uppercase tracking-wider text-muted-foreground">
+              Integrations
+            </SidebarGroupLabel>
+          )}
+          <SidebarGroupContent>
+            {renderMenuItems(integrationItems)}
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>
   );
