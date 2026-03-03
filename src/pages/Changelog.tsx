@@ -41,7 +41,7 @@ const changelog: ChangelogEntry[] = [
   {
     version: "3.6.3",
     date: "March 3, 2026",
-    title: "Open WebUI Integration & Commands Skill",
+    title: "OpenClaw & Open WebUI Integrations",
     type: "minor",
     changes: [
       { category: "feature", description: "Open WebUI integration — added Docker Compose setup and automated install script for running Open WebUI pre-configured with ReGraph as the AI provider. Supports chat, RAG, voice I/O, and multi-user out of the box." },
