@@ -1701,6 +1701,148 @@ for await (const chunk of stream) {
                   </div>
                 </section>
 
+                {/* Integrations */}
+                <section id="integrations" className="scroll-mt-24">
+                  <h2 className="text-3xl font-bold mb-2">Integrations</h2>
+                  <p className="text-muted-foreground mb-8">
+                    Connect ReGraph to your favorite frameworks and tools. All integrations use the OpenAI-compatible API — no custom plugins required.
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+
+                    {/* Open WebUI */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🖥️</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold">Open WebUI</h4>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">New</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Chat UI for any LLM backend. Add ReGraph as an OpenAI-compatible connection and access 50+ models with RAG, voice, and multi-user support.
+                          </p>
+                          <div className="space-y-1.5">
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">Quick Start</p>
+                            <CodeBlock
+                              code={`# One-liner install (Docker required)\ncurl -fsSL https://regraph.tech/scripts/install-openwebui.sh | bash\n\n# Or with Docker Compose\nexport REGRAPH_API_KEY="rg_your_key"\ndocker compose -f integrations/openwebui/docker-compose.yml up -d`}
+                              language="bash"
+                            />
+                          </div>
+                          <div className="mt-3 flex gap-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Chat + RAG</span>
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Multi-user</span>
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Voice I/O</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bifrost */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">⚡</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1">Maxim Bifrost</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Open-source AI gateway with load balancing, fallbacks, and observability. Use ReGraph as a cost-saving provider alongside OpenAI.
+                          </p>
+                          <CodeBlock
+                            code={`# Add ReGraph provider to Bifrost config\ncurl -X POST http://localhost:8080/api/providers \\\n  -d '{"provider":"regraph","keys":[{"value":"env.REGRAPH_API_KEY"}],"network_config":{"base_url":"https://api.regraph.tech/v1"}}'`}
+                            language="bash"
+                          />
+                          <div className="mt-3 flex gap-2 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Load balancing</span>
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Fallbacks</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* LangChain */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🔗</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1">LangChain</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Build agents, RAG pipelines, and chains with ReGraph models via the <code className="text-xs bg-muted px-1 py-0.5 rounded">ChatOpenAI</code> drop-in.
+                          </p>
+                          <CodeBlock
+                            code={`from langchain_openai import ChatOpenAI\n\nllm = ChatOpenAI(\n  model="gpt-5",\n  openai_api_key="rg_your_key",\n  openai_api_base="https://api.regraph.tech/v1"\n)`}
+                            language="python"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Dify */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🌊</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1">Dify</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Visual workflow builder for LLM apps. Add ReGraph via the OpenAI-API-compatible plugin — no coding required.
+                          </p>
+                          <div className="text-sm text-muted-foreground space-y-1">
+                            <div className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /><span>Settings → Model Providers → Add Model</span></div>
+                            <div className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /><span>Base URL: <code className="text-xs bg-muted px-1 rounded">https://api.regraph.tech/v1</code></span></div>
+                            <div className="flex items-center gap-2"><ChevronRight className="h-4 w-4 text-primary shrink-0" /><span>API Key: your <code className="text-xs bg-muted px-1 rounded">rg_</code> key</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Haystack */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🌾</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1">Haystack</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Production RAG and NLP pipelines. Use ReGraph via <code className="text-xs bg-muted px-1 py-0.5 rounded">OpenAIChatGenerator</code>.
+                          </p>
+                          <CodeBlock
+                            code={`from haystack.components.generators.chat import OpenAIChatGenerator\nfrom haystack.utils import Secret\n\ngenerator = OpenAIChatGenerator(\n  model="gpt-5",\n  api_key=Secret.from_token("rg_your_key"),\n  api_base_url="https://api.regraph.tech/v1"\n)`}
+                            language="python"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Semantic Kernel */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🧩</div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="font-semibold mb-1">Semantic Kernel</h4>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Microsoft's AI SDK for .NET, Python, and Java. Point the OpenAI connector at the ReGraph endpoint.
+                          </p>
+                          <CodeBlock
+                            code={`kernel = Kernel()\nkernel.add_service(\n  OpenAIChatCompletion(\n    ai_model_id="gpt-5",\n    api_key="rg_your_key",\n    base_url="https://api.regraph.tech/v1"\n  )\n)`}
+                            language="python"
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <div className="glass-card p-5 rounded-xl border border-primary/20 bg-primary/5">
+                    <div className="flex items-start gap-3">
+                      <Share className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-medium text-sm mb-1">Any OpenAI-compatible tool works with ReGraph</p>
+                        <p className="text-sm text-muted-foreground">
+                          Set <code className="bg-muted px-1 rounded text-xs">base_url=https://api.regraph.tech/v1</code> and your <code className="bg-muted px-1 rounded text-xs">rg_</code> API key in any framework that supports OpenAI — it just works.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 {/* Need Help */}
                 <section className="glass-card p-8 rounded-xl text-center">
                   <h3 className="text-2xl font-bold mb-4">Need Help?</h3>
