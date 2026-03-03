@@ -1012,6 +1012,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      deduct_wallet_balance: {
+        Args: { p_amount: number; p_wallet_id: string }
+        Returns: undefined
+      }
       get_next_derivation_index: {
         Args: { p_network: Database["public"]["Enums"]["blockchain_network"] }
         Returns: number
