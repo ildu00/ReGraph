@@ -273,15 +273,16 @@ export const AdminUsers = () => {
         <CardHeader>
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0 sm:p-6">
-            <Table className="table-fixed w-full">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table className="min-w-[600px] w-full">
               <TableHeader>
                 <TableRow>
-                  <TableHead><SortButton field="display_name">Name</SortButton></TableHead>
-                  <TableHead className="hidden md:table-cell w-[22%]">Email</TableHead>
-                  <TableHead className="w-[28%] sm:w-[18%]"><SortButton field="balance_usd">Balance</SortButton></TableHead>
-                  <TableHead className="hidden sm:table-cell w-[15%]"><SortButton field="status">Status</SortButton></TableHead>
-                  <TableHead className="hidden lg:table-cell w-[15%]"><SortButton field="created_at">Joined</SortButton></TableHead>
+                  <TableHead className="min-w-[140px]"><SortButton field="display_name">Name</SortButton></TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[180px]">Email</TableHead>
+                  <TableHead className="min-w-[110px]"><SortButton field="balance_usd">Balance</SortButton></TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[100px]"><SortButton field="status">Status</SortButton></TableHead>
+                  <TableHead className="hidden lg:table-cell min-w-[120px]"><SortButton field="created_at">Joined</SortButton></TableHead>
                   <TableHead className="w-[44px] text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
