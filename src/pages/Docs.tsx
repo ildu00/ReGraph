@@ -1759,6 +1759,31 @@ for await (const chunk of stream) {
                       </div>
                     </div>
 
+                    {/* OpenClaw */}
+                    <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
+                      <div className="flex items-start gap-4">
+                        <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 text-xl">🦞</div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <h4 className="font-semibold">OpenClaw</h4>
+                            <span className="text-xs px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">New</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-3">
+                            Open-source AI agent platform (250K ★ on GitHub). Runs locally, connects to WhatsApp, Telegram, Discord, Slack. Add ReGraph via <code className="text-xs bg-muted px-1 py-0.5 rounded">models.providers</code>.
+                          </p>
+                          <CodeBlock
+                            code={`# openclaw.json\n{\n  "agents": { "defaults": { "model": { "primary": "regraph/gpt-5" } } },\n  "models": {\n    "mode": "merge",\n    "providers": {\n      "regraph": {\n        "baseUrl": "https://api.regraph.tech/v1",\n        "apiKey": "\${REGRAPH_API_KEY}",\n        "api": "openai-completions",\n        "models": [\n          { "id": "gpt-5", "name": "GPT-5", "contextWindow": 128000, "input": ["text","image"] },\n          { "id": "claude-opus-4-5", "name": "Claude Opus 4.5", "contextWindow": 200000 },\n          { "id": "gemini-3-pro", "name": "Gemini 3 Pro", "contextWindow": 1000000 },\n          { "id": "deepseek-r1", "name": "DeepSeek R1", "reasoning": true }\n        ]\n      }\n    }\n  }\n}`}
+                            language="json"
+                          />
+                          <div className="mt-3 flex gap-2 text-xs text-muted-foreground flex-wrap">
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />WhatsApp / Telegram</span>
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Model failover</span>
+                            <span className="flex items-center gap-1"><ChevronRight className="h-3 w-3 text-primary" />Key rotation</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* LangChain */}
                     <div className="glass-card p-6 rounded-xl border border-border/50 hover:border-primary/30 transition-colors">
                       <div className="flex items-start gap-4">
