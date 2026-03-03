@@ -227,32 +227,26 @@ Full model list: [regraph.tech/models](https://regraph.tech/models)
 
 ---
 
-## Contributing to OpenClaw
+## Contributing to OpenClaw (Become a Built-in Provider)
 
-To add ReGraph as a built-in provider in OpenClaw (no `models.providers` config needed), submit a PR to [openclaw/openclaw](https://github.com/openclaw/openclaw) adding a `regraph` entry to the pi-ai catalog.
+Currently, ReGraph works via `models.providers` (custom provider block) — this is the standard path used by Moonshot AI, MiniMax, BytePlus, and other providers.
 
-The provider definition follows the pattern in `src/providers/`:
+To get ReGraph added as a **built-in provider** (no config needed, just `REGRAPH_API_KEY`), submit a PR to [openclaw/openclaw](https://github.com/openclaw/openclaw). The process:
 
-```typescript
-// src/providers/regraph.ts (proposed)
-export const regraphProvider = {
-  id: "regraph",
-  name: "ReGraph",
-  baseUrl: "https://api.regraph.tech/v1",
-  authEnvKey: "REGRAPH_API_KEY",
-  api: "openai-completions",
-  website: "https://regraph.tech",
-  docsUrl: "https://regraph.tech/docs",
-  description: "Decentralized AI compute marketplace — 50+ models at up to 90% lower cost",
-  models: [
-    { id: "gpt-5",           name: "GPT-5",           contextWindow: 128000, input: ["text", "image"] },
-    { id: "gpt-5-mini",      name: "GPT-5 Mini",      contextWindow: 128000, input: ["text", "image"] },
-    { id: "claude-opus-4-5", name: "Claude Opus 4.5", contextWindow: 200000, input: ["text", "image"] },
-    { id: "gemini-3-pro",    name: "Gemini 3 Pro",    contextWindow: 1000000, input: ["text", "image"] },
-    { id: "deepseek-r1",     name: "DeepSeek R1",     contextWindow: 64000, reasoning: true },
-  ],
-};
-```
+1. **Open an issue first** — describe ReGraph as a provider (OpenAI-compatible, 50+ models, `https://api.regraph.tech/v1`)
+2. **Follow the pattern** from existing built-in providers in the codebase (e.g., Groq, Mistral, xAI — added as entries in the pi-ai catalog and the onboarding CLI)
+3. **PR should include**:
+   - Auth env var: `REGRAPH_API_KEY`
+   - Base URL: `https://api.regraph.tech/v1`  
+   - API type: `openai-completions`
+   - Model list with context windows and capabilities
+   - Entry in `openclaw onboard` CLI options
+
+See existing provider PRs for reference:
+- Kilo Gateway: [PR #16815](https://github.com/openclaw/openclaw/pull/16815)
+- Gemini 3.1 Pro: [PR #21257](https://github.com/openclaw/openclaw/pull/21257)
+
+> **Note:** OpenClaw's codebase doesn't have a `src/providers/` directory — providers are registered centrally in the pi-ai catalog and CLI onboarding config. The exact file structure can be found by browsing [openclaw/openclaw on GitHub](https://github.com/openclaw/openclaw).
 
 ---
 
