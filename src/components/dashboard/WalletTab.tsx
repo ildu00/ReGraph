@@ -102,6 +102,15 @@ const withdrawalSchema = z.object({
   amount: z.number().positive().min(1),
 });
 
+interface ProjectWallet {
+  id: string;
+  network: string;
+  address: string;
+  label: string;
+  currency: string;
+  is_active: boolean;
+}
+
 const WalletTab = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
@@ -115,6 +124,9 @@ const WalletTab = () => {
   const [wertLoading, setWertLoading] = useState(false);
   const [stripeLoading, setStripeLoading] = useState(false);
   const [stripeAmount, setStripeAmount] = useState('25');
+
+  // Project wallets (centralized)
+  const [projectWallets, setProjectWallets] = useState<ProjectWallet[]>([]);
   
   // Withdrawal state
   const [withdrawDialogOpen, setWithdrawDialogOpen] = useState(false);
@@ -140,8 +152,18 @@ const WalletTab = () => {
     if (user) {
       fetchWalletData();
       fetchCryptoPrices();
+      fetchProjectWallets();
     }
   }, [user]);
+
+  const fetchProjectWallets = async () => {
+    const { data } = await supabase
+      .from('project_wallets' as any)
+      .select('*')
+      .eq('is_active', true)
+      .order('network');
+    setProjectWallets((data as unknown as ProjectWallet[]) || []);
+  };
 
   const fetchCryptoPrices = async () => {
     setPricesLoading(true);
