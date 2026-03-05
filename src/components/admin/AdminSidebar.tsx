@@ -49,8 +49,8 @@ const navItems = [
   { id: "notifications", label: "Notifications", icon: Mail },
   { id: "api-logs", label: "API Logs", icon: Activity },
   { id: "api-keys", label: "API Keys", icon: Key },
-  { id: "pricing", label: "Pricing", icon: PricingIcon },
-  { id: "billing", label: "Billing", icon: DollarSign },
+  { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "billing", label: "Billing", icon: CreditCard },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
