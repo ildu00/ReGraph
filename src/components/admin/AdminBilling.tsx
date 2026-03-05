@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search, CreditCard } from "lucide-react";
 
+// Extract model name from endpoint like "openai/gpt-4o-mini" → "gpt-4o-mini"
+const extractModel = (endpoint: string): string => {
+  const slash = endpoint.lastIndexOf("/");
+  if (slash !== -1 && slash < endpoint.length - 1) return endpoint.slice(slash + 1);
+  return endpoint;
+};
+
 interface UsageLog {
   id: string;
   user_id: string;
@@ -30,7 +37,6 @@ export const AdminBilling = () => {
   const [totalTokens, setTotalTokens] = useState(0);
   const [profileMap, setProfileMap] = useState<Map<string, string>>(new Map());
 
-  // Fetch aggregates once
   useEffect(() => {
     const fetchAggregates = async () => {
       const { data: costData } = await supabase
@@ -66,13 +72,12 @@ export const AdminBilling = () => {
       const from = (page - 1) * ITEMS_PER_PAGE;
       const to = from + ITEMS_PER_PAGE - 1;
 
-      let query = supabase
+      const { data, count, error } = await supabase
         .from("usage_logs")
         .select("id, user_id, endpoint, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
 
-      const { data, count, error } = await query;
       if (error) throw error;
 
       const enriched = (data || []).map((log) => ({
@@ -184,10 +189,11 @@ export const AdminBilling = () => {
                 <div key={log.id} className="px-4 py-3 flex items-start justify-between gap-3">
                   <div className="min-w-0 flex-1">
                     <div className="font-mono text-sm font-medium truncate" title={log.email}>{log.email}</div>
-                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+                      <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
+                        {extractModel(log.endpoint)}
+                      </Badge>
                       <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
-                      <span className="text-xs text-muted-foreground">·</span>
-                      <span className="text-xs font-mono text-muted-foreground truncate max-w-[140px]" title={log.endpoint}>{log.endpoint}</span>
                     </div>
                     <div className="text-xs text-muted-foreground mt-0.5">{Number(log.tokens_used).toLocaleString()} tokens</div>
                   </div>
@@ -205,7 +211,7 @@ export const AdminBilling = () => {
               <TableRow>
                 <TableHead>Time</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead className="hidden md:table-cell">Endpoint</TableHead>
+                <TableHead>Model</TableHead>
                 <TableHead className="hidden lg:table-cell">Tokens</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
@@ -229,9 +235,12 @@ export const AdminBilling = () => {
                     </TableCell>
                     <TableCell className="max-w-[180px]">
                       <div className="font-mono text-sm truncate" title={log.email}>{log.email}</div>
-                      <div className="md:hidden text-xs text-muted-foreground truncate mt-0.5" title={log.endpoint}>{log.endpoint}</div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm truncate max-w-[180px]" title={log.endpoint}>{log.endpoint}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="font-mono text-xs">
+                        {extractModel(log.endpoint)}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{Number(log.tokens_used).toLocaleString()}</TableCell>
                     <TableCell className="text-sm font-semibold text-destructive whitespace-nowrap">
                       -${Number(log.cost_usd).toFixed(6)}
