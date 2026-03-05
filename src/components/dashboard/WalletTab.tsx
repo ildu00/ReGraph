@@ -564,74 +564,70 @@ Generated: ${new Date().toISOString()}
                   <DialogHeader>
                     <DialogTitle>Deposit Cryptocurrency</DialogTitle>
                     <DialogDescription>
-                      Send crypto to your unique deposit address. Your balance will be credited after confirmations.
+                      Send crypto to one of the addresses below. After sending, contact support with your transaction hash to credit your balance.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-3 mt-4">
-                    {(Object.keys(networkConfig) as BlockchainNetwork[]).map((network) => {
-                      const config = networkConfig[network];
-                      const existingAddress = getAddressForNetwork(network);
-                      
-                      return (
-                        <Card key={network} className="border-border">
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex flex-col gap-3">
-                              {/* Network header row */}
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2 sm:gap-3">
-                                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${config.color} flex items-center justify-center text-white text-sm sm:text-lg font-bold shrink-0`}>
-                                    {config.icon}
-                                  </div>
-                                  <div className="min-w-0">
-                                    <p className="font-medium text-sm sm:text-base">{config.name}</p>
-                                    <div className="flex flex-wrap gap-1 mt-0.5">
-                                      {config.tokens.map(token => (
-                                        <Badge key={token} variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
-                                          {token}
+                    {projectWallets.length === 0 ? (
+                      <div className="text-center py-8 text-muted-foreground">
+                        <p className="text-sm">No deposit addresses configured yet.</p>
+                        <p className="text-xs mt-1">Please contact support for deposit instructions.</p>
+                      </div>
+                    ) : (
+                      projectWallets.map((pw) => {
+                        const config = networkConfig[pw.network as BlockchainNetwork];
+                        return (
+                          <Card key={pw.id} className="border-border">
+                            <CardContent className="p-3 sm:p-4">
+                              <div className="flex flex-col gap-3">
+                                {/* Network header */}
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2 sm:gap-3">
+                                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full ${config?.color || 'bg-muted'} flex items-center justify-center text-white text-sm sm:text-lg font-bold shrink-0`}>
+                                      {config?.icon || '◉'}
+                                    </div>
+                                    <div className="min-w-0">
+                                      <p className="font-medium text-sm sm:text-base">{config?.name || pw.network}</p>
+                                      <div className="flex items-center gap-1.5 mt-0.5">
+                                        <Badge variant="secondary" className="text-[10px] sm:text-xs px-1.5 py-0">
+                                          {pw.currency}
                                         </Badge>
-                                      ))}
+                                        {pw.label && (
+                                          <span className="text-xs text-muted-foreground">{pw.label}</span>
+                                        )}
+                                      </div>
                                     </div>
                                   </div>
                                 </div>
-                                
-                                {!existingAddress && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    className="shrink-0 text-xs sm:text-sm"
-                                    onClick={() => generateDepositAddress(network)}
-                                    disabled={generatingAddress === network}
-                                  >
-                                    {generatingAddress === network ? (
-                                      <Loader2 className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      'Generate'
-                                    )}
-                                  </Button>
-                                )}
-                              </div>
-                              
-                              {/* Address row - only shown when address exists */}
-                              {existingAddress && (
+                                {/* Address */}
                                 <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2">
                                   <code className="text-[10px] sm:text-xs break-all flex-1 font-mono">
-                                    {existingAddress.address}
+                                    {pw.address}
                                   </code>
-                                  <Button 
-                                    variant="ghost" 
+                                  <Button
+                                    variant="ghost"
                                     size="sm"
                                     className="shrink-0 h-8 w-8 p-0"
-                                    onClick={() => copyToClipboard(existingAddress.address)}
+                                    onClick={() => copyToClipboard(pw.address)}
                                   >
                                     <Copy className="h-4 w-4" />
                                   </Button>
                                 </div>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+                              </div>
+                            </CardContent>
+                          </Card>
+                        );
+                      })
+                    )}
+                    <div className="mt-2 p-3 rounded-lg bg-muted/40 text-xs text-muted-foreground space-y-1">
+                      <p className="font-medium text-foreground">How to deposit:</p>
+                      <ol className="list-decimal list-inside space-y-1">
+                        <li>Copy the address for your desired network above</li>
+                        <li>Send crypto from your wallet</li>
+                        <li>After the transaction confirms, contact support with your TX hash</li>
+                        <li>Your balance will be credited manually</li>
+                      </ol>
+                    </div>
                   </div>
                 </DialogContent>
               </Dialog>
