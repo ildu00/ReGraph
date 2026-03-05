@@ -213,9 +213,9 @@ export const AdminBilling = () => {
           <Table className="hidden sm:table">
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
+                <TableHead className="w-[140px]">Time</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead>Model</TableHead>
+                <TableHead>Endpoint / Model</TableHead>
                 <TableHead className="hidden lg:table-cell">Tokens</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
