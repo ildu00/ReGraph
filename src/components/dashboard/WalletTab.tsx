@@ -154,7 +154,7 @@ const WalletTab = () => {
 
   useEffect(() => {
     if (user) {
-      fetchWalletData();
+      fetchWalletData(1);
       fetchCryptoPrices();
       fetchProjectWallets();
     }
