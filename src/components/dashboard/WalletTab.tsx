@@ -1148,11 +1148,15 @@ Generated: ${new Date().toISOString()}
                   const statusInfo = statusConfig[tx.status];
                   const StatusIcon = statusInfo.icon;
                   const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund' || tx.transaction_type === 'provider_earning';
+                  const isUsageCharge = tx.transaction_type === 'usage_charge';
                   
                   return (
                     <div 
                       key={tx.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      onClick={isUsageCharge ? () => openUsageDetail(tx) : undefined}
+                      className={`flex items-center justify-between p-3 bg-muted/30 rounded-lg transition-colors ${
+                        isUsageCharge ? 'cursor-pointer hover:bg-muted/60' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -1161,9 +1165,14 @@ Generated: ${new Date().toISOString()}
                           {isIncome ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
                         </div>
                         <div>
-                          <p className="font-medium capitalize">
-                            {tx.transaction_type.replace('_', ' ')}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium capitalize">
+                              {tx.transaction_type.replace(/_/g, ' ')}
+                            </p>
+                            {isUsageCharge && (
+                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {tx.network && (
                               <Badge variant="secondary" className="text-xs">
@@ -1191,6 +1200,7 @@ Generated: ${new Date().toISOString()}
                   );
                 })}
               </div>
+
 
               {/* Pagination */}
               {txTotal > TX_PER_PAGE && (
