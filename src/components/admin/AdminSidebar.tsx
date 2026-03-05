@@ -14,7 +14,8 @@ import {
   Mail,
   Activity,
   Key,
-  CreditCard
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ const navItems = [
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "pricing", label: "Pricing", icon: DollarSign },
   // Infrastructure
+  { id: "project-wallets", label: "Project Wallets", icon: Wallet },
   { id: "resources", label: "Resources", icon: Server },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "api-logs", label: "API Logs", icon: Activity },
