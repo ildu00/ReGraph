@@ -169,6 +169,11 @@ const WalletTab = () => {
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [pricesLoading, setPricesLoading] = useState(false);
 
+  // Usage charge detail dialog state
+  const [usageDetailTx, setUsageDetailTx] = useState<WalletTransaction | null>(null);
+  const [usageDetail, setUsageDetail] = useState<UsageChargeDetail | null>(null);
+  const [usageDetailLoading, setUsageDetailLoading] = useState(false);
+
   useEffect(() => {
     if (user) {
       fetchWalletData(1);
