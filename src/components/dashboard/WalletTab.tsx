@@ -1056,66 +1056,6 @@ Generated: ${new Date().toISOString()}
         </DialogContent>
       </Dialog>
 
-      {/* Deposit Addresses Quick View */}
-      {depositAddresses.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg">Your Deposit Addresses</CardTitle>
-                <CardDescription>Send crypto to these addresses to top up your balance</CardDescription>
-              </div>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="gap-2"
-                onClick={() => setExportDialogOpen(true)}
-              >
-                <Key className="h-4 w-4" />
-                Export Keys
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {depositAddresses.map((addr) => {
-                const config = networkConfig[addr.network];
-                return (
-                  <div 
-                    key={addr.id} 
-                    className="flex items-center p-3 bg-muted/50 rounded-lg gap-2 overflow-hidden"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-                      <div className={`w-8 h-8 shrink-0 rounded-full ${config.color} flex items-center justify-center text-white text-sm font-bold`}>
-                        {config.icon}
-                      </div>
-                      <div className="min-w-0 flex-1 overflow-hidden">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <p className="font-medium text-sm">{config.name}</p>
-                          {addr.key_exported && (
-                            <Badge variant="secondary" className="text-[10px]">Key exported</Badge>
-                          )}
-                        </div>
-                        <code className="text-xs text-muted-foreground truncate block max-w-full">
-                          {addr.address}
-                        </code>
-                      </div>
-                    </div>
-                    <Button 
-                      variant="ghost" 
-                      size="sm"
-                      className="shrink-0"
-                      onClick={() => copyToClipboard(addr.address)}
-                    >
-                      <Copy className="h-4 w-4" />
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Transaction History */}
       <Card>
