@@ -277,24 +277,36 @@ serve(async (req) => {
 
     const vsegptModel = modelMapping[model] || "openai/gpt-4o-mini";
 
-    // Helper to log, bill, and return response
-    const respond = (body: string, status: number, errorMsg?: string, usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number }) => {
+    // Helper to log, bill, and return response (with optional actual provider cost)
+    const respond = (
+      body: string,
+      status: number,
+      errorMsg?: string,
+      usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number },
+      providerCostUsd?: number | null,
+    ) => {
       const computeTimeMs = Date.now() - startTime;
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: status, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, error_message: errorMsg || null, request_body: requestBodyLog });
       if (status === 200) touchApiKeyLastUsed(apiKeyPrefix);
-      
+
       if (status === 200 && userId) {
         const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
-        // Log the original model name from the request (e.g. "regraph-llm"), not the internal mapped ID
-        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs, null, model);
+        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs, null, model, providerCostUsd ?? null);
       }
-      
+
       return new Response(body, { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    };
+
+    /** Extract x-used-credits header value from VseGPT response (USD cost) */
+    const extractProviderCost = (headers: Headers): number | null => {
+      const raw = headers.get("x-used-credits") || headers.get("X-Used-Credits");
+      if (!raw) return null;
+      const val = parseFloat(raw);
+      return isNaN(val) || val <= 0 ? null : val;
     };
 
     // 1. Text-based models (with streaming support)
     if (["llm", "chat", "reasoning", "code", "multimodal", "vision", "agents", "fine-tune"].includes(category)) {
-      // For vision/multimodal — use original messages with image_url content parts intact
       const isReGraphLLM = model === "regraph-llm";
       const reGraphSystemMessage = isReGraphLLM ? [{
         role: "system",
@@ -313,14 +325,15 @@ serve(async (req) => {
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
-      if (stream) chatBody.stream = true;
+      // For streaming: request usage in final chunk so we can bill accurately
+      if (stream) {
+        chatBody.stream = true;
+        chatBody.stream_options = { include_usage: true };
+      }
 
       const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${VSEGPT_API_KEY}`,
-          "Content-Type": "application/json",
-        },
+        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify(chatBody),
       });
 
@@ -332,30 +345,56 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), 500, errorText.substring(0, 500));
       }
 
-      // --- STREAMING MODE ---
+      // --- STREAMING MODE: intercept SSE to extract real usage from final chunk ---
       if (stream && response.body) {
         const computeTimeMs = Date.now() - startTime;
         logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 200, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, request_body: requestBodyLog });
+        touchApiKeyLastUsed(apiKeyPrefix);
 
-        // Fire-and-forget billing estimate for streaming
         if (userId) {
-          const estimatedTokens = Math.ceil(prompt.length / 4) + 200;
-          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs, null, model);
+          const decoder = new TextDecoder();
+          let usageTotalTokens = 0;
+          let usageFound = false;
+
+          const transformStream = new TransformStream({
+            transform(chunk, controller) {
+              controller.enqueue(chunk); // pass through to client unchanged
+              // Parse SSE lines to find usage chunk
+              const text = decoder.decode(chunk, { stream: true });
+              for (const line of text.split("\n")) {
+                if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
+                try {
+                  const json = JSON.parse(line.slice(6));
+                  if (json?.usage?.total_tokens) {
+                    usageTotalTokens = json.usage.total_tokens;
+                    usageFound = true;
+                  }
+                } catch { /* ignore parse errors */ }
+              }
+            },
+            flush() {
+              // Bill after stream ends with real token count
+              const tokens = usageFound ? usageTotalTokens : Math.ceil(prompt.length / 4) + 200;
+              // For streaming, x-used-credits not available upfront — use token-based pricing
+              processBilling(userId!, `/v1/model-inference/${category}`, tokens, Date.now() - startTime, null, model, null);
+            },
+          });
+
+          return new Response(response.body.pipeThrough(transformStream), {
+            status: 200,
+            headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
+          });
         }
 
-        // Pipe the SSE stream straight through from VseGPT
+        // No userId — pipe straight through
         return new Response(response.body, {
           status: 200,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "text/event-stream",
-            "Cache-Control": "no-cache",
-            "Connection": "keep-alive",
-          },
+          headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
         });
       }
 
-      // --- NON-STREAMING MODE ---
+      // --- NON-STREAMING: read actual cost from x-used-credits header ---
+      const providerCost = extractProviderCost(response.headers);
       const data = await response.json();
       const message = data.choices?.[0]?.message;
       const content = message?.content || "No response generated";
@@ -364,7 +403,7 @@ serve(async (req) => {
       if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
         responsePayload.tool_calls = toolCalls;
       }
-      return respond(JSON.stringify(responsePayload), 200, undefined, data.usage);
+      return respond(JSON.stringify(responsePayload), 200, undefined, data.usage, providerCost);
     }
 
     // 2. Image Generation
