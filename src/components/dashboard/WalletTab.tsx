@@ -1068,65 +1068,100 @@ Generated: ${new Date().toISOString()}
       {/* Transaction History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg">Transaction History</CardTitle>
-          <CardDescription>Your recent wallet transactions</CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-lg">Transaction History</CardTitle>
+              <CardDescription>
+                {txTotal > 0 ? `${txTotal} transaction${txTotal !== 1 ? 's' : ''} total` : 'Your recent wallet transactions'}
+              </CardDescription>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
-          {transactions.length === 0 ? (
+          {transactions.length === 0 && txPage === 1 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Wallet className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>No transactions yet</p>
               <p className="text-sm">Make your first deposit to get started</p>
             </div>
           ) : (
-            <div className="space-y-3">
-              {transactions.map((tx) => {
-                const statusInfo = statusConfig[tx.status];
-                const StatusIcon = statusInfo.icon;
-                const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund' || tx.transaction_type === 'provider_earning';
-                
-                return (
-                  <div 
-                    key={tx.id}
-                    className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        isIncome ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
-                      }`}>
-                        {isIncome ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
+            <>
+              <div className="space-y-3">
+                {transactions.map((tx) => {
+                  const statusInfo = statusConfig[tx.status];
+                  const StatusIcon = statusInfo.icon;
+                  const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund' || tx.transaction_type === 'provider_earning';
+                  
+                  return (
+                    <div 
+                      key={tx.id}
+                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          isIncome ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'
+                        }`}>
+                          {isIncome ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
+                        </div>
+                        <div>
+                          <p className="font-medium capitalize">
+                            {tx.transaction_type.replace('_', ' ')}
+                          </p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            {tx.network && (
+                              <Badge variant="secondary" className="text-xs">
+                                {networkConfig[tx.network]?.name || tx.network}
+                              </Badge>
+                            )}
+                            {tx.currency && (
+                              <span>{tx.amount_crypto} {tx.currency}</span>
+                            )}
+                            {(tx.network || tx.currency) && <span>•</span>}
+                            <span>{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium capitalize">
-                          {tx.transaction_type.replace('_', ' ')}
+                      <div className="text-right">
+                        <p className={`font-medium ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
+                          {isIncome ? '+' : '-'}${tx.amount_usd.toFixed(4)}
                         </p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          {tx.network && (
-                            <Badge variant="secondary" className="text-xs">
-                              {networkConfig[tx.network]?.name || tx.network}
-                            </Badge>
-                          )}
-                          {tx.currency && (
-                            <span>{tx.amount_crypto} {tx.currency}</span>
-                          )}
-                          {(tx.network || tx.currency) && <span>•</span>}
-                          <span>{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <div className={`flex items-center gap-1 text-xs ${statusInfo.color}`}>
+                          <StatusIcon className="h-3 w-3" />
+                          <span>{statusInfo.label}</span>
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className={`font-medium ${isIncome ? 'text-green-500' : 'text-red-500'}`}>
-                        {isIncome ? '+' : '-'}${tx.amount_usd.toFixed(4)}
-                      </p>
-                      <div className={`flex items-center gap-1 text-xs ${statusInfo.color}`}>
-                        <StatusIcon className="h-3 w-3" />
-                        <span>{statusInfo.label}</span>
-                      </div>
-                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Pagination */}
+              {txTotal > TX_PER_PAGE && (
+                <div className="flex items-center justify-between mt-4 pt-4 border-t border-border">
+                  <span className="text-sm text-muted-foreground">
+                    Page {txPage} of {Math.ceil(txTotal / TX_PER_PAGE)}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={txPage <= 1}
+                      onClick={() => fetchWalletData(txPage - 1)}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={txPage >= Math.ceil(txTotal / TX_PER_PAGE)}
+                      onClick={() => fetchWalletData(txPage + 1)}
+                    >
+                      Next
+                    </Button>
                   </div>
-                );
-              })}
-            </div>
+                </div>
+              )}
+            </>
           )}
         </CardContent>
       </Card>
