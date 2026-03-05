@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { z } from "zod";
 import { 
@@ -29,7 +30,12 @@ import {
   Key,
   Eye,
   EyeOff,
-  ShieldAlert
+  ShieldAlert,
+  Info,
+  Zap,
+  Hash,
+  Timer,
+  Database
 } from "lucide-react";
 
 type BlockchainNetwork = 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'solana' | 'bitcoin' | 'tron';
