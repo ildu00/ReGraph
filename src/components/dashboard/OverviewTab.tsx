@@ -32,11 +32,8 @@ const OverviewTab = () => {
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const monthStart = new Date();
-    monthStart.setDate(1);
-    monthStart.setHours(0, 0, 0, 0);
 
-    const [todayCount, todayLogs, monthLogs, wallet] = await Promise.all([
+    const [todayCount, todayLogs, allCostRes, wallet] = await Promise.all([
       supabase
         .from("usage_logs")
         .select("*", { count: "exact", head: true })
@@ -48,12 +45,9 @@ const OverviewTab = () => {
         .eq("user_id", user.id)
         .gte("created_at", todayStart.toISOString())
         .limit(10000),
-      supabase
-        .from("usage_logs")
-        .select("cost_usd")
-        .eq("user_id", user.id)
-        .gte("created_at", monthStart.toISOString())
-        .limit(10000),
+      // Use RPC for accurate all-time total (avoids row limit)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).rpc("get_total_spent_for_user", { user_id_param: user.id }),
       supabase
         .from("wallets")
         .select("balance_usd")
@@ -62,18 +56,17 @@ const OverviewTab = () => {
     ]);
 
     const todayData = todayLogs.data || [];
-    const monthData = monthLogs.data || [];
     const balance = wallet.data?.balance_usd ?? 0;
 
     const apiCallsToday = todayCount.count ?? 0;
     const totalComputeMs = todayData.reduce((sum, l) => sum + (l.compute_time_ms || 0), 0);
     const avgCompute = apiCallsToday > 0 ? Math.round(totalComputeMs / apiCallsToday) : 0;
-    const monthCredits = monthData.reduce((sum, l) => sum + Number(l.cost_usd || 0), 0);
+    const allTimeCredits = Number(allCostRes.data ?? 0);
 
     setStats([
       { label: "API Calls Today", value: String(apiCallsToday), icon: Zap, change: `${avgCompute}ms avg` },
       { label: "Compute Time", value: totalComputeMs > 1000 ? `${(totalComputeMs / 1000).toFixed(1)}s` : `${totalComputeMs}ms`, icon: Cpu, change: "Today" },
-      { label: "Credits Used", value: `$${monthCredits.toFixed(4)}`, icon: DollarSign, change: "This month" },
+      { label: "Credits Used", value: `$${allTimeCredits.toFixed(4)}`, icon: DollarSign, change: "All time" },
       { label: "Balance", value: `$${Number(balance).toFixed(4)}`, icon: Clock, change: "Current" },
     ]);
   };
