@@ -456,9 +456,10 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Failed to generate speech", details: errorText }), 500, errorText.substring(0, 500));
       }
 
+      const providerCost = extractProviderCost(response.headers);
       const audioBuffer = await response.arrayBuffer();
       const base64Audio = base64Encode(audioBuffer);
-      return respond(JSON.stringify({ audio: base64Audio, audio_format: "mp3", model: vsegptModel, voice: "nova" }), 200, undefined, { total_tokens: Math.ceil(prompt.length / 4) });
+      return respond(JSON.stringify({ audio: base64Audio, audio_format: "mp3", model: vsegptModel, voice: "nova" }), 200, undefined, { total_tokens: Math.ceil(prompt.length / 4) }, providerCost);
     }
 
     // 5. STT/Audio
@@ -485,13 +486,14 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Failed to generate embeddings" }), 500, errorText.substring(0, 500));
       }
 
+      const providerCost = extractProviderCost(response.headers);
       const data = await response.json();
       const embedding = data.data?.[0]?.embedding;
       const dimensions = embedding?.length || 0;
       return respond(JSON.stringify({
         response: `📊 Embeddings generated successfully!\n\nDimensions: ${dimensions}\nFirst 5 values: [${embedding?.slice(0, 5).map((v: number) => v.toFixed(6)).join(', ')}...]`,
         model: vsegptModel, embedding, dimensions,
-      }), 200, undefined, data.usage);
+      }), 200, undefined, data.usage, providerCost);
     }
 
     // 8. Document AI / OCR
@@ -521,9 +523,10 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Moderation check failed" }), 500, errorText.substring(0, 500));
       }
 
+      const providerCost = extractProviderCost(response.headers);
       const data = await response.json();
       const content = data.choices?.[0]?.message?.content || "";
-      return respond(JSON.stringify({ response: content, model: moderationModel }), 200, undefined, data.usage);
+      return respond(JSON.stringify({ response: content, model: moderationModel }), 200, undefined, data.usage, providerCost);
     }
 
     // Default fallback
