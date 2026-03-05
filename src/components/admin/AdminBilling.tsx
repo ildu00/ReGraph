@@ -7,13 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search, CreditCard } from "lucide-react";
 
-// Extract model name from endpoint like "openai/gpt-4o-mini" → "gpt-4o-mini"
-const extractModel = (endpoint: string): string => {
-  const slash = endpoint.lastIndexOf("/");
-  if (slash !== -1 && slash < endpoint.length - 1) return endpoint.slice(slash + 1);
-  return endpoint;
-};
-
 interface UsageLog {
   id: string;
   user_id: string;
