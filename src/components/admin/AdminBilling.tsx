@@ -243,10 +243,12 @@ export const AdminBilling = () => {
                       <div className="font-mono text-sm truncate" title={log.email}>{log.email}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <Badge variant="secondary" className="font-mono text-xs w-fit">
-                          {extractModel(log.endpoint)}
-                        </Badge>
+                      <div className="flex flex-col gap-1">
+                        {log.model && (
+                          <Badge variant="secondary" className="font-mono text-xs w-fit">
+                            {log.model}
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground font-mono" title={log.endpoint}>{log.endpoint}</span>
                       </div>
                     </TableCell>
