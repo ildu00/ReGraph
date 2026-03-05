@@ -428,17 +428,16 @@ export const AdminTasks = () => {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <Table className="w-full min-w-[340px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[32px] pl-2 sm:pl-4"></TableHead>
-                  <SortableHeader field="title">Title</SortableHeader>
-                  <SortableHeader field="priority" className="hidden sm:table-cell w-[15%]">Priority</SortableHeader>
-                  <SortableHeader field="status" className="hidden md:table-cell w-[13%]">Status</SortableHeader>
-                  <TableHead className="hidden lg:table-cell w-[13%]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
-                  <TableHead className="hidden xl:table-cell w-[12%]"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
-                  <TableHead className="text-right w-[60px] pr-2">Actions</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[32px] pl-2 sm:pl-4"></TableHead>
+                <SortableHeader field="title">Title</SortableHeader>
+                <SortableHeader field="priority" className="hidden sm:table-cell">Priority</SortableHeader>
+                <SortableHeader field="status" className="hidden md:table-cell">Status</SortableHeader>
+                <TableHead className="hidden lg:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("due_date")}>Due Date {sortField === "due_date" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
+                <TableHead className="hidden xl:table-cell"><div className="flex items-center gap-1 cursor-pointer" onClick={() => handleSort("created_at")}>Created {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />) : <ArrowUpDown className="h-4 w-4 opacity-30" />}</div></TableHead>
+                <TableHead className="text-right w-[60px] pr-2">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
