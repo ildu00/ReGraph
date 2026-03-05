@@ -223,7 +223,6 @@ export const AdminBilling = () => {
               )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
