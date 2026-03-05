@@ -189,61 +189,59 @@ export const AdminApiLogs = () => {
               <p className="text-sm mt-1">Requests to api.regraph.tech will appear here</p>
             </div>
           ) : (
-            <div className="overflow-x-auto w-full">
-              <Table className="w-full min-w-[480px]">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="min-w-[72px]">Method</TableHead>
-                    <TableHead className="min-w-[160px]">Endpoint</TableHead>
-                    <TableHead className="hidden lg:table-cell min-w-[160px]">Request Body</TableHead>
-                    <TableHead className="min-w-[56px]">Status</TableHead>
-                    <TableHead className="min-w-[64px] hidden md:table-cell">Time</TableHead>
-                    <TableHead className="min-w-[80px] hidden xl:table-cell">API Key</TableHead>
-                    <TableHead className="min-w-[96px] hidden xl:table-cell">IP</TableHead>
-                    <TableHead className="min-w-[140px] hidden sm:table-cell">Date & Time</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {logs.map((log) => (
-                    <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedLog(log)}>
-                      <TableCell>
-                        <Badge variant="outline" className={`text-xs font-mono ${methodColor(log.method)}`}>
-                          {log.method}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs truncate" title={log.endpoint}>
-                        {log.endpoint}
-                        <div className="sm:hidden text-[10px] text-muted-foreground font-sans mt-0.5">
-                          {formatTime(log.created_at)}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell">
-                        <span className="text-xs text-muted-foreground truncate block">
-                          {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
-                        </span>
-                      </TableCell>
-                      <TableCell>
-                        <span className={`font-mono text-xs font-semibold ${statusColor(log.status_code)}`}>
-                          {log.status_code}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
-                        {log.response_time_ms}ms
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-xs font-mono text-muted-foreground truncate">
-                        {log.api_key_prefix || "—"}
-                      </TableCell>
-                      <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
-                        {log.ip_address || "—"}
-                      </TableCell>
-                      <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Method</TableHead>
+                  <TableHead>Endpoint</TableHead>
+                  <TableHead className="hidden lg:table-cell">Request Body</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="hidden md:table-cell">Time</TableHead>
+                  <TableHead className="hidden xl:table-cell">API Key</TableHead>
+                  <TableHead className="hidden xl:table-cell">IP</TableHead>
+                  <TableHead className="hidden sm:table-cell">Date & Time</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id} className="cursor-pointer hover:bg-muted/50" onClick={() => setSelectedLog(log)}>
+                    <TableCell>
+                      <Badge variant="outline" className={`text-xs font-mono ${methodColor(log.method)}`}>
+                        {log.method}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="max-w-0">
+                      <div className="font-mono text-xs truncate" title={log.endpoint}>{log.endpoint}</div>
+                      <div className="sm:hidden text-[10px] text-muted-foreground font-sans mt-0.5">
                         {formatTime(log.created_at)}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden lg:table-cell">
+                      <span className="text-xs text-muted-foreground truncate block">
+                        {log.request_body ? log.request_body.substring(0, 100) + (log.request_body.length > 100 ? "…" : "") : "—"}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`font-mono text-xs font-semibold ${statusColor(log.status_code)}`}>
+                        {log.status_code}
+                      </span>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell text-xs text-muted-foreground">
+                      {log.response_time_ms}ms
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell text-xs font-mono text-muted-foreground truncate">
+                      {log.api_key_prefix || "—"}
+                    </TableCell>
+                    <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
+                      {log.ip_address || "—"}
+                    </TableCell>
+                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
+                      {formatTime(log.created_at)}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
