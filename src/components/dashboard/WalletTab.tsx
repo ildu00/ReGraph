@@ -514,28 +514,36 @@ Generated: ${new Date().toISOString()}
     setUsageDetail(null);
     setUsageDetailLoading(true);
 
-    // Try to find matching usage log by cost and timestamp proximity
     try {
       const meta = tx.metadata as Record<string, unknown> | null;
       const usageLogId = meta?.usage_log_id as string | undefined;
 
-      let query = supabase
-        .from('usage_logs')
-        .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
-        .eq('user_id', user!.id)
-        .eq('cost_usd', tx.amount_usd)
-        .order('created_at', { ascending: false })
-        .limit(1);
-
+      // If metadata has explicit usage_log_id, use it directly
       if (usageLogId) {
-        query = supabase
+        const { data } = await supabase
           .from('usage_logs')
           .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
           .eq('id', usageLogId)
           .limit(1);
+        setUsageDetail((data?.[0] as UsageChargeDetail) || null);
+        return;
       }
 
-      const { data } = await query;
+      // Otherwise match by timestamp proximity (±10 seconds window)
+      // Note: transaction.amount_usd includes 20% markup, usage_logs.cost_usd is pre-markup
+      const txTime = new Date(tx.created_at);
+      const from = new Date(txTime.getTime() - 10_000).toISOString();
+      const to = new Date(txTime.getTime() + 10_000).toISOString();
+
+      const { data } = await supabase
+        .from('usage_logs')
+        .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
+        .eq('user_id', user!.id)
+        .gte('created_at', from)
+        .lte('created_at', to)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
       setUsageDetail((data?.[0] as UsageChargeDetail) || null);
     } catch (e) {
       console.error('Error fetching usage detail:', e);
