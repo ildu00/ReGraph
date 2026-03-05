@@ -163,6 +163,8 @@ const Admin = () => {
         return <AdminApiKeysTab />;
       case "pricing":
         return <AdminPricing />;
+      case "billing":
+        return <AdminBilling />;
       default:
         return <AdminDashboard />;
     }
