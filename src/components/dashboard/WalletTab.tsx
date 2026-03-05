@@ -69,6 +69,17 @@ interface WalletTransaction {
   amount_usd: number;
   tx_hash: string | null;
   created_at: string;
+  metadata?: Record<string, unknown> | null;
+}
+
+interface UsageChargeDetail {
+  id: string;
+  endpoint: string;
+  model: string | null;
+  tokens_used: number;
+  compute_time_ms: number;
+  cost_usd: number;
+  created_at: string;
 }
 
 const networkConfig: Record<BlockchainNetwork, { name: string; icon: string; color: string; tokens: CryptoCurrency[] }> = {
