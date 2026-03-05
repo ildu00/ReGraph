@@ -7,17 +7,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search, CreditCard } from "lucide-react";
 
-// Extract model name from endpoint like "openai/gpt-4o-mini" → "gpt-4o-mini"
-const extractModel = (endpoint: string): string => {
-  const slash = endpoint.lastIndexOf("/");
-  if (slash !== -1 && slash < endpoint.length - 1) return endpoint.slice(slash + 1);
-  return endpoint;
+// Extract category from endpoint like "/v1/model-inference/llm" → "llm"
+const extractCategory = (endpoint: string): string => {
+  const parts = endpoint.split("/");
+  return parts[parts.length - 1] || endpoint;
 };
 
 interface UsageLog {
   id: string;
   user_id: string;
   endpoint: string;
+  model?: string | null;
   tokens_used: number;
   cost_usd: number;
   compute_time_ms: number;
@@ -74,7 +74,7 @@ export const AdminBilling = () => {
 
       const { data, count, error } = await supabase
         .from("usage_logs")
-        .select("id, user_id, endpoint, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
+        .select("id, user_id, endpoint, model, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
 
@@ -190,9 +190,11 @@ export const AdminBilling = () => {
                   <div className="min-w-0 flex-1">
                     <div className="font-mono text-sm font-medium truncate" title={log.email}>{log.email}</div>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
-                        {extractModel(log.endpoint)}
-                      </Badge>
+                      {log.model && (
+                        <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
+                          {log.model}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={log.endpoint}>{log.endpoint}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
@@ -241,10 +243,12 @@ export const AdminBilling = () => {
                       <div className="font-mono text-sm truncate" title={log.email}>{log.email}</div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-0.5">
-                        <Badge variant="secondary" className="font-mono text-xs w-fit">
-                          {extractModel(log.endpoint)}
-                        </Badge>
+                      <div className="flex flex-col gap-1">
+                        {log.model && (
+                          <Badge variant="secondary" className="font-mono text-xs w-fit">
+                            {log.model}
+                          </Badge>
+                        )}
                         <span className="text-xs text-muted-foreground font-mono" title={log.endpoint}>{log.endpoint}</span>
                       </div>
                     </TableCell>

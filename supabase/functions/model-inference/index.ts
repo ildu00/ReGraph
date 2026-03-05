@@ -60,7 +60,7 @@ async function extractUserId(req: Request): Promise<string | null> {
 }
 
 /** Process billing: log usage + deduct balance for authenticated users (atomic update to prevent race conditions) */
-async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number, apiKeyId?: string | null) {
+async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number, apiKeyId?: string | null, modelName?: string | null) {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
@@ -112,6 +112,7 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
         tokens_used: tokensUsed,
         compute_time_ms: computeTimeMs,
         cost_usd: totalCost,
+        model: modelName ?? null,
       });
 
     console.log(`Billing: user ${userId} charged $${totalCost.toFixed(6)} for ${tokensUsed} tokens`);
@@ -265,7 +266,7 @@ serve(async (req) => {
       
       if (status === 200 && userId) {
         const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
-        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs);
+        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs, null, vsegptModel);
       }
       
       return new Response(body, { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -319,7 +320,7 @@ serve(async (req) => {
         // Fire-and-forget billing estimate for streaming
         if (userId) {
           const estimatedTokens = Math.ceil(prompt.length / 4) + 200;
-          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs);
+          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs, null, vsegptModel);
         }
 
         // Pipe the SSE stream straight through from VseGPT

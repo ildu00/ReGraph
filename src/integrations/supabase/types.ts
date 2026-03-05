@@ -803,6 +803,7 @@ export type Database = {
           created_at: string
           endpoint: string
           id: string
+          model: string | null
           provider_device_id: string | null
           provider_id: string | null
           tokens_used: number
@@ -815,6 +816,7 @@ export type Database = {
           created_at?: string
           endpoint: string
           id?: string
+          model?: string | null
           provider_device_id?: string | null
           provider_id?: string | null
           tokens_used?: number
@@ -827,6 +829,7 @@ export type Database = {
           created_at?: string
           endpoint?: string
           id?: string
+          model?: string | null
           provider_device_id?: string | null
           provider_id?: string | null
           tokens_used?: number
