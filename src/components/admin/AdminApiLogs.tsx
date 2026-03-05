@@ -189,8 +189,8 @@ export const AdminApiLogs = () => {
               <p className="text-sm mt-1">Requests to api.regraph.tech will appear here</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="table-fixed w-full">
+            <div className="overflow-x-auto w-full">
+              <Table className="w-full min-w-[480px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[72px]">Method</TableHead>

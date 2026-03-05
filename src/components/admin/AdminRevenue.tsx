@@ -358,15 +358,16 @@ export const AdminRevenue = () => {
             {transactions.length} total
           </span>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0 sm:p-6">
-            <Table className="table-fixed w-full min-w-[320px]">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full min-w-[360px]">
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[25%] sm:w-[20%]">Type</TableHead>
-                  <TableHead className="w-[25%] sm:w-[20%]">Amount</TableHead>
-                  <TableHead className="w-[25%] sm:w-[15%]">Status</TableHead>
-                  <TableHead className="hidden md:table-cell w-[20%]">User ID</TableHead>
-                  <TableHead className="hidden sm:table-cell w-[25%]">Date</TableHead>
+                  <TableHead className="min-w-[100px]">Type</TableHead>
+                  <TableHead className="min-w-[100px]">Amount</TableHead>
+                  <TableHead className="min-w-[80px]">Status</TableHead>
+                  <TableHead className="hidden md:table-cell min-w-[100px]">User ID</TableHead>
+                  <TableHead className="hidden sm:table-cell min-w-[140px]">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -400,6 +401,7 @@ export const AdminRevenue = () => {
                 ))}
               </TableBody>
             </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
