@@ -321,7 +321,7 @@ serve(async (req) => {
         // Fire-and-forget billing estimate for streaming
         if (userId) {
           const estimatedTokens = Math.ceil(prompt.length / 4) + 200;
-          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs, null, vsegptModel);
+          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs, null, model);
         }
 
         // Pipe the SSE stream straight through from VseGPT
