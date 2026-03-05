@@ -509,6 +509,41 @@ Generated: ${new Date().toISOString()}
     setExportConfirmed(false);
   };
 
+  const openUsageDetail = async (tx: WalletTransaction) => {
+    setUsageDetailTx(tx);
+    setUsageDetail(null);
+    setUsageDetailLoading(true);
+
+    // Try to find matching usage log by cost and timestamp proximity
+    try {
+      const meta = tx.metadata as Record<string, unknown> | null;
+      const usageLogId = meta?.usage_log_id as string | undefined;
+
+      let query = supabase
+        .from('usage_logs')
+        .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
+        .eq('user_id', user!.id)
+        .eq('cost_usd', tx.amount_usd)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (usageLogId) {
+        query = supabase
+          .from('usage_logs')
+          .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
+          .eq('id', usageLogId)
+          .limit(1);
+      }
+
+      const { data } = await query;
+      setUsageDetail((data?.[0] as UsageChargeDetail) || null);
+    } catch (e) {
+      console.error('Error fetching usage detail:', e);
+    } finally {
+      setUsageDetailLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
