@@ -1023,6 +1023,10 @@ export type Database = {
         Args: { p_network: Database["public"]["Enums"]["blockchain_network"] }
         Returns: number
       }
+      get_total_spent_for_user: {
+        Args: { user_id_param: string }
+        Returns: number
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
