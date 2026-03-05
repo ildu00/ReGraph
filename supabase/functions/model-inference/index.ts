@@ -266,7 +266,7 @@ serve(async (req) => {
       
       if (status === 200 && userId) {
         const tokens = usage?.total_tokens || Math.ceil(prompt.length / 4) + 50;
-        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs);
+        processBilling(userId, `/v1/model-inference/${category}`, tokens, computeTimeMs, null, vsegptModel);
       }
       
       return new Response(body, { status, headers: { ...corsHeaders, "Content-Type": "application/json" } });
@@ -320,7 +320,7 @@ serve(async (req) => {
         // Fire-and-forget billing estimate for streaming
         if (userId) {
           const estimatedTokens = Math.ceil(prompt.length / 4) + 200;
-          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs);
+          processBilling(userId, `/v1/model-inference/${category}`, estimatedTokens, computeTimeMs, null, vsegptModel);
         }
 
         // Pipe the SSE stream straight through from VseGPT
