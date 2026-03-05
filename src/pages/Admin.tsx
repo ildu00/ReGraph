@@ -17,6 +17,7 @@ import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { AdminApiLogs } from "@/components/admin/AdminApiLogs";
 import { AdminApiKeys as AdminApiKeysTab } from "@/components/admin/AdminApiKeys";
 import { AdminPricing } from "@/components/admin/AdminPricing";
+import { AdminBilling } from "@/components/admin/AdminBilling";
 import { 
   Menu, 
   X, 
@@ -62,6 +63,7 @@ const navItems = [
   { id: "api-logs", label: "API Logs", icon: Activity },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "billing", label: "Billing", icon: DollarSign },
 ];
 
 const Admin = () => {
@@ -161,6 +163,8 @@ const Admin = () => {
         return <AdminApiKeysTab />;
       case "pricing":
         return <AdminPricing />;
+      case "billing":
+        return <AdminBilling />;
       default:
         return <AdminDashboard />;
     }
