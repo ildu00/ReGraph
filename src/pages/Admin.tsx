@@ -17,6 +17,7 @@ import { AdminNotifications } from "@/components/admin/AdminNotifications";
 import { AdminApiLogs } from "@/components/admin/AdminApiLogs";
 import { AdminApiKeys as AdminApiKeysTab } from "@/components/admin/AdminApiKeys";
 import { AdminPricing } from "@/components/admin/AdminPricing";
+import { AdminBilling } from "@/components/admin/AdminBilling";
 import { 
   Menu, 
   X, 
