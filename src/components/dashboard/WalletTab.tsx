@@ -182,7 +182,7 @@ const WalletTab = () => {
     }
   };
 
-  const fetchWalletData = async () => {
+  const fetchWalletData = async (page = 1) => {
     if (!user) return;
     
     setLoading(true);
@@ -195,7 +195,6 @@ const WalletTab = () => {
         .single();
 
       if (walletError && walletError.code === 'PGRST116') {
-        // Wallet doesn't exist, create one
         const { data: newWallet, error: createError } = await supabase
           .from('wallets')
           .insert({ user_id: user.id })
@@ -219,16 +218,21 @@ const WalletTab = () => {
       if (addressError) throw addressError;
       setDepositAddresses(addresses || []);
 
-      // Fetch transactions
-      const { data: txs, error: txError } = await supabase
+      // Fetch transactions with pagination
+      const from = (page - 1) * TX_PER_PAGE;
+      const to = from + TX_PER_PAGE - 1;
+
+      const { data: txs, error: txError, count } = await supabase
         .from('wallet_transactions')
-        .select('*')
+        .select('*', { count: 'exact' })
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .range(from, to);
 
       if (txError) throw txError;
       setTransactions(txs || []);
+      setTxTotal(count || 0);
+      setTxPage(page);
     } catch (error: any) {
       console.error('Error fetching wallet data:', error);
       toast.error('Failed to load wallet data');
