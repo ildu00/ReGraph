@@ -74,7 +74,7 @@ export const AdminBilling = () => {
 
       const { data, count, error } = await supabase
         .from("usage_logs")
-        .select("id, user_id, endpoint, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
+        .select("id, user_id, endpoint, model, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
         .order("created_at", { ascending: false })
         .range(from, to);
 
