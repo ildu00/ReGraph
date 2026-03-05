@@ -63,6 +63,7 @@ const navItems = [
   { id: "api-logs", label: "API Logs", icon: Activity },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "billing", label: "Billing", icon: DollarSign },
 ];
 
 const Admin = () => {
