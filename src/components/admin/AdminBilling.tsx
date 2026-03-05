@@ -171,12 +171,41 @@ export const AdminBilling = () => {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          {/* Mobile card list */}
+          <div className="sm:hidden divide-y divide-border">
+            {loading ? (
+              <div className="py-10 flex justify-center">
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+              </div>
+            ) : filteredLogs.length === 0 ? (
+              <div className="py-10 text-center text-muted-foreground text-sm">No records found</div>
+            ) : (
+              filteredLogs.map((log) => (
+                <div key={log.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-mono text-sm font-medium truncate" title={log.email}>{log.email}</div>
+                    <div className="flex items-center gap-2 mt-1 flex-wrap">
+                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs font-mono text-muted-foreground truncate max-w-[140px]" title={log.endpoint}>{log.endpoint}</span>
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{Number(log.tokens_used).toLocaleString()} tokens</div>
+                  </div>
+                  <div className="text-sm font-semibold text-destructive whitespace-nowrap shrink-0">
+                    -${Number(log.cost_usd).toFixed(6)}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* Desktop table */}
+          <Table className="hidden sm:table">
             <TableHeader>
               <TableRow>
-                <TableHead className="hidden sm:table-cell">Time</TableHead>
+                <TableHead>Time</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead className="hidden md:table-cell">Model / Endpoint</TableHead>
+                <TableHead className="hidden md:table-cell">Endpoint</TableHead>
                 <TableHead className="hidden lg:table-cell">Tokens</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
@@ -190,39 +219,28 @@ export const AdminBilling = () => {
                 </TableRow>
               ) : filteredLogs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
-                    No records found
-                  </TableCell>
+                  <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">No records found</TableCell>
                 </TableRow>
               ) : (
                 filteredLogs.map((log) => (
                   <TableRow key={log.id}>
-                    <TableCell className="hidden sm:table-cell text-xs text-muted-foreground whitespace-nowrap">
+                    <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                       {new Date(log.created_at).toLocaleString()}
                     </TableCell>
-                    <TableCell className="max-w-0">
-                      <div className="text-sm font-mono truncate" title={log.email}>{log.email}</div>
-                      <div className="sm:hidden text-xs text-muted-foreground mt-0.5">
-                        {new Date(log.created_at).toLocaleDateString()}
-                      </div>
-                      <div className="md:hidden text-xs text-muted-foreground truncate mt-0.5" title={log.endpoint}>
-                        {log.endpoint}
-                      </div>
+                    <TableCell className="max-w-[180px]">
+                      <div className="font-mono text-sm truncate" title={log.email}>{log.email}</div>
+                      <div className="md:hidden text-xs text-muted-foreground truncate mt-0.5" title={log.endpoint}>{log.endpoint}</div>
                     </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm truncate max-w-[160px]" title={log.endpoint}>
-                      {log.endpoint}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm">
-                      {Number(log.tokens_used).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="text-sm font-medium text-destructive whitespace-nowrap">
+                    <TableCell className="hidden md:table-cell text-sm truncate max-w-[180px]" title={log.endpoint}>{log.endpoint}</TableCell>
+                    <TableCell className="hidden lg:table-cell text-sm">{Number(log.tokens_used).toLocaleString()}</TableCell>
+                    <TableCell className="text-sm font-semibold text-destructive whitespace-nowrap">
                       -${Number(log.cost_usd).toFixed(6)}
                     </TableCell>
                   </TableRow>
                 ))
               )}
-              </TableBody>
-            </Table>
+            </TableBody>
+          </Table>
 
           {/* Pagination */}
           {totalPages > 1 && (
