@@ -525,7 +525,6 @@ export const AdminTasks = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (

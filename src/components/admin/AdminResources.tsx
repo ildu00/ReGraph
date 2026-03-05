@@ -532,7 +532,6 @@ export const AdminResources = () => {
                 )}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
