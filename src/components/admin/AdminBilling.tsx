@@ -193,9 +193,13 @@ export const AdminBilling = () => {
                       <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
                         {extractModel(log.endpoint)}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
+                      <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={log.endpoint}>{log.endpoint}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{Number(log.tokens_used).toLocaleString()} tokens</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">{Number(log.tokens_used).toLocaleString()} tokens</span>
+                    </div>
                   </div>
                   <div className="text-sm font-semibold text-destructive whitespace-nowrap shrink-0">
                     -${Number(log.cost_usd).toFixed(6)}
@@ -209,9 +213,9 @@ export const AdminBilling = () => {
           <Table className="hidden sm:table">
             <TableHeader>
               <TableRow>
-                <TableHead>Time</TableHead>
+                <TableHead className="w-[140px]">Time</TableHead>
                 <TableHead>User</TableHead>
-                <TableHead>Model</TableHead>
+                <TableHead>Endpoint / Model</TableHead>
                 <TableHead className="hidden lg:table-cell">Tokens</TableHead>
                 <TableHead>Cost</TableHead>
               </TableRow>
@@ -237,9 +241,12 @@ export const AdminBilling = () => {
                       <div className="font-mono text-sm truncate" title={log.email}>{log.email}</div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary" className="font-mono text-xs">
-                        {extractModel(log.endpoint)}
-                      </Badge>
+                      <div className="flex flex-col gap-0.5">
+                        <Badge variant="secondary" className="font-mono text-xs w-fit">
+                          {extractModel(log.endpoint)}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground font-mono" title={log.endpoint}>{log.endpoint}</span>
+                      </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell text-sm">{Number(log.tokens_used).toLocaleString()}</TableCell>
                     <TableCell className="text-sm font-semibold text-destructive whitespace-nowrap">
