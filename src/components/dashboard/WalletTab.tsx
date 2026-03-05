@@ -111,11 +111,15 @@ interface ProjectWallet {
   is_active: boolean;
 }
 
+const TX_PER_PAGE = 10;
+
 const WalletTab = () => {
   const { user } = useAuth();
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [depositAddresses, setDepositAddresses] = useState<DepositAddress[]>([]);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
+  const [txPage, setTxPage] = useState(1);
+  const [txTotal, setTxTotal] = useState(0);
   const [loading, setLoading] = useState(true);
   const [generatingAddress, setGeneratingAddress] = useState<BlockchainNetwork | null>(null);
   const [depositDialogOpen, setDepositDialogOpen] = useState(false);
