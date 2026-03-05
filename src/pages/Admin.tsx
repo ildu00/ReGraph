@@ -34,7 +34,8 @@ import {
   BookOpen,
   Mail,
   Activity,
-  Key
+  Key,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,18 +53,18 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "users", label: "Users", icon: Users },
-  { id: "requests", label: "Requests", icon: FileText },
-  { id: "resources", label: "Resources", icon: Server },
-  { id: "tasks", label: "Tasks", icon: ListTodo },
-  { id: "revenue", label: "Revenue", icon: DollarSign },
-  { id: "forms", label: "Form Data", icon: Inbox },
-  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
-  { id: "blog", label: "Blog", icon: BookOpen },
   { id: "notifications", label: "Notifications", icon: Mail },
-  { id: "api-logs", label: "API Logs", icon: Activity },
-  { id: "api-keys", label: "API Keys", icon: Key },
+  { id: "forms", label: "Form Data", icon: Inbox },
+  { id: "revenue", label: "Revenue", icon: DollarSign },
+  { id: "billing", label: "Billing", icon: CreditCard },
   { id: "pricing", label: "Pricing", icon: DollarSign },
-  { id: "billing", label: "Billing", icon: DollarSign },
+  { id: "resources", label: "Resources", icon: Server },
+  { id: "api-keys", label: "API Keys", icon: Key },
+  { id: "api-logs", label: "API Logs", icon: Activity },
+  { id: "requests", label: "Requests", icon: FileText },
+  { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
 ];
 
 const Admin = () => {
