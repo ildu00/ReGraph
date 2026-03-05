@@ -169,6 +169,8 @@ const Admin = () => {
         return <AdminPricing />;
       case "billing":
         return <AdminBilling />;
+      case "project-wallets":
+        return <AdminProjectWallets />;
       default:
         return <AdminDashboard />;
     }
