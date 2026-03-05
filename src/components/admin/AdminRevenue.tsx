@@ -37,13 +37,13 @@ export const AdminRevenue = () => {
             .from("wallet_transactions")
             .select("id, user_id, amount_usd, transaction_type, status, created_at")
             .order("created_at", { ascending: false })
-            .limit(1000),
+            .limit(10000),
           supabase
             .from("usage_logs")
             .select("created_at, cost_usd")
             .gte("created_at", fourteenDaysAgo.toISOString())
             .order("created_at", { ascending: true })
-            .limit(5000),
+            .limit(50000),
         ]);
 
         if (txRes.error) throw txRes.error;

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -25,77 +25,96 @@ export const AdminBilling = () => {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
   const [totalCost, setTotalCost] = useState(0);
   const [totalTokens, setTotalTokens] = useState(0);
+  const [profileMap, setProfileMap] = useState<Map<string, string>>(new Map());
 
+  // Fetch aggregates once
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch usage logs with profile emails
-        const { data: usageLogs, error } = await supabase
-          .from("usage_logs")
-          .select("id, user_id, endpoint, tokens_used, cost_usd, compute_time_ms, created_at")
-          .order("created_at", { ascending: false })
-          .limit(1000);
+    const fetchAggregates = async () => {
+      const { data: costData } = await supabase
+        .from("usage_logs")
+        .select("cost_usd, tokens_used")
+        .limit(100000);
 
-        if (error) throw error;
-
-        // Fetch all profiles to map user_id -> email
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, email");
-
-        const profileMap = new Map((profiles || []).map((p) => [p.user_id, p.email]));
-
-        const enriched = (usageLogs || []).map((log) => ({
-          ...log,
-          email: profileMap.get(log.user_id) || log.user_id.slice(0, 8) + "...",
-        }));
-
-        setLogs(enriched);
-        setTotalCost(enriched.reduce((s, l) => s + Number(l.cost_usd), 0));
-        setTotalTokens(enriched.reduce((s, l) => s + Number(l.tokens_used), 0));
-      } catch (e) {
-        console.error("Error fetching billing logs:", e);
-      } finally {
-        setLoading(false);
+      if (costData) {
+        setTotalCost(costData.reduce((s, l) => s + Number(l.cost_usd), 0));
+        setTotalTokens(costData.reduce((s, l) => s + Number(l.tokens_used), 0));
       }
+
+      const { count } = await supabase
+        .from("usage_logs")
+        .select("*", { count: "exact", head: true });
+      setTotalCount(count || 0);
     };
 
-    fetchData();
+    const fetchProfiles = async () => {
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("user_id, email");
+      setProfileMap(new Map((profiles || []).map((p) => [p.user_id, p.email || ""])));
+    };
+
+    fetchAggregates();
+    fetchProfiles();
   }, []);
 
-  const filtered = logs.filter(
-    (l) =>
-      !search ||
-      l.email?.toLowerCase().includes(search.toLowerCase()) ||
-      l.endpoint.toLowerCase().includes(search.toLowerCase())
-  );
+  const fetchPage = useCallback(async (page: number, searchTerm: string) => {
+    setLoading(true);
+    try {
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+      let query = supabase
+        .from("usage_logs")
+        .select("id, user_id, endpoint, tokens_used, cost_usd, compute_time_ms, created_at", { count: "exact" })
+        .order("created_at", { ascending: false })
+        .range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      const enriched = (data || []).map((log) => ({
+        ...log,
+        email: profileMap.get(log.user_id) || log.user_id.slice(0, 8) + "...",
+      }));
+
+      setLogs(enriched);
+      if (count !== null) setTotalCount(count);
+    } catch (e) {
+      console.error("Error fetching billing logs:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [profileMap]);
+
+  useEffect(() => {
+    if (profileMap.size >= 0) {
+      fetchPage(currentPage, search);
+    }
+  }, [currentPage, profileMap]);
 
   const handleSearch = (v: string) => {
     setSearch(v);
     setCurrentPage(1);
   };
 
-  const getModelFromEndpoint = (endpoint: string) => {
-    // endpoint may be like "openai/gpt-4o-mini" or "/v1/chat/completions"
-    if (endpoint.includes("/")) {
-      const parts = endpoint.split("/");
-      return parts[parts.length - 1] || endpoint;
-    }
-    return endpoint;
-  };
+  const filteredLogs = search
+    ? logs.filter(
+        (l) =>
+          l.email?.toLowerCase().includes(search.toLowerCase()) ||
+          l.endpoint.toLowerCase().includes(search.toLowerCase())
+      )
+    : logs;
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
-      </div>
-    );
-  }
+  const totalPages = Math.ceil(totalCount / ITEMS_PER_PAGE);
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
+    fetchPage(newPage, search);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   return (
     <div className="space-y-6">
@@ -131,7 +150,7 @@ export const AdminBilling = () => {
           <CardContent className="pt-6">
             <div>
               <p className="text-sm text-muted-foreground">Total Records</p>
-              <p className="text-2xl font-bold">{logs.length.toLocaleString()}</p>
+              <p className="text-2xl font-bold">{totalCount.toLocaleString()}</p>
             </div>
           </CardContent>
         </Card>
@@ -165,14 +184,20 @@ export const AdminBilling = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {paginated.length === 0 ? (
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center py-8">
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary/20 border-t-primary mx-auto" />
+                    </TableCell>
+                  </TableRow>
+                ) : filteredLogs.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
                       No records found
                     </TableCell>
                   </TableRow>
                 ) : (
-                  paginated.map((log) => (
+                  filteredLogs.map((log) => (
                     <TableRow key={log.id}>
                       <TableCell className="text-sm text-muted-foreground whitespace-nowrap">
                         {new Date(log.created_at).toLocaleString()}
@@ -203,14 +228,14 @@ export const AdminBilling = () => {
           {totalPages > 1 && (
             <div className="flex items-center justify-between px-4 py-3 border-t border-border">
               <span className="text-sm text-muted-foreground">
-                {filtered.length} records · Page {currentPage} of {totalPages}
+                {totalCount.toLocaleString()} records · Page {currentPage} of {totalPages}
               </span>
               <div className="flex gap-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}
                 >
                   <ChevronLeft className="h-4 w-4" />
                   Prev
@@ -218,8 +243,8 @@ export const AdminBilling = () => {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}
                 >
                   Next
                   <ChevronRight className="h-4 w-4" />
