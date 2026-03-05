@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { z } from "zod";
 import { 
@@ -29,7 +30,12 @@ import {
   Key,
   Eye,
   EyeOff,
-  ShieldAlert
+  ShieldAlert,
+  Info,
+  Zap,
+  Hash,
+  Timer,
+  Database
 } from "lucide-react";
 
 type BlockchainNetwork = 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'solana' | 'bitcoin' | 'tron';
@@ -62,6 +68,17 @@ interface WalletTransaction {
   network: BlockchainNetwork | null;
   amount_usd: number;
   tx_hash: string | null;
+  created_at: string;
+  metadata?: unknown;
+}
+
+interface UsageChargeDetail {
+  id: string;
+  endpoint: string;
+  model: string | null;
+  tokens_used: number;
+  compute_time_ms: number;
+  cost_usd: number;
   created_at: string;
 }
 
@@ -151,6 +168,11 @@ const WalletTab = () => {
   // Crypto prices state
   const [cryptoPrices, setCryptoPrices] = useState<Record<string, number>>({});
   const [pricesLoading, setPricesLoading] = useState(false);
+
+  // Usage charge detail dialog state
+  const [usageDetailTx, setUsageDetailTx] = useState<WalletTransaction | null>(null);
+  const [usageDetail, setUsageDetail] = useState<UsageChargeDetail | null>(null);
+  const [usageDetailLoading, setUsageDetailLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -485,6 +507,41 @@ Generated: ${new Date().toISOString()}
     setExportedKey(null);
     setShowPrivateKey(false);
     setExportConfirmed(false);
+  };
+
+  const openUsageDetail = async (tx: WalletTransaction) => {
+    setUsageDetailTx(tx);
+    setUsageDetail(null);
+    setUsageDetailLoading(true);
+
+    // Try to find matching usage log by cost and timestamp proximity
+    try {
+      const meta = tx.metadata as Record<string, unknown> | null;
+      const usageLogId = meta?.usage_log_id as string | undefined;
+
+      let query = supabase
+        .from('usage_logs')
+        .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
+        .eq('user_id', user!.id)
+        .eq('cost_usd', tx.amount_usd)
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (usageLogId) {
+        query = supabase
+          .from('usage_logs')
+          .select('id, endpoint, model, tokens_used, compute_time_ms, cost_usd, created_at')
+          .eq('id', usageLogId)
+          .limit(1);
+      }
+
+      const { data } = await query;
+      setUsageDetail((data?.[0] as UsageChargeDetail) || null);
+    } catch (e) {
+      console.error('Error fetching usage detail:', e);
+    } finally {
+      setUsageDetailLoading(false);
+    }
   };
 
   if (loading) {
@@ -1091,11 +1148,15 @@ Generated: ${new Date().toISOString()}
                   const statusInfo = statusConfig[tx.status];
                   const StatusIcon = statusInfo.icon;
                   const isIncome = tx.transaction_type === 'deposit' || tx.transaction_type === 'wert_purchase' || tx.transaction_type === 'refund' || tx.transaction_type === 'provider_earning';
+                  const isUsageCharge = tx.transaction_type === 'usage_charge';
                   
                   return (
                     <div 
                       key={tx.id}
-                      className="flex items-center justify-between p-3 bg-muted/30 rounded-lg"
+                      onClick={isUsageCharge ? () => openUsageDetail(tx) : undefined}
+                      className={`flex items-center justify-between p-3 bg-muted/30 rounded-lg transition-colors ${
+                        isUsageCharge ? 'cursor-pointer hover:bg-muted/60' : ''
+                      }`}
                     >
                       <div className="flex items-center gap-3">
                         <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
@@ -1104,9 +1165,14 @@ Generated: ${new Date().toISOString()}
                           {isIncome ? <ArrowDownLeft className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
                         </div>
                         <div>
-                          <p className="font-medium capitalize">
-                            {tx.transaction_type.replace('_', ' ')}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium capitalize">
+                              {tx.transaction_type.replace(/_/g, ' ')}
+                            </p>
+                            {isUsageCharge && (
+                              <Info className="h-3.5 w-3.5 text-muted-foreground" />
+                            )}
+                          </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             {tx.network && (
                               <Badge variant="secondary" className="text-xs">
@@ -1134,6 +1200,7 @@ Generated: ${new Date().toISOString()}
                   );
                 })}
               </div>
+
 
               {/* Pagination */}
               {txTotal > TX_PER_PAGE && (
@@ -1165,6 +1232,91 @@ Generated: ${new Date().toISOString()}
           )}
         </CardContent>
       </Card>
+
+      {/* Usage Charge Detail Dialog */}
+      <Dialog open={!!usageDetailTx} onOpenChange={(open) => { if (!open) { setUsageDetailTx(null); setUsageDetail(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Usage Charge Details
+            </DialogTitle>
+            <DialogDescription>
+              {usageDetailTx && (
+                <>Charged on {new Date(usageDetailTx.created_at).toLocaleDateString()} at {new Date(usageDetailTx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {usageDetailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : usageDetail ? (
+            <div className="space-y-4 mt-2">
+              {/* Amount */}
+              <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
+                <span className="text-sm text-muted-foreground font-medium">Amount Charged</span>
+                <span className="text-lg font-bold text-red-500">-${usageDetailTx?.amount_usd.toFixed(4)}</span>
+              </div>
+
+              <Separator />
+
+              {/* Endpoint */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  <Hash className="h-3.5 w-3.5" />
+                  Endpoint
+                </div>
+                <code className="block text-sm bg-muted/50 px-3 py-2 rounded-md break-all font-mono">
+                  {usageDetail.endpoint}
+                </code>
+              </div>
+
+              {/* Model */}
+              {usageDetail.model && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                    <Database className="h-3.5 w-3.5" />
+                    Model
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-sm">
+                      {usageDetail.model}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Tokens</p>
+                  <p className="font-semibold text-sm">{usageDetail.tokens_used.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Timer className="h-3 w-3" />
+                    Latency
+                  </div>
+                  <p className="font-semibold text-sm">{usageDetail.compute_time_ms}ms</p>
+                </div>
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Cost</p>
+                  <p className="font-semibold text-sm">${usageDetail.cost_usd.toFixed(4)}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No detailed usage data found for this charge.</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
