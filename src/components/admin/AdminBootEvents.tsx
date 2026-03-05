@@ -257,8 +257,8 @@ export const AdminBootEvents = () => {
           </div>
 
           {/* Desktop table layout */}
-          <div className="hidden sm:block overflow-x-auto w-full">
-            <Table className="min-w-[520px]">
+          <div className="hidden sm:block">
+            <Table className="min-w-0 w-full">
               <TableHeader>
                 <TableRow>
                   <TableHead>Time</TableHead>
