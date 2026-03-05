@@ -46,7 +46,8 @@ const OverviewTab = () => {
         .gte("created_at", todayStart.toISOString())
         .limit(10000),
       // Use RPC for accurate all-time total (avoids row limit)
-      supabase.rpc("get_total_spent_for_user", { user_id_param: user.id }),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any).rpc("get_total_spent_for_user", { user_id_param: user.id }),
       supabase
         .from("wallets")
         .select("balance_usd")
