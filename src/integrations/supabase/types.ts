@@ -580,6 +580,42 @@ export type Database = {
         }
         Relationships: []
       }
+      project_wallets: {
+        Row: {
+          address: string
+          created_at: string
+          currency: string
+          id: string
+          is_active: boolean
+          label: string
+          network: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          address: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          network: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string
+          created_at?: string
+          currency?: string
+          id?: string
+          is_active?: boolean
+          label?: string
+          network?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       provider_devices: {
         Row: {
           agent_version: string | null

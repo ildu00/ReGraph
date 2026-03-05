@@ -18,6 +18,7 @@ import { AdminApiLogs } from "@/components/admin/AdminApiLogs";
 import { AdminApiKeys as AdminApiKeysTab } from "@/components/admin/AdminApiKeys";
 import { AdminPricing } from "@/components/admin/AdminPricing";
 import { AdminBilling } from "@/components/admin/AdminBilling";
+import { AdminProjectWallets } from "@/components/admin/AdminProjectWallets";
 import { 
   Menu, 
   X, 
@@ -35,7 +36,8 @@ import {
   Mail,
   Activity,
   Key,
-  CreditCard
+  CreditCard,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +60,7 @@ const navItems = [
   { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "billing", label: "Billing", icon: CreditCard },
   { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "project-wallets", label: "Project Wallets", icon: Wallet },
   { id: "resources", label: "Resources", icon: Server },
   { id: "api-keys", label: "API Keys", icon: Key },
   { id: "api-logs", label: "API Logs", icon: Activity },
@@ -166,6 +169,8 @@ const Admin = () => {
         return <AdminPricing />;
       case "billing":
         return <AdminBilling />;
+      case "project-wallets":
+        return <AdminProjectWallets />;
       default:
         return <AdminDashboard />;
     }
