@@ -359,15 +359,14 @@ export const AdminRevenue = () => {
           </span>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto w-full">
-            <Table className="w-full min-w-[360px]">
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="min-w-[100px]">Type</TableHead>
-                  <TableHead className="min-w-[100px]">Amount</TableHead>
-                  <TableHead className="min-w-[80px]">Status</TableHead>
-                  <TableHead className="hidden md:table-cell min-w-[100px]">User ID</TableHead>
-                  <TableHead className="hidden sm:table-cell min-w-[140px]">Date</TableHead>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead className="hidden sm:table-cell">Status</TableHead>
+                <TableHead className="hidden md:table-cell">User ID</TableHead>
+                <TableHead className="hidden sm:table-cell">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -401,7 +400,6 @@ export const AdminRevenue = () => {
                 ))}
               </TableBody>
             </Table>
-          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
