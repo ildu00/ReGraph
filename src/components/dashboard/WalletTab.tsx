@@ -1102,7 +1102,7 @@ Generated: ${new Date().toISOString()}
                             <span>{tx.amount_crypto} {tx.currency}</span>
                           )}
                           {(tx.network || tx.currency) && <span>•</span>}
-                          <span>{new Date(tx.created_at).toLocaleDateString()}</span>
+                          <span>{new Date(tx.created_at).toLocaleDateString()} {new Date(tx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         </div>
                       </div>
                     </div>
