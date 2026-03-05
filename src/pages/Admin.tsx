@@ -34,7 +34,8 @@ import {
   BookOpen,
   Mail,
   Activity,
-  Key
+  Key,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
