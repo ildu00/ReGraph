@@ -37,20 +37,25 @@ interface AdminSidebarProps {
 }
 
 const navItems = [
+  // Overview
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  // Users & activity
   { id: "users", label: "Users", icon: Users },
-  { id: "requests", label: "Requests", icon: FileText },
-  { id: "resources", label: "Resources", icon: Server },
-  { id: "tasks", label: "Tasks", icon: ListTodo },
-  { id: "revenue", label: "Revenue", icon: DollarSign },
-  { id: "forms", label: "Form Data", icon: Inbox },
-  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
-  { id: "blog", label: "Blog", icon: BookOpen },
   { id: "notifications", label: "Notifications", icon: Mail },
-  { id: "api-logs", label: "API Logs", icon: Activity },
-  { id: "api-keys", label: "API Keys", icon: Key },
-  { id: "pricing", label: "Pricing", icon: DollarSign },
+  { id: "forms", label: "Form Data", icon: Inbox },
+  // Finance
+  { id: "revenue", label: "Revenue", icon: DollarSign },
   { id: "billing", label: "Billing", icon: CreditCard },
+  { id: "pricing", label: "Pricing", icon: DollarSign },
+  // Infrastructure
+  { id: "resources", label: "Resources", icon: Server },
+  { id: "api-keys", label: "API Keys", icon: Key },
+  { id: "api-logs", label: "API Logs", icon: Activity },
+  { id: "requests", label: "Requests", icon: FileText },
+  // Content & system
+  { id: "blog", label: "Blog", icon: BookOpen },
+  { id: "tasks", label: "Tasks", icon: ListTodo },
+  { id: "boot-events", label: "Boot Events", icon: AlertTriangle },
 ];
 
 export const AdminSidebar = ({ activeTab, onTabChange }: AdminSidebarProps) => {
