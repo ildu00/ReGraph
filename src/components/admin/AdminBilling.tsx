@@ -17,6 +17,7 @@ interface UsageLog {
   id: string;
   user_id: string;
   endpoint: string;
+  model?: string | null;
   tokens_used: number;
   cost_usd: number;
   compute_time_ms: number;
