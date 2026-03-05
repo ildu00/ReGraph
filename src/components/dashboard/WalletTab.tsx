@@ -69,7 +69,7 @@ interface WalletTransaction {
   amount_usd: number;
   tx_hash: string | null;
   created_at: string;
-  metadata?: Record<string, unknown> | null;
+  metadata?: unknown;
 }
 
 interface UsageChargeDetail {
