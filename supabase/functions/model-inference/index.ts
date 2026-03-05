@@ -59,19 +59,39 @@ async function extractUserId(req: Request): Promise<string | null> {
   return null;
 }
 
-/** Process billing: log usage + deduct balance for authenticated users (atomic update to prevent race conditions) */
-async function processBilling(userId: string, endpoint: string, tokensUsed: number, computeTimeMs: number, apiKeyId?: string | null, modelName?: string | null) {
+const MARKUP_MULTIPLIER = 1.20; // 20% markup over VseGPT actual cost
+
+/**
+ * Process billing: deduct balance using actual VseGPT cost + markup.
+ * If providerCostUsd is provided (from x-used-credits header), use it * MARKUP_MULTIPLIER.
+ * Otherwise fall back to token-based estimate.
+ */
+async function processBilling(
+  userId: string,
+  endpoint: string,
+  tokensUsed: number,
+  computeTimeMs: number,
+  apiKeyId?: string | null,
+  modelName?: string | null,
+  providerCostUsd?: number | null,
+) {
   try {
     const supabase = createClient(
       Deno.env.get("SUPABASE_URL")!,
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const tokenCost = (tokensUsed / 1000) * 0.001;
-    const computeCost = (computeTimeMs / 1000) * 0.0001;
-    const totalCost = Math.max(tokenCost + computeCost, 0.0001);
+    let totalCost: number;
+    if (providerCostUsd != null && providerCostUsd > 0) {
+      // Use actual VseGPT cost + our markup
+      totalCost = providerCostUsd * MARKUP_MULTIPLIER;
+    } else {
+      // Fallback: token-based estimate (used when provider cost unavailable)
+      const tokenCost = (tokensUsed / 1000) * 0.001;
+      const computeCost = (computeTimeMs / 1000) * 0.0001;
+      totalCost = Math.max(tokenCost + computeCost, 0.0001);
+    }
 
-    // Atomic balance deduction using SQL to prevent race conditions
     const { data: wallet } = await supabase
       .from("wallets")
       .select("id, balance_usd")
@@ -79,43 +99,42 @@ async function processBilling(userId: string, endpoint: string, tokensUsed: numb
       .single();
 
     if (wallet) {
-      // Use SQL expression for atomic decrement — prevents race condition where
-      // concurrent requests read the same balance and overwrite each other
       const { error: updateError } = await supabase.rpc("deduct_wallet_balance", {
         p_wallet_id: wallet.id,
         p_amount: totalCost,
       });
-
       if (updateError) {
-        // Fallback: log but don't fail — balance may go slightly off
         console.error("Atomic balance deduct failed:", updateError.message);
       }
 
-      await supabase
-        .from("wallet_transactions")
-        .insert({
-          user_id: userId,
-          wallet_id: wallet.id,
-          transaction_type: "usage_charge",
-          status: "confirmed",
-          amount_usd: totalCost,
-          metadata: { endpoint, tokens_used: tokensUsed, compute_time_ms: computeTimeMs, source: "dashboard_chat" },
-        });
+      await supabase.from("wallet_transactions").insert({
+        user_id: userId,
+        wallet_id: wallet.id,
+        transaction_type: "usage_charge",
+        status: "confirmed",
+        amount_usd: totalCost,
+        metadata: {
+          endpoint,
+          tokens_used: tokensUsed,
+          compute_time_ms: computeTimeMs,
+          source: "dashboard_chat",
+          provider_cost_usd: providerCostUsd ?? null,
+          markup_multiplier: MARKUP_MULTIPLIER,
+        },
+      });
     }
 
-    await supabase
-      .from("usage_logs")
-      .insert({
-        user_id: userId,
-        api_key_id: apiKeyId ?? null,
-        endpoint: endpoint || "/v1/model-inference",
-        tokens_used: tokensUsed,
-        compute_time_ms: computeTimeMs,
-        cost_usd: totalCost,
-        model: modelName ?? null,
-      });
+    await supabase.from("usage_logs").insert({
+      user_id: userId,
+      api_key_id: apiKeyId ?? null,
+      endpoint: endpoint || "/v1/model-inference",
+      tokens_used: tokensUsed,
+      compute_time_ms: computeTimeMs,
+      cost_usd: totalCost,
+      model: modelName ?? null,
+    });
 
-    console.log(`Billing: user ${userId} charged $${totalCost.toFixed(6)} for ${tokensUsed} tokens`);
+    console.log(`Billing: user ${userId} charged $${totalCost.toFixed(6)} (provider=$${(providerCostUsd ?? 0).toFixed(6)}, markup=${MARKUP_MULTIPLIER}x) for ${tokensUsed} tokens`);
   } catch (err) {
     console.error("Billing error (non-fatal):", err);
   }
