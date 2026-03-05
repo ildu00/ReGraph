@@ -7,6 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ChevronLeft, ChevronRight, Search, CreditCard } from "lucide-react";
 
+// Extract category from endpoint like "/v1/model-inference/llm" → "llm"
+const extractCategory = (endpoint: string): string => {
+  const parts = endpoint.split("/");
+  return parts[parts.length - 1] || endpoint;
+};
+
 interface UsageLog {
   id: string;
   user_id: string;
