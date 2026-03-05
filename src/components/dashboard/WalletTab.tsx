@@ -1232,6 +1232,91 @@ Generated: ${new Date().toISOString()}
           )}
         </CardContent>
       </Card>
+
+      {/* Usage Charge Detail Dialog */}
+      <Dialog open={!!usageDetailTx} onOpenChange={(open) => { if (!open) { setUsageDetailTx(null); setUsageDetail(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Zap className="h-5 w-5 text-primary" />
+              Usage Charge Details
+            </DialogTitle>
+            <DialogDescription>
+              {usageDetailTx && (
+                <>Charged on {new Date(usageDetailTx.created_at).toLocaleDateString()} at {new Date(usageDetailTx.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {usageDetailLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : usageDetail ? (
+            <div className="space-y-4 mt-2">
+              {/* Amount */}
+              <div className="flex items-center justify-between p-3 bg-muted/40 rounded-lg">
+                <span className="text-sm text-muted-foreground font-medium">Amount Charged</span>
+                <span className="text-lg font-bold text-red-500">-${usageDetailTx?.amount_usd.toFixed(4)}</span>
+              </div>
+
+              <Separator />
+
+              {/* Endpoint */}
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                  <Hash className="h-3.5 w-3.5" />
+                  Endpoint
+                </div>
+                <code className="block text-sm bg-muted/50 px-3 py-2 rounded-md break-all font-mono">
+                  {usageDetail.endpoint}
+                </code>
+              </div>
+
+              {/* Model */}
+              {usageDetail.model && (
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wider font-semibold">
+                    <Database className="h-3.5 w-3.5" />
+                    Model
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="secondary" className="font-mono text-sm">
+                      {usageDetail.model}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              <Separator />
+
+              {/* Stats row */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Tokens</p>
+                  <p className="font-semibold text-sm">{usageDetail.tokens_used.toLocaleString()}</p>
+                </div>
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <div className="flex items-center justify-center gap-1 text-xs text-muted-foreground mb-1">
+                    <Timer className="h-3 w-3" />
+                    Latency
+                  </div>
+                  <p className="font-semibold text-sm">{usageDetail.compute_time_ms}ms</p>
+                </div>
+                <div className="text-center p-3 bg-muted/40 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Cost</p>
+                  <p className="font-semibold text-sm">${usageDetail.cost_usd.toFixed(4)}</p>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground">
+              <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
+              <p className="text-sm">No detailed usage data found for this charge.</p>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
