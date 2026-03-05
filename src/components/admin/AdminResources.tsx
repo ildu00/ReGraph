@@ -468,8 +468,9 @@ export const AdminResources = () => {
         <CardHeader>
           <CardTitle>Devices ({filteredAndSortedDevices.length})</CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0 sm:p-6">
-            <Table className="table-fixed w-full min-w-[360px]">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full min-w-[420px]">
               <TableHeader>
                 <TableRow>
                    <SortableHeader field="device_name">Device</SortableHeader>
@@ -532,10 +533,11 @@ export const AdminResources = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-4 pt-4 border-t px-4 pb-4">
               <p className="text-sm text-muted-foreground">
                 Showing {((currentPage - 1) * itemsPerPage) + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedDevices.length)} of {filteredAndSortedDevices.length} devices
               </p>

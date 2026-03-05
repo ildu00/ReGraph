@@ -189,18 +189,18 @@ export const AdminApiLogs = () => {
               <p className="text-sm mt-1">Requests to api.regraph.tech will appear here</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <Table className="table-fixed w-full">
+            <div className="overflow-x-auto w-full">
+              <Table className="w-full min-w-[480px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[72px]">Method</TableHead>
-                    <TableHead className="w-auto min-w-0">Endpoint</TableHead>
-                    <TableHead className="hidden lg:table-cell w-[200px] min-w-0">Request Body</TableHead>
-                    <TableHead className="w-[56px]">Status</TableHead>
-                    <TableHead className="w-[64px] hidden md:table-cell">Time</TableHead>
-                    <TableHead className="w-[80px] hidden xl:table-cell">API Key</TableHead>
-                    <TableHead className="w-[96px] hidden xl:table-cell">IP</TableHead>
-                    <TableHead className="w-[140px] hidden sm:table-cell">Date & Time</TableHead>
+                    <TableHead className="min-w-[72px]">Method</TableHead>
+                    <TableHead className="min-w-[160px]">Endpoint</TableHead>
+                    <TableHead className="hidden lg:table-cell min-w-[160px]">Request Body</TableHead>
+                    <TableHead className="min-w-[56px]">Status</TableHead>
+                    <TableHead className="min-w-[64px] hidden md:table-cell">Time</TableHead>
+                    <TableHead className="min-w-[80px] hidden xl:table-cell">API Key</TableHead>
+                    <TableHead className="min-w-[96px] hidden xl:table-cell">IP</TableHead>
+                    <TableHead className="min-w-[140px] hidden sm:table-cell">Date & Time</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

@@ -427,8 +427,9 @@ export const AdminTasks = () => {
             {searchQuery && ` matching "${searchQuery}"`}
           </CardTitle>
         </CardHeader>
-        <CardContent className="overflow-x-auto p-0 sm:px-6 sm:pb-6">
-            <Table className="table-fixed w-full min-w-[320px]">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto w-full">
+            <Table className="w-full min-w-[340px]">
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[32px] pl-2 sm:pl-4"></TableHead>
@@ -525,6 +526,7 @@ export const AdminTasks = () => {
                 )}
               </TableBody>
             </Table>
+          </div>
 
           {/* Pagination */}
           {totalPages > 1 && (
