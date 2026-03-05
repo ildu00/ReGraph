@@ -14,7 +14,7 @@ import {
   Mail,
   Activity,
   Key,
-  DollarSign as PricingIcon
+  CreditCard
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
