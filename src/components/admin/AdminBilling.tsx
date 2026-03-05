@@ -193,9 +193,13 @@ export const AdminBilling = () => {
                       <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
                         {extractModel(log.endpoint)}
                       </Badge>
-                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
+                      <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={log.endpoint}>{log.endpoint}</span>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{Number(log.tokens_used).toLocaleString()} tokens</div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <span className="text-xs text-muted-foreground">{new Date(log.created_at).toLocaleDateString("ru-RU")}</span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">{Number(log.tokens_used).toLocaleString()} tokens</span>
+                    </div>
                   </div>
                   <div className="text-sm font-semibold text-destructive whitespace-nowrap shrink-0">
                     -${Number(log.cost_usd).toFixed(6)}
