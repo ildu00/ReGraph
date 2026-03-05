@@ -190,9 +190,11 @@ export const AdminBilling = () => {
                   <div className="min-w-0 flex-1">
                     <div className="font-mono text-sm font-medium truncate" title={log.email}>{log.email}</div>
                     <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-                      <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
-                        {extractModel(log.endpoint)}
-                      </Badge>
+                      {log.model && (
+                        <Badge variant="secondary" className="text-xs font-mono px-1.5 py-0">
+                          {log.model}
+                        </Badge>
+                      )}
                       <span className="text-xs text-muted-foreground font-mono truncate max-w-[160px]" title={log.endpoint}>{log.endpoint}</span>
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
