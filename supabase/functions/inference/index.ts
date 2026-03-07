@@ -271,12 +271,26 @@ serve(async (req) => {
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    if (category === "embedding" && data.embedding) {
+    if (category === "embedding") {
       logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
+      // Support batch: model-inference may return embeddings[] (array) or single embedding
+      const inputArray = Array.isArray(input) ? input : (typeof input === "string" ? [input] : [finalPrompt]);
+      let embeddingData: Array<{ object: string; index: number; embedding: number[] }>;
+      if (data.embeddings && Array.isArray(data.embeddings)) {
+        // Batch response from model-inference
+        embeddingData = data.embeddings.map((emb: number[], i: number) => ({ object: "embedding", index: i, embedding: emb }));
+      } else if (data.embedding) {
+        // Single embedding — wrap in array
+        embeddingData = [{ object: "embedding", index: 0, embedding: data.embedding }];
+      } else {
+        return new Response(JSON.stringify({ error: "No embedding returned from model" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      }
+      const totalTokens = inputArray.reduce((sum: number, t: string) => sum + Math.ceil((t || "").length / 4), 0);
       return new Response(JSON.stringify({
         object: "list",
-        data: [{ object: "embedding", index: 0, embedding: data.embedding }],
-        usage: { prompt_tokens: Math.ceil(finalPrompt.length / 4), total_tokens: Math.ceil(finalPrompt.length / 4) },
+        data: embeddingData,
+        model: model || "text-embedding-3-large",
+        usage: { prompt_tokens: totalTokens, total_tokens: totalTokens },
       }), { headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
