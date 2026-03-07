@@ -474,10 +474,14 @@ serve(async (req) => {
 
     // 7. Embeddings
     if (category === "embedding") {
+      // Support batch: parsedBody.input may be a string or array
+      const rawInput = (parsedBody as any).input;
+      const inputForVseGPT = rawInput !== undefined ? rawInput : prompt;
+
       const response = await fetch("https://api.vsegpt.ru/v1/embeddings", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, input: prompt }),
+        body: JSON.stringify({ model: vsegptModel, input: inputForVseGPT }),
       });
 
       if (!response.ok) {
@@ -488,6 +492,23 @@ serve(async (req) => {
 
       const providerCost = extractProviderCost(response.headers);
       const data = await response.json();
+
+      // Batch: return all embeddings from data.data[]
+      const allEmbeddings = data.data as Array<{ embedding: number[]; index: number }> | undefined;
+      if (allEmbeddings && allEmbeddings.length > 0) {
+        const dimensions = allEmbeddings[0]?.embedding?.length || 0;
+        return respond(JSON.stringify({
+          response: `📊 Embeddings generated successfully!\n\nItems: ${allEmbeddings.length}\nDimensions: ${dimensions}`,
+          model: vsegptModel,
+          // Single embedding (backward compat)
+          embedding: allEmbeddings[0]?.embedding,
+          // All embeddings for batch support
+          embeddings: allEmbeddings.map(e => e.embedding),
+          dimensions,
+        }), 200, undefined, data.usage, providerCost);
+      }
+
+      // Fallback — should not happen
       const embedding = data.data?.[0]?.embedding;
       const dimensions = embedding?.length || 0;
       return respond(JSON.stringify({
