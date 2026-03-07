@@ -93,7 +93,8 @@ serve(async (req) => {
       if (typeof input === "string") {
         finalPrompt = input;
       } else if (Array.isArray(input)) {
-        finalPrompt = input.join("\n");
+        // Keep the array for batch embeddings — use first item as prompt fallback only
+        finalPrompt = input[0] || "";
       }
       // Force embedding category when `input` field is used
       if (category === "chat") {
