@@ -39,6 +39,30 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.5",
+    date: "March 7, 2026",
+    title: "Embeddings Batch Fix & Usage Charge Details",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed /v1/embeddings returning only one vector regardless of batch size — all vectors from a batch input are now correctly mapped and returned in OpenAI-standard format with index fields." },
+      { category: "fix", description: "Fixed totalTokens calculation for batch embedding requests — now sums estimated token lengths across all input strings instead of returning 0." },
+      { category: "fix", description: "Resolved AssertionError in RAGFlow task_executor.py caused by vector dimension mismatch — the API now returns the correct number of dimensions per model instead of collapsing batches to a single vector." },
+      { category: "improvement", description: "Embedding endpoint now accepts both string and array inputs uniformly; response always contains a data array compatible with RAGFlow, LangChain, and other downstream consumers." },
+      { category: "feature", description: "Usage charge transactions in wallet history are now clickable — a detail dialog shows the endpoint, model, total tokens, compute latency, and cost for each charge." },
+      { category: "fix", description: "Usage charge detail lookup now matches by timestamp proximity (±10s window) instead of exact cost amount, eliminating false 'no data found' results caused by markup differences." },
+    ]
+  },
+  {
+    version: "3.6.4",
+    date: "March 6, 2026",
+    title: "Transaction History UX & Wallet Detail View",
+    type: "patch",
+    changes: [
+      { category: "improvement", description: "Usage charge rows in Transaction History are now visually distinguished with an info icon, indicating they are interactive and expandable." },
+      { category: "feature", description: "Usage charge detail modal displays full request breakdown: endpoint path, model ID, token count, compute time in milliseconds, and USD cost." },
+    ]
+  },
+  {
     version: "3.6.3",
     date: "March 3, 2026",
     title: "OpenClaw & Open WebUI Integrations",
