@@ -30,6 +30,9 @@ const ROUTES = {
   "/v1/moderations": "inference",
   // OpenAI Responses API (new stateful API, maps to inference)
   "/v1/responses": "inference",
+  // Video generation (long-running, async)
+  "/v1/video/generate": "inference",
+  "/v1/video/generations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
@@ -108,7 +111,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/responses", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/batch", "/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/rerank", "/v1/moderations"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/responses", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/batch", "/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/rerank", "/v1/moderations", "/v1/video/generate", "/v1/video/generations"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
@@ -177,7 +180,7 @@ export default {
     }
 
     // For special endpoints, inject hint so inference knows the intent
-    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations"];
+    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations", "/v1/video/generate", "/v1/video/generations"];
     if (injectEndpoints.includes(matchedPath) && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
@@ -186,6 +189,14 @@ export default {
         if (matchedPath === "/v1/images/variations") { parsed._endpoint = "images/variations"; parsed.category = "image-gen"; }
         if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
         if (matchedPath === "/v1/moderations") { parsed._endpoint = "moderations"; parsed.category = "moderation"; }
+        if (matchedPath === "/v1/video/generate" || matchedPath === "/v1/video/generations") {
+          parsed._endpoint = "video/generate";
+          parsed.category = "video";
+          // Ensure model has txt2vid prefix if not already set
+          if (parsed.model && !parsed.model.startsWith("txt2vid-")) {
+            parsed.model = `txt2vid-${parsed.model}`;
+          }
+        }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
