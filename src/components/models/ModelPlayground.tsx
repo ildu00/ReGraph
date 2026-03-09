@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink } from "lucide-react";
+import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
@@ -18,6 +18,7 @@ interface ModelPlaygroundProps {
 }
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
+const VIDEO_STATUS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-status`;
 
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [prompt, setPrompt] = useState("");
@@ -28,6 +29,72 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [maxTokens, setMaxTokens] = useState([512]);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [videoRequestId, setVideoRequestId] = useState<string | null>(null);
+  const [videoPolling, setVideoPolling] = useState(false);
+  const [videoPollSeconds, setVideoPollSeconds] = useState(0);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollCountRef = useRef(0);
+
+  // Client-side polling for video generation
+  useEffect(() => {
+    if (!videoRequestId) return;
+
+    setVideoPolling(true);
+    pollCountRef.current = 0;
+    setVideoPollSeconds(0);
+
+    const tick = setInterval(() => {
+      setVideoPollSeconds(s => s + 1);
+    }, 1000);
+
+    const poll = async () => {
+      pollCountRef.current += 1;
+      // Give up after 20 polls (~5 min)
+      if (pollCountRef.current > 20) {
+        clearInterval(pollIntervalRef.current!);
+        clearInterval(tick);
+        setVideoPolling(false);
+        toast.error("Video generation timed out. Please try again.");
+        setVideoRequestId(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(`${VIDEO_STATUS_URL}?request_id=${videoRequestId}`, {
+          headers: { "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}` },
+        });
+        const data = await res.json();
+
+        if (data.status === "COMPLETED" && data.videoUrl) {
+          clearInterval(pollIntervalRef.current!);
+          clearInterval(tick);
+          setVideoPolling(false);
+          setVideoRequestId(null);
+          setImageUrl(data.videoUrl);
+          toast.success("🎬 Video ready!");
+        } else if (data.status === "FAILED") {
+          clearInterval(pollIntervalRef.current!);
+          clearInterval(tick);
+          setVideoPolling(false);
+          setVideoRequestId(null);
+          toast.error("Video generation failed on provider side.");
+          setError("Video generation failed. Please try a different model or prompt.");
+        }
+        // else still IN_QUEUE or IN_PROGRESS — keep polling
+      } catch {
+        // Network error — keep trying
+      }
+    };
+
+    pollIntervalRef.current = setInterval(poll, 15_000);
+    // First poll after 20s (give provider time to start)
+    setTimeout(poll, 20_000);
+
+    return () => {
+      clearInterval(pollIntervalRef.current!);
+      clearInterval(tick);
+    };
+  }, [videoRequestId]);
 
   if (!model) {
     return (
@@ -90,13 +157,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       
       // Handle video URL from video generation models
       if (data.videoUrl) {
-        setImageUrl(data.videoUrl); // reuse imageUrl state for video too
+        setImageUrl(data.videoUrl);
         toast.success("Video generated successfully!");
       } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
       } else if (data.videoRequestId) {
-        toast.info("Video is still generating. The request_id: " + data.videoRequestId);
+        // Start client-side polling
+        setVideoRequestId(data.videoRequestId);
+        toast.info("🎬 Video is being generated. Checking status automatically...");
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
         const costUsd = (tokens / 1000) * 0.001;
@@ -226,6 +295,18 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           <div className="flex items-start gap-3 p-4 bg-destructive/10 border border-destructive/30 rounded-lg text-destructive">
             <AlertCircle className="h-5 w-5 shrink-0 mt-0.5" />
             <p className="text-sm">{error}</p>
+          </div>
+        )}
+
+        {/* Video generation polling indicator */}
+        {videoPolling && (
+          <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+            <Film className="h-5 w-5 shrink-0 text-primary animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">🎬 Generating video... {videoPollSeconds}s</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Video models typically take 1–3 minutes. Please wait.</p>
+            </div>
+            <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
           </div>
         )}
 

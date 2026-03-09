@@ -86,3 +86,6 @@ verify_jwt = false
 
 [functions.claw-code-interpreter]
 verify_jwt = false
+
+[functions.video-status]
+verify_jwt = false
