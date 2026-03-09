@@ -48,7 +48,7 @@ const categoryGroups = [
   {
     label: "Vision & Image",
     categories: [
-      { id: "image-gen", label: "Image Generation", icon: Image, count: 4 },
+      { id: "image-gen", label: "Image Generation", icon: Image, count: 27 },
       { id: "vision", label: "Vision & Understanding", icon: Eye, count: 3 },
       { id: "image-edit", label: "Image Editing", icon: Wand2, count: 2 },
     ]

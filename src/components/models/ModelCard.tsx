@@ -13,6 +13,7 @@ export interface Model {
   latency: string;
   tags: string[];
   isPopular?: boolean;
+  isNew?: boolean;
 }
 
 interface ModelCardProps {
