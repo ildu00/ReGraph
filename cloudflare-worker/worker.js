@@ -28,6 +28,8 @@ const ROUTES = {
   "/v1/images/variations": "inference",
   "/v1/audio/translations": "audio-transcriptions",
   "/v1/moderations": "inference",
+  // OpenAI Responses API (new stateful API, maps to inference)
+  "/v1/responses": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
@@ -98,7 +100,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Endpoint not found",
-          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/*, /v1/hardware/rent, /v1/models/deploy`,
+          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/chat/completions, /v1/completions, /v1/responses, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/*, /v1/hardware/rent, /v1/models/deploy`,
           documentation: "https://regraph.tech/docs"
         }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -106,7 +108,7 @@ export default {
     }
 
     // Validate HTTP method for specific endpoints
-    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/batch", "/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/rerank", "/v1/moderations"];
+    const postOnlyEndpoints = ["/v1/inference", "/v1/chat/completions", "/v1/completions", "/v1/responses", "/v1/audio/speech", "/v1/audio/transcriptions", "/v1/audio/translations", "/v1/batch", "/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/rerank", "/v1/moderations"];
     if (postOnlyEndpoints.some(ep => path === ep || path.startsWith(ep + "/")) && request.method === "GET") {
       return new Response(
         JSON.stringify({
