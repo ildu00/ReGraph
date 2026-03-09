@@ -437,6 +437,38 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
+      // Actual VseGPT provider cost per image (USD) — used as billing fallback when x-used-credits header is absent.
+      // These prices match VseGPT's current catalog to prevent billing at a loss.
+      const VSEGPT_IMAGE_PRICES_USD: Record<string, number> = {
+        "img-google/nano-banana-2":               0.00022,
+        "img-google/nano-banana-pro":             0.00033,
+        "img-google/flash-25":                    0.00011,
+        "img-google/imagen4-preview":             0.00013,
+        "img-google/imagen4-preview-fast":        0.000065,
+        "img-google/imagen4-preview-ultra":       0.00022,
+        "img-flux/flux-2":                        0.00004,
+        "img-flux/flux-2-pro":                    0.00011,
+        "img-flux/flux-2-flex":                   0.0002,
+        "img-flux/flux-2-klein-9b":               0.00011,
+        "img-flux/flux-2-klein-4b":               0.000043,
+        "img-flux/pro1.1":                        0.00016,
+        "img-flux/pro":                           0.00016,
+        "img-flux/dev":                           0.000083,
+        "img-flux/schnell":                       0.00002,
+        "img-flux/kontext-pro":                   0.000083,
+        "img-flux/kontext-max":                   0.000165,
+        "img-flux/juggernaut-lightning":          0.00002,
+        "img-bytedance/seedream-v4.5":            0.000154,
+        "img-bytedance/seedream-v4":              0.000077,
+        "img-reve":                               0.000099,
+        "img-openai/gpt-image-1-mini":            0.000055,
+        "img-recraft/v3":                         0.00011,
+        "img-ideogram/v3":                        0.000088,
+        "img-stable/stable-diffusion-xl-lightning": 0.0000033,
+        "img-stable/stable-diffusion-xl-1024":   0.0000105,
+        "img-playground-v2-5-1024px":             0.000016,
+      };
+
       // Determine if this model should be routed through VseGPT or Lovable AI Gateway
       const isVseGPTImageModel = vsegptModel.startsWith("img-");
 
@@ -456,7 +488,12 @@ serve(async (req) => {
           return respond(JSON.stringify({ error: "Failed to generate image", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
         }
 
-        const providerCost = extractProviderCost(imageResp.headers);
+        // VseGPT images endpoint doesn't return x-used-credits, use catalog price as fallback
+        const headerCost = extractProviderCost(imageResp.headers);
+        const catalogCost = VSEGPT_IMAGE_PRICES_USD[vsegptModel] ?? 0.0001;
+        const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
+        console.log(`Image billing: model=${vsegptModel} headerCost=${headerCost} catalogCost=${catalogCost} finalCost=${providerCost}`);
+
         const data = await imageResp.json();
         const b64 = data?.data?.[0]?.b64_json ?? null;
         const urlFromResp = data?.data?.[0]?.url ?? null;
@@ -465,7 +502,7 @@ serve(async (req) => {
         if (!imageUrl) {
           return respond(JSON.stringify({ error: "Failed to generate image (no image in response)", model: vsegptModel }), 500, "No image in response");
         }
-        return respond(JSON.stringify({ response: "🖼️ Image generated successfully!", imageUrl, model: vsegptModel }), 200, undefined, { total_tokens: 500 }, providerCost);
+        return respond(JSON.stringify({ response: "🖼️ Image generated successfully!", imageUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
       }
 
       // Fallback: Lovable AI Gateway (for non-img-* models like gemini-2.5-flash-image)
@@ -493,7 +530,9 @@ serve(async (req) => {
       if (!imageUrl) {
         return respond(JSON.stringify({ error: "Failed to generate image (no image in response)", model: gatewayModel }), 500, "No image in response");
       }
-      return respond(JSON.stringify({ response: text ?? "🖼️ Image generated successfully!", imageUrl, model: gatewayModel }), 200, undefined, { total_tokens: 500 });
+      // Lovable Gateway cost for nano-banana-2 image
+      const gatewayImageCost = 0.00022;
+      return respond(JSON.stringify({ response: text ?? "🖼️ Image generated successfully!", imageUrl, model: gatewayModel }), 200, undefined, { total_tokens: 0 }, gatewayImageCost);
     }
 
     // 3. Image Editing
