@@ -624,6 +624,7 @@ serve(async (req) => {
         body: JSON.stringify({
           model: vsegptModel,
           prompt: prompt,
+          action: "generate",
         }),
       });
 
