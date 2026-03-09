@@ -88,10 +88,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       setResponse(data.response);
       
-      // Handle image URL from image generation models
-      if (data.imageUrl) {
+      // Handle video URL from video generation models
+      if (data.videoUrl) {
+        setImageUrl(data.videoUrl); // reuse imageUrl state for video too
+        toast.success("Video generated successfully!");
+      } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
+      } else if (data.videoRequestId) {
+        toast.info("Video is still generating. The request_id: " + data.videoRequestId);
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
         const costUsd = (tokens / 1000) * 0.001;
@@ -224,41 +229,43 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
-        {/* Generated Image */}
+        {/* Generated Image or Video */}
         {imageUrl && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Generated Image</Label>
+              <Label>{model?.category === "video" ? "Generated Video" : "Generated Image"}</Label>
               <div className="flex items-center gap-2">
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => window.open(imageUrl, '_blank')}
-                >
+                <Button variant="ghost" size="sm" onClick={() => window.open(imageUrl, '_blank')}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  asChild
-                >
-                  <a href={imageUrl} download="generated-image.png">
+                <Button variant="ghost" size="sm" asChild>
+                  <a href={imageUrl} download={model?.category === "video" ? "generated-video.mp4" : "generated-image.png"}>
                     <Download className="h-4 w-4" />
                   </a>
                 </Button>
               </div>
             </div>
             <div className="relative bg-secondary/50 rounded-lg p-4 flex items-center justify-center">
-              <img 
-                src={imageUrl} 
-                alt="Generated image" 
-                className="max-w-full max-h-[500px] rounded-lg shadow-lg object-contain"
-                onError={(e) => {
-                  console.error("Failed to load image:", imageUrl);
-                  e.currentTarget.style.display = 'none';
-                  setError("Failed to load the generated image. The URL may have expired.");
-                }}
-              />
+              {model?.category === "video" ? (
+                <video
+                  src={imageUrl}
+                  controls
+                  autoPlay
+                  loop
+                  className="max-w-full max-h-[500px] rounded-lg shadow-lg"
+                  onError={() => setError("Failed to load the generated video. The URL may have expired.")}
+                />
+              ) : (
+                <img
+                  src={imageUrl}
+                  alt="Generated image"
+                  className="max-w-full max-h-[500px] rounded-lg shadow-lg object-contain"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    setError("Failed to load the generated image. The URL may have expired.");
+                  }}
+                />
+              )}
             </div>
           </div>
         )}
