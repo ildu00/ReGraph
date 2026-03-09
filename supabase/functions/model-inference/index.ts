@@ -474,11 +474,11 @@ serve(async (req) => {
         "img-playground-v2-5-1024px":             1.45  / 90,  // 1.45 руб
       };
 
-      // Determine if this model should be routed through VseGPT or Lovable AI Gateway
+      // Determine if this model should be routed through the image provider or Lovable AI Gateway
       const isVseGPTImageModel = vsegptModel.startsWith("img-");
 
       if (isVseGPTImageModel) {
-        // Route through VseGPT using the images endpoint
+        // Route through the image provider endpoint
         const imageResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
