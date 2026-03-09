@@ -298,6 +298,18 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
+        {/* Video generation polling indicator */}
+        {videoPolling && (
+          <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
+            <Film className="h-5 w-5 shrink-0 text-primary animate-pulse" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium">🎬 Generating video... {videoPollSeconds}s</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Video models typically take 1–3 minutes. Please wait.</p>
+            </div>
+            <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+          </div>
+        )}
+
         {/* Generated Image or Video */}
         {imageUrl && (
           <div className="space-y-3">
