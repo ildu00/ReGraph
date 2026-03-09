@@ -10,6 +10,8 @@ on:
         description: "Tag to release (e.g. agent/v1.2.0)"
         required: true
 
+# Only run when triggered by an agent/v* tag or manual dispatch
+# This prevents accidental triggers from branch pushes
 permissions:
   contents: write   # create releases, upload assets
   packages: read
