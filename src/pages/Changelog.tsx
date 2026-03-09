@@ -39,6 +39,21 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.8",
+    date: "March 9, 2026",
+    title: "Async Video Generation & Model Playground",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Text-to-video models are now fully functional in the Models Playground — submit a prompt and the UI polls for completion automatically." },
+      { category: "feature", description: "Asynchronous video generation flow: inference endpoint returns a request_id immediately, a dedicated video-status edge function checks completion status every 15 seconds." },
+      { category: "improvement", description: "Video generation no longer blocks the inference edge function — eliminates 504 gateway timeouts that occurred when waiting for the provider to finish rendering." },
+      { category: "feature", description: "Model Playground shows a live progress indicator with elapsed timer while video is being generated; the video player appears automatically once rendering completes." },
+      { category: "fix", description: "Fixed 400 error from video provider — request body now includes required action: generate field for all txt2vid-* model calls." },
+      { category: "fix", description: "Fixed release-agent.yml workflow incorrectly triggering on branch pushes to main — added tag format guard that exits early with a descriptive error when GITHUB_REF is not an agent/v* tag." },
+      { category: "fix", description: "Fixed YAML syntax error in release-agent.yml caused by a bare --- separator inside a multi-line bash string — replaced with printf to avoid YAML document delimiter conflict." },
+    ]
+  },
+  {
     version: "3.6.7",
     date: "March 9, 2026",
     title: "Text-to-Video Models",
