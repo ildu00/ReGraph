@@ -44,7 +44,7 @@ serve(async (req) => {
         formData.set("model", "whisper-1");
       }
 
-      // Map model names to VseGPT STT model IDs (require stt-openai/ prefix)
+      // Map model names to STT model IDs (require stt-openai/ prefix)
       const model = formData.get("model") as string;
       const modelMapping: Record<string, string> = {
         "whisper-large-v3": "stt-openai/whisper-v3",
