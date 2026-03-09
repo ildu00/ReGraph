@@ -112,8 +112,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("VseGPT transcription error:", response.status, response.statusText, errorText);
-      console.error("VseGPT response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+      console.error("Transcription error:", response.status, response.statusText, errorText);
+      console.error("Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
       if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded." }), 429, "Rate limit");
       if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits." }), 402, "Insufficient credits");
       return respond(JSON.stringify({ error: "Transcription failed", details: errorText, upstream_status: response.status }), response.status >= 400 && response.status < 500 ? response.status : 500, errorText.substring(0, 500));
