@@ -83,7 +83,7 @@ async function processBilling(
 
     let totalCost: number;
     if (providerCostUsd != null && providerCostUsd > 0) {
-      // Use actual VseGPT cost + our markup
+      // Use actual provider cost + our markup
       totalCost = providerCostUsd * MARKUP_MULTIPLIER;
     } else {
       // Fallback: token-based estimate (used when provider cost unavailable)
