@@ -6,8 +6,8 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-// Models that go through VseGPT (real external models)
-const VSEGPT_MODELS: Record<string, string> = {
+// External models available for comparison
+const EXTERNAL_MODELS: Record<string, string> = {
   "gpt-4o-mini": "openai/gpt-4o-mini",
   "gpt-4o": "openai/gpt-4o",
   "claude-3.5-sonnet": "anthropic/claude-3.5-sonnet",
@@ -17,7 +17,7 @@ const VSEGPT_MODELS: Record<string, string> = {
 
 const REGRAPH_MODEL = "google/gemini-3-flash-preview";
 const LOVABLE_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const VSEGPT_GATEWAY = "https://api.vsegpt.ru/v1/chat/completions";
+const EXTERNAL_GATEWAY = "https://api.vsegpt.ru/v1/chat/completions";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -37,11 +37,11 @@ serve(async (req) => {
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
-    const VSEGPT_API_KEY = Deno.env.get("VSEGPT_API_KEY");
-    if (!VSEGPT_API_KEY) throw new Error("VSEGPT_API_KEY is not configured");
+    const PROVIDER_API_KEY = Deno.env.get("VSEGPT_API_KEY");
+    if (!PROVIDER_API_KEY) throw new Error("VSEGPT_API_KEY is not configured");
 
-    const vsegptModel = VSEGPT_MODELS[compareModel];
-    if (!vsegptModel) {
+    const externalModel = EXTERNAL_MODELS[compareModel];
+    if (!externalModel) {
       return new Response(
         JSON.stringify({ error: `Unknown model: ${compareModel}` }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -85,17 +85,17 @@ serve(async (req) => {
       };
     };
 
-    // Competitor model via VseGPT
-    const makeVsegptRequest = async () => {
+    // Competitor model via external provider
+    const makeExternalRequest = async () => {
       const start = Date.now();
-      const resp = await fetch(VSEGPT_GATEWAY, {
+      const resp = await fetch(EXTERNAL_GATEWAY, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${VSEGPT_API_KEY}`,
+          Authorization: `Bearer ${PROVIDER_API_KEY}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          model: vsegptModel,
+          model: externalModel,
           messages: [
             { role: "system", content: `You are a helpful AI assistant. ${systemBase}` },
             { role: "user", content: userMessage },
@@ -106,7 +106,7 @@ serve(async (req) => {
 
       if (!resp.ok) {
         const text = await resp.text();
-        console.error(`VseGPT ${vsegptModel} error:`, resp.status, text);
+        console.error(`Model ${externalModel} error:`, resp.status, text);
         return { error: `Model error (${resp.status})`, latency: 0 };
       }
 
@@ -120,7 +120,7 @@ serve(async (req) => {
 
     const [regraphResult, compareResult] = await Promise.all([
       makeRegraphRequest(),
-      makeVsegptRequest(),
+      makeExternalRequest(),
     ]);
 
     return new Response(
