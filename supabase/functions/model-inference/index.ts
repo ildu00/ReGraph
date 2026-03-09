@@ -603,10 +603,11 @@ serve(async (req) => {
         "txt2vid-kling/standart":                   49.9  / 90,
       };
 
-      const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generations", {
+      // txt2vid models use the same /v1/images/generations endpoint
+      const videoResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, prompt, n: 1 }),
+        body: JSON.stringify({ model: vsegptModel, prompt, n: 1, response_format: "url" }),
       });
 
       if (!videoResp.ok) {
@@ -622,10 +623,11 @@ serve(async (req) => {
       const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
 
       const data = await videoResp.json();
-      const videoUrl = data?.data?.[0]?.url ?? data?.url ?? null;
+      const b64 = data?.data?.[0]?.b64_json ?? null;
+      const videoUrl = data?.data?.[0]?.url ?? data?.url ?? (b64 ? `data:video/mp4;base64,${b64}` : null);
 
       if (!videoUrl) {
-        return respond(JSON.stringify({ error: "Failed to generate video (no video in response)", model: vsegptModel }), 500, "No video in response");
+        return respond(JSON.stringify({ error: "Failed to generate video (no video in response)", raw: JSON.stringify(data).slice(0, 500), model: vsegptModel }), 500, "No video in response");
       }
       return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
     }
