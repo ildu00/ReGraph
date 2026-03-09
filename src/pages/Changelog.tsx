@@ -39,6 +39,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.7",
+    date: "March 9, 2026",
+    title: "Text-to-Video Models",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Added 12 text-to-video models to the /v1/models endpoint and inference routing layer." },
+      { category: "feature", description: "New Kling AI models: Kling Pro Turbo 2.5 (5s), Kling Master v2.1, Kling Pro v1.6, Kling Standard v1.6, Kling Pro v1.5, Kling Standard." },
+      { category: "feature", description: "New OpenAI models: Sora 2 with audio (8s), Sora 2 with audio (4s)." },
+      { category: "feature", description: "New Google models: Veo 3.1 Fast with audio, Veo 3.1 Fast without audio." },
+      { category: "feature", description: "New LightTricks models: LTX 0.9.7 distilled (fast), LTX 0.9.5." },
+      { category: "improvement", description: "Video generation category now routes live inference requests to the provider endpoint — replaces the previous placeholder stub." },
+    ]
+  },
+  {
     version: "3.6.6",
     date: "March 9, 2026",
     title: "Expanded Image Generation Catalog",
