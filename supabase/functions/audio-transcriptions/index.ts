@@ -36,7 +36,7 @@ serve(async (req) => {
     };
 
     if (contentType.includes("multipart/form-data")) {
-      // Pass through multipart form data directly to VseGPT
+      // Pass through multipart form data directly to provider
       const formData = await req.formData();
 
       // Ensure model is set
