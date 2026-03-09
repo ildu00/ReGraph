@@ -53,7 +53,7 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("VseGPT TTS API error:", response.status, errorText);
+      console.error("TTS API error:", response.status, errorText);
       if (response.status === 429) return logAndRespond(JSON.stringify({ error: "Rate limit exceeded." }), 429, "Rate limit exceeded");
       if (response.status === 402) return logAndRespond(JSON.stringify({ error: "Insufficient credits." }), 402, "Insufficient credits");
       return logAndRespond(JSON.stringify({ error: "Failed to generate speech", details: errorText }), 500, errorText.substring(0, 500));

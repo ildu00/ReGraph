@@ -122,7 +122,7 @@ serve(async (req) => {
     const result = await response.text();
     logApiRequest({ method: req.method, endpoint: "/v1/audio/transcriptions", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
 
-    // Pass through the response as-is (VseGPT returns OpenAI-compatible format)
+    // Pass through the response as-is (returns OpenAI-compatible format)
     return new Response(result, {
       status: 200,
       headers: {

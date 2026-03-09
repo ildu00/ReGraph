@@ -46,7 +46,7 @@ const modelCatalog = [
   { id: "liuhaotian/LLaVA-1.6-34B", category: "vision", provider: "LMSys", context_length: 4096, price_per_1k_tokens: 0.00018, latency_ms: 420 },
   { id: "qwen/Qwen-VL-Max", category: "vision", provider: "Alibaba", context_length: 32768, price_per_1k_tokens: 0.00025, latency_ms: 480 },
   { id: "microsoft/Phi-3-Vision", category: "vision", provider: "Microsoft", context_length: 128000, price_per_1k_tokens: 0.0001, latency_ms: 280 },
-  // --- Image Generation (VseGPT catalog) ---
+  // --- Image Generation ---
   { id: "img-google/nano-banana-2", category: "image-gen", provider: "Google", price_per_image: 0.00022, latency_ms: 3000 },
   { id: "img-google/nano-banana-pro", category: "image-gen", provider: "Google", price_per_image: 0.00033, latency_ms: 4000 },
   { id: "img-google/flash-25", category: "image-gen", provider: "Google", price_per_image: 0.00011, latency_ms: 2500 },

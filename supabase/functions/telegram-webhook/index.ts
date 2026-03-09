@@ -1158,7 +1158,7 @@ serve(async (req) => {
   while (loopCount < MAX_LOOPS) {
     loopCount++;
 
-    // Map internal model IDs to VseGPT-compatible ones
+    // Map internal model IDs to provider-compatible ones
     const MODEL_MAP: Record<string, string> = {
       "regraph-llm": "openai/gpt-4o-mini",
       "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
