@@ -62,7 +62,7 @@ async function extractUserId(req: Request): Promise<string | null> {
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
 /**
- * Process billing: deduct balance using actual VseGPT cost + markup.
+ * Process billing: deduct balance using actual provider cost + markup.
  * If providerCostUsd is provided (from x-used-credits header), use it * MARKUP_MULTIPLIER.
  * Otherwise fall back to token-based estimate.
  */
