@@ -157,13 +157,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       
       // Handle video URL from video generation models
       if (data.videoUrl) {
-        setImageUrl(data.videoUrl); // reuse imageUrl state for video too
+        setImageUrl(data.videoUrl);
         toast.success("Video generated successfully!");
       } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
       } else if (data.videoRequestId) {
-        toast.info("Video is still generating. The request_id: " + data.videoRequestId);
+        // Start client-side polling
+        setVideoRequestId(data.videoRequestId);
+        toast.info("🎬 Video is being generated. Checking status automatically...");
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
         const costUsd = (tokens / 1000) * 0.001;
