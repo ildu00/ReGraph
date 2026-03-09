@@ -603,10 +603,11 @@ serve(async (req) => {
         "txt2vid-kling/standart":                   49.9  / 90,
       };
 
-      const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generations", {
+      // txt2vid models use the same /v1/images/generations endpoint
+      const videoResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, prompt, n: 1 }),
+        body: JSON.stringify({ model: vsegptModel, prompt, n: 1, response_format: "url" }),
       });
 
       if (!videoResp.ok) {
