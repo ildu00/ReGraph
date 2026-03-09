@@ -270,6 +270,19 @@ serve(async (req) => {
       "eleven-multilangual": "tts-openai/tts-1-hd",
       "stable-video": "txt2vid-kling/standart",
       "animatediff": "txt2vid-kling/standart",
+      // Video generation - txt2vid models
+      "txt2vid-kling/pro25-turbo": "txt2vid-kling/pro25-turbo",
+      "txt2vid-openai/sora-2-audio-8s": "txt2vid-openai/sora-2-audio-8s",
+      "txt2vid-openai/sora-2-audio": "txt2vid-openai/sora-2-audio",
+      "txt2vid-google/veo3.1-fast-with-audio": "txt2vid-google/veo3.1-fast-with-audio",
+      "txt2vid-google/veo3.1-fast-no-audio": "txt2vid-google/veo3.1-fast-no-audio",
+      "txt2vid-kling/master21": "txt2vid-kling/master21",
+      "txt2vid-ltx/097-distilled": "txt2vid-ltx/097-distilled",
+      "txt2vid-ltx/video-095": "txt2vid-ltx/video-095",
+      "txt2vid-kling/pro16": "txt2vid-kling/pro16",
+      "txt2vid-kling/standart16": "txt2vid-kling/standart16",
+      "txt2vid-kling/pro15": "txt2vid-kling/pro15",
+      "txt2vid-kling/standart": "txt2vid-kling/standart",
       "bge-large-en": "text-embedding-3-small",
       "e5-mistral-7b": "text-embedding-3-large",
       "nomic-embed-v1.5": "text-embedding-3-small",
@@ -572,9 +585,49 @@ serve(async (req) => {
       return respond(JSON.stringify({ response: `🎤 Speech Recognition with ${model}.\n\nTo transcribe audio, please upload an audio file.`, model: vsegptModel, note: "Speech recognition requires audio file upload." }), 200);
     }
 
-    // 6. Video Generation
+    // 6. Video Generation (txt2vid)
     if (category === "video") {
-      return respond(JSON.stringify({ response: `🎬 Video Generation with ${model}.\n\nVideo generation is an async process.`, model: vsegptModel, note: "Video generation is asynchronous." }), 200);
+      // Provider prices in RUB, converted at ~90 RUB/USD
+      const VIDEO_PRICES_USD: Record<string, number> = {
+        "txt2vid-kling/pro25-turbo":                89.9  / 90,
+        "txt2vid-openai/sora-2-audio-8s":           198.0 / 90,
+        "txt2vid-openai/sora-2-audio":              99.0  / 90,
+        "txt2vid-google/veo3.1-fast-with-audio":    149.0 / 90,
+        "txt2vid-google/veo3.1-fast-no-audio":      99.0  / 90,
+        "txt2vid-kling/master21":                   299.9 / 90,
+        "txt2vid-ltx/097-distilled":                12.0  / 90,
+        "txt2vid-ltx/video-095":                    12.0  / 90,
+        "txt2vid-kling/pro16":                      149.9 / 90,
+        "txt2vid-kling/standart16":                 49.9  / 90,
+        "txt2vid-kling/pro15":                      149.9 / 90,
+        "txt2vid-kling/standart":                   49.9  / 90,
+      };
+
+      const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generations", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ model: vsegptModel, prompt, n: 1 }),
+      });
+
+      if (!videoResp.ok) {
+        const errText = await videoResp.text();
+        console.error("Video generation error:", videoResp.status, errText);
+        if (videoResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
+        if (videoResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
+        return respond(JSON.stringify({ error: "Failed to generate video", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
+      }
+
+      const headerCost = extractProviderCost(videoResp.headers);
+      const catalogCost = VIDEO_PRICES_USD[vsegptModel] ?? (49.9 / 90);
+      const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
+
+      const data = await videoResp.json();
+      const videoUrl = data?.data?.[0]?.url ?? data?.url ?? null;
+
+      if (!videoUrl) {
+        return respond(JSON.stringify({ error: "Failed to generate video (no video in response)", model: vsegptModel }), 500, "No video in response");
+      }
+      return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
     }
 
     // 7. Embeddings
