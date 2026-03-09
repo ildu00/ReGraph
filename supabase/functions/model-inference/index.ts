@@ -623,10 +623,11 @@ serve(async (req) => {
       const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
 
       const data = await videoResp.json();
-      const videoUrl = data?.data?.[0]?.url ?? data?.url ?? null;
+      const b64 = data?.data?.[0]?.b64_json ?? null;
+      const videoUrl = data?.data?.[0]?.url ?? data?.url ?? (b64 ? `data:video/mp4;base64,${b64}` : null);
 
       if (!videoUrl) {
-        return respond(JSON.stringify({ error: "Failed to generate video (no video in response)", model: vsegptModel }), 500, "No video in response");
+        return respond(JSON.stringify({ error: "Failed to generate video (no video in response)", raw: JSON.stringify(data).slice(0, 500), model: vsegptModel }), 500, "No video in response");
       }
       return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
     }
