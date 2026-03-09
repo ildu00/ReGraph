@@ -320,7 +320,18 @@ serve(async (req) => {
       "gemma-7b-ft": "google/gemma-2-27b-it",
     };
 
-    const vsegptModel = modelMapping[model] || "openai/gpt-4o-mini";
+    // For txt2vid/img/stt/tts models not in map, pass through as-is (don't default to gpt-4o-mini)
+    const vsegptModel = modelMapping[model] ?? (
+      model.startsWith("txt2vid-") ||
+      model.startsWith("img-") ||
+      model.startsWith("img2img-") ||
+      model.startsWith("stt-") ||
+      model.startsWith("tts-") ||
+      model.startsWith("emb-") ||
+      model.startsWith("utils/")
+        ? model
+        : "openai/gpt-4o-mini"
+    );
 
     // Helper to log, bill, and return response (with optional actual provider cost)
     const respond = (
