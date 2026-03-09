@@ -39,6 +39,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.6",
+    date: "March 9, 2026",
+    title: "Expanded Image Generation Catalog",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Added 27 new image generation models to the /v1/models endpoint and model-inference routing, all sourced from the VseGPT provider catalog." },
+      { category: "feature", description: "New Google models: Nano Banana 2 (Flash Image 3.1), Nano Banana Pro (Gemini Image Pro 3), Flash Image 2.5, Imagen 4, Imagen 4 Fast, Imagen 4 Ultra." },
+      { category: "feature", description: "New FLUX 2 series: FLUX 2, FLUX 2 Pro, FLUX 2 (flex), FLUX 2 Klein 9B, FLUX 2 Klein 4B, plus FLUX 1.x Pro/1.1 Pro, Dev, Schnell, Kontext Pro/Max, Juggernaut Lightning." },
+      { category: "feature", description: "New models from ByteDance (Seedream v4, v4.5), Reve AI, OpenAI (GPT Image 1 Mini), Recraft V3, Ideogram V3, Stability AI (SDXL Lightning), and Playground v2.5." },
+      { category: "improvement", description: "All new image models pass VseGPT model IDs (e.g. img-flux/flux-2) directly through the routing layer — no additional mapping required for direct API calls." },
+      { category: "improvement", description: "Legacy model aliases (sdxl-turbo, kandinsky-3, playground-v2.5, etc.) preserved for backwards compatibility and remapped to best equivalent modern models." },
+    ]
+  },
+  {
     version: "3.6.5",
     date: "March 7, 2026",
     title: "Embeddings Batch Fix & Usage Charge Details",
