@@ -617,7 +617,7 @@ serve(async (req) => {
         "txt2vid-kling/standart":                   49.9  / 90,
       };
 
-      // txt2vid models use the dedicated /v1/video/generate endpoint (NOT chat/completions or images)
+      // Step 1: Submit video generation task → get request_id
       const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generate", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
@@ -625,41 +625,68 @@ serve(async (req) => {
           model: vsegptModel,
           prompt: prompt,
           action: "generate",
+          aspect_ratio: "16:9",
         }),
       });
 
       if (!videoResp.ok) {
         const errText = await videoResp.text();
-        console.error("Video generation error:", videoResp.status, errText);
+        console.error("Video generation submit error:", videoResp.status, errText);
         if (videoResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
         if (videoResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
         if (videoResp.status === 400 && errText.toLowerCase().includes("disabled")) {
           return respond(JSON.stringify({ error: "This model is currently unavailable. Please select a different video model.", model: vsegptModel }), 400, "Model disabled");
         }
-        if (videoResp.status === 404) {
-          return respond(JSON.stringify({ error: "Video model not found. Please select a different model.", model: vsegptModel }), 404, "Model not found");
-        }
         return respond(JSON.stringify({ error: "Failed to generate video", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
       }
 
-      const headerCost = extractProviderCost(videoResp.headers);
+      const submitData = await videoResp.json();
+      console.log("Video submit response:", JSON.stringify(submitData).slice(0, 500));
+
+      const requestId = submitData?.request_id;
+      if (!requestId) {
+        return respond(JSON.stringify({ error: "No request_id returned from video API", raw: submitData, model: vsegptModel }), 500, "No request_id");
+      }
+
       const catalogCost = VIDEO_PRICES_USD[vsegptModel] ?? (49.9 / 90);
-      const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
 
-      const data = await videoResp.json();
-      console.log("Video generation raw response:", JSON.stringify(data).slice(0, 1000));
+      // Step 2: Poll /v1/video/status every 10s for up to 50s (edge fn limit ~60s)
+      const pollDeadline = Date.now() + 50_000;
+      let videoUrl: string | null = null;
+      let pollStatus = "PENDING";
 
-      // Response may contain a video URL in content or a task_id for polling
-      const content = data?.choices?.[0]?.message?.content ?? "";
-      // Try to extract URL from content
-      const urlMatch = content.match(/https?:\/\/\S+\.(mp4|webm|mov|gif)/i);
-      const videoUrl = urlMatch?.[0] ?? data?.choices?.[0]?.message?.video_url ?? null;
+      while (Date.now() < pollDeadline) {
+        await new Promise(r => setTimeout(r, 10_000));
+
+        const statusResp = await fetch(
+          `https://api.vsegpt.ru/v1/video/status?request_id=${requestId}`,
+          { headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` } }
+        );
+        const statusData = await statusResp.json();
+        pollStatus = statusData?.status ?? "UNKNOWN";
+        console.log(`Video poll status: ${pollStatus} (request_id: ${requestId})`);
+
+        if (pollStatus === "COMPLETED") {
+          videoUrl = statusData?.url ?? null;
+          break;
+        }
+        if (pollStatus === "FAILED") {
+          return respond(JSON.stringify({ error: "Video generation failed on provider side.", model: vsegptModel }), 500, "Video FAILED");
+        }
+      }
 
       if (!videoUrl) {
-        // Return the raw content as response — model may give status/instructions
-        return respond(JSON.stringify({ response: content || "🎬 Video is being generated...", model: vsegptModel, raw: data }), 200, undefined, { total_tokens: 0 }, providerCost);
+        // Still processing — return request_id so client can poll later
+        return respond(JSON.stringify({
+          response: "🎬 Video is still generating. Check back in a minute.",
+          videoRequestId: requestId,
+          status: pollStatus,
+          model: vsegptModel,
+          pollUrl: `https://api.vsegpt.ru/v1/video/status?request_id=${requestId}`,
+        }), 200, undefined, { total_tokens: 0 }, catalogCost);
       }
-      return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
+
+      return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCost);
     }
 
     // 7. Embeddings
