@@ -437,12 +437,44 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
+      // Determine if this model should be routed through VseGPT or Lovable AI Gateway
+      const isVseGPTImageModel = vsegptModel.startsWith("img-");
+
+      if (isVseGPTImageModel) {
+        // Route through VseGPT using the images endpoint
+        const imageResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: vsegptModel, prompt, n: 1, response_format: "b64_json" }),
+        });
+
+        if (!imageResp.ok) {
+          const errText = await imageResp.text();
+          console.error("VseGPT image generation error:", imageResp.status, errText);
+          if (imageResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
+          if (imageResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
+          return respond(JSON.stringify({ error: "Failed to generate image", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
+        }
+
+        const providerCost = extractProviderCost(imageResp.headers);
+        const data = await imageResp.json();
+        const b64 = data?.data?.[0]?.b64_json ?? null;
+        const urlFromResp = data?.data?.[0]?.url ?? null;
+        const imageUrl = b64 ? `data:image/png;base64,${b64}` : urlFromResp;
+
+        if (!imageUrl) {
+          return respond(JSON.stringify({ error: "Failed to generate image (no image in response)", model: vsegptModel }), 500, "No image in response");
+        }
+        return respond(JSON.stringify({ response: "🖼️ Image generated successfully!", imageUrl, model: vsegptModel }), 200, undefined, { total_tokens: 500 }, providerCost);
+      }
+
+      // Fallback: Lovable AI Gateway (for non-img-* models like gemini-2.5-flash-image)
       const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
       if (!LOVABLE_API_KEY) {
         return respond(JSON.stringify({ error: "Image generation is not configured (missing LOVABLE_API_KEY)" }), 500, "Missing LOVABLE_API_KEY");
       }
 
-      const gatewayModel = "google/gemini-2.5-flash-image";
+      const gatewayModel = vsegptModel.startsWith("google/gemini") ? vsegptModel : "google/gemini-2.5-flash-image";
       const gatewayResp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
         method: "POST",
         headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
