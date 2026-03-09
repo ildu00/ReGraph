@@ -493,7 +493,7 @@ serve(async (req) => {
           return respond(JSON.stringify({ error: "Failed to generate image", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
         }
 
-        // VseGPT images endpoint doesn't return x-used-credits, use catalog price as fallback
+        // Images endpoint doesn't return x-used-credits, use catalog price as fallback
         const headerCost = extractProviderCost(imageResp.headers);
         const catalogCost = VSEGPT_IMAGE_PRICES_USD[vsegptModel] ?? 0.0001;
         const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
