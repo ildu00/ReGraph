@@ -226,7 +226,7 @@ serve(async (req) => {
       "phi-3-vision": "microsoft/phi-3-medium-128k-instruct",
       "cogvlm2": "vis-google/gemini-flash-1.5",
       "internvl-2": "vis-google/gemini-flash-1.5",
-      // Image generation - direct VseGPT IDs pass-through
+      // Image generation - direct provider IDs pass-through
       "img-google/nano-banana-2": "img-google/nano-banana-2",
       "img-google/nano-banana-pro": "img-google/nano-banana-pro",
       "img-google/flash-25": "img-google/flash-25",
