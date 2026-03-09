@@ -618,6 +618,13 @@ serve(async (req) => {
         console.error("Video generation error:", videoResp.status, errText);
         if (videoResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
         if (videoResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
+        // Handle disabled/deprecated models
+        if (videoResp.status === 400 && errText.toLowerCase().includes("disabled")) {
+          return respond(JSON.stringify({ error: "This model is currently unavailable. Please select a different video model.", model: vsegptModel }), 400, "Model disabled");
+        }
+        if (videoResp.status === 404) {
+          return respond(JSON.stringify({ error: "Video model not found. Please select a different model.", model: vsegptModel }), 404, "Model not found");
+        }
         return respond(JSON.stringify({ error: "Failed to generate video", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
       }
 
