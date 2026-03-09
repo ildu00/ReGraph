@@ -650,43 +650,13 @@ serve(async (req) => {
 
       const catalogCost = VIDEO_PRICES_USD[vsegptModel] ?? (49.9 / 90);
 
-      // Step 2: Poll /v1/video/status every 10s for up to 50s (edge fn limit ~60s)
-      const pollDeadline = Date.now() + 50_000;
-      let videoUrl: string | null = null;
-      let pollStatus = "PENDING";
-
-      while (Date.now() < pollDeadline) {
-        await new Promise(r => setTimeout(r, 10_000));
-
-        const statusResp = await fetch(
-          `https://api.vsegpt.ru/v1/video/status?request_id=${requestId}`,
-          { headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` } }
-        );
-        const statusData = await statusResp.json();
-        pollStatus = statusData?.status ?? "UNKNOWN";
-        console.log(`Video poll status: ${pollStatus} (request_id: ${requestId})`);
-
-        if (pollStatus === "COMPLETED") {
-          videoUrl = statusData?.url ?? null;
-          break;
-        }
-        if (pollStatus === "FAILED") {
-          return respond(JSON.stringify({ error: "Video generation failed on provider side.", model: vsegptModel }), 500, "Video FAILED");
-        }
-      }
-
-      if (!videoUrl) {
-        // Still processing — return request_id so client can poll later
-        return respond(JSON.stringify({
-          response: "🎬 Video is still generating. Check back in a minute.",
-          videoRequestId: requestId,
-          status: pollStatus,
-          model: vsegptModel,
-          pollUrl: `https://api.vsegpt.ru/v1/video/status?request_id=${requestId}`,
-        }), 200, undefined, { total_tokens: 0 }, catalogCost);
-      }
-
-      return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCost);
+      // Return request_id immediately — client will poll /video-status
+      return respond(JSON.stringify({
+        response: "🎬 Video generation started! It usually takes 1-3 minutes.",
+        videoRequestId: requestId,
+        status: "IN_QUEUE",
+        model: vsegptModel,
+      }), 200, undefined, { total_tokens: 0 }, catalogCost);
     }
 
     // 7. Embeddings
