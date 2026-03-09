@@ -30,6 +30,9 @@ const ROUTES = {
   "/v1/moderations": "inference",
   // OpenAI Responses API (new stateful API, maps to inference)
   "/v1/responses": "inference",
+  // Video generation (long-running, async)
+  "/v1/video/generate": "inference",
+  "/v1/video/generations": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
