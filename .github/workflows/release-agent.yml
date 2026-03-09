@@ -275,12 +275,7 @@ jobs:
           SECTION=$(echo "$SECTION" | sed "1s/\[${VERSION}\$/[${VERSION}] — ${DATE}/")
 
           # Build replacement: marker + blank line + new section + blank line
-          REPLACEMENT="${MARKER}
-
-${SECTION}
-
----
-"
+          REPLACEMENT=$(printf '%s\n\n%s\n\n%s\n' "${MARKER}" "${SECTION}" "---")
           # Replace marker line with marker + new section
           awk -v marker="$MARKER" -v repl="$REPLACEMENT" '
             $0 == marker { print repl; next }
