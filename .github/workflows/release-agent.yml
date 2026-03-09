@@ -45,6 +45,13 @@ jobs:
             TAG="${GITHUB_REF#refs/tags/}"
           fi
 
+          # Guard: must be an agent/v* tag, not a branch ref
+          if [[ "$TAG" != agent/v* ]]; then
+            echo "::error::This workflow should only run for agent/v* tags. Got: '${TAG}' (GITHUB_REF=${GITHUB_REF})"
+            echo "::notice::To create a release, push a tag: git tag agent/v1.2.3 && git push origin agent/v1.2.3"
+            exit 1
+          fi
+
           VERSION="${TAG#agent/v}"
 
           # Pre-release if contains alpha/beta/rc
