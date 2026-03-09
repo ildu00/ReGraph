@@ -437,36 +437,42 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
-      // Actual VseGPT provider cost per image (USD) — used as billing fallback when x-used-credits header is absent.
-      // These prices match VseGPT's current catalog to prevent billing at a loss.
+      // Actual VseGPT provider cost per image (USD) — converted from VseGPT ruble prices at ~90 RUB/USD.
+      // Source: https://vsegpt.ru/Docs/Models/Txt2Img — updated March 2026.
+      // IMPORTANT: VseGPT lists prices in RUB per image. Divide by 90 to get USD.
       const VSEGPT_IMAGE_PRICES_USD: Record<string, number> = {
-        "img-google/nano-banana-2":               0.00022,
-        "img-google/nano-banana-pro":             0.00033,
-        "img-google/flash-25":                    0.00011,
-        "img-google/imagen4-preview":             0.00013,
-        "img-google/imagen4-preview-fast":        0.000065,
-        "img-google/imagen4-preview-ultra":       0.00022,
-        "img-flux/flux-2":                        0.00004,
-        "img-flux/flux-2-pro":                    0.00011,
-        "img-flux/flux-2-flex":                   0.0002,
-        "img-flux/flux-2-klein-9b":               0.00011,
-        "img-flux/flux-2-klein-4b":               0.000043,
-        "img-flux/pro1.1":                        0.00016,
-        "img-flux/pro":                           0.00016,
-        "img-flux/dev":                           0.000083,
-        "img-flux/schnell":                       0.00002,
-        "img-flux/kontext-pro":                   0.000083,
-        "img-flux/kontext-max":                   0.000165,
-        "img-flux/juggernaut-lightning":          0.00002,
-        "img-bytedance/seedream-v4.5":            0.000154,
-        "img-bytedance/seedream-v4":              0.000077,
-        "img-reve":                               0.000099,
-        "img-openai/gpt-image-1-mini":            0.000055,
-        "img-recraft/v3":                         0.00011,
-        "img-ideogram/v3":                        0.000088,
-        "img-stable/stable-diffusion-xl-lightning": 0.0000033,
-        "img-stable/stable-diffusion-xl-1024":   0.0000105,
-        "img-playground-v2-5-1024px":             0.000016,
+        // Google
+        "img-google/nano-banana-2":               19.9  / 90,  // 19.9 руб
+        "img-google/nano-banana-pro":             29.9  / 90,  // 29.9 руб
+        "img-google/flash-25":                    9.9   / 90,  // 9.9 руб
+        "img-google/imagen4-preview":             11.9  / 90,  // 11.9 руб
+        "img-google/imagen4-preview-fast":        5.9   / 90,  // 5.9 руб
+        "img-google/imagen4-preview-ultra":       20.0  / 90,  // 20 руб
+        // FLUX 2
+        "img-flux/flux-2":                        3.6   / 90,  // 3.6 руб
+        "img-flux/flux-2-pro":                    9.0   / 90,  // 9 руб
+        "img-flux/flux-2-flex":                   18.0  / 90,  // 18 руб (low-res) / 36 (hi-res), use average
+        "img-flux/flux-2-klein-9b":               9.9   / 90,  // 4.9/9.9 руб, use high
+        "img-flux/flux-2-klein-4b":               3.9   / 90,  // 3.9 руб
+        // FLUX 1
+        "img-flux/pro1.1":                        14.9  / 90,  // 14.9 руб
+        "img-flux/pro":                           14.9  / 90,  // 14.9 руб
+        "img-flux/dev":                           7.5   / 90,  // 7.5 руб
+        "img-flux/schnell":                       1.8   / 90,  // 1.8 руб
+        "img-flux/kontext-pro":                   7.5   / 90,  // 7.5 руб
+        "img-flux/kontext-max":                   15.0  / 90,  // 15 руб
+        "img-flux/juggernaut-lightning":          1.8   / 90,  // 1.80 руб
+        // ByteDance
+        "img-bytedance/seedream-v4.5":            13.9  / 90,  // 13.9 руб
+        "img-bytedance/seedream-v4":              6.9   / 90,  // 6.9 руб
+        // Others
+        "img-reve":                               8.9   / 90,  // 8.9 руб
+        "img-openai/gpt-image-1-mini":            5.0   / 90,  // 5.0 руб
+        "img-recraft/v3":                         9.9   / 90,  // 9.9 руб
+        "img-ideogram/v3":                        7.9   / 90,  // 7.9 руб
+        "img-stable/stable-diffusion-xl-lightning": 0.30 / 90, // 0.30 руб
+        "img-stable/stable-diffusion-xl-1024":   1.0   / 90,  // ~1 руб (not listed, estimate)
+        "img-playground-v2-5-1024px":             1.45  / 90,  // 1.45 руб
       };
 
       // Determine if this model should be routed through VseGPT or Lovable AI Gateway
