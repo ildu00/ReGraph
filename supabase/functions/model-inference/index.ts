@@ -59,10 +59,10 @@ async function extractUserId(req: Request): Promise<string | null> {
   return null;
 }
 
-const MARKUP_MULTIPLIER = 1.20; // 20% markup over VseGPT actual cost
+const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
 /**
- * Process billing: deduct balance using actual VseGPT cost + markup.
+ * Process billing: deduct balance using actual provider cost + markup.
  * If providerCostUsd is provided (from x-used-credits header), use it * MARKUP_MULTIPLIER.
  * Otherwise fall back to token-based estimate.
  */
@@ -83,7 +83,7 @@ async function processBilling(
 
     let totalCost: number;
     if (providerCostUsd != null && providerCostUsd > 0) {
-      // Use actual VseGPT cost + our markup
+      // Use actual provider cost + our markup
       totalCost = providerCostUsd * MARKUP_MULTIPLIER;
     } else {
       // Fallback: token-based estimate (used when provider cost unavailable)
@@ -226,7 +226,7 @@ serve(async (req) => {
       "phi-3-vision": "microsoft/phi-3-medium-128k-instruct",
       "cogvlm2": "vis-google/gemini-flash-1.5",
       "internvl-2": "vis-google/gemini-flash-1.5",
-      // Image generation - direct VseGPT IDs pass-through
+      // Image generation - direct provider IDs pass-through
       "img-google/nano-banana-2": "img-google/nano-banana-2",
       "img-google/nano-banana-pro": "img-google/nano-banana-pro",
       "img-google/flash-25": "img-google/flash-25",
@@ -437,9 +437,8 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
-      // Actual VseGPT provider cost per image (USD) — converted from VseGPT ruble prices at ~90 RUB/USD.
-      // Source: https://vsegpt.ru/Docs/Models/Txt2Img — updated March 2026.
-      // IMPORTANT: VseGPT lists prices in RUB per image. Divide by 90 to get USD.
+      // Actual provider cost per image (USD) — converted from RUB prices at ~90 RUB/USD.
+      // Updated March 2026. Prices in RUB per image, divided by 90 to get USD.
       const VSEGPT_IMAGE_PRICES_USD: Record<string, number> = {
         // Google
         "img-google/nano-banana-2":               19.9  / 90,  // 19.9 руб
@@ -475,11 +474,11 @@ serve(async (req) => {
         "img-playground-v2-5-1024px":             1.45  / 90,  // 1.45 руб
       };
 
-      // Determine if this model should be routed through VseGPT or Lovable AI Gateway
+      // Determine if this model should be routed through the image provider or Lovable AI Gateway
       const isVseGPTImageModel = vsegptModel.startsWith("img-");
 
       if (isVseGPTImageModel) {
-        // Route through VseGPT using the images endpoint
+        // Route through the image provider endpoint
         const imageResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
@@ -488,13 +487,13 @@ serve(async (req) => {
 
         if (!imageResp.ok) {
           const errText = await imageResp.text();
-          console.error("VseGPT image generation error:", imageResp.status, errText);
+          console.error("Image generation error:", imageResp.status, errText);
           if (imageResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
           if (imageResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
           return respond(JSON.stringify({ error: "Failed to generate image", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
         }
 
-        // VseGPT images endpoint doesn't return x-used-credits, use catalog price as fallback
+        // Images endpoint doesn't return x-used-credits, use catalog price as fallback
         const headerCost = extractProviderCost(imageResp.headers);
         const catalogCost = VSEGPT_IMAGE_PRICES_USD[vsegptModel] ?? 0.0001;
         const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;

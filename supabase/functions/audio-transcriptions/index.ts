@@ -36,7 +36,7 @@ serve(async (req) => {
     };
 
     if (contentType.includes("multipart/form-data")) {
-      // Pass through multipart form data directly to VseGPT
+      // Pass through multipart form data directly to provider
       const formData = await req.formData();
 
       // Ensure model is set
@@ -44,7 +44,7 @@ serve(async (req) => {
         formData.set("model", "whisper-1");
       }
 
-      // Map model names to VseGPT STT model IDs (require stt-openai/ prefix)
+      // Map model names to STT model IDs (require stt-openai/ prefix)
       const model = formData.get("model") as string;
       const modelMapping: Record<string, string> = {
         "whisper-large-v3": "stt-openai/whisper-v3",
@@ -54,7 +54,7 @@ serve(async (req) => {
         "whisper-v3-turbo": "stt-openai/whisper-v3-turbo",
         "gpt-4o-transcribe": "stt-openai/gpt-4o-transcribe",
         "gpt-4o-mini-transcribe": "stt-openai/gpt-4o-mini-transcribe",
-        // Catalog display names → VseGPT STT models
+        // Catalog display names → STT models
         "openai/Whisper-Large-v3": "stt-openai/whisper-v3", "openai/whisper-large-v3": "stt-openai/whisper-v3",
         "meta/SeamlessM4T": "stt-openai/whisper-v3", "meta/seamlessm4t": "stt-openai/whisper-v3",
         "nvidia/Canary-1B": "stt-openai/whisper-v3", "nvidia/canary-1b": "stt-openai/whisper-v3",
@@ -112,8 +112,8 @@ serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("VseGPT transcription error:", response.status, response.statusText, errorText);
-      console.error("VseGPT response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
+      console.error("Transcription error:", response.status, response.statusText, errorText);
+      console.error("Response headers:", JSON.stringify(Object.fromEntries(response.headers.entries())));
       if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded." }), 429, "Rate limit");
       if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits." }), 402, "Insufficient credits");
       return respond(JSON.stringify({ error: "Transcription failed", details: errorText, upstream_status: response.status }), response.status >= 400 && response.status < 500 ? response.status : 500, errorText.substring(0, 500));
@@ -122,7 +122,7 @@ serve(async (req) => {
     const result = await response.text();
     logApiRequest({ method: req.method, endpoint: "/v1/audio/transcriptions", status_code: 200, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix });
 
-    // Pass through the response as-is (VseGPT returns OpenAI-compatible format)
+    // Pass through the response as-is (returns OpenAI-compatible format)
     return new Response(result, {
       status: 200,
       headers: {
