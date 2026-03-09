@@ -437,9 +437,8 @@ serve(async (req) => {
 
     // 2. Image Generation
     if (category === "image-gen") {
-      // Actual VseGPT provider cost per image (USD) — converted from VseGPT ruble prices at ~90 RUB/USD.
-      // Source: https://vsegpt.ru/Docs/Models/Txt2Img — updated March 2026.
-      // IMPORTANT: VseGPT lists prices in RUB per image. Divide by 90 to get USD.
+      // Actual provider cost per image (USD) — converted from RUB prices at ~90 RUB/USD.
+      // Updated March 2026. Prices in RUB per image, divided by 90 to get USD.
       const VSEGPT_IMAGE_PRICES_USD: Record<string, number> = {
         // Google
         "img-google/nano-banana-2":               19.9  / 90,  // 19.9 руб
