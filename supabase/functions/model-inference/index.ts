@@ -617,14 +617,13 @@ serve(async (req) => {
         "txt2vid-kling/standart":                   49.9  / 90,
       };
 
-      // txt2vid models go through /v1/chat/completions — provider routes video via chat endpoint
-      const videoResp = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+      // txt2vid models use the dedicated /v1/video/generate endpoint (NOT chat/completions or images)
+      const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generate", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
           model: vsegptModel,
-          messages: [{ role: "user", content: prompt }],
-          max_tokens: 512,
+          prompt: prompt,
         }),
       });
 
