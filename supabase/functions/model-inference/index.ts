@@ -487,7 +487,7 @@ serve(async (req) => {
 
         if (!imageResp.ok) {
           const errText = await imageResp.text();
-          console.error("VseGPT image generation error:", imageResp.status, errText);
+          console.error("Image generation error:", imageResp.status, errText);
           if (imageResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
           if (imageResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
           return respond(JSON.stringify({ error: "Failed to generate image", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
