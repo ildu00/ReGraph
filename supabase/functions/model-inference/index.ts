@@ -606,7 +606,7 @@ serve(async (req) => {
         "txt2vid-kling/standart":                   49.9  / 90,
       };
 
-      // txt2vid models use the same /v1/images/generations endpoint
+      // txt2vid models use /v1/images/generations — provider processes async, may return a task_id
       const videoResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
@@ -626,6 +626,30 @@ serve(async (req) => {
       const providerCost = (headerCost != null && headerCost > 0) ? headerCost : catalogCost;
 
       const data = await videoResp.json();
+      console.log("Video generation raw response:", JSON.stringify(data).slice(0, 1000));
+
+      // Provider may return a pending task — poll until done (max ~110s)
+      const taskId: string | null = data?.task_id ?? data?.id ?? null;
+      if (taskId && !data?.data?.[0]?.url) {
+        const maxAttempts = 22; // 22 * 5s = 110s
+        for (let i = 0; i < maxAttempts; i++) {
+          await new Promise(r => setTimeout(r, 5000));
+          const pollResp = await fetch(`https://api.vsegpt.ru/v1/images/generations/${taskId}`, {
+            headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` },
+          });
+          if (!pollResp.ok) continue;
+          const pollData = await pollResp.json();
+          const pollUrl = pollData?.data?.[0]?.url ?? pollData?.url ?? null;
+          const status = pollData?.status ?? pollData?.data?.[0]?.status ?? null;
+          console.log(`Video poll attempt ${i + 1}: status=${status} url=${pollUrl}`);
+          if (pollUrl) {
+            return respond(JSON.stringify({ response: "🎬 Video generated successfully!", videoUrl: pollUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, providerCost);
+          }
+          if (status === "failed" || status === "error") break;
+        }
+        return respond(JSON.stringify({ error: "Video generation timed out. The task may still be processing.", task_id: taskId, model: vsegptModel }), 202, "Timeout");
+      }
+
       const b64 = data?.data?.[0]?.b64_json ?? null;
       const videoUrl = data?.data?.[0]?.url ?? data?.url ?? (b64 ? `data:video/mp4;base64,${b64}` : null);
 
