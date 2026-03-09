@@ -100,7 +100,7 @@ export default {
       return new Response(
         JSON.stringify({
           error: "Endpoint not found",
-          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/*, /v1/hardware/rent, /v1/models/deploy`,
+          message: `The endpoint '${path}' does not exist. Available endpoints: /v1/inference, /v1/chat/completions, /v1/completions, /v1/responses, /v1/models, /v1/batch, /v1/training/jobs, /v1/usage, /v1/provider/*, /v1/hardware/rent, /v1/models/deploy`,
           documentation: "https://regraph.tech/docs"
         }),
         { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
