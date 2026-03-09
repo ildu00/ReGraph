@@ -28,6 +28,8 @@ const ROUTES = {
   "/v1/images/variations": "inference",
   "/v1/audio/translations": "audio-transcriptions",
   "/v1/moderations": "inference",
+  // OpenAI Responses API (new stateful API, maps to inference)
+  "/v1/responses": "inference",
   // Boot diagnostics logging (used by index.html watchdog)
   "/v1/log-boot-event": "log-boot-event",
 };
