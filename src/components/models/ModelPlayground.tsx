@@ -88,10 +88,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       setResponse(data.response);
       
-      // Handle image URL from image generation models
-      if (data.imageUrl) {
+      // Handle video URL from video generation models
+      if (data.videoUrl) {
+        setImageUrl(data.videoUrl); // reuse imageUrl state for video too
+        toast.success("Video generated successfully!");
+      } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
+      } else if (data.videoRequestId) {
+        toast.info("Video is still generating. The request_id: " + data.videoRequestId);
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
         const costUsd = (tokens / 1000) * 0.001;
