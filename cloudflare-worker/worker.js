@@ -180,7 +180,7 @@ export default {
     }
 
     // For special endpoints, inject hint so inference knows the intent
-    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations"];
+    const injectEndpoints = ["/v1/images/generations", "/v1/images/edits", "/v1/images/variations", "/v1/embeddings", "/v1/moderations", "/v1/video/generate", "/v1/video/generations"];
     if (injectEndpoints.includes(matchedPath) && options.body && typeof options.body === "string") {
       try {
         const parsed = JSON.parse(options.body);
@@ -189,6 +189,14 @@ export default {
         if (matchedPath === "/v1/images/variations") { parsed._endpoint = "images/variations"; parsed.category = "image-gen"; }
         if (matchedPath === "/v1/embeddings") { parsed._endpoint = "embeddings"; parsed.category = "embeddings"; }
         if (matchedPath === "/v1/moderations") { parsed._endpoint = "moderations"; parsed.category = "moderation"; }
+        if (matchedPath === "/v1/video/generate" || matchedPath === "/v1/video/generations") {
+          parsed._endpoint = "video/generate";
+          parsed.category = "video";
+          // Ensure model has txt2vid prefix if not already set
+          if (parsed.model && !parsed.model.startsWith("txt2vid-")) {
+            parsed.model = `txt2vid-${parsed.model}`;
+          }
+        }
         options.body = JSON.stringify(parsed);
       } catch (_) {}
     }
