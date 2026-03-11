@@ -108,7 +108,9 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         clearInterval(pollIntervalRef.current!);
         clearInterval(tick);
         setVideoPolling(false);
-        toast.error("Video generation timed out. Please try again.");
+        setIsAudioPolling(false);
+        const label = isAudioPolling ? "Music" : "Video";
+        toast.error(`${label} generation timed out. Please try again.`);
         setVideoRequestId(null);
         return;
       }
