@@ -703,57 +703,64 @@ serve(async (req) => {
         }
       }
 
-      // VseGPT music models go through /v1/audio/speech — synchronous, returns binary audio
-      const musicResp = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, input: musicPrompt, voice: "alloy", response_format: "mp3" }),
-      });
+      // VseGPT music models — failover chain: try requested model first, fall back to lyria2
+      const MUSIC_FAILOVER_CHAIN = [vsegptModel, "tta-google/lyria2", "tta-cassette/music-generator", "tta-stable/stable-audio"].filter((m, i, a) => a.indexOf(m) === i);
 
-      if (!musicResp.ok) {
-        const errText = await musicResp.text();
-        console.error("Music generation error:", musicResp.status, errText);
-        if (musicResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
-        if (musicResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
-        if (musicResp.status === 400 && errText.toLowerCase().includes("disabled")) {
-          return respond(JSON.stringify({ error: "This model is currently unavailable.", model: vsegptModel }), 400, "Model disabled");
+      const tryMusicModel = async (modelId: string): Promise<Response | null> => {
+        const musicResp = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: modelId, input: musicPrompt, voice: "alloy", response_format: "mp3" }),
+        });
+
+        if (!musicResp.ok) {
+          const errText = await musicResp.text();
+          console.error(`Music generation error [${modelId}]:`, musicResp.status, errText);
+          // Fail immediately on client auth/credit errors
+          if (musicResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
+          if (musicResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
+          // 400 = model disabled/provider issue → signal to try next in chain
+          if (musicResp.status === 400) return null;
+          return respond(JSON.stringify({ error: "Failed to generate music", details: errText.slice(0, 500), model: modelId }), 500, errText.slice(0, 500));
         }
-        return respond(JSON.stringify({ error: "Failed to generate music", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
-      }
 
-      const contentType = musicResp.headers.get("content-type") || "";
-      console.log("Music gen content-type:", contentType);
+        const contentType = musicResp.headers.get("content-type") || "";
+        console.log(`Music gen content-type [${modelId}]:`, contentType);
 
-      // Always read as binary — detect format by magic bytes or content-type
-      const audioBuffer = await musicResp.arrayBuffer();
-      const firstBytes = new Uint8Array(audioBuffer.slice(0, 4));
-      const isRiff = firstBytes[0] === 0x52 && firstBytes[1] === 0x49 && firstBytes[2] === 0x46 && firstBytes[3] === 0x46; // "RIFF"
-      const isOgg  = firstBytes[0] === 0x4F && firstBytes[1] === 0x67 && firstBytes[2] === 0x67 && firstBytes[3] === 0x53; // "OggS"
-      const isMp3  = (firstBytes[0] === 0xFF && (firstBytes[1] & 0xE0) === 0xE0) || (firstBytes[0] === 0x49 && firstBytes[1] === 0x44 && firstBytes[2] === 0x33); // sync or ID3
-      const isBinary = isRiff || isOgg || isMp3 || contentType.includes("audio/") || contentType.includes("application/octet-stream");
+        const audioBuffer = await musicResp.arrayBuffer();
+        const firstBytes = new Uint8Array(audioBuffer.slice(0, 4));
+        const isRiff = firstBytes[0] === 0x52 && firstBytes[1] === 0x49 && firstBytes[2] === 0x46 && firstBytes[3] === 0x46;
+        const isOgg  = firstBytes[0] === 0x4F && firstBytes[1] === 0x67 && firstBytes[2] === 0x67 && firstBytes[3] === 0x53;
+        const isMp3  = (firstBytes[0] === 0xFF && (firstBytes[1] & 0xE0) === 0xE0) || (firstBytes[0] === 0x49 && firstBytes[1] === 0x44 && firstBytes[2] === 0x33);
+        const isBinary = isRiff || isOgg || isMp3 || contentType.includes("audio/") || contentType.includes("application/octet-stream");
 
-      if (isBinary) {
-        const ext = isRiff ? "wav" : isOgg ? "ogg" : "mp3";
-        const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-        const path = `music/${Date.now()}_${vsegptModel.replace(/\//g, "_")}.${ext}`;
-        await supabase.storage.from("claw-images").upload(path, audioBuffer, { contentType: `audio/${ext}`, upsert: true });
-        const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(path);
-        return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl: urlData.publicUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
-      }
-
-      // JSON response — try to extract URL
-      try {
-        const text = new TextDecoder().decode(audioBuffer);
-        const data = JSON.parse(text);
-        console.log("Music gen JSON response:", JSON.stringify(data).slice(0, 500));
-        const audioUrl = data?.url || data?.audio_url || data?.data?.[0]?.url || null;
-        if (audioUrl) {
-          return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+        if (isBinary) {
+          const ext = isRiff ? "wav" : isOgg ? "ogg" : "mp3";
+          const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+          const path = `music/${Date.now()}_${modelId.replace(/\//g, "_")}.${ext}`;
+          await supabase.storage.from("claw-images").upload(path, audioBuffer, { contentType: `audio/${ext}`, upsert: true });
+          const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(path);
+          return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl: urlData.publicUrl, model: modelId }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
         }
-        return respond(JSON.stringify({ response: "🎵 " + JSON.stringify(data), model: vsegptModel }), 200, undefined, undefined, catalogCostMusic);
-      } catch {
-        return respond(JSON.stringify({ error: "Unexpected response format from music API", model: vsegptModel }), 500, "Unexpected response format");
+
+        try {
+          const text = new TextDecoder().decode(audioBuffer);
+          const data = JSON.parse(text);
+          const audioUrl = data?.url || data?.audio_url || data?.data?.[0]?.url || null;
+          if (audioUrl) return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: modelId }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+          return respond(JSON.stringify({ response: "🎵 " + JSON.stringify(data), model: modelId }), 200, undefined, undefined, catalogCostMusic);
+        } catch {
+          return respond(JSON.stringify({ error: "Unexpected response format from music API", model: modelId }), 500, "Unexpected response format");
+        }
+      };
+
+      for (const candidateModel of MUSIC_FAILOVER_CHAIN) {
+        const result = await tryMusicModel(candidateModel);
+        if (result !== null) return result;
+        console.warn(`Music model ${candidateModel} unavailable, trying next in chain...`);
       }
+
+      return respond(JSON.stringify({ error: "All music generation models are temporarily unavailable. Please try again later.", model: vsegptModel }), 503, "All models unavailable");
     }
 
     // 7. Embeddings
