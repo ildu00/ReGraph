@@ -214,6 +214,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     setIsLoading(true);
     setResponse("");
     setImageUrl(null);
+    setAudioUrl(null);
     setError(null);
 
     try {
