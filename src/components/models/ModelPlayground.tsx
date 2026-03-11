@@ -72,6 +72,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [videoRequestId, setVideoRequestId] = useState<string | null>(null);
   const [videoPolling, setVideoPolling] = useState(false);
   const [videoPollSeconds, setVideoPollSeconds] = useState(0);
+  const [isAudioPolling, setIsAudioPolling] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
