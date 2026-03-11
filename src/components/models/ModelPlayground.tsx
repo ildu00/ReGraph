@@ -63,6 +63,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([512]);
@@ -213,6 +214,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     setIsLoading(true);
     setResponse("");
     setImageUrl(null);
+    setAudioUrl(null);
     setError(null);
 
     try {
@@ -254,7 +256,10 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       setResponse(data.response);
 
-      if (data.videoUrl) {
+      if (data.audioUrl) {
+        setAudioUrl(data.audioUrl);
+        toast.success("🎵 Music generated!");
+      } else if (data.videoUrl) {
         setImageUrl(data.videoUrl);
         toast.success("Video generated successfully!");
       } else if (data.imageUrl) {
@@ -490,6 +495,21 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
               <p className="text-xs text-muted-foreground mt-0.5">Video models typically take 1–3 minutes. Please wait.</p>
             </div>
             <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+          </div>
+        )}
+
+        {/* Generated Audio (music-gen) */}
+        {audioUrl && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Generated Audio</Label>
+              <Button variant="ghost" size="sm" asChild>
+                <a href={audioUrl} download="generated-music.mp3"><Download className="h-4 w-4" /></a>
+              </Button>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <audio controls autoPlay src={audioUrl} className="w-full" />
+            </div>
           </div>
         )}
 
