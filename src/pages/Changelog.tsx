@@ -70,14 +70,16 @@ const changelog: ChangelogEntry[] = [
   {
     version: "3.6.7",
     date: "March 9, 2026",
-    title: "Text-to-Video Models",
+    title: "Image-to-Video & Expanded Text-to-Video Catalog",
     type: "minor",
     changes: [
-      { category: "feature", description: "Added 12 text-to-video models to the /v1/models endpoint and inference routing layer." },
-      { category: "feature", description: "New Kling AI models: Kling Pro Turbo 2.5 (5s), Kling Master v2.1, Kling Pro v1.6, Kling Standard v1.6, Kling Pro v1.5, Kling Standard." },
-      { category: "feature", description: "New OpenAI models: Sora 2 with audio (8s), Sora 2 with audio (4s)." },
-      { category: "feature", description: "New Google models: Veo 3.1 Fast with audio, Veo 3.1 Fast without audio." },
-      { category: "feature", description: "New LightTricks models: LTX 0.9.7 distilled (fast), LTX 0.9.5." },
+      { category: "feature", description: "Added 22 image-to-video models to the /v1/models endpoint and inference routing layer — all accept a source image and generate a short video clip from it." },
+      { category: "feature", description: "New Kling AI image-to-video models: Kling O3 Pro (with/without audio, 3–15s), Kling O3 Standard (with/without audio, 3–15s), Kling Standard Turbo 2.5 (5s/10s), Kling Pro Turbo 2.5 (5s/10s), Kling Master v2.1, Kling Pro v2.1, Kling Standard v2.1, Kling Pro v1.6, Kling Standard v1.6, Kling Pro v1.5, Kling Standard." },
+      { category: "feature", description: "New OpenAI image-to-video models: Sora 2 Pro (with audio, 4s/8s) and Sora 2 (with audio, 4s/8s) — image-to-video variants of the text-to-video Sora 2 family." },
+      { category: "feature", description: "New Google image-to-video models: Veo 3.1 Fast with first+last frame control (with/without audio), Veo 3.1 Fast (with/without audio) — enable video generation anchored to both a start and an end frame." },
+      { category: "feature", description: "New LightTricks image-to-video models: LTX 2.3 Pro (with audio, 6–20s), LTX 0.9.7 distilled (fast), LTX Video 0.9.5." },
+      { category: "feature", description: "Added 12 text-to-video models: Kling Pro Turbo 2.5 (5s), Kling Master v2.1, Kling Pro v1.6, Kling Standard v1.6, Kling Pro v1.5, Kling Standard, Sora 2 (with audio, 4s/8s), Veo 3.1 Fast (with/without audio), LTX 0.9.7 distilled, LTX 0.9.5." },
+      { category: "improvement", description: "Image-to-video models use the same async polling flow as text-to-video — the frontend receives a videoRequestId immediately and polls every 15 seconds until completion." },
       { category: "improvement", description: "Video generation category now routes live inference requests to the provider endpoint — replaces the previous placeholder stub." },
     ]
   },
