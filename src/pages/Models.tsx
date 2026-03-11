@@ -217,7 +217,7 @@ const categoryTitles: Record<string, string> = {
   "image-edit": "Image Editing",
   audio: "Speech Recognition",
   tts: "Text-to-Speech",
-  video: "Video Generation (txt2vid)",
+  video: "Text-to-Video",
   img2vid: "Image-to-Video",
   code: "Code Generation",
   embedding: "Embeddings",
