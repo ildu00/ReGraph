@@ -13,7 +13,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import os
-import tempfile
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -411,7 +411,6 @@ class TransformersHandle:
         import torch  # type: ignore
 
         try:
-            from transformers import AutoModel  # type: ignore
             inputs = self._tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
             with torch.no_grad():
@@ -430,7 +429,6 @@ class TransformersHandle:
         batch_size: int = 8,
     ) -> TrainStepResult:
         import json
-        import torch  # type: ignore
         from torch.optim import AdamW  # type: ignore
 
         # Deserialize shard: expect JSON-lines of {"text": "..."}
@@ -547,7 +545,7 @@ class AscendHandle:
 
     def __init__(self, model_id: str, device: str = "npu:0", load_in_bf16: bool = True):
         import torch  # type: ignore
-        import torch_npu  # type: ignore
+        import torch_npu as _torch_npu  # type: ignore  # noqa: F401
         from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
 
         self.model_id = model_id

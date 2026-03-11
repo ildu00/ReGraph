@@ -301,7 +301,6 @@ class TestModelCaching:
 
 class TestDownloadShard:
     def test_returns_bytes_on_success(self):
-        import httpx
         mock_resp = MagicMock()
         mock_resp.content = b"shard data"
         mock_resp.raise_for_status = MagicMock()
