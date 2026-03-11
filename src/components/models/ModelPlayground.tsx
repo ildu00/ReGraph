@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film } from "lucide-react";
+import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film, Upload, ImageIcon, Mic, XCircle } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
@@ -19,6 +19,38 @@ interface ModelPlaygroundProps {
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
 const VIDEO_STATUS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-status`;
+
+// Categories that require a file upload
+const IMAGE_INPUT_CATEGORIES = ["img2vid", "vision", "multimodal", "image-edit"];
+const AUDIO_INPUT_CATEGORIES = ["audio"];
+
+function getFileAccept(category: string): string {
+  if (IMAGE_INPUT_CATEGORIES.includes(category)) return "image/*";
+  if (AUDIO_INPUT_CATEGORIES.includes(category)) return "audio/*,video/*";
+  return "*";
+}
+
+function getUploadLabel(category: string): string {
+  if (IMAGE_INPUT_CATEGORIES.includes(category)) return "Input Image";
+  if (AUDIO_INPUT_CATEGORIES.includes(category)) return "Audio / Video File";
+  return "Input File";
+}
+
+function getUploadHint(category: string): string {
+  if (category === "img2vid") return "Upload a reference image to animate into a video.";
+  if (category === "vision" || category === "multimodal") return "Upload an image for the model to analyze.";
+  if (category === "image-edit") return "Upload the image you want to edit.";
+  if (category === "audio") return "Upload an audio or video file for transcription.";
+  return "Upload the input file.";
+}
+
+function needsFileUpload(category: string): boolean {
+  return IMAGE_INPUT_CATEGORIES.includes(category) || AUDIO_INPUT_CATEGORIES.includes(category);
+}
+
+function isImageCategory(category: string): boolean {
+  return IMAGE_INPUT_CATEGORIES.includes(category);
+}
 
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [prompt, setPrompt] = useState("");
@@ -35,6 +67,20 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
+  // File upload state
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFilePreview, setUploadedFilePreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Reset file when model changes
+  useEffect(() => {
+    setUploadedFile(null);
+    setUploadedFilePreview(null);
+    setUploadedFileUrl(null);
+  }, [model?.id]);
+
   // Client-side polling for video generation
   useEffect(() => {
     if (!videoRequestId) return;
@@ -49,7 +95,6 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
     const poll = async () => {
       pollCountRef.current += 1;
-      // Give up after 20 polls (~5 min)
       if (pollCountRef.current > 20) {
         clearInterval(pollIntervalRef.current!);
         clearInterval(tick);
@@ -80,14 +125,12 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           toast.error("Video generation failed on provider side.");
           setError("Video generation failed. Please try a different model or prompt.");
         }
-        // else still IN_QUEUE or IN_PROGRESS — keep polling
       } catch {
         // Network error — keep trying
       }
     };
 
     pollIntervalRef.current = setInterval(poll, 15_000);
-    // First poll after 20s (give provider time to start)
     setTimeout(poll, 20_000);
 
     return () => {
@@ -95,6 +138,51 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       clearInterval(tick);
     };
   }, [videoRequestId]);
+
+  // Handle file selection
+  const handleFileSelect = async (file: File) => {
+    setUploadedFile(file);
+    setUploadedFileUrl(null);
+
+    // Create preview for images
+    if (file.type.startsWith("image/")) {
+      const reader = new FileReader();
+      reader.onload = (e) => setUploadedFilePreview(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      setUploadedFilePreview(null);
+    }
+
+    // Upload to Supabase Storage
+    setIsUploading(true);
+    try {
+      const { supabase } = await import("@/integrations/supabase/client");
+      const ext = file.name.split(".").pop() || "bin";
+      const path = `playground/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("claw-images")
+        .upload(path, file, { upsert: true });
+
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(path);
+      setUploadedFileUrl(urlData.publicUrl);
+      toast.success("File uploaded ✓");
+    } catch (e: any) {
+      toast.error("Upload failed: " + (e?.message || "Unknown error"));
+      setUploadedFile(null);
+      setUploadedFilePreview(null);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const clearUploadedFile = () => {
+    setUploadedFile(null);
+    setUploadedFilePreview(null);
+    setUploadedFileUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   if (!model) {
     return (
@@ -109,8 +197,12 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   }
 
   const handleRun = async () => {
-    if (!prompt.trim()) return;
-    
+    if (!prompt.trim() && !uploadedFileUrl) return;
+    if (needsFileUpload(model.category) && !uploadedFileUrl) {
+      toast.error("Please upload a file first.");
+      return;
+    }
+
     setIsLoading(true);
     setResponse("");
     setImageUrl(null);
@@ -129,6 +221,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           temperature: temperature[0],
           maxTokens: maxTokens[0],
           category: model.category,
+          ...(uploadedFileUrl ? { imageUrl: uploadedFileUrl } : {}),
         }),
       });
 
@@ -144,7 +237,6 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           setError(msg);
           toast.error("Insufficient credits");
         } else {
-          // Surface upstream details from the backend (helps debug VseGPT param/model issues)
           const upstream = data?.upstream_body ? `\n\nUpstream: ${data.upstream_body}` : "";
           const msg = (data?.error || "Failed to get response from the model") + upstream;
           setError(msg);
@@ -154,8 +246,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       }
 
       setResponse(data.response);
-      
-      // Handle video URL from video generation models
+
       if (data.videoUrl) {
         setImageUrl(data.videoUrl);
         toast.success("Video generated successfully!");
@@ -163,7 +254,6 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
       } else if (data.videoRequestId) {
-        // Start client-side polling
         setVideoRequestId(data.videoRequestId);
         toast.info("🎬 Video is being generated. Checking status automatically...");
       } else if (data.usage) {
@@ -187,6 +277,10 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const isVideo = model.category === "video" || model.category === "img2vid";
+  const requiresFile = needsFileUpload(model.category);
+  const promptOptional = requiresFile && AUDIO_INPUT_CATEGORIES.includes(model.category);
+
   const curlExample = `curl -X POST https://api.regraph.tech/v1/inference \\
   -H "Authorization: Bearer rg_your_api_key" \\
   -H "Content-Type: application/json" \\
@@ -194,7 +288,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     "model": "${model.id}",
     "prompt": "${prompt.slice(0, 50).replace(/"/g, '\\"')}${prompt.length > 50 ? "..." : ""}",
     "temperature": ${temperature[0]},
-    "max_tokens": ${maxTokens[0]}
+    "max_tokens": ${maxTokens[0]}${uploadedFileUrl ? `,\n    "image_url": "${uploadedFileUrl}"` : ""}
   }'`;
 
   return (
@@ -207,9 +301,9 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">{model.description}</p>
         </div>
-        <Button 
-          variant="ghost" 
-          size="icon" 
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClose}
           className="shrink-0 h-10 w-10 md:h-8 md:w-8"
         >
@@ -218,69 +312,149 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       </CardHeader>
 
       <CardContent className="space-y-6">
-        {/* Input */}
+
+        {/* File Upload (for img2vid, vision, audio, etc.) */}
+        {requiresFile && (
+          <div className="space-y-2">
+            <Label>{getUploadLabel(model.category)}</Label>
+            <p className="text-xs text-muted-foreground">{getUploadHint(model.category)}</p>
+
+            {!uploadedFile ? (
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="w-full border-2 border-dashed border-border hover:border-primary/50 rounded-xl p-6 flex flex-col items-center gap-3 transition-colors cursor-pointer bg-secondary/20 hover:bg-secondary/40"
+              >
+                {isImageCategory(model.category) ? (
+                  <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                ) : (
+                  <Mic className="h-8 w-8 text-muted-foreground" />
+                )}
+                <div className="text-center">
+                  <p className="text-sm font-medium">Click to upload</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {isImageCategory(model.category) ? "PNG, JPG, WEBP, GIF" : "MP3, WAV, M4A, MP4, WEBM"}
+                  </p>
+                </div>
+                <Upload className="h-4 w-4 text-muted-foreground" />
+              </button>
+            ) : (
+              <div className="relative border border-border rounded-xl overflow-hidden bg-secondary/20">
+                {/* Image preview */}
+                {uploadedFilePreview && (
+                  <div className="flex justify-center p-3 bg-secondary/30">
+                    <img
+                      src={uploadedFilePreview}
+                      alt="Upload preview"
+                      className="max-h-48 rounded-lg object-contain"
+                    />
+                  </div>
+                )}
+                <div className="flex items-center gap-3 px-4 py-3">
+                  {isUploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
+                  ) : uploadedFileUrl ? (
+                    <Check className="h-4 w-4 text-green-500 shrink-0" />
+                  ) : (
+                    <Upload className="h-4 w-4 text-muted-foreground shrink-0" />
+                  )}
+                  <span className="text-sm flex-1 truncate text-muted-foreground">
+                    {isUploading ? "Uploading..." : (uploadedFileUrl ? "Uploaded" : "Processing...")} — {uploadedFile.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={clearUploadedFile}
+                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={getFileAccept(model.category)}
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) handleFileSelect(file);
+              }}
+            />
+          </div>
+        )}
+
+        {/* Prompt input */}
         <div>
-          <Label htmlFor="prompt" className="mb-2 block">Prompt</Label>
+          <Label htmlFor="prompt" className="mb-2 block">
+            Prompt {promptOptional && <span className="text-muted-foreground font-normal">(optional)</span>}
+          </Label>
           <Textarea
             id="prompt"
             placeholder={
-              model.category === "image-gen" 
-                ? "A futuristic cityscape at sunset, cyberpunk style, highly detailed..." 
+              model.category === "img2vid"
+                ? "Describe the motion or animation (e.g. 'the camera slowly zooms in, gentle breeze moves the hair')..."
+                : model.category === "vision" || model.category === "multimodal"
+                ? "What do you want to know about this image? (e.g. 'Describe what you see')"
+                : model.category === "image-edit"
+                ? "Describe the edit (e.g. 'Make the background a sunny beach')..."
+                : model.category === "audio"
+                ? "Optional: language hint or instructions (e.g. 'Transcribe in English')..."
+                : model.category === "image-gen"
+                ? "A futuristic cityscape at sunset, cyberpunk style, highly detailed..."
                 : model.category === "code"
                 ? "Write a Python function that calculates the Fibonacci sequence..."
                 : "Enter your prompt here..."
             }
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            className="min-h-[120px] resize-none"
+            className="min-h-[100px] resize-none"
           />
         </div>
 
-        {/* Parameters */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Temperature</Label>
-              <span className="text-sm text-muted-foreground">{temperature[0]}</span>
+        {/* Parameters — hide for audio/img2vid */}
+        {!["audio", "img2vid", "video", "image-gen", "image-edit"].includes(model.category) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Temperature</Label>
+                <span className="text-sm text-muted-foreground">{temperature[0]}</span>
+              </div>
+              <Slider value={temperature} onValueChange={setTemperature} min={0} max={2} step={0.1} className="w-full" />
+              <p className="text-xs text-muted-foreground">Controls randomness. Lower = more focused, higher = more creative.</p>
             </div>
-            <Slider
-              value={temperature}
-              onValueChange={setTemperature}
-              min={0}
-              max={2}
-              step={0.1}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">Controls randomness. Lower = more focused, higher = more creative.</p>
-          </div>
-
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Max Tokens</Label>
-              <span className="text-sm text-muted-foreground">{maxTokens[0]}</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label>Max Tokens</Label>
+                <span className="text-sm text-muted-foreground">{maxTokens[0]}</span>
+              </div>
+              <Slider value={maxTokens} onValueChange={setMaxTokens} min={64} max={4096} step={64} className="w-full" />
+              <p className="text-xs text-muted-foreground">Maximum length of the generated response.</p>
             </div>
-            <Slider
-              value={maxTokens}
-              onValueChange={setMaxTokens}
-              min={64}
-              max={4096}
-              step={64}
-              className="w-full"
-            />
-            <p className="text-xs text-muted-foreground">Maximum length of the generated response.</p>
           </div>
-        </div>
+        )}
 
         {/* Run Button */}
-        <Button 
-          onClick={handleRun} 
-          disabled={!prompt.trim() || isLoading}
+        <Button
+          onClick={handleRun}
+          disabled={
+            isLoading ||
+            isUploading ||
+            (requiresFile && !uploadedFileUrl) ||
+            (!requiresFile && !prompt.trim())
+          }
           className="w-full glow-primary"
         >
           {isLoading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               Generating...
+            </>
+          ) : isUploading ? (
+            <>
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              Uploading file...
             </>
           ) : (
             <>
@@ -298,7 +472,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
-        {/* Video generation polling indicator */}
+        {/* Video polling indicator */}
         {videoPolling && (
           <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
             <Film className="h-5 w-5 shrink-0 text-primary animate-pulse" />
@@ -314,20 +488,20 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         {imageUrl && (
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>{model?.category === "video" ? "Generated Video" : "Generated Image"}</Label>
+              <Label>{isVideo ? "Generated Video" : "Generated Image"}</Label>
               <div className="flex items-center gap-2">
-                <Button variant="ghost" size="sm" onClick={() => window.open(imageUrl, '_blank')}>
+                <Button variant="ghost" size="sm" onClick={() => window.open(imageUrl, "_blank")}>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
                 <Button variant="ghost" size="sm" asChild>
-                  <a href={imageUrl} download={model?.category === "video" ? "generated-video.mp4" : "generated-image.png"}>
+                  <a href={imageUrl} download={isVideo ? "generated-video.mp4" : "generated-image.png"}>
                     <Download className="h-4 w-4" />
                   </a>
                 </Button>
               </div>
             </div>
             <div className="relative bg-secondary/50 rounded-lg p-4 flex items-center justify-center">
-              {model?.category === "video" ? (
+              {isVideo ? (
                 <video
                   src={imageUrl}
                   controls
@@ -339,10 +513,10 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
               ) : (
                 <img
                   src={imageUrl}
-                  alt="Generated image"
+                  alt="Generated"
                   className="max-w-full max-h-[500px] rounded-lg shadow-lg object-contain"
                   onError={(e) => {
-                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.style.display = "none";
                     setError("Failed to load the generated image. The URL may have expired.");
                   }}
                 />
@@ -357,11 +531,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
             <div className="flex items-center justify-between">
               <Label>Response</Label>
               <Button variant="ghost" size="sm" onClick={handleCopy}>
-                {copied ? (
-                  <Check className="h-4 w-4 text-green-500" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
+                {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
               </Button>
             </div>
             <div className="markdown-response bg-secondary/50 rounded-lg p-4 text-sm max-h-[400px] overflow-y-auto">
@@ -371,47 +541,22 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
                   code({ inline, className, children, ...props }: any) {
                     const match = /language-(\w+)/.exec(className || "");
                     const codeString = String(children).replace(/\n$/, "");
-                    
-                    if (!inline && match) {
-                      return (
-                        <CodeBlock 
-                          code={codeString} 
-                          language={match[1]} 
-                        />
-                      );
-                    }
-                    
-                    return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
+                    if (!inline && match) return <CodeBlock code={codeString} language={match[1]} />;
+                    return <code className={className} {...props}>{children}</code>;
                   },
-                  pre({ children }: any) {
-                    return <>{children}</>;
-                  },
+                  pre({ children }: any) { return <>{children}</>; },
                   table({ children }: any) {
                     return (
                       <div className="overflow-x-auto my-4">
-                        <table className="min-w-full border-collapse border border-border">
-                          {children}
-                        </table>
+                        <table className="min-w-full border-collapse border border-border">{children}</table>
                       </div>
                     );
                   },
                   th({ children }: any) {
-                    return (
-                      <th className="border border-border bg-secondary/50 px-3 py-2 text-left font-semibold">
-                        {children}
-                      </th>
-                    );
+                    return <th className="border border-border bg-secondary/50 px-3 py-2 text-left font-semibold">{children}</th>;
                   },
                   td({ children }: any) {
-                    return (
-                      <td className="border border-border px-3 py-2">
-                        {children}
-                      </td>
-                    );
+                    return <td className="border border-border px-3 py-2">{children}</td>;
                   },
                 }}
               >
