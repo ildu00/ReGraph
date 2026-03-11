@@ -279,7 +279,7 @@ RUN pip install --no-cache-dir \
     "rich>=13.0"
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 # Install agent package (without heavy extras — already installed above)
