@@ -63,6 +63,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [temperature, setTemperature] = useState([0.7]);
   const [maxTokens, setMaxTokens] = useState([512]);
