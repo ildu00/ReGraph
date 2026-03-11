@@ -245,6 +245,7 @@ const categoryDescriptions: Record<string, string> = {
   "image-edit": "Edit and manipulate existing images with AI assistance.",
   audio: "Convert speech to text with high accuracy across languages.",
   tts: "Generate natural-sounding speech from text input.",
+  "music-gen": "Generate music and songs from text prompts.",
   video: "Create video content from text prompts.",
   img2vid: "Generate video from an image and text prompt.",
   code: "Specialized models for code generation and completion.",
