@@ -662,7 +662,7 @@ serve(async (req) => {
       }), 200, undefined, { total_tokens: 0 }, catalogCost);
     }
 
-    // 6b. Music Generation (tta-* and txt2sng-*)
+    // 6b. Music Generation (tta-* and txt2sng-*) — uses same async /v1/video/generate endpoint
     if (category === "music-gen") {
       const MUSIC_PRICES_USD: Record<string, number> = {
         "tta-google/lyria2":            20.0 / 90,
@@ -671,44 +671,48 @@ serve(async (req) => {
         "txt2sng-minimax/music":        10.0 / 90,
       };
 
-      const audioResp = await fetch("https://api.vsegpt.ru/v1/audio/generations", {
+      // VseGPT music models use the same async video/generate endpoint (returns request_id)
+      const musicResp = await fetch("https://api.vsegpt.ru/v1/video/generate", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: vsegptModel, prompt, action: "generate" }),
       });
 
-      if (!audioResp.ok) {
-        const errText = await audioResp.text();
-        console.error("Music generation error:", audioResp.status, errText);
-        if (audioResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
-        if (audioResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
-        if (audioResp.status === 400 && errText.toLowerCase().includes("disabled")) {
+      if (!musicResp.ok) {
+        const errText = await musicResp.text();
+        console.error("Music generation error:", musicResp.status, errText);
+        if (musicResp.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
+        if (musicResp.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your account." }), 402, "Insufficient credits");
+        if (musicResp.status === 400 && errText.toLowerCase().includes("disabled")) {
           return respond(JSON.stringify({ error: "This model is currently unavailable.", model: vsegptModel }), 400, "Model disabled");
         }
-        return respond(JSON.stringify({ error: "Failed to generate audio", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
+        return respond(JSON.stringify({ error: "Failed to generate music", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
       }
+
+      const submitData = await musicResp.json();
+      console.log("Music gen submit response:", JSON.stringify(submitData).slice(0, 500));
 
       const catalogCostMusic = MUSIC_PRICES_USD[vsegptModel] ?? (10.0 / 90);
-      const contentType = audioResp.headers.get("content-type") || "";
+      const requestId = submitData?.request_id;
 
-      if (contentType.includes("audio/") || contentType.includes("application/octet-stream")) {
-        // Binary audio — upload to storage and return public URL
-        const audioBuffer = await audioResp.arrayBuffer();
-        const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
-        const ext = contentType.includes("mpeg") ? "mp3" : contentType.includes("wav") ? "wav" : "mp3";
-        const path = `music/${Date.now()}_${vsegptModel.replace(/\//g, "_")}.${ext}`;
-        await supabase.storage.from("claw-images").upload(path, audioBuffer, { contentType: `audio/${ext}`, upsert: true });
-        const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(path);
-        return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl: urlData.publicUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+      if (!requestId) {
+        // Maybe response already contains audio URL directly
+        const audioUrl = submitData?.url || submitData?.audio_url || submitData?.data?.[0]?.url || null;
+        if (audioUrl) {
+          return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+        }
+        return respond(JSON.stringify({ error: "No request_id returned from music API", raw: submitData, model: vsegptModel }), 500, "No request_id");
       }
 
-      const data = await audioResp.json();
-      console.log("Music gen response:", JSON.stringify(data).slice(0, 500));
-      const audioUrl = data?.url || data?.audio_url || data?.data?.[0]?.url || null;
-      if (audioUrl) {
-        return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
-      }
-      return respond(JSON.stringify({ response: JSON.stringify(data), model: vsegptModel }), 200, undefined, undefined, catalogCostMusic);
+      // Return request_id — client will poll /video-status (same polling endpoint works for audio)
+      return respond(JSON.stringify({
+        response: "🎵 Music generation started! It usually takes 30-60 seconds.",
+        videoRequestId: requestId,
+        audioRequestId: requestId,
+        status: "IN_QUEUE",
+        model: vsegptModel,
+        isAudio: true,
+      }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
     }
 
     // 7. Embeddings

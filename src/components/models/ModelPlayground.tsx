@@ -72,6 +72,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
   const [videoRequestId, setVideoRequestId] = useState<string | null>(null);
   const [videoPolling, setVideoPolling] = useState(false);
   const [videoPollSeconds, setVideoPollSeconds] = useState(0);
+  const [isAudioPolling, setIsAudioPolling] = useState(false);
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollCountRef = useRef(0);
 
@@ -107,7 +108,9 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         clearInterval(pollIntervalRef.current!);
         clearInterval(tick);
         setVideoPolling(false);
-        toast.error("Video generation timed out. Please try again.");
+        setIsAudioPolling(false);
+        const label = isAudioPolling ? "Music" : "Video";
+        toast.error(`${label} generation timed out. Please try again.`);
         setVideoRequestId(null);
         return;
       }
@@ -118,20 +121,28 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         });
         const data = await res.json();
 
-        if (data.status === "COMPLETED" && data.videoUrl) {
+        if (data.status === "COMPLETED" && (data.videoUrl || data.audioUrl)) {
           clearInterval(pollIntervalRef.current!);
           clearInterval(tick);
           setVideoPolling(false);
           setVideoRequestId(null);
-          setImageUrl(data.videoUrl);
-          toast.success("🎬 Video ready!");
+          if (isAudioPolling && (data.audioUrl || data.videoUrl)) {
+            setAudioUrl(data.audioUrl || data.videoUrl);
+            setIsAudioPolling(false);
+            toast.success("🎵 Music ready!");
+          } else {
+            setImageUrl(data.videoUrl);
+            toast.success("🎬 Video ready!");
+          }
         } else if (data.status === "FAILED") {
           clearInterval(pollIntervalRef.current!);
           clearInterval(tick);
           setVideoPolling(false);
           setVideoRequestId(null);
-          toast.error("Video generation failed on provider side.");
-          setError("Video generation failed. Please try a different model or prompt.");
+          setIsAudioPolling(false);
+          const label = isAudioPolling ? "Music" : "Video";
+          toast.error(`${label} generation failed on provider side.`);
+          setError(`${label} generation failed. Please try a different model or prompt.`);
         }
       } catch {
         // Network error — keep trying
@@ -265,8 +276,14 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
+      } else if (data.audioRequestId || (data.videoRequestId && data.isAudio)) {
+        const reqId = data.audioRequestId || data.videoRequestId;
+        setVideoRequestId(reqId);
+        setIsAudioPolling(true);
+        toast.info("🎵 Music is being generated. Checking status automatically...");
       } else if (data.videoRequestId) {
         setVideoRequestId(data.videoRequestId);
+        setIsAudioPolling(false);
         toast.info("🎬 Video is being generated. Checking status automatically...");
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
@@ -486,13 +503,16 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
-        {/* Video polling indicator */}
+        {/* Video/Audio polling indicator */}
         {videoPolling && (
           <div className="flex items-center gap-3 p-4 bg-primary/10 border border-primary/30 rounded-lg">
-            <Film className="h-5 w-5 shrink-0 text-primary animate-pulse" />
+            {isAudioPolling
+              ? <span className="text-xl shrink-0">🎵</span>
+              : <Film className="h-5 w-5 shrink-0 text-primary animate-pulse" />
+            }
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium">🎬 Generating video... {videoPollSeconds}s</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Video models typically take 1–3 minutes. Please wait.</p>
+              <p className="text-sm font-medium">{isAudioPolling ? "🎵 Generating music..." : "🎬 Generating video..."} {videoPollSeconds}s</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{isAudioPolling ? "Music models typically take 30–90 seconds. Please wait." : "Video models typically take 1–3 minutes. Please wait."}</p>
             </div>
             <Loader2 className="h-4 w-4 animate-spin text-primary shrink-0" />
           </div>
