@@ -672,11 +672,42 @@ serve(async (req) => {
       };
       const catalogCostMusic = MUSIC_PRICES_USD[vsegptModel] ?? (10.0 / 90);
 
+      // Auto-translate prompt to English if it contains non-Latin characters (music models require English)
+      const hasNonLatin = /[^\u0000-\u024F]/.test(prompt);
+      let musicPrompt = prompt;
+      if (hasNonLatin) {
+        try {
+          const transResp = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+            method: "POST",
+            headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
+            body: JSON.stringify({
+              model: "openai/gpt-4o-mini",
+              messages: [
+                { role: "system", content: "Translate the following music generation prompt to English. Return only the translated text, nothing else." },
+                { role: "user", content: prompt },
+              ],
+              temperature: 0.3,
+              max_tokens: 300,
+            }),
+          });
+          if (transResp.ok) {
+            const transData = await transResp.json();
+            const translated = transData?.choices?.[0]?.message?.content?.trim();
+            if (translated) {
+              musicPrompt = translated;
+              console.log(`Translated music prompt: "${prompt}" → "${musicPrompt}"`);
+            }
+          }
+        } catch (e) {
+          console.warn("Prompt translation failed, using original:", e);
+        }
+      }
+
       // VseGPT music models go through /v1/audio/speech — synchronous, returns binary audio
       const musicResp = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, input: prompt, voice: "alloy", response_format: "mp3" }),
+        body: JSON.stringify({ model: vsegptModel, input: musicPrompt, voice: "alloy", response_format: "mp3" }),
       });
 
       if (!musicResp.ok) {
