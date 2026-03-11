@@ -121,7 +121,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 &
     python -m pip install --upgrade pip
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 # Install PyTorch with CUDA 12.1
