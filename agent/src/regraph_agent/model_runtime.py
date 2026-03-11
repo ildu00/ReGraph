@@ -429,7 +429,6 @@ class TransformersHandle:
         batch_size: int = 8,
     ) -> TrainStepResult:
         import json
-        import torch  # type: ignore
         from torch.optim import AdamW  # type: ignore
 
         # Deserialize shard: expect JSON-lines of {"text": "..."}
