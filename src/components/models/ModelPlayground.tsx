@@ -119,20 +119,28 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         });
         const data = await res.json();
 
-        if (data.status === "COMPLETED" && data.videoUrl) {
+        if (data.status === "COMPLETED" && (data.videoUrl || data.audioUrl)) {
           clearInterval(pollIntervalRef.current!);
           clearInterval(tick);
           setVideoPolling(false);
           setVideoRequestId(null);
-          setImageUrl(data.videoUrl);
-          toast.success("🎬 Video ready!");
+          if (isAudioPolling && (data.audioUrl || data.videoUrl)) {
+            setAudioUrl(data.audioUrl || data.videoUrl);
+            setIsAudioPolling(false);
+            toast.success("🎵 Music ready!");
+          } else {
+            setImageUrl(data.videoUrl);
+            toast.success("🎬 Video ready!");
+          }
         } else if (data.status === "FAILED") {
           clearInterval(pollIntervalRef.current!);
           clearInterval(tick);
           setVideoPolling(false);
           setVideoRequestId(null);
-          toast.error("Video generation failed on provider side.");
-          setError("Video generation failed. Please try a different model or prompt.");
+          setIsAudioPolling(false);
+          const label = isAudioPolling ? "Music" : "Video";
+          toast.error(`${label} generation failed on provider side.`);
+          setError(`${label} generation failed. Please try a different model or prompt.`);
         }
       } catch {
         // Network error — keep trying
