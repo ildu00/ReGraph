@@ -256,7 +256,10 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
       setResponse(data.response);
 
-      if (data.videoUrl) {
+      if (data.audioUrl) {
+        setAudioUrl(data.audioUrl);
+        toast.success("🎵 Music generated!");
+      } else if (data.videoUrl) {
         setImageUrl(data.videoUrl);
         toast.success("Video generated successfully!");
       } else if (data.imageUrl) {
