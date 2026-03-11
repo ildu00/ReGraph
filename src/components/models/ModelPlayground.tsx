@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film, Upload, ImageIcon, Mic, XCircle } from "lucide-react";
+import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film, Upload, ImageIcon, Mic, XCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
@@ -21,18 +21,21 @@ const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-i
 const VIDEO_STATUS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-status`;
 
 // Categories that require a file upload
-const IMAGE_INPUT_CATEGORIES = ["img2vid", "vision", "multimodal", "image-edit"];
+const IMAGE_INPUT_CATEGORIES = ["img2vid", "vision", "multimodal", "image-edit", "ocr"];
 const AUDIO_INPUT_CATEGORIES = ["audio"];
+const DOCUMENT_INPUT_CATEGORIES = ["document"];
 
 function getFileAccept(category: string): string {
   if (IMAGE_INPUT_CATEGORIES.includes(category)) return "image/*";
   if (AUDIO_INPUT_CATEGORIES.includes(category)) return "audio/*,video/*";
+  if (DOCUMENT_INPUT_CATEGORIES.includes(category)) return ".pdf,.docx,.doc,.xlsx,.xls,.pptx,.ppt,image/*";
   return "*";
 }
 
 function getUploadLabel(category: string): string {
   if (IMAGE_INPUT_CATEGORIES.includes(category)) return "Input Image";
   if (AUDIO_INPUT_CATEGORIES.includes(category)) return "Audio / Video File";
+  if (DOCUMENT_INPUT_CATEGORIES.includes(category)) return "Document / File";
   return "Input File";
 }
 
@@ -40,12 +43,16 @@ function getUploadHint(category: string): string {
   if (category === "img2vid") return "Upload a reference image to animate into a video.";
   if (category === "vision" || category === "multimodal") return "Upload an image for the model to analyze.";
   if (category === "image-edit") return "Upload the image you want to edit.";
+  if (category === "ocr") return "Upload an image containing text to extract.";
   if (category === "audio") return "Upload an audio or video file for transcription.";
+  if (category === "document") return "Upload a PDF or document for analysis and extraction.";
   return "Upload the input file.";
 }
 
 function needsFileUpload(category: string): boolean {
-  return IMAGE_INPUT_CATEGORIES.includes(category) || AUDIO_INPUT_CATEGORIES.includes(category);
+  return IMAGE_INPUT_CATEGORIES.includes(category)
+    || AUDIO_INPUT_CATEGORIES.includes(category)
+    || DOCUMENT_INPUT_CATEGORIES.includes(category);
 }
 
 function isImageCategory(category: string): boolean {
@@ -327,13 +334,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
               >
                 {isImageCategory(model.category) ? (
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                ) : DOCUMENT_INPUT_CATEGORIES.includes(model.category) ? (
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 ) : (
                   <Mic className="h-8 w-8 text-muted-foreground" />
                 )}
                 <div className="text-center">
                   <p className="text-sm font-medium">Click to upload</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {isImageCategory(model.category) ? "PNG, JPG, WEBP, GIF" : "MP3, WAV, M4A, MP4, WEBM"}
+                    {isImageCategory(model.category) ? "PNG, JPG, WEBP, GIF" : DOCUMENT_INPUT_CATEGORIES.includes(model.category) ? "PDF, DOCX, XLSX, PPTX, images" : "MP3, WAV, M4A, MP4, WEBM"}
                   </p>
                 </div>
                 <Upload className="h-4 w-4 text-muted-foreground" />
