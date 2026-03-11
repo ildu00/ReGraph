@@ -39,6 +39,20 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.6.9",
+    date: "March 11, 2026",
+    title: "Music Generation Failover & Non-Latin Prompt Support",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Automatic music generation failover chain — when a music model is unavailable, the system automatically tries up to 4 fallback models (Lyria 2, Cassette Music Generator, Stable Audio) to ensure music generation always succeeds." },
+      { category: "feature", description: "Non-Latin character prompt detection for music models — prompts in Cyrillic, Chinese, Japanese, and other scripts are automatically translated to English using GPT-4o-mini before being sent to the provider." },
+      { category: "feature", description: "Binary audio response detection via magic bytes — the system automatically detects WAV (RIFF), OGG, and MP3 audio formats returned by providers and handles them correctly." },
+      { category: "improvement", description: "Music generation endpoint now uploads binary audio responses to cloud storage and returns a public URL with proper Content-Type headers, enabling direct playback in the browser." },
+      { category: "fix", description: "Fixed 500 errors when music providers return binary audio data instead of JSON — the system now handles both JSON URLs and binary audio responses." },
+      { category: "fix", description: "Fixed 422 errors on music models when using non-English prompts — automatic translation ensures all supported models receive English input." },
+    ]
+  },
+  {
     version: "3.6.8",
     date: "March 9, 2026",
     title: "Async Video Generation & Model Playground",
