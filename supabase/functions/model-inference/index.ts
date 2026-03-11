@@ -662,7 +662,7 @@ serve(async (req) => {
       }), 200, undefined, { total_tokens: 0 }, catalogCost);
     }
 
-    // 6b. Music Generation (tta-* and txt2sng-*) — uses same async /v1/video/generate endpoint
+    // 6b. Music Generation (tta-* and txt2sng-*) — uses /v1/audio/speech (only audio-output endpoint)
     if (category === "music-gen") {
       const MUSIC_PRICES_USD: Record<string, number> = {
         "tta-google/lyria2":            20.0 / 90,
@@ -670,12 +670,13 @@ serve(async (req) => {
         "tta-stable/stable-audio":      5.0  / 90,
         "txt2sng-minimax/music":        10.0 / 90,
       };
+      const catalogCostMusic = MUSIC_PRICES_USD[vsegptModel] ?? (10.0 / 90);
 
-      // VseGPT music models use the same async video/generate endpoint (returns request_id)
-      const musicResp = await fetch("https://api.vsegpt.ru/v1/video/generate", {
+      // VseGPT music models go through /v1/audio/speech — synchronous, returns binary audio
+      const musicResp = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, prompt, action: "generate" }),
+        body: JSON.stringify({ model: vsegptModel, input: prompt, voice: "alloy", response_format: "mp3" }),
       });
 
       if (!musicResp.ok) {
@@ -689,30 +690,28 @@ serve(async (req) => {
         return respond(JSON.stringify({ error: "Failed to generate music", details: errText.slice(0, 500), model: vsegptModel }), 500, errText.slice(0, 500));
       }
 
-      const submitData = await musicResp.json();
-      console.log("Music gen submit response:", JSON.stringify(submitData).slice(0, 500));
+      const contentType = musicResp.headers.get("content-type") || "";
+      console.log("Music gen content-type:", contentType);
 
-      const catalogCostMusic = MUSIC_PRICES_USD[vsegptModel] ?? (10.0 / 90);
-      const requestId = submitData?.request_id;
-
-      if (!requestId) {
-        // Maybe response already contains audio URL directly
-        const audioUrl = submitData?.url || submitData?.audio_url || submitData?.data?.[0]?.url || null;
-        if (audioUrl) {
-          return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
-        }
-        return respond(JSON.stringify({ error: "No request_id returned from music API", raw: submitData, model: vsegptModel }), 500, "No request_id");
+      if (contentType.includes("audio/") || contentType.includes("application/octet-stream")) {
+        // Binary audio — upload to storage and return public URL
+        const audioBuffer = await musicResp.arrayBuffer();
+        const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+        const ext = contentType.includes("wav") ? "wav" : contentType.includes("ogg") ? "ogg" : "mp3";
+        const path = `music/${Date.now()}_${vsegptModel.replace(/\//g, "_")}.${ext}`;
+        await supabase.storage.from("claw-images").upload(path, audioBuffer, { contentType: `audio/${ext}`, upsert: true });
+        const { data: urlData } = supabase.storage.from("claw-images").getPublicUrl(path);
+        return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl: urlData.publicUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
       }
 
-      // Return request_id — client will poll /video-status (same polling endpoint works for audio)
-      return respond(JSON.stringify({
-        response: "🎵 Music generation started! It usually takes 30-60 seconds.",
-        videoRequestId: requestId,
-        audioRequestId: requestId,
-        status: "IN_QUEUE",
-        model: vsegptModel,
-        isAudio: true,
-      }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+      // JSON response — try to extract URL
+      const data = await musicResp.json();
+      console.log("Music gen JSON response:", JSON.stringify(data).slice(0, 500));
+      const audioUrl = data?.url || data?.audio_url || data?.data?.[0]?.url || null;
+      if (audioUrl) {
+        return respond(JSON.stringify({ response: "🎵 Music generated successfully!", audioUrl, model: vsegptModel }), 200, undefined, { total_tokens: 0 }, catalogCostMusic);
+      }
+      return respond(JSON.stringify({ response: "🎵 " + JSON.stringify(data), model: vsegptModel }), 200, undefined, undefined, catalogCostMusic);
     }
 
     // 7. Embeddings
