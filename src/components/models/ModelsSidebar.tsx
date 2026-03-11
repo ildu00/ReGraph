@@ -58,6 +58,7 @@ const categoryGroups = [
     categories: [
       { id: "audio", label: "Speech Recognition", icon: Mic, count: 3 },
       { id: "tts", label: "Text-to-Speech", icon: Music, count: 3 },
+      { id: "music-gen", label: "Music Generation", icon: Music, count: 4 },
       { id: "video", label: "Text-to-Video", icon: Video, count: 12 },
       { id: "img2vid", label: "Image-to-Video", icon: Video, count: 27 },
     ]
