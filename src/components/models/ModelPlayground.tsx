@@ -265,8 +265,14 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
       } else if (data.imageUrl) {
         setImageUrl(data.imageUrl);
         toast.success("Image generated successfully!");
+      } else if (data.audioRequestId || (data.videoRequestId && data.isAudio)) {
+        const reqId = data.audioRequestId || data.videoRequestId;
+        setVideoRequestId(reqId);
+        setIsAudioPolling(true);
+        toast.info("🎵 Music is being generated. Checking status automatically...");
       } else if (data.videoRequestId) {
         setVideoRequestId(data.videoRequestId);
+        setIsAudioPolling(false);
         toast.info("🎬 Video is being generated. Checking status automatically...");
       } else if (data.usage) {
         const tokens = data.usage.total_tokens || 0;
