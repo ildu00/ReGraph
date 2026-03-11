@@ -8,6 +8,8 @@ from typing import Any
 
 import psutil
 
+from regraph_agent.model_runtime import load_model
+
 logger = logging.getLogger("regraph.tasks")
 
 
@@ -351,7 +353,6 @@ class TaskExecutor:
             del self._model_cache[oldest_key]
 
         logger.info("Loading model %s …", model_id)
-        from regraph_agent.model_runtime import load_model
         model = load_model(model_id, gpu_mode=self.gpu_mode)
         self._model_cache[model_id] = model
         logger.info("Model %s loaded (backend=%s)", model_id, model.backend)

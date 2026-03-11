@@ -45,7 +45,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 # Copy project metadata first for layer caching
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 
@@ -121,7 +121,7 @@ RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 &
     python -m pip install --upgrade pip
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 # Install PyTorch with CUDA 12.1
@@ -279,7 +279,7 @@ RUN pip install --no-cache-dir \
     "rich>=13.0"
 
 WORKDIR /app
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY src/ ./src/
 
 # Install agent package (without heavy extras — already installed above)
