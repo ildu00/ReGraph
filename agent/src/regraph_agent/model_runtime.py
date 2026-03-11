@@ -545,7 +545,7 @@ class AscendHandle:
 
     def __init__(self, model_id: str, device: str = "npu:0", load_in_bf16: bool = True):
         import torch  # type: ignore
-        import torch_npu  # type: ignore
+        import torch_npu as _torch_npu  # type: ignore  # noqa: F401
         from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
 
         self.model_id = model_id
