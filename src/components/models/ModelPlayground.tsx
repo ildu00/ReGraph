@@ -334,13 +334,15 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
               >
                 {isImageCategory(model.category) ? (
                   <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                ) : DOCUMENT_INPUT_CATEGORIES.includes(model.category) ? (
+                  <FileText className="h-8 w-8 text-muted-foreground" />
                 ) : (
                   <Mic className="h-8 w-8 text-muted-foreground" />
                 )}
                 <div className="text-center">
                   <p className="text-sm font-medium">Click to upload</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    {isImageCategory(model.category) ? "PNG, JPG, WEBP, GIF" : "MP3, WAV, M4A, MP4, WEBM"}
+                    {isImageCategory(model.category) ? "PNG, JPG, WEBP, GIF" : DOCUMENT_INPUT_CATEGORIES.includes(model.category) ? "PDF, DOCX, XLSX, PPTX, images" : "MP3, WAV, M4A, MP4, WEBM"}
                   </p>
                 </div>
                 <Upload className="h-4 w-4 text-muted-foreground" />
