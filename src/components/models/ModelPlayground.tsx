@@ -5,7 +5,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film, Upload, ImageIcon, Mic, XCircle } from "lucide-react";
+import { Play, Copy, Check, Loader2, Settings2, X, AlertCircle, Download, ExternalLink, Film, Upload, ImageIcon, Mic, XCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
