@@ -320,13 +320,16 @@ serve(async (req) => {
       "gemma-7b-ft": "google/gemma-2-27b-it",
     };
 
-    // For txt2vid/img/stt/tts models not in map, pass through as-is (don't default to gpt-4o-mini)
+    // For txt2vid/img/stt/tts/tta/txt2sng models not in map, pass through as-is
     const vsegptModel = modelMapping[model] ?? (
       model.startsWith("txt2vid-") ||
+      model.startsWith("img2vid-") ||
       model.startsWith("img-") ||
       model.startsWith("img2img-") ||
       model.startsWith("stt-") ||
       model.startsWith("tts-") ||
+      model.startsWith("tta-") ||
+      model.startsWith("txt2sng-") ||
       model.startsWith("emb-") ||
       model.startsWith("utils/")
         ? model
