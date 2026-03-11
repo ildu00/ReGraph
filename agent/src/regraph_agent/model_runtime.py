@@ -411,7 +411,6 @@ class TransformersHandle:
         import torch  # type: ignore
 
         try:
-            from transformers import AutoModel  # type: ignore
             inputs = self._tokenizer(text, return_tensors="pt", truncation=True, max_length=512)
             inputs = {k: v.to(self._device) for k, v in inputs.items()}
             with torch.no_grad():
