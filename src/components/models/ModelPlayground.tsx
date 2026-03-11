@@ -498,6 +498,21 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
           </div>
         )}
 
+        {/* Generated Audio (music-gen) */}
+        {audioUrl && (
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label>Generated Audio</Label>
+              <Button variant="ghost" size="sm" asChild>
+                <a href={audioUrl} download="generated-music.mp3"><Download className="h-4 w-4" /></a>
+              </Button>
+            </div>
+            <div className="bg-secondary/50 rounded-lg p-4">
+              <audio controls autoPlay src={audioUrl} className="w-full" />
+            </div>
+          </div>
+        )}
+
         {/* Generated Image or Video */}
         {imageUrl && (
           <div className="space-y-3">
