@@ -8,6 +8,8 @@ from typing import Any
 
 import psutil
 
+from regraph_agent.model_runtime import load_model
+
 logger = logging.getLogger("regraph.tasks")
 
 
