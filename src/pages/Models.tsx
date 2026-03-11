@@ -122,6 +122,12 @@ const modelsData: Model[] = [
   { id: "bark", name: "Bark", provider: "Suno", category: "tts", description: "Text-to-audio generation including speech, music, and sound effects.", pricing: "$0.01/min", latency: "~2s", tags: ["Expressive", "Music", "SFX"] },
   { id: "eleven-multilingual", name: "ElevenLabs Turbo", provider: "ElevenLabs", category: "tts", description: "Ultra-realistic voice synthesis with emotional control.", pricing: "$0.015/min", latency: "~0.1s/s", tags: ["Realistic", "Emotions", "Fast"] },
 
+  // Music Generation
+  { id: "tta-google/lyria2", name: "Google Lyria 2", provider: "Google", category: "music-gen", description: "Google's professional music generation model. Creates high-quality instrumental and vocal tracks from text prompts.", pricing: "$0.22/track", latency: "~8s", tags: ["Professional", "Instrumental", "Google"], isNew: true, isPopular: true },
+  { id: "tta-cassette/music-generator", name: "Cassette Music Generator", provider: "Cassette", category: "music-gen", description: "Versatile music generation with per-minute pricing. Ideal for longer compositions and background scores.", pricing: "$0.067/min", latency: "~15s", tags: ["Per-Minute", "Versatile", "Background"], isNew: true },
+  { id: "tta-stable/stable-audio", name: "Stable Audio", provider: "Stability AI", category: "music-gen", description: "High-quality audio and music generation from Stability AI. Produces professional-sounding tracks from text descriptions.", pricing: "$0.056/track", latency: "~6s", tags: ["High Quality", "Stability AI", "Instruments"], isNew: true },
+  { id: "txt2sng-minimax/music", name: "Minimax Music (Song Generation)", provider: "Minimax", category: "music-gen", description: "Song generation from text and audio reference. Currently temporarily unavailable.", pricing: "$0.11/song", latency: "~20s", tags: ["Song", "Audio Reference", "Unavailable"], isNew: true },
+
   // Video Generation (txt2vid)
   { id: "txt2vid-kling/pro25-turbo", name: "Kling Pro Turbo 2.5", provider: "Kling AI", category: "video", description: "Best price/quality text-to-video model. Generates 5s professional videos.", pricing: "$1.00/video", latency: "~30s", tags: ["5s", "Professional", "Best Value"], isPopular: true, isNew: true },
   { id: "txt2vid-google/veo3.1-fast-with-audio", name: "Google Veo 3.1 Fast (with audio)", provider: "Google", category: "video", description: "Top-tier fast video generation with synchronized audio track.", pricing: "$1.66/video", latency: "~40s", tags: ["Audio", "Fast", "Google"], isPopular: true, isNew: true },
@@ -217,6 +223,7 @@ const categoryTitles: Record<string, string> = {
   "image-edit": "Image Editing",
   audio: "Speech Recognition",
   tts: "Text-to-Speech",
+  "music-gen": "Music Generation",
   video: "Text-to-Video",
   img2vid: "Image-to-Video",
   code: "Code Generation",
@@ -238,6 +245,7 @@ const categoryDescriptions: Record<string, string> = {
   "image-edit": "Edit and manipulate existing images with AI assistance.",
   audio: "Convert speech to text with high accuracy across languages.",
   tts: "Generate natural-sounding speech from text input.",
+  "music-gen": "Generate music and songs from text prompts.",
   video: "Create video content from text prompts.",
   img2vid: "Generate video from an image and text prompt.",
   code: "Specialized models for code generation and completion.",

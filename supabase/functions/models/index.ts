@@ -85,6 +85,11 @@ const modelCatalog = [
   { id: "coqui/XTTS-v2", category: "tts", provider: "Coqui", price_per_1k_chars: 0.015, latency_ms: 800 },
   { id: "suno/Bark", category: "tts", provider: "Suno", price_per_1k_chars: 0.012, latency_ms: 1200 },
   { id: "elevenlabs/Eleven-Multilingual", category: "tts", provider: "ElevenLabs", price_per_1k_chars: 0.024, latency_ms: 600 },
+  // --- Music Generation ---
+  { id: "tta-google/lyria2", category: "music-gen", provider: "Google", price_per_video: 20.0/90, latency_ms: 8000 },
+  { id: "tta-cassette/music-generator", category: "music-gen", provider: "Cassette", price_per_minute: 6.0/90, latency_ms: 15000 },
+  { id: "tta-stable/stable-audio", category: "music-gen", provider: "Stability AI", price_per_video: 5.0/90, latency_ms: 6000 },
+  { id: "txt2sng-minimax/music", category: "music-gen", provider: "Minimax", price_per_video: 10.0/90, latency_ms: 20000 },
   { id: "openai/Whisper-Large-v3", category: "audio", provider: "OpenAI", price_per_minute: 0.006, latency_ms: 1500 },
   { id: "meta/SeamlessM4T", category: "audio", provider: "Meta", price_per_minute: 0.005, latency_ms: 1800 },
   { id: "nvidia/Canary-1B", category: "audio", provider: "NVIDIA", price_per_minute: 0.004, latency_ms: 1200 },
