@@ -372,42 +372,42 @@ class TestCollectAscendMetrics:
     # ── two devices, full fields ───────────────────────────────────────────────
 
     def test_two_devices_returned(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert len(result) == 2
 
     def test_first_device_id(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["id"] == 0
         assert result[1]["id"] == 1
 
     def test_utilization_percent(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["utilization_percent"] == pytest.approx(72.0)
         assert result[1]["utilization_percent"] == pytest.approx(0.0)
 
     def test_hbm_used_mb(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["hbm_used_mb"] == 32768
         assert result[1]["hbm_used_mb"] == 1024
 
     def test_hbm_total_mb(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["hbm_total_mb"] == 65536
         assert result[1]["hbm_total_mb"] == 65536
 
     def test_hbm_used_percent_calculated(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         # 32768 / 65536 * 100 = 50.0
         assert result[0]["hbm_used_percent"] == pytest.approx(50.0)
@@ -415,15 +415,15 @@ class TestCollectAscendMetrics:
         assert result[1]["hbm_used_percent"] == pytest.approx(1.6, abs=0.05)
 
     def test_temperature_c(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["temperature_c"] == pytest.approx(55.0)
         assert result[1]["temperature_c"] == pytest.approx(42.0)
 
     def test_power_w(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_TWO_DEVICES)):
             result = _collect_ascend_metrics()
         assert result[0]["power_w"] == pytest.approx(310.0)
         assert result[1]["power_w"] == pytest.approx(180.0)
@@ -431,8 +431,8 @@ class TestCollectAscendMetrics:
     # ── aicore key variant (CANN 7.x) ─────────────────────────────────────────
 
     def test_aicore_key_parsed_as_utilization(self):
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_AICORE_KEY)):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", return_value=_make_run_result(_NPU_SMI_USAGES_AICORE_KEY)):
             result = _collect_ascend_metrics()
         assert len(result) == 1
         assert result[0]["utilization_percent"] == pytest.approx(45.0)
@@ -447,8 +447,8 @@ class TestCollectAscendMetrics:
             _make_run_result(""),                          # -t usages-info: unsupported
             _make_run_result(_NPU_SMI_PLAIN_OUTPUT),       # plain npu-smi info
         ]
-        with patch("shutil.which", return_value="/usr/bin/npu-smi"), \
-             patch("subprocess.run", side_effect=responses):
+        with patch("regraph_agent.tasks.shutil.which", return_value="/usr/bin/npu-smi"), \
+             patch("regraph_agent.tasks.subprocess.run", side_effect=responses):
             result = _collect_ascend_metrics()
         assert len(result) == 1
         assert result[0]["hbm_used_mb"] == 2048
@@ -468,7 +468,7 @@ class TestCollectAscendMetrics:
             "allocated_bytes.all.current": 8 * 1024 * 1024 * 1024  # 8 GB used
         }
 
-        with patch("shutil.which", return_value=None), \
+        with patch("regraph_agent.tasks.shutil.which", return_value=None), \
              patch.dict("sys.modules", {"torch_npu": mock_torch_npu}):
             result = _collect_ascend_metrics()
 
@@ -489,7 +489,7 @@ class TestCollectAscendMetrics:
             "allocated_bytes.all.current": 4 * 1024 * 1024 * 1024
         }
 
-        with patch("shutil.which", return_value=None), \
+        with patch("regraph_agent.tasks.shutil.which", return_value=None), \
              patch.dict("sys.modules", {"torch_npu": mock_torch_npu}):
             result = _collect_ascend_metrics()
 
@@ -500,7 +500,7 @@ class TestCollectAscendMetrics:
     # ── no hardware at all ─────────────────────────────────────────────────────
 
     def test_empty_list_when_nothing_available(self):
-        with patch("shutil.which", return_value=None), \
+        with patch("regraph_agent.tasks.shutil.which", return_value=None), \
              patch.dict("sys.modules", {"torch_npu": None}):
             result = _collect_ascend_metrics()
         assert result == []
