@@ -3,6 +3,9 @@
 from __future__ import annotations
 
 import logging
+import shutil
+import subprocess
+import sys
 import time
 from typing import Any
 
@@ -20,8 +23,6 @@ def _collect_ascend_metrics() -> list[dict]:
     Returns a list of per-device metric dicts (empty list on failure).
     """
     import re
-    import shutil
-    import subprocess
 
     metrics: list[dict] = []
 
@@ -291,7 +292,8 @@ class TaskExecutor:
     def _run_health_check(self, _task: dict) -> dict:
         """Lightweight health check — confirms agent can execute tasks."""
         mem = psutil.virtual_memory()
-        disk = psutil.disk_usage("/")
+        _disk_path = "C:\\" if sys.platform == "win32" else "/"
+        disk = psutil.disk_usage(_disk_path)
 
         result: dict = {
             "status": "healthy",
@@ -302,6 +304,7 @@ class TaskExecutor:
             "gpu_mode": self.gpu_mode,
             "models_loaded": list(self._model_cache.keys()),
         }
+
 
         # NVIDIA GPU metrics
         try:
