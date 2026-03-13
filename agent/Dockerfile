@@ -254,9 +254,9 @@ RUN update-alternatives --install /usr/bin/python  python  /usr/bin/python${PYTH
 # We install the official torch_npu wheel which bundles CANN runtime stubs
 # for CPU-side build, with real CANN libs injected at runtime via volume mounts.
 RUN pip install --no-cache-dir \
-    # PyTorch (CPU wheels — GPU ops activated via torch_npu at runtime)
-    "torch==2.1.0+cpu" \
-    --index-url https://download.pytorch.org/whl/cpu
+    # PyTorch standard wheel — GPU ops activated via torch_npu at runtime.
+    # torch_npu requires plain torch (no +cpu local suffix) for both amd64 and arm64.
+    "torch==2.1.0"
 
 # torch_npu: Huawei's official PyTorch NPU extension
 # Wheel index: https://repo.huaweicloud.com/repository/pypi/simple/torch-npu/
