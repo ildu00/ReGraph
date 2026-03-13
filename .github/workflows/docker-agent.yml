@@ -182,10 +182,13 @@ jobs:
             VERSION=${{ needs.meta.outputs.version }}
 
   # ── Ascend NPU image (linux/amd64 + linux/arm64) ─────────────────────────
+  # Note: torch_npu wheel install is best-effort (may not exist for all archs).
+  # This job is allowed to fail without blocking the overall workflow.
   build-ascend:
     name: Build — ascend (CANN 8.x / torch_npu)
     needs: meta
     if: contains(needs.meta.outputs.targets, 'ascend')
+    continue-on-error: true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

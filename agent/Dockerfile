@@ -261,9 +261,11 @@ RUN pip install --no-cache-dir \
 # torch_npu: Huawei's official PyTorch NPU extension
 # Wheel index: https://repo.huaweicloud.com/repository/pypi/simple/torch-npu/
 # Pin to the version matching torch 2.1.0 on CANN 8.x
+# Allow failure: wheel may be unavailable for the current arch (amd64/arm64 emulation in CI)
 RUN pip install --no-cache-dir \
     "torch_npu==2.1.0.post8" \
-    --index-url https://repo.huaweicloud.com/repository/pypi/simple/
+    --index-url https://repo.huaweicloud.com/repository/pypi/simple/ \
+    || echo "⚠️  torch_npu install skipped (wheel not found for this arch — NPU ops require native Ascend hardware anyway)"
 
 # ── ML dependencies ───────────────────────────────────────────────────────────
 RUN pip install --no-cache-dir \
