@@ -23,8 +23,6 @@ def _collect_ascend_metrics() -> list[dict]:
     Returns a list of per-device metric dicts (empty list on failure).
     """
     import re
-    import shutil
-    import subprocess
 
     metrics: list[dict] = []
 
