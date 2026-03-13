@@ -291,9 +291,8 @@ class TaskExecutor:
 
     def _run_health_check(self, _task: dict) -> dict:
         """Lightweight health check — confirms agent can execute tasks."""
-        import sys as _sys
         mem = psutil.virtual_memory()
-        _disk_path = "C:\\" if _sys.platform == "win32" else "/"
+        _disk_path = "C:\\" if sys.platform == "win32" else "/"
         disk = psutil.disk_usage(_disk_path)
 
         result: dict = {
@@ -305,6 +304,7 @@ class TaskExecutor:
             "gpu_mode": self.gpu_mode,
             "models_loaded": list(self._model_cache.keys()),
         }
+
 
         # NVIDIA GPU metrics
         try:
