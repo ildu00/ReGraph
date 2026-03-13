@@ -277,10 +277,9 @@ jobs:
           # Build replacement: marker + blank line + new section + blank line
           REPLACEMENT=$(printf '%s\n\n%s\n\n%s\n' "${MARKER}" "${SECTION}" "---")
           # Replace marker line with marker + new section
-          awk -v marker="$MARKER" -v repl="$REPLACEMENT" '
-            $0 == marker { print repl; next }
-            { print }
-          ' "$CHANGELOG" > /tmp/CHANGELOG.new
+          awk -v marker="$MARKER" -v repl="$REPLACEMENT" \
+            'BEGIN{} $0==marker{print repl; next} {print}' \
+            "$CHANGELOG" > /tmp/CHANGELOG.new
 
           mv /tmp/CHANGELOG.new "$CHANGELOG"
           echo "--- Preview (first 60 lines) ---"
