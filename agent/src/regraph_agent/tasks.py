@@ -290,8 +290,10 @@ class TaskExecutor:
 
     def _run_health_check(self, _task: dict) -> dict:
         """Lightweight health check — confirms agent can execute tasks."""
+        import sys as _sys
         mem = psutil.virtual_memory()
-        disk = psutil.disk_usage("/")
+        _disk_path = "C:\\" if _sys.platform == "win32" else "/"
+        disk = psutil.disk_usage(_disk_path)
 
         result: dict = {
             "status": "healthy",
