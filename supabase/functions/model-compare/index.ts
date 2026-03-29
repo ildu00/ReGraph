@@ -10,6 +10,7 @@ const corsHeaders = {
 const EXTERNAL_MODELS: Record<string, string> = {
   "gpt-4o-mini": "openai/gpt-4o-mini",
   "gpt-4o": "openai/gpt-4o",
+  "gpt-5": "openai/gpt-5",
   "claude-3.5-sonnet": "anthropic/claude-3.5-sonnet",
   "llama-3-70b": "meta-llama/llama-3-70b-instruct",
   "gemini-2.5-pro": "google/gemini-2.5-pro",
