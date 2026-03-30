@@ -39,6 +39,29 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.7.1",
+    date: "March 30, 2026",
+    title: "Embeddings Resilience & Error Recovery",
+    type: "patch",
+    changes: [
+      { category: "fix", description: "Fixed intermittent 500 errors on /v1/embeddings — requests to the upstream provider now retry up to 3 times with a 15-second timeout per attempt before returning a failure." },
+      { category: "improvement", description: "Embeddings endpoint returns 503 Service Unavailable with a descriptive message when the provider is down, instead of a generic 500 Internal Server Error." },
+    ]
+  },
+  {
+    version: "3.7.0",
+    date: "March 30, 2026",
+    title: "Inference Resilience & Automatic Failover",
+    type: "major",
+    changes: [
+      { category: "feature", description: "Automatic model failover — when the primary inference provider returns 5xx errors or times out, the system seamlessly retries and falls back to an alternative provider to ensure uninterrupted service." },
+      { category: "feature", description: "Per-request timeout enforcement — all inference calls are now capped at 20 seconds via AbortController, preventing requests from hanging indefinitely during provider outages." },
+      { category: "performance", description: "Retry logic with up to 2 attempts on the primary provider before triggering failover — reduces p95 latency during transient errors without unnecessary delays." },
+      { category: "improvement", description: "Rate-limited (429) responses from the primary provider now immediately trigger failover instead of retrying, minimizing end-user wait time during traffic spikes." },
+      { category: "improvement", description: "Failover responses include an x-regraph-fallback: true header so clients can detect when an alternative model was used." },
+    ]
+  },
+  {
     version: "3.6.9",
     date: "March 11, 2026",
     title: "Music Generation Failover & Non-Latin Prompt Support",
