@@ -507,22 +507,30 @@ serve(async (req) => {
         chatBody.stream_options = { include_usage: true };
       }
 
-      const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify(chatBody),
-      });
+      // ── Resilient fetch: timeout + retry + fallback ──
+      const primaryHeaders = { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" };
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("VseGPT API error:", response.status, errorText);
-        if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
-        if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }), 402, "Insufficient credits");
-        return respond(JSON.stringify({ error: "Failed to get response from AI model" }), 500, errorText.substring(0, 500));
-      }
+      // For streaming — skip resilient wrapper (stream needs direct pipe)
+      if (stream) {
+        let streamResp: Response;
+        try {
+          streamResp = await fetchWithTimeout("https://api.vsegpt.ru/v1/chat/completions", {
+            method: "POST",
+            headers: primaryHeaders,
+            body: JSON.stringify(chatBody),
+          }, 30_000);
+        } catch (err) {
+          console.error("Streaming fetch failed:", err);
+          return respond(JSON.stringify({ error: "Inference provider timeout" }), 504, "Stream timeout");
+        }
 
-      // --- STREAMING MODE: intercept SSE to extract real usage from final chunk ---
-      if (stream && response.body) {
+        if (!streamResp.ok) {
+          const errorText = await streamResp.text();
+          console.error("VseGPT streaming error:", streamResp.status, errorText);
+          return respond(JSON.stringify({ error: "Failed to get response from AI model" }), streamResp.status, errorText.substring(0, 500));
+        }
+
+        // Stream handling (existing logic)
         const computeTimeMs = Date.now() - startTime;
         logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 200, response_time_ms: computeTimeMs, api_key_prefix: apiKeyPrefix, request_body: requestBodyLog });
         touchApiKeyLastUsed(apiKeyPrefix);
@@ -531,51 +539,60 @@ serve(async (req) => {
           const decoder = new TextDecoder();
           let usageTotalTokens = 0;
           let usageFound = false;
-
           const transformStream = new TransformStream({
             transform(chunk, controller) {
-              controller.enqueue(chunk); // pass through to client unchanged
-              // Parse SSE lines to find usage chunk
+              controller.enqueue(chunk);
               const text = decoder.decode(chunk, { stream: true });
               for (const line of text.split("\n")) {
                 if (!line.startsWith("data: ") || line === "data: [DONE]") continue;
                 try {
                   const json = JSON.parse(line.slice(6));
-                  if (json?.usage?.total_tokens) {
-                    usageTotalTokens = json.usage.total_tokens;
-                    usageFound = true;
-                  }
-                } catch { /* ignore parse errors */ }
+                  if (json?.usage?.total_tokens) { usageTotalTokens = json.usage.total_tokens; usageFound = true; }
+                } catch { /* ignore */ }
               }
             },
             flush() {
-              // Bill after stream ends with real token count
               const tokens = usageFound ? usageTotalTokens : Math.ceil(prompt.length / 4) + 200;
-              // For streaming, x-used-credits not available upfront — use token-based pricing
               processBilling(userId!, `/v1/model-inference/${category}`, tokens, Date.now() - startTime, null, model, null);
             },
           });
-
-          return new Response(response.body.pipeThrough(transformStream), {
+          return new Response(streamResp.body!.pipeThrough(transformStream), {
             status: 200,
             headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
           });
         }
-
-        // No userId — pipe straight through
-        return new Response(response.body, {
+        return new Response(streamResp.body, {
           status: 200,
           headers: { ...corsHeaders, "Content-Type": "text/event-stream", "Cache-Control": "no-cache", "Connection": "keep-alive" },
         });
       }
 
-      // --- NON-STREAMING: read actual cost from x-used-credits header ---
-      const providerCost = extractProviderCost(response.headers);
+      // ── Non-streaming: use resilient fetch with retry + fallback ──
+      const { response, usedFallback } = await resilientChatFetch(
+        "https://api.vsegpt.ru/v1/chat/completions",
+        primaryHeaders,
+        chatBody,
+        vsegptModel,
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Inference error:", response.status, errorText, usedFallback ? "(fallback)" : "(primary)");
+        if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
+        if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }), 402, "Insufficient credits");
+        return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
+      }
+
+      const providerCost = usedFallback ? null : extractProviderCost(response.headers);
       const data = await response.json();
       const message = data.choices?.[0]?.message;
       const content = message?.content || "No response generated";
       const toolCalls = message?.tool_calls;
-      const responsePayload: Record<string, unknown> = { response: content, model: vsegptModel, usage: data.usage };
+      const responsePayload: Record<string, unknown> = {
+        response: content,
+        model: usedFallback ? `${vsegptModel} (fallback)` : vsegptModel,
+        usage: data.usage,
+      };
       if (toolCalls && Array.isArray(toolCalls) && toolCalls.length > 0) {
         responsePayload.tool_calls = toolCalls;
       }
