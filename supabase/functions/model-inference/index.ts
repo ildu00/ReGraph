@@ -61,6 +61,123 @@ async function extractUserId(req: Request): Promise<string | null> {
 
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
+// ── Resilient fetch: timeout + retry + Lovable AI Gateway fallback ──────────
+const PRIMARY_TIMEOUT_MS = 20_000;   // 20s per attempt on primary provider
+const FALLBACK_TIMEOUT_MS = 25_000;  // 25s for fallback
+const MAX_PRIMARY_ATTEMPTS = 2;
+
+// Models available on Lovable AI Gateway (used as fallback)
+const LOVABLE_FALLBACK_MAP: Record<string, string> = {
+  "anthropic/claude-sonnet-4": "openai/gpt-5",
+  "anthropic/claude-sonnet-4.5": "openai/gpt-5",
+  "anthropic/claude-opus-4": "openai/gpt-5",
+  "anthropic/claude-3.5-sonnet": "openai/gpt-5",
+  "openai/gpt-4o": "openai/gpt-5-mini",
+  "openai/gpt-4o-mini": "openai/gpt-5-nano",
+  "openai/gpt-4-turbo": "openai/gpt-5-mini",
+  "openai/gpt-5": "openai/gpt-5",
+  "openai/gpt-5-mini": "openai/gpt-5-mini",
+  "openai/gpt-5-nano": "openai/gpt-5-nano",
+  "google/gemini-2.5-pro": "google/gemini-2.5-pro",
+  "google/gemini-2.5-flash": "google/gemini-2.5-flash",
+  "meta-llama/llama-3.1-70b-instruct": "openai/gpt-5-mini",
+  "deepseek/deepseek-r1": "openai/gpt-5",
+};
+
+interface ResilientResult {
+  response: Response;
+  usedFallback: boolean;
+}
+
+/**
+ * Fetch with timeout using AbortController.
+ */
+async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: number): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/**
+ * Resilient chat completion: try primary provider with timeout + retry,
+ * then fall back to Lovable AI Gateway if available.
+ */
+async function resilientChatFetch(
+  primaryUrl: string,
+  primaryHeaders: Record<string, string>,
+  chatBody: Record<string, unknown>,
+  vsegptModel: string,
+): Promise<ResilientResult> {
+  const bodyStr = JSON.stringify(chatBody);
+
+  // ── Primary provider attempts ──
+  for (let attempt = 1; attempt <= MAX_PRIMARY_ATTEMPTS; attempt++) {
+    try {
+      const resp = await fetchWithTimeout(primaryUrl, {
+        method: "POST",
+        headers: primaryHeaders,
+        body: bodyStr,
+      }, PRIMARY_TIMEOUT_MS);
+
+      // Retriable server errors
+      if (resp.status >= 500 && attempt < MAX_PRIMARY_ATTEMPTS) {
+        console.warn(`Primary provider attempt ${attempt} returned ${resp.status}, retrying…`);
+        continue;
+      }
+      // 429 rate limit — go straight to fallback
+      if (resp.status === 429) {
+        console.warn("Primary provider rate-limited (429), trying fallback…");
+        break;
+      }
+
+      return { response: resp, usedFallback: false };
+    } catch (err) {
+      const isTimeout = err instanceof DOMException && err.name === "AbortError";
+      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"}: ${err}`);
+      if (attempt < MAX_PRIMARY_ATTEMPTS) continue;
+    }
+  }
+
+  // ── Fallback: Lovable AI Gateway ──
+  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+  const fallbackModel = LOVABLE_FALLBACK_MAP[vsegptModel];
+
+  if (LOVABLE_API_KEY && fallbackModel) {
+    console.log(`Falling back to Lovable Gateway: ${fallbackModel} (original: ${vsegptModel})`);
+    const fallbackBody = { ...chatBody, model: fallbackModel, stream: false };
+    // Remove stream_options for non-streaming fallback
+    delete (fallbackBody as any).stream_options;
+
+    try {
+      const resp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fallbackBody),
+      }, FALLBACK_TIMEOUT_MS);
+
+      return { response: resp, usedFallback: true };
+    } catch (fallbackErr) {
+      console.error("Lovable Gateway fallback also failed:", fallbackErr);
+    }
+  }
+
+  // Both failed — return a synthetic error response
+  return {
+    response: new Response(JSON.stringify({ error: "All inference providers unavailable" }), {
+      status: 503,
+      headers: { "Content-Type": "application/json" },
+    }),
+    usedFallback: false,
+  };
+}
+
 /**
  * Process billing: deduct balance using actual provider cost + markup.
  * If providerCostUsd is provided (from x-used-credits header), use it * MARKUP_MULTIPLIER.
