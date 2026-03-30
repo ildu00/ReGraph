@@ -897,43 +897,68 @@ serve(async (req) => {
       return respond(JSON.stringify({ error: "All music generation models are temporarily unavailable. Please try again later.", model: vsegptModel }), 503, "All models unavailable");
     }
 
-    // 7. Embeddings
+    // 7. Embeddings (with timeout + retry)
     if (category === "embedding") {
-      // Support batch: parsedBody.input may be a string or array
       const rawInput = (parsedBody as any).input;
       const inputForVseGPT = rawInput !== undefined ? rawInput : prompt;
+      const embBody = JSON.stringify({ model: vsegptModel, input: inputForVseGPT });
+      const embHeaders = { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" };
 
-      const response = await fetch("https://api.vsegpt.ru/v1/embeddings", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
-        body: JSON.stringify({ model: vsegptModel, input: inputForVseGPT }),
-      });
+      let response: Response | null = null;
+      const EMB_TIMEOUT = 15_000;
+      const EMB_MAX_ATTEMPTS = 3;
+
+      for (let attempt = 1; attempt <= EMB_MAX_ATTEMPTS; attempt++) {
+        try {
+          response = await fetchWithTimeout("https://api.vsegpt.ru/v1/embeddings", {
+            method: "POST",
+            headers: embHeaders,
+            body: embBody,
+          }, EMB_TIMEOUT);
+
+          if (response.ok) break;
+
+          // Retriable server errors
+          if (response.status >= 500 && attempt < EMB_MAX_ATTEMPTS) {
+            console.warn(`Embeddings attempt ${attempt} returned ${response.status}, retrying…`);
+            response = null;
+            continue;
+          }
+          // Non-retriable error — break
+          break;
+        } catch (err) {
+          const isTimeout = err instanceof DOMException && err.name === "AbortError";
+          console.warn(`Embeddings attempt ${attempt} ${isTimeout ? "timed out" : "failed"}: ${err}`);
+          response = null;
+          if (attempt < EMB_MAX_ATTEMPTS) continue;
+        }
+      }
+
+      if (!response) {
+        return respond(JSON.stringify({ error: "Embedding service unavailable after retries" }), 503, "All embedding attempts failed");
+      }
 
       if (!response.ok) {
         const errorText = await response.text();
-        console.error("VseGPT Embeddings API error:", response.status, errorText);
-        return respond(JSON.stringify({ error: "Failed to generate embeddings" }), 500, errorText.substring(0, 500));
+        console.error("Embeddings API error:", response.status, errorText);
+        return respond(JSON.stringify({ error: "Failed to generate embeddings" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
 
       const providerCost = extractProviderCost(response.headers);
       const data = await response.json();
 
-      // Batch: return all embeddings from data.data[]
       const allEmbeddings = data.data as Array<{ embedding: number[]; index: number }> | undefined;
       if (allEmbeddings && allEmbeddings.length > 0) {
         const dimensions = allEmbeddings[0]?.embedding?.length || 0;
         return respond(JSON.stringify({
           response: `📊 Embeddings generated successfully!\n\nItems: ${allEmbeddings.length}\nDimensions: ${dimensions}`,
           model: vsegptModel,
-          // Single embedding (backward compat)
           embedding: allEmbeddings[0]?.embedding,
-          // All embeddings for batch support
           embeddings: allEmbeddings.map(e => e.embedding),
           dimensions,
         }), 200, undefined, data.usage, providerCost);
       }
 
-      // Fallback — should not happen
       const embedding = data.data?.[0]?.embedding;
       const dimensions = embedding?.length || 0;
       return respond(JSON.stringify({
