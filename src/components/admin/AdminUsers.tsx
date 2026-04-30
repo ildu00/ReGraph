@@ -187,7 +187,97 @@ export const AdminUsers = () => {
     }
   };
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const openUserView = async (user: UnifiedUser) => {
+    setViewingUser(user);
+    setReferralCodeDraft(user.referral_code || "");
+    setUserDetails(null);
+    if (user.type !== "real") return;
+    setDetailsLoading(true);
+    try {
+      const [spentRes, keysRes, devicesRes, txRes, refUsersRes, referrerRes] = await Promise.all([
+        supabase.rpc("get_total_spent_for_user", { user_id_param: user.id }),
+        supabase.from("api_keys").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("provider_devices").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("wallet_transactions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("user_id, display_name, email, created_at")
+          .eq("referred_by", user.id)
+          .order("created_at", { ascending: false }),
+        user.referred_by
+          ? supabase
+              .from("profiles")
+              .select("display_name, email, referral_code")
+              .eq("user_id", user.referred_by)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      setUserDetails({
+        totalSpent: Number(spentRes.data || 0),
+        apiKeys: keysRes.count || 0,
+        devices: devicesRes.count || 0,
+        transactions: txRes.count || 0,
+        referralCount: (refUsersRes.data || []).length,
+        referrer: (referrerRes as any).data || null,
+        referredUsers: (refUsersRes.data || []) as any,
+      });
+    } catch (e) {
+      console.error("Error loading user details:", e);
+      toast.error("Failed to load user details");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleSaveReferralCode = async () => {
+    if (!viewingUser || viewingUser.type !== "real") return;
+    const code = referralCodeDraft.trim();
+    if (code && !/^[A-Za-z0-9_-]{3,32}$/.test(code)) {
+      toast.error("Code must be 3–32 chars: letters, digits, _ or -");
+      return;
+    }
+    setSavingCode(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ referral_code: code || null })
+        .eq("user_id", viewingUser.id);
+      if (error) {
+        if ((error as any).code === "23505") {
+          toast.error("This referral code is already taken");
+        } else {
+          throw error;
+        }
+        return;
+      }
+      toast.success(code ? "Referral code saved" : "Referral code removed");
+      setViewingUser({ ...viewingUser, referral_code: code || null });
+      fetchData();
+    } catch (e) {
+      console.error("Error saving referral code:", e);
+      toast.error("Failed to save referral code");
+    } finally {
+      setSavingCode(false);
+    }
+  };
+
+  const generateReferralCode = () => {
+    const base = (viewingUser?.display_name || viewingUser?.email || "user")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 8) || "user";
+    const suffix = Math.random().toString(36).slice(2, 6);
+    setReferralCodeDraft(`${base}${suffix}`);
+  };
+
+  const copyReferralLink = () => {
+    if (!viewingUser?.referral_code) return;
+    const link = `${window.location.origin}/auth?ref=${viewingUser.referral_code}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Referral link copied");
+  };
+
 
   // Filter and sort users
   const filteredUsers = users
