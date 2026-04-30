@@ -4,6 +4,7 @@ import { useLocation } from "react-router-dom";
 declare global {
   interface Window {
     ym?: (...args: unknown[]) => void;
+    fbq?: (...args: unknown[]) => void;
   }
 }
 
@@ -38,6 +39,13 @@ const ScrollToTop = () => {
           referer: document.referrer,
           title: document.title,
         });
+      }
+    } catch {
+      // ignore
+    }
+    try {
+      if (typeof window.fbq === "function") {
+        window.fbq("track", "PageView");
       }
     } catch {
       // ignore
