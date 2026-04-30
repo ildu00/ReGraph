@@ -559,6 +559,8 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          referral_code: string | null
+          referred_by: string | null
           updated_at: string
           user_id: string
         }
@@ -567,6 +569,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id: string
         }
@@ -575,10 +579,20 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          referral_code?: string | null
+          referred_by?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_referred_by_fkey"
+            columns: ["referred_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["user_id"]
+          },
+        ]
       }
       project_wallets: {
         Row: {
