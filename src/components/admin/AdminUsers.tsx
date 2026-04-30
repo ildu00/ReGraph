@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign } from "lucide-react";
+import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, Eye, Copy, Link2, Users as UsersIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
@@ -27,6 +28,18 @@ interface UnifiedUser {
   created_at: string;
   type: "test" | "real";
   role?: string;
+  referral_code?: string | null;
+  referred_by?: string | null;
+}
+
+interface UserDetails {
+  totalSpent: number;
+  apiKeys: number;
+  devices: number;
+  transactions: number;
+  referralCount: number;
+  referrer: { display_name: string | null; email: string | null; referral_code: string | null } | null;
+  referredUsers: Array<{ user_id: string; display_name: string | null; email: string | null; created_at: string }>;
 }
 
 type SortField = "display_name" | "balance_usd" | "created_at" | "status";
@@ -45,6 +58,11 @@ export const AdminUsers = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [editingUser, setEditingUser] = useState<UnifiedUser | null>(null);
   const [newBalance, setNewBalance] = useState("");
+  const [viewingUser, setViewingUser] = useState<UnifiedUser | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [referralCodeDraft, setReferralCodeDraft] = useState("");
+  const [savingCode, setSavingCode] = useState(false);
 
   const fetchData = async () => {
     try {
@@ -59,7 +77,7 @@ export const AdminUsers = () => {
       // Fetch real users (profiles + roles + wallets)
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, created_at")
+        .select("user_id, display_name, email, created_at, referral_code, referred_by")
         .order("created_at", { ascending: false });
 
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
@@ -77,7 +95,7 @@ export const AdminUsers = () => {
       }));
 
       // Convert real users to unified format
-      const realUsersUnified: UnifiedUser[] = (profiles || []).map((p) => ({
+      const realUsersUnified: UnifiedUser[] = (profiles || []).map((p: any) => ({
         id: p.user_id,
         display_name: p.display_name || "",
         email: p.email || "",
@@ -86,6 +104,8 @@ export const AdminUsers = () => {
         created_at: p.created_at,
         type: "real" as const,
         role: roles?.find((r) => r.user_id === p.user_id)?.role || "user",
+        referral_code: p.referral_code ?? null,
+        referred_by: p.referred_by ?? null,
       }));
 
       setUsers([...realUsersUnified, ...testUsersUnified]);
@@ -165,6 +185,97 @@ export const AdminUsers = () => {
       console.error("Error updating balance:", error);
       toast.error("Failed to update balance");
     }
+  };
+
+  const openUserView = async (user: UnifiedUser) => {
+    setViewingUser(user);
+    setReferralCodeDraft(user.referral_code || "");
+    setUserDetails(null);
+    if (user.type !== "real") return;
+    setDetailsLoading(true);
+    try {
+      const [spentRes, keysRes, devicesRes, txRes, refUsersRes, referrerRes] = await Promise.all([
+        supabase.rpc("get_total_spent_for_user", { user_id_param: user.id }),
+        supabase.from("api_keys").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("provider_devices").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase.from("wallet_transactions").select("id", { count: "exact", head: true }).eq("user_id", user.id),
+        supabase
+          .from("profiles")
+          .select("user_id, display_name, email, created_at")
+          .eq("referred_by", user.id)
+          .order("created_at", { ascending: false }),
+        user.referred_by
+          ? supabase
+              .from("profiles")
+              .select("display_name, email, referral_code")
+              .eq("user_id", user.referred_by)
+              .maybeSingle()
+          : Promise.resolve({ data: null }),
+      ]);
+
+      setUserDetails({
+        totalSpent: Number(spentRes.data || 0),
+        apiKeys: keysRes.count || 0,
+        devices: devicesRes.count || 0,
+        transactions: txRes.count || 0,
+        referralCount: (refUsersRes.data || []).length,
+        referrer: (referrerRes as any).data || null,
+        referredUsers: (refUsersRes.data || []) as any,
+      });
+    } catch (e) {
+      console.error("Error loading user details:", e);
+      toast.error("Failed to load user details");
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleSaveReferralCode = async () => {
+    if (!viewingUser || viewingUser.type !== "real") return;
+    const code = referralCodeDraft.trim();
+    if (code && !/^[A-Za-z0-9_-]{3,32}$/.test(code)) {
+      toast.error("Code must be 3–32 chars: letters, digits, _ or -");
+      return;
+    }
+    setSavingCode(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ referral_code: code || null })
+        .eq("user_id", viewingUser.id);
+      if (error) {
+        if ((error as any).code === "23505") {
+          toast.error("This referral code is already taken");
+        } else {
+          throw error;
+        }
+        return;
+      }
+      toast.success(code ? "Referral code saved" : "Referral code removed");
+      setViewingUser({ ...viewingUser, referral_code: code || null });
+      fetchData();
+    } catch (e) {
+      console.error("Error saving referral code:", e);
+      toast.error("Failed to save referral code");
+    } finally {
+      setSavingCode(false);
+    }
+  };
+
+  const generateReferralCode = () => {
+    const base = (viewingUser?.display_name || viewingUser?.email || "user")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, "")
+      .slice(0, 8) || "user";
+    const suffix = Math.random().toString(36).slice(2, 6);
+    setReferralCodeDraft(`${base}${suffix}`);
+  };
+
+  const copyReferralLink = () => {
+    if (!viewingUser?.referral_code) return;
+    const link = `${window.location.origin}/auth?ref=${viewingUser.referral_code}`;
+    navigator.clipboard.writeText(link);
+    toast.success("Referral link copied");
   };
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -295,7 +406,7 @@ export const AdminUsers = () => {
                   </TableRow>
                 ) : (
                   paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="cursor-pointer" onClick={() => openUserView(user)}>
                       <TableCell className="max-w-0">
                         <div className="truncate font-medium">{user.display_name || "No name"}</div>
                         <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
@@ -324,7 +435,7 @@ export const AdminUsers = () => {
                       <TableCell className="hidden lg:table-cell">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right p-1">
+                      <TableCell className="text-right p-1" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -332,6 +443,10 @@ export const AdminUsers = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openUserView(user)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleBalanceEdit(user)}>
                               <DollarSign className="mr-2 h-4 w-4" />
                               Edit Balance
@@ -411,6 +526,162 @@ export const AdminUsers = () => {
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditingUser(null)}>Cancel</Button>
             <Button onClick={handleBalanceSave}>Save</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewingUser?.display_name || "No name"}
+              {viewingUser?.role && viewingUser.role !== "user" && (
+                <Badge variant="destructive">{viewingUser.role}</Badge>
+              )}
+              {viewingUser?.type === "test" && <Badge variant="secondary">test</Badge>}
+            </DialogTitle>
+            <DialogDescription>{viewingUser?.email || "—"}</DialogDescription>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="space-y-6">
+              {/* Basic info */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-muted-foreground text-xs">User ID</div>
+                  <div className="font-mono text-xs break-all">{viewingUser.id}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Joined</div>
+                  <div>{new Date(viewingUser.created_at).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Balance</div>
+                  <div className="text-green-600 font-medium">${viewingUser.balance_usd.toFixed(4)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Status</div>
+                  <div>
+                    <Badge variant={viewingUser.status === "active" ? "default" : "secondary"}>
+                      {viewingUser.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {viewingUser.type === "real" && (
+                <>
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Total Spent", value: detailsLoading ? "…" : `$${(userDetails?.totalSpent || 0).toFixed(4)}` },
+                      { label: "API Keys", value: detailsLoading ? "…" : (userDetails?.apiKeys ?? 0) },
+                      { label: "Devices", value: detailsLoading ? "…" : (userDetails?.devices ?? 0) },
+                      { label: "Transactions", value: detailsLoading ? "…" : (userDetails?.transactions ?? 0) },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-lg border border-border bg-card p-3">
+                        <div className="text-xs text-muted-foreground">{s.label}</div>
+                        <div className="text-lg font-semibold mt-1">{s.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Referral system */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">Referral Code</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ref-code" className="text-xs">Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="ref-code"
+                          value={referralCodeDraft}
+                          onChange={(e) => setReferralCodeDraft(e.target.value)}
+                          placeholder="e.g. john2026"
+                          className="font-mono"
+                        />
+                        <Button type="button" variant="outline" onClick={generateReferralCode}>
+                          Generate
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        3–32 chars: letters, digits, _ or -. Must be unique.
+                      </p>
+                    </div>
+
+                    {viewingUser.referral_code && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Referral Link</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            readOnly
+                            value={`${window.location.origin}/auth?ref=${viewingUser.referral_code}`}
+                            className="font-mono text-xs"
+                          />
+                          <Button type="button" variant="outline" size="icon" onClick={copyReferralLink}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button onClick={handleSaveReferralCode} disabled={savingCode} className="w-full">
+                      {savingCode ? "Saving…" : "Save Referral Code"}
+                    </Button>
+                  </div>
+
+                  {/* Referrer */}
+                  {userDetails?.referrer && (
+                    <div className="rounded-lg border border-border p-4">
+                      <div className="text-xs text-muted-foreground mb-1">Invited by</div>
+                      <div className="font-medium">{userDetails.referrer.display_name || userDetails.referrer.email}</div>
+                      {userDetails.referrer.referral_code && (
+                        <div className="text-xs text-muted-foreground font-mono mt-1">
+                          code: {userDetails.referrer.referral_code}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Referred users */}
+                  <div className="rounded-lg border border-border p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <UsersIcon className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">
+                        Referred Users {userDetails ? `(${userDetails.referralCount})` : ""}
+                      </h3>
+                    </div>
+                    {detailsLoading ? (
+                      <div className="text-sm text-muted-foreground">Loading…</div>
+                    ) : userDetails && userDetails.referredUsers.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {userDetails.referredUsers.map((u) => (
+                          <div key={u.user_id} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium">{u.display_name || "No name"}</div>
+                              <div className="truncate text-xs text-muted-foreground">{u.email}</div>
+                            </div>
+                            <div className="text-xs text-muted-foreground shrink-0 ml-2">
+                              {new Date(u.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">No referred users yet.</div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingUser(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

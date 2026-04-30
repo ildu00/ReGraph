@@ -85,12 +85,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const signUp = async (email: string, password: string, displayName?: string) => {
     const supabase = await getClient();
+    let referralCode: string | undefined;
+    try {
+      const stored = localStorage.getItem("referral_code");
+      if (stored && /^[A-Za-z0-9_-]{3,32}$/.test(stored)) {
+        referralCode = stored;
+      }
+    } catch {
+      // ignore
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { display_name: displayName },
+        data: { display_name: displayName, referral_code: referralCode },
       },
     });
     return { error: error as Error | null };
