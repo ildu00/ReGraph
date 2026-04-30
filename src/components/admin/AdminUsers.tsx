@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign } from "lucide-react";
+import { Search, Shield, ShieldOff, MoreHorizontal, ChevronLeft, ChevronRight, ArrowUpDown, DollarSign, Eye, Copy, Link2, Users as UsersIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
