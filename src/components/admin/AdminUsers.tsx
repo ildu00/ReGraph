@@ -435,7 +435,7 @@ export const AdminUsers = () => {
                       <TableCell className="hidden lg:table-cell">
                         {new Date(user.created_at).toLocaleDateString()}
                       </TableCell>
-                      <TableCell className="text-right p-1">
+                      <TableCell className="text-right p-1" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -443,6 +443,10 @@ export const AdminUsers = () => {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => openUserView(user)}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Details
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleBalanceEdit(user)}>
                               <DollarSign className="mr-2 h-4 w-4" />
                               Edit Balance
