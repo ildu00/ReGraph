@@ -58,6 +58,11 @@ export const AdminUsers = () => {
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [editingUser, setEditingUser] = useState<UnifiedUser | null>(null);
   const [newBalance, setNewBalance] = useState("");
+  const [viewingUser, setViewingUser] = useState<UnifiedUser | null>(null);
+  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [referralCodeDraft, setReferralCodeDraft] = useState("");
+  const [savingCode, setSavingCode] = useState(false);
 
   const fetchData = async () => {
     try {
