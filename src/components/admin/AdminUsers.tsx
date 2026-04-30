@@ -529,6 +529,162 @@ export const AdminUsers = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* User Details Dialog */}
+      <Dialog open={!!viewingUser} onOpenChange={(open) => !open && setViewingUser(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {viewingUser?.display_name || "No name"}
+              {viewingUser?.role && viewingUser.role !== "user" && (
+                <Badge variant="destructive">{viewingUser.role}</Badge>
+              )}
+              {viewingUser?.type === "test" && <Badge variant="secondary">test</Badge>}
+            </DialogTitle>
+            <DialogDescription>{viewingUser?.email || "—"}</DialogDescription>
+          </DialogHeader>
+
+          {viewingUser && (
+            <div className="space-y-6">
+              {/* Basic info */}
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <div className="text-muted-foreground text-xs">User ID</div>
+                  <div className="font-mono text-xs break-all">{viewingUser.id}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Joined</div>
+                  <div>{new Date(viewingUser.created_at).toLocaleString()}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Balance</div>
+                  <div className="text-green-600 font-medium">${viewingUser.balance_usd.toFixed(4)}</div>
+                </div>
+                <div>
+                  <div className="text-muted-foreground text-xs">Status</div>
+                  <div>
+                    <Badge variant={viewingUser.status === "active" ? "default" : "secondary"}>
+                      {viewingUser.status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+
+              {viewingUser.type === "real" && (
+                <>
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    {[
+                      { label: "Total Spent", value: detailsLoading ? "…" : `$${(userDetails?.totalSpent || 0).toFixed(4)}` },
+                      { label: "API Keys", value: detailsLoading ? "…" : (userDetails?.apiKeys ?? 0) },
+                      { label: "Devices", value: detailsLoading ? "…" : (userDetails?.devices ?? 0) },
+                      { label: "Transactions", value: detailsLoading ? "…" : (userDetails?.transactions ?? 0) },
+                    ].map((s) => (
+                      <div key={s.label} className="rounded-lg border border-border bg-card p-3">
+                        <div className="text-xs text-muted-foreground">{s.label}</div>
+                        <div className="text-lg font-semibold mt-1">{s.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Referral system */}
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-center gap-2">
+                      <Link2 className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">Referral Code</h3>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ref-code" className="text-xs">Code</Label>
+                      <div className="flex gap-2">
+                        <Input
+                          id="ref-code"
+                          value={referralCodeDraft}
+                          onChange={(e) => setReferralCodeDraft(e.target.value)}
+                          placeholder="e.g. john2026"
+                          className="font-mono"
+                        />
+                        <Button type="button" variant="outline" onClick={generateReferralCode}>
+                          Generate
+                        </Button>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        3–32 chars: letters, digits, _ or -. Must be unique.
+                      </p>
+                    </div>
+
+                    {viewingUser.referral_code && (
+                      <div className="space-y-1">
+                        <Label className="text-xs">Referral Link</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            readOnly
+                            value={`${window.location.origin}/auth?ref=${viewingUser.referral_code}`}
+                            className="font-mono text-xs"
+                          />
+                          <Button type="button" variant="outline" size="icon" onClick={copyReferralLink}>
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button onClick={handleSaveReferralCode} disabled={savingCode} className="w-full">
+                      {savingCode ? "Saving…" : "Save Referral Code"}
+                    </Button>
+                  </div>
+
+                  {/* Referrer */}
+                  {userDetails?.referrer && (
+                    <div className="rounded-lg border border-border p-4">
+                      <div className="text-xs text-muted-foreground mb-1">Invited by</div>
+                      <div className="font-medium">{userDetails.referrer.display_name || userDetails.referrer.email}</div>
+                      {userDetails.referrer.referral_code && (
+                        <div className="text-xs text-muted-foreground font-mono mt-1">
+                          code: {userDetails.referrer.referral_code}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Referred users */}
+                  <div className="rounded-lg border border-border p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <UsersIcon className="h-4 w-4 text-primary" />
+                      <h3 className="font-semibold">
+                        Referred Users {userDetails ? `(${userDetails.referralCount})` : ""}
+                      </h3>
+                    </div>
+                    {detailsLoading ? (
+                      <div className="text-sm text-muted-foreground">Loading…</div>
+                    ) : userDetails && userDetails.referredUsers.length > 0 ? (
+                      <div className="space-y-2 max-h-48 overflow-y-auto">
+                        {userDetails.referredUsers.map((u) => (
+                          <div key={u.user_id} className="flex justify-between items-center text-sm border-b border-border/50 pb-2 last:border-0">
+                            <div className="min-w-0">
+                              <div className="truncate font-medium">{u.display_name || "No name"}</div>
+                              <div className="truncate text-xs text-muted-foreground">{u.email}</div>
+                            </div>
+                            <div className="text-xs text-muted-foreground shrink-0 ml-2">
+                              {new Date(u.created_at).toLocaleDateString()}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-sm text-muted-foreground">No referred users yet.</div>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingUser(null)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
