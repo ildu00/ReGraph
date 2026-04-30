@@ -278,6 +278,7 @@ export const AdminUsers = () => {
     toast.success("Referral link copied");
   };
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
 
   // Filter and sort users
   const filteredUsers = users
