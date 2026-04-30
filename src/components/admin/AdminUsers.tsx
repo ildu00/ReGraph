@@ -406,7 +406,7 @@ export const AdminUsers = () => {
                   </TableRow>
                 ) : (
                   paginatedUsers.map((user) => (
-                    <TableRow key={user.id}>
+                    <TableRow key={user.id} className="cursor-pointer" onClick={() => openUserView(user)}>
                       <TableCell className="max-w-0">
                         <div className="truncate font-medium">{user.display_name || "No name"}</div>
                         <div className="text-xs text-muted-foreground md:hidden truncate">{user.email || "—"}</div>
