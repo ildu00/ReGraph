@@ -14,6 +14,19 @@ const ScrollToTop = () => {
   const { pathname, hash, search } = useLocation();
   const isFirst = useRef(true);
 
+  // Capture ?ref=CODE referral attribution into localStorage (persists across signup flow)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(search);
+      const ref = params.get("ref");
+      if (ref && /^[A-Za-z0-9_-]{3,32}$/.test(ref)) {
+        localStorage.setItem("referral_code", ref);
+      }
+    } catch {
+      // ignore
+    }
+  }, [search]);
+
   useEffect(() => {
     // If there's a hash, scroll to that element
     if (hash) {
@@ -26,6 +39,7 @@ const ScrollToTop = () => {
     } else {
       window.scrollTo(0, 0);
     }
+
 
     // Yandex.Metrika SPA pageview tracking.
     // Skip the very first navigation — initial load is auto-tracked by the counter.
