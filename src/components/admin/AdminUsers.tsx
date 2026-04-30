@@ -77,7 +77,7 @@ export const AdminUsers = () => {
       // Fetch real users (profiles + roles + wallets)
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("user_id, display_name, email, created_at")
+        .select("user_id, display_name, email, created_at, referral_code, referred_by")
         .order("created_at", { ascending: false });
 
       const { data: roles } = await supabase.from("user_roles").select("user_id, role");
@@ -95,7 +95,7 @@ export const AdminUsers = () => {
       }));
 
       // Convert real users to unified format
-      const realUsersUnified: UnifiedUser[] = (profiles || []).map((p) => ({
+      const realUsersUnified: UnifiedUser[] = (profiles || []).map((p: any) => ({
         id: p.user_id,
         display_name: p.display_name || "",
         email: p.email || "",
@@ -104,6 +104,8 @@ export const AdminUsers = () => {
         created_at: p.created_at,
         type: "real" as const,
         role: roles?.find((r) => r.user_id === p.user_id)?.role || "user",
+        referral_code: p.referral_code ?? null,
+        referred_by: p.referred_by ?? null,
       }));
 
       setUsers([...realUsersUnified, ...testUsersUnified]);
