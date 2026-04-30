@@ -28,6 +28,18 @@ interface UnifiedUser {
   created_at: string;
   type: "test" | "real";
   role?: string;
+  referral_code?: string | null;
+  referred_by?: string | null;
+}
+
+interface UserDetails {
+  totalSpent: number;
+  apiKeys: number;
+  devices: number;
+  transactions: number;
+  referralCount: number;
+  referrer: { display_name: string | null; email: string | null; referral_code: string | null } | null;
+  referredUsers: Array<{ user_id: string; display_name: string | null; email: string | null; created_at: string }>;
 }
 
 type SortField = "display_name" | "balance_usd" | "created_at" | "status";
