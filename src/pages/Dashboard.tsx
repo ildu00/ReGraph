@@ -76,6 +76,17 @@ const DashboardInner = () => {
     const stripeStatus = searchParams.get("stripe");
     if (stripeStatus === "success") {
       import("sonner").then(({ toast }) => toast.success("Payment successful! Your balance will update shortly."));
+      try {
+        const tracked = localStorage.getItem("fb_purchase_tracked");
+        const amountStr = localStorage.getItem("pending_stripe_deposit_amount");
+        const amount = amountStr ? parseFloat(amountStr) : NaN;
+        if (!tracked && !isNaN(amount) && amount > 0) {
+          const w = window as unknown as { fbq?: (...args: unknown[]) => void };
+          w.fbq?.("track", "Purchase", { value: amount, currency: "USD" });
+          localStorage.setItem("fb_purchase_tracked", "1");
+        }
+        localStorage.removeItem("pending_stripe_deposit_amount");
+      } catch { /* ignore */ }
     } else if (stripeStatus === "cancelled") {
       import("sonner").then(({ toast }) => toast.info("Payment was cancelled."));
     }
