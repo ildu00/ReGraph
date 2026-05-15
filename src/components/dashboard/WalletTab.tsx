@@ -362,6 +362,7 @@ const WalletTab = () => {
 
       const { url } = response.data;
       if (url) {
+        try { localStorage.setItem('pending_stripe_deposit_amount', String(amount)); } catch { /* ignore */ }
         window.open(url, '_blank');
         setCardDialogOpen(false);
         setCardProvider(null);
