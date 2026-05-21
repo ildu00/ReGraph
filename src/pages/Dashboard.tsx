@@ -94,7 +94,7 @@ const DashboardInner = () => {
     } else if (stripeStatus === "cancelled") {
       import("sonner").then(({ toast }) => toast.info("Payment was cancelled."));
     }
-  }, [searchParams]);
+  }, [searchParams, user?.email]);
 
   // Lock body scroll when mobile chat/claw is active to prevent iOS Safari
   // from scrolling fixed elements out of view when keyboard opens
