@@ -45,8 +45,11 @@ const Auth = () => {
         } else {
           toast.success("Account created successfully!");
           try {
-            const w = window as unknown as { fbq?: (...args: unknown[]) => void };
-            w.fbq?.("track", "CompleteRegistration", { content_name: "signup", status: true });
+            const { trackMetaEvent } = await import("@/lib/metaPixel");
+            await trackMetaEvent("CompleteRegistration", {
+              email,
+              customData: { content_name: "signup", status: true },
+            });
           } catch { /* ignore */ }
         }
       } else {

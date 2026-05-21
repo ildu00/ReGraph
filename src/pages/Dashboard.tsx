@@ -81,8 +81,12 @@ const DashboardInner = () => {
         const amountStr = localStorage.getItem("pending_stripe_deposit_amount");
         const amount = amountStr ? parseFloat(amountStr) : NaN;
         if (!tracked && !isNaN(amount) && amount > 0) {
-          const w = window as unknown as { fbq?: (...args: unknown[]) => void };
-          w.fbq?.("track", "Purchase", { value: amount, currency: "USD" });
+          import("@/lib/metaPixel").then(({ trackMetaEvent }) => {
+            trackMetaEvent("Purchase", {
+              email: user?.email,
+              customData: { value: amount, currency: "USD" },
+            });
+          });
           localStorage.setItem("fb_purchase_tracked", "1");
         }
         localStorage.removeItem("pending_stripe_deposit_amount");
@@ -90,7 +94,7 @@ const DashboardInner = () => {
     } else if (stripeStatus === "cancelled") {
       import("sonner").then(({ toast }) => toast.info("Payment was cancelled."));
     }
-  }, [searchParams]);
+  }, [searchParams, user?.email]);
 
   // Lock body scroll when mobile chat/claw is active to prevent iOS Safari
   // from scrolling fixed elements out of view when keyboard opens
