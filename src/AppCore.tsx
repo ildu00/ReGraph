@@ -74,6 +74,7 @@ const AppCore = () => {
                   <Routes>
                     <Route path="/" element={<Index />} />
                     <Route path="/auth" element={<Auth />} />
+                    <Route path="/signup" element={<Auth />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/docs" element={<Docs />} />
                     <Route path="/models" element={<Models />} />

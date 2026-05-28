@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Navigate, useSearchParams } from "react-router-dom";
+import { Navigate, useSearchParams, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
@@ -13,8 +13,9 @@ import { toast } from "sonner";
 const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
   const redirectTab = searchParams.get("redirect");
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(location.pathname === "/signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
