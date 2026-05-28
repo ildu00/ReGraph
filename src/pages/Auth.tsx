@@ -14,8 +14,10 @@ const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const redirectTab = searchParams.get("redirect");
-  const [isSignUp, setIsSignUp] = useState(location.pathname === "/signup");
+  const isSignUp = location.pathname === "/signup";
+  useEffect(() => { /* keep URL as source of truth */ }, [location.pathname]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
