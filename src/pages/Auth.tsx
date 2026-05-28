@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate, useSearchParams, useLocation } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Navigate, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,8 +14,10 @@ const Auth = () => {
   const { user, loading, signIn, signUp } = useAuth();
   const [searchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const redirectTab = searchParams.get("redirect");
-  const [isSignUp, setIsSignUp] = useState(location.pathname === "/signup");
+  const isSignUp = location.pathname === "/signup";
+  useEffect(() => { /* keep URL as source of truth */ }, [location.pathname]);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -215,7 +217,7 @@ const Auth = () => {
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => navigate(isSignUp ? "/auth" : "/signup", { replace: true })}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isSignUp
