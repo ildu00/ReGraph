@@ -217,7 +217,7 @@ const Auth = () => {
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => setIsSignUp(!isSignUp)}
+              onClick={() => navigate(isSignUp ? "/auth" : "/signup", { replace: true })}
               className="text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               {isSignUp
