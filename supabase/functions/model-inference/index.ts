@@ -448,7 +448,10 @@ serve(async (req) => {
       model.startsWith("tta-") ||
       model.startsWith("txt2sng-") ||
       model.startsWith("emb-") ||
-      model.startsWith("utils/")
+      model.startsWith("utils/") ||
+      model.startsWith("deepseek/") ||
+      model.startsWith("aion/") ||
+      model.startsWith("perplexity/")
         ? model
         : "openai/gpt-4o-mini"
     );
