@@ -310,7 +310,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false } = parsedBody;
+    const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = parsedBody;
     // Allow _endpoint injection from the gateway to override category
     const _endpoint = (parsedBody as any)._endpoint as string | undefined;
     const category = (parsedBody as any).category || rawCategory;
@@ -501,6 +501,12 @@ serve(async (req) => {
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
+      if (response_format) chatBody.response_format = response_format;
+      if (top_p !== undefined) chatBody.top_p = top_p;
+      if (frequency_penalty !== undefined) chatBody.frequency_penalty = frequency_penalty;
+      if (presence_penalty !== undefined) chatBody.presence_penalty = presence_penalty;
+      if (stop !== undefined) chatBody.stop = stop;
+      if (seed !== undefined) chatBody.seed = seed;
       // For streaming: request usage in final chunk so we can bill accurately
       if (stream) {
         chatBody.stream = true;

@@ -49,7 +49,7 @@ serve(async (req) => {
       );
     }
     
-    const { model, messages, prompt, input, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents, encoding_format, dimensions } = body;
+    const { model, messages, prompt, input, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents, encoding_format, dimensions, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = body;
     const useAgents = agents === true;
     // Check if this is a special endpoint (forwarded by Cloudflare Worker)
     const requestUrl = new URL(req.url);
@@ -233,6 +233,13 @@ serve(async (req) => {
     if (stream) inferenceBody.stream = true;
     if (n) inferenceBody.n = n;
     if (size) inferenceBody.size = size;
+    if (response_format) inferenceBody.response_format = response_format;
+    if (top_p !== undefined) inferenceBody.top_p = top_p;
+    if (frequency_penalty !== undefined) inferenceBody.frequency_penalty = frequency_penalty;
+    if (presence_penalty !== undefined) inferenceBody.presence_penalty = presence_penalty;
+    if (stop !== undefined) inferenceBody.stop = stop;
+    if (seed !== undefined) inferenceBody.seed = seed;
+
 
     const inferenceResponse = await fetch(`${SUPABASE_URL}/functions/v1/model-inference`, {
       method: "POST",
