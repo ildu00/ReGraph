@@ -501,6 +501,12 @@ serve(async (req) => {
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
+      if (response_format) chatBody.response_format = response_format;
+      if (top_p !== undefined) chatBody.top_p = top_p;
+      if (frequency_penalty !== undefined) chatBody.frequency_penalty = frequency_penalty;
+      if (presence_penalty !== undefined) chatBody.presence_penalty = presence_penalty;
+      if (stop !== undefined) chatBody.stop = stop;
+      if (seed !== undefined) chatBody.seed = seed;
       // For streaming: request usage in final chunk so we can bill accurately
       if (stream) {
         chatBody.stream = true;
