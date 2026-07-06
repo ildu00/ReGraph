@@ -310,7 +310,7 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: 400, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid JSON", request_body: rawBody.substring(0, 1000) });
       return new Response(JSON.stringify({ error: "Invalid JSON body" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
-    const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false } = parsedBody;
+    const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = parsedBody;
     // Allow _endpoint injection from the gateway to override category
     const _endpoint = (parsedBody as any)._endpoint as string | undefined;
     const category = (parsedBody as any).category || rawCategory;
