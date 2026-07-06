@@ -39,6 +39,23 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.0",
+    date: "July 6, 2026",
+    title: "DeepSeek V4 Family & Expanded Reasoning Catalog",
+    type: "major",
+    changes: [
+      { category: "feature", description: "Added DeepSeek V4 Pro 1.6T and V4 Flash 284B — both in standard and Thinking variants, with 1M token context and tools/structured outputs support (deepseek/deepseek-v4-pro, deepseek-v4-pro-thinking, deepseek-v4-flash, deepseek-v4-flash-thinking)." },
+      { category: "feature", description: "Added alternate-provider mirrors of the V4 family for higher availability: deepseek/deepseek-v4-pro-alt, deepseek-v4-pro-alt-thinking, deepseek-v4-flash-alt, deepseek-v4-flash-alt-thinking." },
+      { category: "feature", description: "Added DeepSeek V3.2 671B lineup: deepseek/deepseek-v3.2-alt, deepseek-v3.2-alt-thinking, deepseek-v3.2-alt-faster, deepseek-v3.2-speciale-alt, plus experimental deepseek-v3.2-exp-alt and deepseek-v3.2-exp-alt-thinking." },
+      { category: "feature", description: "Added DeepSeek V3.1 671B lineup: deepseek/deepseek-chat-3.1-alt, deepseek-chat-3.1-alt-thinking, deepseek-chat-3.1-alt-fast, deepseek-chat-3.1-terminus-alt, deepseek-chat-3.1-terminus-alt-thinking." },
+      { category: "feature", description: "Added additional DeepSeek R1 and V3 options: deepseek/deepseek-r1-alt-0528, deepseek-r1-alt-fast, deepseek-r1-distill-llama-70b, deepseek-chat-0324-alt, deepseek-chat-0324-alt-fast, deepseek-chat-alt." },
+      { category: "feature", description: "Added deepseek/deepseek-chat (routed to V4 Flash) and deepseek/deepseek-coder (now a universal model)." },
+      { category: "feature", description: "Added AionLabs Aion 2.0 (aion/aion-2.0) — roleplay model built on DeepSeek 3.2 with extended reasoning." },
+      { category: "feature", description: "Added Perplexity Sonar Reasoning (perplexity/sonar-r1-online) — online reasoning model with web access built on DeepSeek R1." },
+      { category: "improvement", description: "Inference router now transparently passes through deepseek/, aion/, and perplexity/ model IDs, so any newly published model in these namespaces is instantly callable via /v1/chat/completions." },
+    ]
+  },
+  {
     version: "3.7.1",
     date: "March 30, 2026",
     title: "Embeddings Resilience & Error Recovery",
