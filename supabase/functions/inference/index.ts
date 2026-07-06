@@ -49,7 +49,7 @@ serve(async (req) => {
       );
     }
     
-    const { model, messages, prompt, input, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents, encoding_format, dimensions } = body;
+    const { model, messages, prompt, input, max_tokens, temperature, stream, tools, tool_choice, n, size, quality, style, agents, encoding_format, dimensions, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = body;
     const useAgents = agents === true;
     // Check if this is a special endpoint (forwarded by Cloudflare Worker)
     const requestUrl = new URL(req.url);
