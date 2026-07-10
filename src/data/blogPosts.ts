@@ -34,174 +34,191 @@ export interface BlogPost {
 export const blogPosts: BlogPost[] = [
   {
     id: "18",
-    slug: "deepseek-models-on-regraph-v3-v3.1-r1-comparison",
-    title: "DeepSeek on ReGraph: A Professional Review of V3, V3.1, and R1",
-    excerpt: "An in-depth look at the DeepSeek model family now available on ReGraph — architecture, benchmarks, use-case fit, and how each model compares on cost, latency, and reasoning quality.",
+    slug: "deepseek-v4-family-on-regraph-pro-flash-thinking",
+    title: "DeepSeek V4 on ReGraph: Pro 1.6T, Flash 284B, Thinking Variants & the V3.2 Line",
+    excerpt: "A professional overview of the full DeepSeek catalog now live on ReGraph — V4 Pro 1.6T, V4 Flash 284B, their Thinking variants, the V3.2 line including Speciale, and how to pick between them on cost, latency, context, and reasoning depth.",
     featured: false,
-    content: `The DeepSeek family has quickly become one of the strongest open-weight lineups in production AI. With the recent additions on ReGraph, developers now get access to a coherent tier of general-purpose, long-context, and reasoning-specialized models — all served through the same decentralized inference layer, at a fraction of the cost of closed frontier models.
+    content: `DeepSeek's V4 generation is the largest jump the family has made since V3 — a **1.6T-parameter Mixture-of-Experts flagship**, a fast **284B MoE**, native **1M-token context**, and dedicated **Thinking** variants that produce explicit reasoning traces. ReGraph now hosts the full V4 lineup alongside the mature V3.2 line and the R1 reasoning models, giving you a single OpenAI-compatible endpoint for everything from ultra-cheap high-throughput chat to frontier-class analytical reasoning.
 
-This article breaks down what each DeepSeek model is designed for, how they compare, and where they fit into a real production stack.
-
----
-
-## The DeepSeek Lineup on ReGraph
-
-We currently host three production-grade DeepSeek endpoints:
-
-| Model | Type | Context | Best For |
-|-------|------|---------|----------|
-| **DeepSeek V3** | General-purpose MoE | 128K | Everyday chat, coding, agents, high-throughput workloads |
-| **DeepSeek V3.1** | Improved MoE | 128K | Same as V3, with sharper instruction following and tool use |
-| **DeepSeek R1** | Reasoning-specialized | 64K | Math, code synthesis, multi-step logic, evaluations |
-
-All three are Mixture-of-Experts (MoE) architectures with **671B total parameters** and roughly **37B active per token**, which is the reason they deliver frontier-class quality at open-weight cost.
+This article is a professional walkthrough of what shipped, what each model is actually good at, and how to choose between them in production.
 
 ---
 
-## Architecture in Brief
+## The Full DeepSeek Catalog on ReGraph
 
-DeepSeek's models share a common backbone that is worth understanding before choosing between them:
+| Model ID | Params | Context | Type | Positioning |
+|----------|--------|---------|------|-------------|
+| \`deepseek/deepseek-v4-pro\` | 1.6T MoE | 1M | General | Ultra-cheap flagship |
+| \`deepseek/deepseek-v4-pro-thinking\` | 1.6T MoE | 1M | Reasoning | Flagship with explicit CoT |
+| \`deepseek/deepseek-v4-pro-alt\` | 1.6T MoE | 1M | General | High-availability flagship tier |
+| \`deepseek/deepseek-v4-pro-alt-thinking\` | 1.6T MoE | 1M | Reasoning | High-availability flagship + CoT |
+| \`deepseek/deepseek-v4-flash\` | 284B MoE | 1M | General | Fast, cost-optimized |
+| \`deepseek/deepseek-v4-flash-thinking\` | 284B MoE | 1M | Reasoning | Fast + CoT |
+| \`deepseek/deepseek-v4-flash-alt\` | 284B MoE | 1M | General | High-availability Flash tier |
+| \`deepseek/deepseek-v4-flash-alt-thinking\` | 284B MoE | 1M | Reasoning | High-availability Flash + CoT |
+| \`deepseek/deepseek-chat\` | 284B MoE | 1M | General | Latest chat alias → V4 Flash |
+| \`deepseek/deepseek-v3.2-speciale-alt\` | 671B MoE | 162K | Reasoning | Analysis-tuned V3.2 |
+| \`deepseek/deepseek-v3.2-alt\` / \`-thinking\` / \`-faster\` | 671B MoE | 162K | General / Reasoning | Mature V3.2 line |
+| \`deepseek/deepseek-chat-3.1-terminus-alt\` (+ \`-thinking\`) | 671B MoE | 162K | General / Reasoning | Final V3.1 refinement |
+| \`deepseek/deepseek-chat-3.1-alt\` (+ variants) | 671B MoE | 162K | General / Reasoning | Baseline V3.1 |
+| \`deepseek/deepseek-r1\` (+ \`-alt-fast\`, \`-alt-0528\`) | 671B MoE | 64K–163K | Reasoning | Original o1-class R1 |
+| \`deepseek/deepseek-r1-distill-llama-70b\` | 70B dense | 128K | Reasoning | Distilled R1 on Llama 3.3 |
+| \`deepseek/deepseek-coder\` | — | 128K | Code (alias) | Routes to universal DeepSeek Chat |
 
-- **MoE routing** — only a fraction of parameters activate per token, keeping inference cost close to a 40B dense model while retaining the knowledge capacity of a 600B+ model.
-- **Multi-head Latent Attention (MLA)** — a compressed attention mechanism that dramatically reduces the KV cache footprint, enabling long context at reasonable memory cost.
-- **FP8 mixed-precision training** — allowed the base models to be trained efficiently and released with high numerical stability for inference quantization.
+Two conventions to know:
 
-R1 is built on top of the V3 base but trained with **large-scale reinforcement learning on verifiable reasoning tasks**, producing explicit chain-of-thought traces before the final answer.
+- **Thinking** variants emit an explicit chain-of-thought before the final answer. Use them when reasoning depth matters more than latency.
+- **Alt** variants are served through a **high-availability routing tier** with independent capacity. Prefer them when uptime, burst tolerance, or SLA behavior matters more than the absolute cheapest unit price.
 
 ---
 
-## DeepSeek V3 — The Default Workhorse
+## What Changed in V4
 
-V3 is the model to reach for when you want strong general performance without paying for a reasoning tax.
+V4 is not a cosmetic bump. Three things move at once:
+
+1. **Native 1M-token context.** Every V4 endpoint accepts up to 1,000,000 tokens of input. That is roughly 8× the effective usable context of V3.2 and puts DeepSeek in the same class as the long-context frontier models — at open-weight economics.
+2. **Sparser, larger MoE.** V4 Pro pushes total capacity to **1.6T parameters** while keeping the active-per-token footprint tight, so inference cost stays close to a mid-sized dense model. V4 Flash is a smaller **284B MoE** tuned for latency.
+3. **First-class Thinking variants.** Rather than a single reasoning-only sibling (R1), V4 ships explicit \`-thinking\` versions of both Pro and Flash. Reasoning becomes a *mode* of the same model family, not a separate product.
+
+The result: one architecture, four operating points (Pro vs Flash × Thinking vs Direct), all with 1M context and tool use.
+
+---
+
+## DeepSeek V4 Pro 1.6T — The New Flagship
+
+V4 Pro is the model to reach for when quality is the priority and you still want open-weight cost.
 
 **Strengths**
 
-- Excellent instruction following across English, Chinese, and code.
-- Strong long-context comprehension up to 128K tokens.
-- Fast time-to-first-token thanks to MoE sparsity — feels comparable to much smaller dense models in latency.
-- Robust JSON and structured output.
+- Frontier-class general reasoning, knowledge breadth, and coding.
+- 1M-token context handled natively — long documents, whole repos, extended agent traces fit in one call.
+- Tools and structured outputs are stable and well-tuned.
+- With the \`-thinking\` variant, competitive with closed reasoning models on math, logic, and code synthesis.
 
 **Where it fits**
 
-- Chat and support assistants
-- RAG pipelines with large retrieved contexts
-- Code completion and refactoring where speed matters
-- Cost-sensitive batch inference
+- Repo-scale coding assistants that need to see the whole project
+- Long-document analysis, contract review, research synthesis
+- Complex agents that plan over many steps and tool calls
+- Any workload where V3.2 was capable but occasionally short on depth
 
-If you are migrating from GPT-4 class models and want a drop-in replacement that keeps quality high while cutting cost by roughly an order of magnitude, V3 is the starting point.
+**Direct vs Thinking**
 
----
-
-## DeepSeek V3.1 — Sharper, More Agentic
-
-V3.1 is an incremental but meaningful upgrade over V3. It keeps the same architecture and pricing tier while improving the behaviors that matter most for real applications.
-
-**What changed vs V3**
-
-- Better adherence to system prompts and formatting constraints.
-- Stronger **tool / function-calling** behavior — fewer hallucinated arguments, cleaner JSON, better recovery when a tool returns an error.
-- Improved multi-turn coherence on long conversations.
-- Small but consistent gains on coding and math benchmarks.
-
-**Where it fits**
-
-- Agents that call tools and browse structured data
-- Assistants with strict output schemas
-- Workflows where V3 was "almost right but not quite"
-
-For most new projects on ReGraph, **V3.1 is the recommended default**. V3 remains available for reproducibility and for users who prefer its slightly different phrasing style.
+- \`deepseek-v4-pro\`: fast, direct answers. Default for chat, drafting, tool use.
+- \`deepseek-v4-pro-thinking\`: emits a reasoning trace before the answer. Higher output tokens, higher latency, materially better on hard problems.
 
 ---
 
-## DeepSeek R1 — Reasoning First
+## DeepSeek V4 Flash 284B — Cheap, Fast, 1M Context
 
-R1 is a different animal. Instead of optimizing for chat and throughput, R1 is trained to *think out loud* — it produces long internal reasoning chains before committing to an answer, similar in spirit to OpenAI's o-series and Anthropic's extended thinking modes.
+V4 Flash is the workhorse. It keeps the V4 architecture and 1M context but shrinks the MoE to 284B, trading a modest amount of top-end quality for a large gain in latency and unit cost.
 
 **Strengths**
 
-- State-of-the-art open-weight scores on math (AIME, MATH), competitive programming, and logic puzzles.
-- Strong performance on multi-step scientific and analytical tasks.
-- Transparent reasoning traces you can inspect and, if desired, expose to end users.
-
-**Trade-offs**
-
-- Higher output token counts — reasoning traces are long by design.
-- Higher latency and cost per answer.
-- Not ideal for casual chat or short factual replies, where it will over-think.
+- Sub-500ms typical time-to-first-token for short prompts.
+- Same 1M context and tool-use behavior as V4 Pro.
+- One of the cheapest 1M-context models available anywhere.
+- Thinking variant closes most of the reasoning gap to Pro on structured problems.
 
 **Where it fits**
 
-- Math tutors and STEM assistants
-- Code synthesis with correctness constraints
-- Evaluation pipelines and dataset labeling
-- "Second opinion" layers behind a cheaper first-pass model
+- High-volume chat, support automation, classification, extraction
+- RAG over large corpora where context length is the constraint, not raw quality
+- Agentic loops with many cheap tool-using turns
+- Cost-sensitive coding assistants
 
-A common production pattern on ReGraph: route the initial request to V3.1, and escalate to R1 only when the task is detected as reasoning-heavy or the first answer fails a validator.
+For most new projects, **V4 Flash is the recommended default**, with V4 Pro reserved for requests where the extra depth is worth the cost.
 
 ---
 
-## Head-to-Head Comparison
+## The V3.2 Line — Still Highly Relevant
 
-| Dimension | V3 | V3.1 | R1 |
-|-----------|-----|------|-----|
-| Primary strength | General quality | Agents, tool use | Reasoning, math, code |
-| Context window | 128K | 128K | 64K |
-| Output style | Direct | Direct, structured | Chain-of-thought + final answer |
-| Typical latency | Low | Low | Medium–High |
-| Cost per 1M tokens | Low | Low | Medium |
-| Best for | Chat, RAG, throughput | Production default | Hard problems, evaluation |
+V3.2 is mature, well-benchmarked, and cheaper than V4 on absolute unit price for the classic 162K context window. It remains the right choice in several concrete cases:
 
-Benchmark direction (higher is better, indicative):
+- \`deepseek-v3.2-alt\` — general-purpose 671B with tools. Predictable, well-understood behavior.
+- \`deepseek-v3.2-alt-thinking\` — reasoning variant of the same base.
+- \`deepseek-v3.2-speciale-alt\` — analysis-tuned, particularly strong on structured reasoning and dense text.
+- \`deepseek-v3.2-alt-faster\` — latency-optimized routing when you need V3.2 quality at Flash-like speed.
 
-- **MMLU / general knowledge:** V3 ≈ V3.1 > R1 on breadth, R1 wins on hard subsets.
-- **HumanEval / coding:** V3.1 ≥ V3, R1 leads on non-trivial algorithmic tasks.
-- **MATH / AIME:** R1 significantly ahead of both V3 and V3.1.
-- **Tool-use / function-calling:** V3.1 clearly ahead of V3; R1 usable but not its focus.
+Prefer V3.2 when 162K of context is enough, when you already have production evals against it, or when you want the lowest total spend on non-frontier workloads.
+
+**V3.1 Terminus** is worth calling out separately: it is the final, best-behaved iteration of the V3.1 line and is often the right pick for teams that pinned to V3.1 and want the last quality bump without moving generations.
+
+---
+
+## R1 and the Reasoning Line
+
+R1 is the model that made open-weight reasoning credible against o1. It remains on the platform in three forms:
+
+- \`deepseek/deepseek-r1\` — the original release. Verbose reasoning traces, strong on math and logic.
+- \`deepseek/deepseek-r1-alt-fast\` — same reasoning quality on faster routing at a higher unit price.
+- \`deepseek/deepseek-r1-alt-0528\` — the 05-28 refresh, tuned for stability and formatting.
+- \`deepseek/deepseek-r1-distill-llama-70b\` — a dense 70B distillation on Llama 3.3. Much cheaper, keeps a large fraction of R1's reasoning gains, easy to self-benchmark against Llama baselines.
+
+With V4 Thinking variants available, the practical role of R1 has narrowed but not disappeared: it is still the reference reasoning model for reproducibility, evaluation baselines, and pipelines that were built and validated against R1 outputs.
+
+---
+
+## Direct vs Thinking — When to Pay for Reasoning
+
+Thinking variants are not universally better. They spend more output tokens and add latency in exchange for depth. A simple rule that holds in practice:
+
+- **Use Direct** for chat, drafting, summarization, extraction, tool orchestration, and anything where the answer is short and the failure mode is style, not correctness.
+- **Use Thinking** for math, formal logic, algorithmic coding, multi-step planning, root-cause analysis, and evaluations — anywhere a wrong answer is expensive and a longer answer is cheap.
+
+A common production pattern on ReGraph:
+
+1. Route every request to **V4 Flash** by default.
+2. Detect reasoning-heavy prompts (or failed validations) and re-route those to **V4 Flash Thinking**.
+3. Escalate the small remainder to **V4 Pro Thinking**.
+
+This gives you frontier reasoning quality on the hard tail of traffic without paying for it on the easy 90%.
+
+---
+
+## Head-to-Head at a Glance
+
+| Dimension | V4 Pro | V4 Pro Thinking | V4 Flash | V4 Flash Thinking | V3.2 | R1 |
+|-----------|--------|-----------------|----------|--------------------|------|-----|
+| Total params | 1.6T MoE | 1.6T MoE | 284B MoE | 284B MoE | 671B MoE | 671B MoE |
+| Context | 1M | 1M | 1M | 1M | 162K | 64K–163K |
+| Output style | Direct | CoT + answer | Direct | CoT + answer | Direct / CoT | Long CoT |
+| Latency | Low–Med | Med | Very Low | Low–Med | Low | Med–High |
+| Best for | Quality-first general | Hard reasoning | Volume + long context | Cheap reasoning | Mature 162K workloads | Reference reasoning |
 
 ---
 
 ## Advantages of Running DeepSeek on ReGraph
 
-Choosing ReGraph as the serving layer for DeepSeek models adds concrete advantages on top of the models themselves.
-
-- **OpenAI-compatible API** — the same \`/v1/chat/completions\`, \`/v1/completions\`, and streaming SSE contract, so existing SDKs work unchanged.
-- **Decentralized inference** — requests are routed across a global network of GPU and NPU nodes, which improves availability and keeps unit economics low.
-- **Transparent pricing in USD** — no token credits, no proprietary units; you pay directly for what you use with a predictable ~20% markup over raw compute cost.
-- **Consistent tooling** — function calling, JSON mode, streaming, and multimodal inputs behave the same across the DeepSeek family and the rest of the ReGraph catalog.
-- **No vendor lock-in** — the same code that runs V3.1 today can point at any other model on the platform tomorrow.
+- **One OpenAI-compatible endpoint** — the same \`/v1/chat/completions\`, streaming, tools, and structured-output contract across every DeepSeek model. Switching models is a one-line change.
+- **High-availability \`-alt\` tiers** — independent routing capacity for teams that care about burst behavior and uptime, not just headline price.
+- **Transparent USD pricing** — no proprietary credits or tokens; predictable per-1K-token rates directly in USD.
+- **Decentralized inference layer** — requests are routed across a global network of GPU and NPU nodes, which improves availability and keeps unit economics low.
+- **No vendor lock-in** — the same code path can address any DeepSeek variant, or any other model in the ReGraph catalog, without SDK changes.
 
 ---
 
-## How to Choose
+## How to Choose in Practice
 
-A simple decision tree that works for the vast majority of production use cases:
+A short decision tree that covers the majority of use cases:
 
-1. **Is the task reasoning-heavy** (math, formal logic, multi-step code synthesis, evaluation)?
-   → Use **R1**.
-2. **Does the task involve tools, strict schemas, or agentic loops**?
-   → Use **V3.1**.
-3. **Everything else** — chat, RAG, summarization, classification, high-volume workloads?
-   → Use **V3.1** by default, fall back to **V3** if you need a slightly different style or want to A/B test.
-
-You can also compose them: a fast V3.1 pass for the 95% of easy requests, plus an R1 escalation for the hard 5%. This is where MoE economics really pay off — you get frontier-class reasoning on demand without paying for it on every request.
+1. **Do you need > 162K tokens of context?** → V4 (Pro or Flash).
+2. **Is the workload reasoning-heavy?** → Pick the **Thinking** variant at your budget tier.
+3. **Is uptime / burst tolerance more important than the last cent of unit price?** → Use the **-alt** variant.
+4. **Is 162K context enough and cost is the priority?** → V3.2, or V3.2 Speciale for analysis.
+5. **Anything else?** → \`deepseek/deepseek-chat\` (routes to V4 Flash) is a strong default.
 
 ---
 
 ## Getting Started
 
-All three models are already live on ReGraph. To try them, point any OpenAI-compatible client at the ReGraph endpoint and use one of:
-
-- \`deepseek-v3\`
-- \`deepseek-v3.1\`
-- \`deepseek-r1\`
-
-Streaming, function calling, and JSON mode are supported across the family. You can benchmark them side by side directly from the Playground in your dashboard, or via the API with your existing test suite.
+Every model listed above is live on ReGraph today. Point any OpenAI-compatible client at the ReGraph endpoint and set the \`model\` field to the ID from the catalog. Streaming, function calling, structured outputs, and long-context inputs work identically across the family. You can benchmark side-by-side directly from the Playground, or plug the endpoints into your existing evaluation harness.
 
 ---
 
-*The DeepSeek family is one of the clearest signals that open-weight models have caught up with — and in specific domains overtaken — closed frontier systems. Running them on a decentralized network makes that progress economically usable at scale.*`,
+*V4 is the point where open-weight AI stops being a compromise. With 1M-token context, first-class reasoning variants, and pricing an order of magnitude below closed frontier models, the DeepSeek family on ReGraph is now a serious default for production systems — not just a cost-saving alternative.*`,
     date: "2026-07-10",
-    readTime: "10 min read",
+    readTime: "12 min read",
     category: "Models",
     image: deepseekModelsOverviewImg,
   },
