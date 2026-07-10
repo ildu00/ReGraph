@@ -37,7 +37,22 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
   const [index, setIndex] = useState(0);
   const [rect, setRect] = useState<DOMRect | null>(null);
   const [cardSize, setCardSize] = useState({ w: CARD_W, h: 240 });
+  const [viewport, setViewport] = useState(() => ({
+    w: typeof window !== "undefined" ? window.innerWidth : 1280,
+    h: typeof window !== "undefined" ? window.innerHeight : 800,
+  }));
   const cardRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const onResize = () =>
+      setViewport({ w: window.innerWidth, h: window.innerHeight });
+    window.addEventListener("resize", onResize);
+    window.visualViewport?.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.visualViewport?.removeEventListener("resize", onResize);
+    };
+  }, []);
 
   useEffect(() => {
     if (forceStart) {
@@ -238,12 +253,12 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
 
   if (!open || !current) return null;
 
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const vw = viewport.w;
+  const vh = viewport.h;
+  const isNarrow = vw < 640;
 
   // Compute card position + spotlight box.
   let cardStyle: React.CSSProperties;
-  let placement: "top" | "bottom" | "left" | "right" | "center" = "center";
   let spotlight: { top: number; left: number; width: number; height: number } | null = null;
 
   if (rect) {
@@ -254,17 +269,40 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
       height: rect.height + PAD * 2,
     };
     spotlight = padded;
+  }
 
+  if (isNarrow) {
+    // Mobile: bottom sheet. If target is in the lower half, dock to top instead
+    // so the card never covers the highlighted element.
+    const dockTop = !!rect && rect.top > vh / 2;
+    if (dockTop) {
+      cardStyle = {
+        position: "fixed",
+        top: `calc(env(safe-area-inset-top, 0px) + 8px)`,
+        left: 8,
+        right: 8,
+        width: "auto",
+      };
+    } else {
+      cardStyle = {
+        position: "fixed",
+        bottom: `calc(env(safe-area-inset-bottom, 0px) + 8px)`,
+        left: 8,
+        right: 8,
+        width: "auto",
+      };
+    }
+  } else if (rect) {
     const spaceRight = vw - (rect.right + GAP);
     const spaceLeft = rect.left - GAP;
     const spaceBottom = vh - (rect.bottom + GAP);
     const spaceTop = rect.top - GAP;
 
+    let placement: "top" | "bottom" | "left" | "right" = "bottom";
     if (spaceRight >= CARD_W + 16) placement = "right";
     else if (spaceLeft >= CARD_W + 16) placement = "left";
     else if (spaceBottom >= cardSize.h + 16) placement = "bottom";
     else if (spaceTop >= cardSize.h + 16) placement = "top";
-    else placement = "bottom";
 
     const w = Math.min(CARD_W, vw - 24);
     let top = 0;
@@ -278,7 +316,7 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
     } else if (placement === "bottom") {
       top = rect.bottom + GAP;
       left = rect.left + rect.width / 2 - w / 2;
-    } else if (placement === "top") {
+    } else {
       top = rect.top - GAP - cardSize.h;
       left = rect.left + rect.width / 2 - w / 2;
     }
