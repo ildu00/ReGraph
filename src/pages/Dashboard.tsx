@@ -236,6 +236,7 @@ const DashboardInner = () => {
               <button
                 key={item.value}
                 type="button"
+                data-tour={`nav-${item.value}`}
                 onClick={() => handleTabChange(item.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                   isActive
@@ -295,6 +296,7 @@ const DashboardInner = () => {
                     <button
                       key={item.value}
                       type="button"
+                      data-tour-mobile={`nav-${item.value}`}
                       onClick={() => {
                         handleTabChange(item.value);
                         setIsSidebarOpen(false);
@@ -340,16 +342,16 @@ const DashboardInner = () => {
       }>
         <Tabs value={activeTab} onValueChange={handleTabChange} className="flex-1 min-h-0 flex flex-col h-full">
           <TabsList className="bg-card border border-border shrink-0 w-full md:w-auto justify-start mb-2">
-            <TabsTrigger value="overview" className="data-[state=active]:bg-secondary px-2">
+            <TabsTrigger value="overview" data-tour-tab="overview" className="data-[state=active]:bg-secondary px-2">
               <BarChart3 className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="chat" className="data-[state=active]:bg-secondary px-2">
+            <TabsTrigger value="chat" data-tour-tab="chat" className="data-[state=active]:bg-secondary px-2">
               <MessageSquare className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="claw" className="data-[state=active]:bg-secondary px-2">
+            <TabsTrigger value="claw" data-tour-tab="claw" className="data-[state=active]:bg-secondary px-2">
               <Workflow className="h-4 w-4" />
             </TabsTrigger>
-            <TabsTrigger value="wallet" className="data-[state=active]:bg-secondary px-2">
+            <TabsTrigger value="wallet" data-tour-tab="wallet" className="data-[state=active]:bg-secondary px-2">
               <Wallet className="h-4 w-4" />
             </TabsTrigger>
             <TabsTrigger value="api-keys" className="data-[state=active]:bg-secondary px-2">
