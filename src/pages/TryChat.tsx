@@ -240,15 +240,12 @@ const TryChat = () => {
       {/* Header */}
       <header className="shrink-0 border-b border-border/40 bg-background/70 backdrop-blur-lg">
         <div className="container mx-auto flex items-center justify-between px-4 py-2.5">
-          <Link to="/" className="flex items-center gap-2 font-semibold group">
-            {/* Custom mark: layered rings */}
-            <div className="relative h-8 w-8">
-              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary via-fuchsia-500 to-cyan-400 opacity-90 group-hover:opacity-100 transition" />
-              <div className="absolute inset-[3px] rounded-[6px] bg-background flex items-center justify-center">
-                <div className="h-2 w-2 rounded-full bg-gradient-to-br from-primary to-fuchsia-500 shadow-[0_0_10px_hsl(var(--primary))]" />
-              </div>
-            </div>
-            <span className="tracking-tight">ReGraph</span>
+          <Link to="/" className="flex items-center gap-2">
+            <Zap className="h-6 w-6 text-primary" />
+            <span className="text-xl font-bold">
+              <span className="text-gradient">Re</span>
+              <span className="text-primary">Graph</span>
+            </span>
           </Link>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="hidden sm:inline-flex gap-1 font-mono">
