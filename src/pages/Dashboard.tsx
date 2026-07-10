@@ -409,6 +409,10 @@ const DashboardInner = () => {
           </TabsContent>
         </Tabs>
       </main>
+      <DemoTour
+        onNavigate={handleTabChange}
+        forceStart={searchParams.get("demo") === "1"}
+      />
     </div>
   );
 };
