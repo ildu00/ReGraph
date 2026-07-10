@@ -39,6 +39,19 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.1",
+    date: "July 10, 2026",
+    title: "TryChat Landing Page & Demo Tour Fixes",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "New /try landing page — try 50+ AI models before signup with a built-in chat, model picker, and one-click example prompts for chat, code, writing, and image generation." },
+      { category: "feature", description: "3 free requests on /try with no registration; after the limit a paywall shows estimated savings vs market rates and invites the user to sign up." },
+      { category: "improvement", description: "Unified /try branding with the shared ReGraph logo and platform styling for a consistent look across all pages." },
+      { category: "fix", description: "Fixed 'Maximum update depth exceeded' React error in the dashboard demo tour that could cause the page to become unresponsive." },
+      { category: "fix", description: "Improved demo tour popup positioning and truncation on mobile viewports so steps are fully visible and correctly aligned." },
+    ]
+  },
+  {
     version: "3.8.0",
     date: "July 6, 2026",
     title: "DeepSeek V4 Family & Expanded Reasoning Catalog",
