@@ -41,6 +41,7 @@ const GpuNodes = lazyWithRetry(() => import("./pages/GpuNodes"));
 const Mobile = lazyWithRetry(() => import("./pages/Mobile"));
 const Competitions = lazyWithRetry(() => import("./pages/Competitions"));
 const Claw = lazyWithRetry(() => import("./pages/Claw"));
+const TryChat = lazyWithRetry(() => import("./pages/TryChat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -99,6 +100,7 @@ const AppCore = () => {
                     <Route path="/mobile" element={<Mobile />} />
                     <Route path="/competitions" element={<Competitions />} />
                     <Route path="/claw" element={<Claw />} />
+                    <Route path="/try" element={<TryChat />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
