@@ -100,6 +100,7 @@ const AppCore = () => {
                     <Route path="/mobile" element={<Mobile />} />
                     <Route path="/competitions" element={<Competitions />} />
                     <Route path="/claw" element={<Claw />} />
+                    <Route path="/try" element={<TryChat />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
