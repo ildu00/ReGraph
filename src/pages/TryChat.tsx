@@ -5,7 +5,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import {
-  Send, Loader2, Bot, User, Sparkles, ArrowRight, Zap, Download, ExternalLink, RotateCcw,
+  Send, Loader2, Bot, User, ArrowRight, Zap, Download, ExternalLink, RotateCcw,
+  Atom, Braces, Rocket, Palette, ScrollText, Wand2, TrendingDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -54,13 +55,13 @@ const MODELS: ModelOption[] = [
   { id: "img-google/nano-banana-2", name: "Google Nano Banana 2", provider: "Google", category: "image-gen", market: 0.05, ours: 0.010 },
 ];
 
-const EXAMPLES: { title: string; prompt: string; modelId?: string; icon: string }[] = [
-  { title: "Explain quantum computing", prompt: "Explain quantum computing to a curious 12-year-old, using a simple analogy.", icon: "🧠" },
-  { title: "Write Python code", prompt: "Write a Python function that finds all prime numbers up to N using the Sieve of Eratosthenes. Add comments.", icon: "💻" },
-  { title: "Startup pitch", prompt: "Draft a 60-second elevator pitch for a decentralized AI compute marketplace.", icon: "🚀" },
-  { title: "Generate an image", prompt: "A neon cyberpunk cityscape at night, rain-slick streets, purple and cyan lights, cinematic wide shot.", modelId: "img-flux/flux-2", icon: "🎨" },
-  { title: "Summarize an article", prompt: "Summarize the key ideas of the paper 'Attention Is All You Need' in 5 bullet points.", icon: "📄" },
-  { title: "Fantasy portrait", prompt: "Portrait of an elven mage in an ancient library, glowing runes, soft lantern light, painterly, ultra-detailed.", modelId: "img-flux/schnell", icon: "🧙" },
+const EXAMPLES: { title: string; prompt: string; modelId?: string; Icon: any; tint: string; tag: string }[] = [
+  { title: "Explain quantum computing", prompt: "Explain quantum computing to a curious 12-year-old, using a simple analogy.", Icon: Atom, tint: "from-cyan-500/25 to-indigo-500/10 text-cyan-300", tag: "Learn" },
+  { title: "Sieve of Eratosthenes", prompt: "Write a Python function that finds all prime numbers up to N using the Sieve of Eratosthenes. Add comments.", Icon: Braces, tint: "from-emerald-500/25 to-teal-500/10 text-emerald-300", tag: "Code" },
+  { title: "60-second pitch", prompt: "Draft a 60-second elevator pitch for a decentralized AI compute marketplace.", Icon: Rocket, tint: "from-orange-500/25 to-pink-500/10 text-orange-300", tag: "Write" },
+  { title: "Cyberpunk cityscape", prompt: "A neon cyberpunk cityscape at night, rain-slick streets, purple and cyan lights, cinematic wide shot.", modelId: "img-flux/flux-2", Icon: Palette, tint: "from-fuchsia-500/25 to-purple-500/10 text-fuchsia-300", tag: "Image" },
+  { title: "Summarize a paper", prompt: "Summarize the key ideas of the paper 'Attention Is All You Need' in 5 bullet points.", Icon: ScrollText, tint: "from-amber-500/25 to-yellow-500/10 text-amber-300", tag: "Distill" },
+  { title: "Elven mage portrait", prompt: "Portrait of an elven mage in an ancient library, glowing runes, soft lantern light, painterly, ultra-detailed.", modelId: "img-flux/schnell", Icon: Wand2, tint: "from-violet-500/25 to-blue-500/10 text-violet-300", tag: "Image" },
 ];
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
@@ -220,7 +221,8 @@ const TryChat = () => {
   const s = computeSavings();
 
   return (
-    <div className="min-h-[100dvh] bg-background text-foreground flex flex-col">
+    <div className="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <Helmet>
         <title>Try ReGraph AI Free — 50+ Models, 80% Cheaper</title>
         <meta name="description" content="Try ReGraph AI free. Chat with GPT-5, Claude, Gemini, DeepSeek and generate images with FLUX. 3 free requests, no signup." />
@@ -230,23 +232,28 @@ const TryChat = () => {
 
       {/* Ambient background */}
       <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute top-[-20%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px]" />
-        <div className="absolute bottom-[-30%] right-[-10%] h-[600px] w-[600px] rounded-full bg-purple-500/15 blur-[140px]" />
+        <div className="absolute top-[-20%] left-[-10%] h-[500px] w-[500px] rounded-full bg-primary/20 blur-[120px] animate-pulse" style={{ animationDuration: '8s' }} />
+        <div className="absolute bottom-[-30%] right-[-10%] h-[600px] w-[600px] rounded-full bg-fuchsia-500/15 blur-[140px] animate-pulse" style={{ animationDuration: '11s' }} />
+        <div className="absolute top-[30%] right-[20%] h-[300px] w-[300px] rounded-full bg-cyan-500/10 blur-[100px]" />
       </div>
 
       {/* Header */}
-      <header className="sticky top-0 z-20 border-b border-border/40 bg-background/70 backdrop-blur-lg">
-        <div className="container mx-auto flex items-center justify-between px-4 py-3">
-          <Link to="/" className="flex items-center gap-2 font-semibold">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center glow-primary">
-              <Sparkles className="h-4 w-4 text-white" />
+      <header className="shrink-0 border-b border-border/40 bg-background/70 backdrop-blur-lg">
+        <div className="container mx-auto flex items-center justify-between px-4 py-2.5">
+          <Link to="/" className="flex items-center gap-2 font-semibold group">
+            {/* Custom mark: layered rings */}
+            <div className="relative h-8 w-8">
+              <div className="absolute inset-0 rounded-lg bg-gradient-to-br from-primary via-fuchsia-500 to-cyan-400 opacity-90 group-hover:opacity-100 transition" />
+              <div className="absolute inset-[3px] rounded-[6px] bg-background flex items-center justify-center">
+                <div className="h-2 w-2 rounded-full bg-gradient-to-br from-primary to-fuchsia-500 shadow-[0_0_10px_hsl(var(--primary))]" />
+              </div>
             </div>
             <span className="tracking-tight">ReGraph</span>
           </Link>
           <div className="flex items-center gap-2">
-            <Badge variant="secondary" className="hidden sm:inline-flex gap-1">
+            <Badge variant="secondary" className="hidden sm:inline-flex gap-1 font-mono">
               <Zap className="h-3 w-3 text-primary" />
-              {remaining} free {remaining === 1 ? "request" : "requests"} left
+              {remaining}/{FREE_LIMIT} free
             </Badge>
             <Button asChild size="sm" variant="ghost" className="hidden sm:inline-flex">
               <Link to="/auth">Sign in</Link>
@@ -258,28 +265,30 @@ const TryChat = () => {
         </div>
       </header>
 
-      <main className="container mx-auto flex-1 flex flex-col px-4 py-3 sm:py-4 w-full max-w-4xl min-h-0">
-        {/* Hero — compact so it fits without scroll */}
+      <main className="container mx-auto flex-1 min-h-0 flex flex-col px-4 py-3 w-full max-w-4xl">
+        {/* Hero — tight, one line on desktop */}
         {messages.length === 0 && (
-          <section className="text-center mb-3 sm:mb-4">
-            <Badge variant="outline" className="mb-2 border-primary/40 text-primary">
-              Free trial · No signup
-            </Badge>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
-              Try 50+ AI models,{" "}
-              <span className="bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent">
-                up to 80% cheaper
+          <section className="mb-3 shrink-0">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
+                Try 50+ AI models{" "}
+                <span className="bg-gradient-to-r from-primary via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
+                  at 1/5 the price
+                </span>
+              </h1>
+              <span className="inline-flex items-center gap-1 text-xs font-mono text-emerald-400">
+                <TrendingDown className="h-3.5 w-3.5" />
+                −80% vs OpenAI · AWS
               </span>
-            </h1>
-            <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl mx-auto hidden sm:block">
-              Chat with GPT-5, Claude, Gemini, DeepSeek and generate images with FLUX.
-              <span className="text-foreground font-semibold"> {FREE_LIMIT} free requests</span>, no account needed.
+            </div>
+            <p className="text-muted-foreground text-xs sm:text-sm mt-1">
+              GPT-5 · Claude · Gemini · DeepSeek · FLUX — <span className="text-foreground font-semibold">{FREE_LIMIT} free requests</span>, no signup.
             </p>
           </section>
         )}
 
-        {/* Model selector */}
-        <div className="flex items-center justify-between gap-2 mb-3">
+        {/* Model selector row */}
+        <div className="flex items-center justify-between gap-2 mb-3 shrink-0">
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full sm:w-[320px] bg-card/60 border-border">
               <SelectValue />
@@ -318,7 +327,7 @@ const TryChat = () => {
                 <span className="hidden sm:inline">New</span>
               </Button>
             )}
-            <Badge variant="secondary" className="sm:hidden gap-1">
+            <Badge variant="secondary" className="sm:hidden gap-1 font-mono">
               <Zap className="h-3 w-3 text-primary" />
               {remaining}/{FREE_LIMIT}
             </Badge>
@@ -326,22 +335,36 @@ const TryChat = () => {
         </div>
 
         {/* Chat area */}
-        <Card className="flex-1 min-h-[380px] bg-card/40 backdrop-blur border-border p-4 mb-3 overflow-y-auto space-y-4">
+        <Card className="flex-1 min-h-0 bg-card/40 backdrop-blur border-border p-4 mb-3 overflow-y-auto space-y-4">
           {messages.length === 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {EXAMPLES.map((ex) => (
-                <button
-                  key={ex.title}
-                  onClick={() => send(ex.prompt, ex.modelId)}
-                  className="text-left p-4 rounded-xl border border-border/60 bg-card/40 hover:border-primary/60 hover:bg-card/70 transition group"
-                >
-                  <div className="text-2xl mb-2">{ex.icon}</div>
-                  <div className="font-medium text-sm mb-1 group-hover:text-primary transition-colors">
-                    {ex.title}
-                  </div>
-                  <div className="text-xs text-muted-foreground line-clamp-2">{ex.prompt}</div>
-                </button>
-              ))}
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 sm:gap-3">
+              {EXAMPLES.map((ex, i) => {
+                const Icon = ex.Icon;
+                return (
+                  <button
+                    key={ex.title}
+                    onClick={() => send(ex.prompt, ex.modelId)}
+                    className="group relative text-left p-3 sm:p-4 rounded-xl border border-border/60 bg-card/50 hover:border-primary/70 hover:-translate-y-0.5 transition-all overflow-hidden"
+                    style={{ animation: `fadeUp .5s ease ${i * 60}ms both` }}
+                  >
+                    <div className={`absolute inset-0 bg-gradient-to-br ${ex.tint} opacity-40 group-hover:opacity-70 transition-opacity`} />
+                    <div className="relative flex items-start justify-between mb-2">
+                      <div className={`h-9 w-9 rounded-lg bg-background/60 backdrop-blur flex items-center justify-center ring-1 ring-border/60 ${ex.tint.split(' ').pop()}`}>
+                        <Icon className="h-4 w-4" strokeWidth={2.2} />
+                      </div>
+                      <span className="text-[10px] uppercase tracking-widest font-mono text-muted-foreground">
+                        {ex.tag}
+                      </span>
+                    </div>
+                    <div className="relative font-semibold text-sm mb-1 leading-snug group-hover:text-primary transition-colors">
+                      {ex.title}
+                    </div>
+                    <div className="relative text-[11px] text-muted-foreground line-clamp-2 leading-snug">
+                      {ex.prompt}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           ) : (
             messages.map((msg) => (
@@ -457,8 +480,8 @@ const TryChat = () => {
       <Dialog open={showPaywall} onOpenChange={setShowPaywall}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="mx-auto h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center mb-2 glow-primary">
-              <Sparkles className="h-6 w-6 text-primary" />
+            <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-primary via-fuchsia-500 to-cyan-400 flex items-center justify-center mb-2 glow-primary shadow-lg">
+              <TrendingDown className="h-7 w-7 text-white" strokeWidth={2.5} />
             </div>
             <DialogTitle className="text-center text-2xl">
               You just saved <span className="text-primary">${s.saved.toFixed(3)}</span>
