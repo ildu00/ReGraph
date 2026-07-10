@@ -236,6 +236,7 @@ const DashboardInner = () => {
               <button
                 key={item.value}
                 type="button"
+                data-tour={`nav-${item.value}`}
                 onClick={() => handleTabChange(item.value)}
                 className={`w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm transition-colors ${
                   isActive
