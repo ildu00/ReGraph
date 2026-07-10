@@ -55,13 +55,13 @@ const MODELS: ModelOption[] = [
   { id: "img-google/nano-banana-2", name: "Google Nano Banana 2", provider: "Google", category: "image-gen", market: 0.05, ours: 0.010 },
 ];
 
-const EXAMPLES: { title: string; prompt: string; modelId?: string; icon: string }[] = [
-  { title: "Explain quantum computing", prompt: "Explain quantum computing to a curious 12-year-old, using a simple analogy.", icon: "🧠" },
-  { title: "Write Python code", prompt: "Write a Python function that finds all prime numbers up to N using the Sieve of Eratosthenes. Add comments.", icon: "💻" },
-  { title: "Startup pitch", prompt: "Draft a 60-second elevator pitch for a decentralized AI compute marketplace.", icon: "🚀" },
-  { title: "Generate an image", prompt: "A neon cyberpunk cityscape at night, rain-slick streets, purple and cyan lights, cinematic wide shot.", modelId: "img-flux/flux-2", icon: "🎨" },
-  { title: "Summarize an article", prompt: "Summarize the key ideas of the paper 'Attention Is All You Need' in 5 bullet points.", icon: "📄" },
-  { title: "Fantasy portrait", prompt: "Portrait of an elven mage in an ancient library, glowing runes, soft lantern light, painterly, ultra-detailed.", modelId: "img-flux/schnell", icon: "🧙" },
+const EXAMPLES: { title: string; prompt: string; modelId?: string; Icon: any; tint: string; tag: string }[] = [
+  { title: "Explain quantum computing", prompt: "Explain quantum computing to a curious 12-year-old, using a simple analogy.", Icon: Atom, tint: "from-cyan-500/25 to-indigo-500/10 text-cyan-300", tag: "Learn" },
+  { title: "Sieve of Eratosthenes", prompt: "Write a Python function that finds all prime numbers up to N using the Sieve of Eratosthenes. Add comments.", Icon: Braces, tint: "from-emerald-500/25 to-teal-500/10 text-emerald-300", tag: "Code" },
+  { title: "60-second pitch", prompt: "Draft a 60-second elevator pitch for a decentralized AI compute marketplace.", Icon: Rocket, tint: "from-orange-500/25 to-pink-500/10 text-orange-300", tag: "Write" },
+  { title: "Cyberpunk cityscape", prompt: "A neon cyberpunk cityscape at night, rain-slick streets, purple and cyan lights, cinematic wide shot.", modelId: "img-flux/flux-2", Icon: Palette, tint: "from-fuchsia-500/25 to-purple-500/10 text-fuchsia-300", tag: "Image" },
+  { title: "Summarize a paper", prompt: "Summarize the key ideas of the paper 'Attention Is All You Need' in 5 bullet points.", Icon: ScrollText, tint: "from-amber-500/25 to-yellow-500/10 text-amber-300", tag: "Distill" },
+  { title: "Elven mage portrait", prompt: "Portrait of an elven mage in an ancient library, glowing runes, soft lantern light, painterly, ultra-detailed.", modelId: "img-flux/schnell", Icon: Wand2, tint: "from-violet-500/25 to-blue-500/10 text-violet-300", tag: "Image" },
 ];
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
