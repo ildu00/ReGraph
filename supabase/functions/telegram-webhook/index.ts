@@ -1060,7 +1060,7 @@ serve(async (req) => {
     await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text: "⚠️ Недостаточно средств на балансе. Пополните счёт на regraph.ai" }),
+      body: JSON.stringify({ chat_id: chatId, text: "⚠️ Insufficient balance. Top up your account at regraph.tech" }),
     });
     return new Response("OK");
   }
