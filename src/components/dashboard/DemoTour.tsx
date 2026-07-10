@@ -253,8 +253,8 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
 
   if (!open || !current) return null;
 
-  const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
-  const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+  const vw = viewport.w;
+  const vh = viewport.h;
   const isNarrow = vw < 640;
 
   // Compute card position + spotlight box.
