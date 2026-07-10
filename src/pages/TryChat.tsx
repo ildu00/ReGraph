@@ -258,28 +258,28 @@ const TryChat = () => {
         </div>
       </header>
 
-      <main className="container mx-auto flex-1 flex flex-col px-4 py-4 sm:py-6 w-full max-w-4xl min-h-0">
-        {/* Hero */}
+      <main className="container mx-auto flex-1 flex flex-col px-4 py-3 sm:py-4 w-full max-w-4xl min-h-0">
+        {/* Hero — compact so it fits without scroll */}
         {messages.length === 0 && (
-          <section className="text-center mb-6 sm:mb-8">
-            <Badge variant="outline" className="mb-3 border-primary/40 text-primary">
+          <section className="text-center mb-3 sm:mb-4">
+            <Badge variant="outline" className="mb-2 border-primary/40 text-primary">
               Free trial · No signup
             </Badge>
-            <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-3">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mb-2">
               Try 50+ AI models,{" "}
               <span className="bg-gradient-to-r from-primary via-purple-400 to-primary bg-clip-text text-transparent">
                 up to 80% cheaper
               </span>
             </h1>
-            <p className="text-muted-foreground text-sm sm:text-base max-w-2xl mx-auto">
-              Chat with GPT-5, Claude, Gemini, DeepSeek and generate images with FLUX — powered by a decentralized GPU network.
-              You've got <span className="text-foreground font-semibold">{FREE_LIMIT} free requests</span>, no account needed.
+            <p className="text-muted-foreground text-xs sm:text-sm max-w-2xl mx-auto hidden sm:block">
+              Chat with GPT-5, Claude, Gemini, DeepSeek and generate images with FLUX.
+              <span className="text-foreground font-semibold"> {FREE_LIMIT} free requests</span>, no account needed.
             </p>
           </section>
         )}
 
         {/* Model selector */}
-        <div className="flex items-center justify-between gap-3 mb-3">
+        <div className="flex items-center justify-between gap-2 mb-3">
           <Select value={selectedModel} onValueChange={setSelectedModel}>
             <SelectTrigger className="w-full sm:w-[320px] bg-card/60 border-border">
               <SelectValue />
@@ -305,10 +305,24 @@ const TryChat = () => {
               ))}
             </SelectContent>
           </Select>
-          <Badge variant="secondary" className="sm:hidden gap-1 shrink-0">
-            <Zap className="h-3 w-3 text-primary" />
-            {remaining}/{FREE_LIMIT}
-          </Badge>
+          <div className="flex items-center gap-2 shrink-0">
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setMessages([]); try { localStorage.removeItem(MSG_KEY); } catch { /* ignore */ } }}
+                className="gap-1"
+                title="Start over"
+              >
+                <RotateCcw className="h-4 w-4" />
+                <span className="hidden sm:inline">New</span>
+              </Button>
+            )}
+            <Badge variant="secondary" className="sm:hidden gap-1">
+              <Zap className="h-3 w-3 text-primary" />
+              {remaining}/{FREE_LIMIT}
+            </Badge>
+          </div>
         </div>
 
         {/* Chat area */}
