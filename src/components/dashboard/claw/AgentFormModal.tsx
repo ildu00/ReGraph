@@ -189,8 +189,10 @@ export default function AgentFormModal({ open, onClose, onSave, initial }: Agent
               <SelectContent>
                 {MODELS.map((m) => (
                   <SelectItem key={m.id} value={m.id}>
-                    <span>{m.name}</span>
-                    <span className="ml-2 text-xs text-muted-foreground">{m.provider}</span>
+                    <span className="flex items-center gap-2 min-w-0">
+                      <span className="truncate">{m.name}</span>
+                      <span className="ml-2 text-xs text-muted-foreground shrink-0">{m.provider}</span>
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
