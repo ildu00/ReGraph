@@ -479,8 +479,8 @@ const TryChat = () => {
       <Dialog open={showPaywall} onOpenChange={setShowPaywall}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <div className="mx-auto h-12 w-12 rounded-full bg-primary/15 flex items-center justify-center mb-2 glow-primary">
-              <Sparkles className="h-6 w-6 text-primary" />
+            <div className="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-primary via-fuchsia-500 to-cyan-400 flex items-center justify-center mb-2 glow-primary shadow-lg">
+              <TrendingDown className="h-7 w-7 text-white" strokeWidth={2.5} />
             </div>
             <DialogTitle className="text-center text-2xl">
               You just saved <span className="text-primary">${s.saved.toFixed(3)}</span>
