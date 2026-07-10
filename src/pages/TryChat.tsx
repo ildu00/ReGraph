@@ -222,6 +222,7 @@ const TryChat = () => {
 
   return (
     <div className="h-[100dvh] bg-background text-foreground flex flex-col overflow-hidden">
+      <style>{`@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}`}</style>
       <Helmet>
         <title>Try ReGraph AI Free — 50+ Models, 80% Cheaper</title>
         <meta name="description" content="Try ReGraph AI free. Chat with GPT-5, Claude, Gemini, DeepSeek and generate images with FLUX. 3 free requests, no signup." />
