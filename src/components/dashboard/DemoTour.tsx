@@ -163,7 +163,8 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
   useLayoutEffect(() => {
     if (!open || !current) return;
     let cancelled = false;
-    let raf = 0;
+
+
 
     const findRect = (): DOMRect | null => {
       for (const sel of current.selectors) {
@@ -180,17 +181,25 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
 
     const update = () => {
       if (cancelled) return;
-      setRect(findRect());
+      const r = findRect();
+      setRect((prev) => {
+        if (!prev && !r) return prev;
+        if (prev && r &&
+            prev.top === r.top && prev.left === r.left &&
+            prev.width === r.width && prev.height === r.height) return prev;
+        return r;
+      });
     };
 
     // Retry a few times for elements that mount after a tab switch.
     const deadline = Date.now() + (current.settleMs ?? 0) + 400;
+    let timer = 0;
     const poll = () => {
       if (cancelled) return;
+      update();
       const r = findRect();
-      setRect(r);
       if (!r && current.selectors.length && Date.now() < deadline) {
-        raf = window.setTimeout(poll, 60) as unknown as number;
+        timer = window.setTimeout(poll, 80);
       }
     };
     poll();
@@ -199,11 +208,12 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
     window.addEventListener("scroll", update, true);
     return () => {
       cancelled = true;
-      window.clearTimeout(raf);
+      window.clearTimeout(timer);
       window.removeEventListener("resize", update);
       window.removeEventListener("scroll", update, true);
     };
-  }, [open, index, current]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, index]);
 
   // Track card height for smart positioning.
   useLayoutEffect(() => {
