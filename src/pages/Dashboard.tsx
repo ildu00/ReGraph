@@ -296,6 +296,7 @@ const DashboardInner = () => {
                     <button
                       key={item.value}
                       type="button"
+                      data-tour-mobile={`nav-${item.value}`}
                       onClick={() => {
                         handleTabChange(item.value);
                         setIsSidebarOpen(false);
