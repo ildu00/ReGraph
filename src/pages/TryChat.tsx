@@ -5,7 +5,8 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
 import {
-  Send, Loader2, Bot, User, Sparkles, ArrowRight, Zap, Download, ExternalLink, RotateCcw,
+  Send, Loader2, Bot, User, ArrowRight, Zap, Download, ExternalLink, RotateCcw,
+  Atom, Braces, Rocket, Palette, ScrollText, Wand2, TrendingDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
