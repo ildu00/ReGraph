@@ -456,32 +456,36 @@ const ChatTab = () => {
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">Chat & LLM</div>
               {MODELS.filter((m) => ["llm", "chat", "reasoning"].includes(m.category)).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    {m.name} <span className="text-xs text-muted-foreground">({m.provider})</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{m.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
               ))}
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-1">Code</div>
               {MODELS.filter((m) => m.category === "code").map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    {m.name} <span className="text-xs text-muted-foreground">({m.provider})</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{m.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
               ))}
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-1">Vision & Multimodal</div>
               {MODELS.filter((m) => ["vision", "multimodal"].includes(m.category)).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    {m.name} <span className="text-xs text-muted-foreground">({m.provider})</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{m.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
               ))}
               <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground mt-1">Image Generation</div>
               {MODELS.filter((m) => m.category === "image-gen").map((m) => (
                 <SelectItem key={m.id} value={m.id}>
-                  <span className="flex items-center gap-2">
-                    {m.name} <span className="text-xs text-muted-foreground">({m.provider})</span>
+                  <span className="flex items-center gap-2 min-w-0">
+                    <span className="truncate">{m.name}</span>
+                    <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
               ))}
