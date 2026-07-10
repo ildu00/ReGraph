@@ -41,6 +41,7 @@ const GpuNodes = lazyWithRetry(() => import("./pages/GpuNodes"));
 const Mobile = lazyWithRetry(() => import("./pages/Mobile"));
 const Competitions = lazyWithRetry(() => import("./pages/Competitions"));
 const Claw = lazyWithRetry(() => import("./pages/Claw"));
+const TryChat = lazyWithRetry(() => import("./pages/TryChat"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
