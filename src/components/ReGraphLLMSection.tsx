@@ -84,7 +84,7 @@ const ReGraphLLMSection = () => {
             <div className="min-w-0">
               <h3 className="text-lg font-semibold mb-3">Try it now</h3>
               <pre className="text-xs font-mono bg-background/80 rounded-lg p-3 sm:p-4 overflow-x-auto text-muted-foreground leading-relaxed max-w-full [overflow-wrap:anywhere]">
-{`curl https://api.regraph.ai/v1/chat/completions \\
+{`curl https://api.regraph.tech/v1/chat/completions \\
   -H "Authorization: Bearer YOUR_KEY" \\
   -d '{
     "model": "regraph-llm",
