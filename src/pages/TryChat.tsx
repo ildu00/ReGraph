@@ -366,8 +366,6 @@ const TryChat = () => {
               })}
             </div>
           ) : (
-            </div>
-          ) : (
             messages.map((msg) => (
               <div key={msg.id} className={`flex gap-3 min-w-0 ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                 {msg.role === "assistant" && (
