@@ -33,6 +33,179 @@ export interface BlogPost {
 
 export const blogPosts: BlogPost[] = [
   {
+    id: "18",
+    slug: "deepseek-models-on-regraph-v3-v3.1-r1-comparison",
+    title: "DeepSeek on ReGraph: A Professional Review of V3, V3.1, and R1",
+    excerpt: "An in-depth look at the DeepSeek model family now available on ReGraph — architecture, benchmarks, use-case fit, and how each model compares on cost, latency, and reasoning quality.",
+    featured: false,
+    content: `The DeepSeek family has quickly become one of the strongest open-weight lineups in production AI. With the recent additions on ReGraph, developers now get access to a coherent tier of general-purpose, long-context, and reasoning-specialized models — all served through the same decentralized inference layer, at a fraction of the cost of closed frontier models.
+
+This article breaks down what each DeepSeek model is designed for, how they compare, and where they fit into a real production stack.
+
+---
+
+## The DeepSeek Lineup on ReGraph
+
+We currently host three production-grade DeepSeek endpoints:
+
+| Model | Type | Context | Best For |
+|-------|------|---------|----------|
+| **DeepSeek V3** | General-purpose MoE | 128K | Everyday chat, coding, agents, high-throughput workloads |
+| **DeepSeek V3.1** | Improved MoE | 128K | Same as V3, with sharper instruction following and tool use |
+| **DeepSeek R1** | Reasoning-specialized | 64K | Math, code synthesis, multi-step logic, evaluations |
+
+All three are Mixture-of-Experts (MoE) architectures with **671B total parameters** and roughly **37B active per token**, which is the reason they deliver frontier-class quality at open-weight cost.
+
+---
+
+## Architecture in Brief
+
+DeepSeek's models share a common backbone that is worth understanding before choosing between them:
+
+- **MoE routing** — only a fraction of parameters activate per token, keeping inference cost close to a 40B dense model while retaining the knowledge capacity of a 600B+ model.
+- **Multi-head Latent Attention (MLA)** — a compressed attention mechanism that dramatically reduces the KV cache footprint, enabling long context at reasonable memory cost.
+- **FP8 mixed-precision training** — allowed the base models to be trained efficiently and released with high numerical stability for inference quantization.
+
+R1 is built on top of the V3 base but trained with **large-scale reinforcement learning on verifiable reasoning tasks**, producing explicit chain-of-thought traces before the final answer.
+
+---
+
+## DeepSeek V3 — The Default Workhorse
+
+V3 is the model to reach for when you want strong general performance without paying for a reasoning tax.
+
+**Strengths**
+
+- Excellent instruction following across English, Chinese, and code.
+- Strong long-context comprehension up to 128K tokens.
+- Fast time-to-first-token thanks to MoE sparsity — feels comparable to much smaller dense models in latency.
+- Robust JSON and structured output.
+
+**Where it fits**
+
+- Chat and support assistants
+- RAG pipelines with large retrieved contexts
+- Code completion and refactoring where speed matters
+- Cost-sensitive batch inference
+
+If you are migrating from GPT-4 class models and want a drop-in replacement that keeps quality high while cutting cost by roughly an order of magnitude, V3 is the starting point.
+
+---
+
+## DeepSeek V3.1 — Sharper, More Agentic
+
+V3.1 is an incremental but meaningful upgrade over V3. It keeps the same architecture and pricing tier while improving the behaviors that matter most for real applications.
+
+**What changed vs V3**
+
+- Better adherence to system prompts and formatting constraints.
+- Stronger **tool / function-calling** behavior — fewer hallucinated arguments, cleaner JSON, better recovery when a tool returns an error.
+- Improved multi-turn coherence on long conversations.
+- Small but consistent gains on coding and math benchmarks.
+
+**Where it fits**
+
+- Agents that call tools and browse structured data
+- Assistants with strict output schemas
+- Workflows where V3 was "almost right but not quite"
+
+For most new projects on ReGraph, **V3.1 is the recommended default**. V3 remains available for reproducibility and for users who prefer its slightly different phrasing style.
+
+---
+
+## DeepSeek R1 — Reasoning First
+
+R1 is a different animal. Instead of optimizing for chat and throughput, R1 is trained to *think out loud* — it produces long internal reasoning chains before committing to an answer, similar in spirit to OpenAI's o-series and Anthropic's extended thinking modes.
+
+**Strengths**
+
+- State-of-the-art open-weight scores on math (AIME, MATH), competitive programming, and logic puzzles.
+- Strong performance on multi-step scientific and analytical tasks.
+- Transparent reasoning traces you can inspect and, if desired, expose to end users.
+
+**Trade-offs**
+
+- Higher output token counts — reasoning traces are long by design.
+- Higher latency and cost per answer.
+- Not ideal for casual chat or short factual replies, where it will over-think.
+
+**Where it fits**
+
+- Math tutors and STEM assistants
+- Code synthesis with correctness constraints
+- Evaluation pipelines and dataset labeling
+- "Second opinion" layers behind a cheaper first-pass model
+
+A common production pattern on ReGraph: route the initial request to V3.1, and escalate to R1 only when the task is detected as reasoning-heavy or the first answer fails a validator.
+
+---
+
+## Head-to-Head Comparison
+
+| Dimension | V3 | V3.1 | R1 |
+|-----------|-----|------|-----|
+| Primary strength | General quality | Agents, tool use | Reasoning, math, code |
+| Context window | 128K | 128K | 64K |
+| Output style | Direct | Direct, structured | Chain-of-thought + final answer |
+| Typical latency | Low | Low | Medium–High |
+| Cost per 1M tokens | Low | Low | Medium |
+| Best for | Chat, RAG, throughput | Production default | Hard problems, evaluation |
+
+Benchmark direction (higher is better, indicative):
+
+- **MMLU / general knowledge:** V3 ≈ V3.1 > R1 on breadth, R1 wins on hard subsets.
+- **HumanEval / coding:** V3.1 ≥ V3, R1 leads on non-trivial algorithmic tasks.
+- **MATH / AIME:** R1 significantly ahead of both V3 and V3.1.
+- **Tool-use / function-calling:** V3.1 clearly ahead of V3; R1 usable but not its focus.
+
+---
+
+## Advantages of Running DeepSeek on ReGraph
+
+Choosing ReGraph as the serving layer for DeepSeek models adds concrete advantages on top of the models themselves.
+
+- **OpenAI-compatible API** — the same \`/v1/chat/completions\`, \`/v1/completions\`, and streaming SSE contract, so existing SDKs work unchanged.
+- **Decentralized inference** — requests are routed across a global network of GPU and NPU nodes, which improves availability and keeps unit economics low.
+- **Transparent pricing in USD** — no token credits, no proprietary units; you pay directly for what you use with a predictable ~20% markup over raw compute cost.
+- **Consistent tooling** — function calling, JSON mode, streaming, and multimodal inputs behave the same across the DeepSeek family and the rest of the ReGraph catalog.
+- **No vendor lock-in** — the same code that runs V3.1 today can point at any other model on the platform tomorrow.
+
+---
+
+## How to Choose
+
+A simple decision tree that works for the vast majority of production use cases:
+
+1. **Is the task reasoning-heavy** (math, formal logic, multi-step code synthesis, evaluation)?
+   → Use **R1**.
+2. **Does the task involve tools, strict schemas, or agentic loops**?
+   → Use **V3.1**.
+3. **Everything else** — chat, RAG, summarization, classification, high-volume workloads?
+   → Use **V3.1** by default, fall back to **V3** if you need a slightly different style or want to A/B test.
+
+You can also compose them: a fast V3.1 pass for the 95% of easy requests, plus an R1 escalation for the hard 5%. This is where MoE economics really pay off — you get frontier-class reasoning on demand without paying for it on every request.
+
+---
+
+## Getting Started
+
+All three models are already live on ReGraph. To try them, point any OpenAI-compatible client at the ReGraph endpoint and use one of:
+
+- \`deepseek-v3\`
+- \`deepseek-v3.1\`
+- \`deepseek-r1\`
+
+Streaming, function calling, and JSON mode are supported across the family. You can benchmark them side by side directly from the Playground in your dashboard, or via the API with your existing test suite.
+
+---
+
+*The DeepSeek family is one of the clearest signals that open-weight models have caught up with — and in specific domains overtaken — closed frontier systems. Running them on a decentralized network makes that progress economically usable at scale.*`,
+    date: "2026-07-10",
+    readTime: "10 min read",
+    category: "Models",
+    image: deepseekModelsOverviewImg,
+  },
+  {
     id: "17",
     slug: "regraph-llm-now-on-huggingface",
     title: "ReGraph LLM Is Now Live on HuggingFace — Try the Decentralized AI Demo",
