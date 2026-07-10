@@ -43,6 +43,7 @@ import WalletTab from "@/components/dashboard/WalletTab";
 import ChatTab from "@/components/dashboard/ChatTab";
 import MiningTab from "@/components/dashboard/MiningTab";
 import ClawTab from "@/components/dashboard/ClawTab";
+import DemoTour from "@/components/dashboard/DemoTour";
 
 const Dashboard = () => {
   return (
@@ -408,6 +409,10 @@ const DashboardInner = () => {
           </TabsContent>
         </Tabs>
       </main>
+      <DemoTour
+        onNavigate={handleTabChange}
+        forceStart={searchParams.get("demo") === "1"}
+      />
     </div>
   );
 };
