@@ -16,6 +16,7 @@ import enterpriseDeepDiveImg from "@/assets/blog/enterprise-deep-dive.jpg";
 import newModels2025Img from "@/assets/blog/new-models-2025.jpg";
 import platformUpdatesQ1Img from "@/assets/blog/platform-updates-q1-2026.jpg";
 import smartphoneAiMiningImg from "@/assets/blog/smartphone-ai-mining.jpg";
+import deepseekModelsOverviewImg from "@/assets/blog/deepseek-models-overview.jpg";
 
 export interface BlogPost {
   id: string;
