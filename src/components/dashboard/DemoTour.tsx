@@ -163,7 +163,8 @@ const DemoTour = ({ onNavigate, forceStart }: DemoTourProps) => {
   useLayoutEffect(() => {
     if (!open || !current) return;
     let cancelled = false;
-    let raf = 0;
+
+
 
     const findRect = (): DOMRect | null => {
       for (const sel of current.selectors) {
