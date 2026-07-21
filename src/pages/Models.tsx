@@ -251,6 +251,24 @@ const modelsData: Model[] = [
   { id: "gemma-7b-ft", name: "Gemma 7B (Fine-tune)", provider: "Google", category: "fine-tune", description: "Google's open model optimized for custom training workflows.", contextLength: 8192, pricing: "$0.00008/1K", latency: "~100ms", tags: ["Open", "Safe", "Research"] },
 ];
 
+// Merge in the full upstream catalog so every routable model appears on this page.
+const _existingIds = new Set(modelsData.map((m) => m.id));
+for (const c of CATALOG_MODELS) {
+  if (_existingIds.has(c.id)) continue;
+  modelsData.push({
+    id: c.id,
+    name: c.name,
+    provider: c.provider,
+    category: c.category as Model["category"],
+    description: `${c.name} by ${c.provider} — available via the ReGraph inference API.`,
+    contextLength: 128000,
+    pricing: "Metered",
+    latency: "Variable",
+    tags: [c.provider],
+  });
+}
+
+
 const categoryTitles: Record<string, string> = {
   llm: "Large Language Models",
   chat: "Chat & Assistants",
