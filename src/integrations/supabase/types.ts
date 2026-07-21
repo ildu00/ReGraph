@@ -845,6 +845,27 @@ export type Database = {
         }
         Relationships: []
       }
+      try_trial_usage: {
+        Row: {
+          count: number
+          first_at: string
+          ip_hash: string
+          last_at: string
+        }
+        Insert: {
+          count?: number
+          first_at?: string
+          ip_hash: string
+          last_at?: string
+        }
+        Update: {
+          count?: number
+          first_at?: string
+          ip_hash?: string
+          last_at?: string
+        }
+        Relationships: []
+      }
       usage_logs: {
         Row: {
           api_key_id: string | null
