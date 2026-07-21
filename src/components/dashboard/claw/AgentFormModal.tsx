@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Code2, Image, Calculator, BookOpen, Mic, Volume2, FileText, Terminal } from "lucide-react";
+import { CATALOG_MODELS } from "@/data/catalogModels";
 
 export interface ClawAgent {
   id?: string;
@@ -40,7 +41,8 @@ interface AgentFormModalProps {
   initial?: ClawAgent | null;
 }
 
-const MODELS = [
+const CURATED_MODELS = [
+  { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph" },
   { id: "gpt-5", name: "GPT-5", provider: "OpenAI" },
   { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "OpenAI" },
   { id: "gpt-5.2", name: "GPT-5.2", provider: "OpenAI" },
@@ -49,36 +51,11 @@ const MODELS = [
   { id: "gemini-3-pro-preview", name: "Gemini 3 Pro", provider: "Google" },
   { id: "gemini-3-flash", name: "Gemini 3 Flash", provider: "Google" },
   { id: "deepseek-r1", name: "DeepSeek R1", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-pro-alt-thinking", name: "DeepSeek V4 Pro 1.6T (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-pro-alt", name: "DeepSeek V4 Pro 1.6T (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-flash-alt-thinking", name: "DeepSeek V4 Flash 284B (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-flash-alt", name: "DeepSeek V4 Flash 284B (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-pro-thinking", name: "DeepSeek V4 Pro 1.6T (Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-pro", name: "DeepSeek V4 Pro 1.6T", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-flash-thinking", name: "DeepSeek V4 Flash 284B (Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v4-flash", name: "DeepSeek V4 Flash 284B", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat", name: "DeepSeek Chat (V4 Flash)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-coder", name: "DeepSeek Coder", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-alt-faster", name: "DeepSeek V3.2 671B (Alt, Faster)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-speciale-alt", name: "DeepSeek V3.2 Speciale (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-alt-thinking", name: "DeepSeek V3.2 671B (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-alt", name: "DeepSeek V3.2 671B (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-exp-alt-thinking", name: "DeepSeek V3.2 Exp (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-v3.2-exp-alt", name: "DeepSeek V3.2 Exp (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-3.1-alt-fast", name: "DeepSeek Chat 3.1 (Alt, Fast)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-3.1-terminus-alt-thinking", name: "DeepSeek Chat 3.1 Terminus (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-3.1-terminus-alt", name: "DeepSeek Chat 3.1 Terminus (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-3.1-alt-thinking", name: "DeepSeek Chat 3.1 (Alt, Thinking)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-3.1-alt", name: "DeepSeek Chat 3.1 (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-r1-alt-0528", name: "DeepSeek R1 0528 (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-r1-alt-fast", name: "DeepSeek R1 (Alt, Fast)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-r1-distill-llama-70b", name: "DeepSeek R1 Distill Llama 70B", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-0324-alt-fast", name: "DeepSeek Chat 0324 (Alt, Fast)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-0324-alt", name: "DeepSeek Chat 0324 (Alt)", provider: "DeepSeek" },
-  { id: "deepseek/deepseek-chat-alt", name: "DeepSeek Chat (Alt)", provider: "DeepSeek" },
-  { id: "aion/aion-2.0", name: "Aion 2.0", provider: "AionLabs" },
-  { id: "perplexity/sonar-r1-online", name: "Perplexity Sonar Reasoning Online", provider: "Perplexity" },
-  { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph" },
+];
+const CURATED_IDS = new Set(CURATED_MODELS.map((m) => m.id));
+const MODELS = [
+  ...CURATED_MODELS,
+  ...CATALOG_MODELS.filter((c) => !CURATED_IDS.has(c.id)).map((c) => ({ id: c.id, name: c.name, provider: c.provider })),
 ];
 
 export const TOOLS = [

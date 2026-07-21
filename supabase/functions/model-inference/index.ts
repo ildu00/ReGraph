@@ -483,7 +483,17 @@ serve(async (req) => {
       model.startsWith("qwen/") ||
       model.startsWith("cohere/") ||
       model.startsWith("microsoft/") ||
-      model.startsWith("x-ai/")
+      model.startsWith("x-ai/") ||
+      model.startsWith("moonshotai/") ||
+      model.startsWith("z-ai/") ||
+      model.startsWith("amazon/") ||
+      model.startsWith("nvidia/") ||
+      model.startsWith("minimax/") ||
+      model.startsWith("nousresearch/") ||
+      model.startsWith("thedrummer/") ||
+      model.startsWith("sao10k/") ||
+      model.startsWith("gryphe/") ||
+      model.startsWith("xiaomi/")
         ? model
         : "openai/gpt-4o-mini"
     );

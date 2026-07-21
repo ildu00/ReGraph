@@ -40,6 +40,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeBlock from "@/components/CodeBlock";
 import { supabase } from "@/integrations/supabase/client";
+import { CATALOG_MODELS } from "@/data/catalogModels";
 
 interface ChatMessage {
   id: string;
@@ -57,7 +58,7 @@ interface ModelOption {
   category: string;
 }
 
-const MODELS: ModelOption[] = [
+const CURATED: ModelOption[] = [
   // Chat & LLM
   { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph", category: "llm" },
   { id: "gpt-5", name: "GPT-5", provider: "OpenAI", category: "chat" },
@@ -153,6 +154,12 @@ const MODELS: ModelOption[] = [
   { id: "img-stable/stable-diffusion-xl-lightning", name: "SDXL Lightning", provider: "Stability AI", category: "image-gen" },
   { id: "img-stable/stable-diffusion-xl-1024", name: "Stable Diffusion XL 1.0", provider: "Stability AI", category: "image-gen" },
   { id: "img-playground-v2-5-1024px", name: "Playground v2.5", provider: "Playground", category: "image-gen" },
+];
+
+const CURATED_IDS = new Set(CURATED.map((m) => m.id));
+const MODELS: ModelOption[] = [
+  ...CURATED,
+  ...CATALOG_MODELS.filter((c) => !CURATED_IDS.has(c.id)),
 ];
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
