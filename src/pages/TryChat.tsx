@@ -89,7 +89,7 @@ const EXAMPLES: { title: string; prompt: string; modelId?: string; Icon: any; ti
   { title: "Elven mage portrait", prompt: "Portrait of an elven mage in an ancient library, glowing runes, soft lantern light, painterly, ultra-detailed.", modelId: "img-flux/schnell", Icon: Wand2, tint: "from-violet-500/25 to-blue-500/10 text-violet-300", tag: "Image" },
 ];
 
-const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
+const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/try-chat`;
 const FREE_LIMIT = 3;
 const COUNT_KEY = "regraph-try-count";
 const MSG_KEY = "regraph-try-messages";
