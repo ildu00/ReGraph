@@ -293,7 +293,7 @@ const TryChat = () => {
           <section className="mb-3 shrink-0">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-                Try 50+ AI models{" "}
+                Try 250+ AI models{" "}
                 <span className="bg-gradient-to-r from-primary via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
                   at 1/5 the price
                 </span>
