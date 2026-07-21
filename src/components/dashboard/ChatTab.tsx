@@ -153,6 +153,7 @@ const MODELS: ModelOption[] = [
   { id: "img-stable/stable-diffusion-xl-lightning", name: "SDXL Lightning", provider: "Stability AI", category: "image-gen" },
   { id: "img-stable/stable-diffusion-xl-1024", name: "Stable Diffusion XL 1.0", provider: "Stability AI", category: "image-gen" },
   { id: "img-playground-v2-5-1024px", name: "Playground v2.5", provider: "Playground", category: "image-gen" },
+  ...CATALOG_MODELS.filter((c) => !CURATED_IDS.has(c.id)),
 ];
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
