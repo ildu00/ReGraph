@@ -39,6 +39,22 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.2",
+    date: "July 21, 2026",
+    title: "Expanded Model Catalog & Server-Side Trial Enforcement",
+    type: "minor",
+    changes: [
+      { category: "feature", description: "Expanded the model catalog to 270+ models across chat, reasoning, vision, and multimodal categories — all available via API and in the AI Chat, Claw agent builder, and Models pages." },
+      { category: "feature", description: "/try Playground now surfaces 250+ AI models with a searchable picker and category-aware savings calculator." },
+      { category: "improvement", description: "Cleaned up model display names across the platform — removed parentheses, technical ID suffixes, and non-English characters for a consistent English-only UI." },
+      { category: "improvement", description: "Inference router now accepts additional provider prefixes (moonshotai/, amazon/, nvidia/, and more) with transparent passthrough." },
+      { category: "security", description: "Free trial on /try is now enforced server-side by hashed IP — clearing localStorage no longer resets the 3-request limit, closing a compute-cost leak." },
+      { category: "fix", description: "Model routing for Claude Sonnet 4.5, GPT-5, and Gemini 3 Flash friendly names now correctly resolves to the intended upstream model." },
+      { category: "fix", description: "Long model names in dropdowns are now truncated to a single line so the selected value no longer breaks onto two rows." },
+      { category: "fix", description: "Replaced api.regraph.ai with api.regraph.tech across the platform and documentation." },
+    ]
+  },
+
     version: "3.8.1",
     date: "July 10, 2026",
     title: "TryChat Landing Page & Demo Tour Fixes",
