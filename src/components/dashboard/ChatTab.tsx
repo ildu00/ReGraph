@@ -154,6 +154,11 @@ const CURATED: ModelOption[] = [
   { id: "img-stable/stable-diffusion-xl-lightning", name: "SDXL Lightning", provider: "Stability AI", category: "image-gen" },
   { id: "img-stable/stable-diffusion-xl-1024", name: "Stable Diffusion XL 1.0", provider: "Stability AI", category: "image-gen" },
   { id: "img-playground-v2-5-1024px", name: "Playground v2.5", provider: "Playground", category: "image-gen" },
+];
+
+const CURATED_IDS = new Set(CURATED.map((m) => m.id));
+const MODELS: ModelOption[] = [
+  ...CURATED,
   ...CATALOG_MODELS.filter((c) => !CURATED_IDS.has(c.id)),
 ];
 
