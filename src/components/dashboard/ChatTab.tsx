@@ -59,6 +59,7 @@ interface ModelOption {
 }
 
 const MODELS: ModelOption[] = [
+const CURATED: ModelOption[] = [
   // Chat & LLM
   { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph", category: "llm" },
   { id: "gpt-5", name: "GPT-5", provider: "OpenAI", category: "chat" },
