@@ -20,6 +20,7 @@ import Footer from "@/components/Footer";
 import ModelsSidebar from "@/components/models/ModelsSidebar";
 import ModelCard, { type Model } from "@/components/models/ModelCard";
 import ModelPlayground from "@/components/models/ModelPlayground";
+import { CATALOG_MODELS } from "@/data/catalogModels";
 
 // Helper to parse price string to number for sorting
 const parsePrice = (pricing: string): number => {
