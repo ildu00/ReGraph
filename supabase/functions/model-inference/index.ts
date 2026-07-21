@@ -461,7 +461,7 @@ serve(async (req) => {
     };
 
     // For txt2vid/img/stt/tts/tta/txt2sng models not in map, pass through as-is
-    const vsegptModel = modelMapping[model] ?? (
+    const vsegptModel = modelMapping[model] ?? modelMapping[model.toLowerCase()] ?? (
       model.startsWith("txt2vid-") ||
       model.startsWith("img2vid-") ||
       model.startsWith("img-") ||
@@ -474,7 +474,16 @@ serve(async (req) => {
       model.startsWith("utils/") ||
       model.startsWith("deepseek/") ||
       model.startsWith("aion/") ||
-      model.startsWith("perplexity/")
+      model.startsWith("perplexity/") ||
+      model.startsWith("anthropic/") ||
+      model.startsWith("openai/") ||
+      model.startsWith("google/") ||
+      model.startsWith("meta-llama/") ||
+      model.startsWith("mistralai/") ||
+      model.startsWith("qwen/") ||
+      model.startsWith("cohere/") ||
+      model.startsWith("microsoft/") ||
+      model.startsWith("x-ai/")
         ? model
         : "openai/gpt-4o-mini"
     );
