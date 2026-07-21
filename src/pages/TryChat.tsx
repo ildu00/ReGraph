@@ -39,8 +39,10 @@ interface ModelOption {
   ours: number;
 }
 
-// Curated selection: fast, popular, and image-gen for demo.
-const MODELS: ModelOption[] = [
+import { CATALOG_MODELS } from "@/data/catalogModels";
+
+// Curated set shown first (with hand-tuned savings numbers).
+const CURATED: ModelOption[] = [
   { id: "regraph-llm", name: "ReGraph LLM", provider: "ReGraph", category: "llm", market: 0.02, ours: 0.004 },
   { id: "gpt-5-mini", name: "GPT-5 Mini", provider: "OpenAI", category: "chat", market: 0.03, ours: 0.006 },
   { id: "gpt-5", name: "GPT-5", provider: "OpenAI", category: "chat", market: 0.08, ours: 0.016 },
@@ -54,6 +56,29 @@ const MODELS: ModelOption[] = [
   { id: "img-flux/schnell", name: "FLUX 1 Schnell", provider: "Black Forest Labs", category: "image-gen", market: 0.03, ours: 0.006 },
   { id: "img-google/nano-banana-2", name: "Google Nano Banana 2", provider: "Google", category: "image-gen", market: 0.05, ours: 0.010 },
 ];
+
+// Approx pricing by category for catalog fill-ins.
+const CATEGORY_RATES: Record<string, { market: number; ours: number }> = {
+  reasoning: { market: 0.05, ours: 0.010 },
+  code: { market: 0.03, ours: 0.006 },
+  vision: { market: 0.04, ours: 0.008 },
+  embedding: { market: 0.001, ours: 0.0002 },
+  llm: { market: 0.02, ours: 0.004 },
+  chat: { market: 0.03, ours: 0.006 },
+  "image-gen": { market: 0.04, ours: 0.008 },
+};
+
+const CURATED_IDS = new Set(CURATED.map((m) => m.id));
+const MODELS: ModelOption[] = [
+  ...CURATED,
+  ...CATALOG_MODELS
+    .filter((c) => !CURATED_IDS.has(c.id) && c.category !== "embedding")
+    .map((c) => {
+      const rate = CATEGORY_RATES[c.category] ?? CATEGORY_RATES.llm;
+      return { id: c.id, name: c.name, provider: c.provider, category: c.category, market: rate.market, ours: rate.ours };
+    }),
+];
+
 
 const EXAMPLES: { title: string; prompt: string; modelId?: string; Icon: any; tint: string; tag: string }[] = [
   { title: "Explain quantum computing", prompt: "Explain quantum computing to a curious 12-year-old, using a simple analogy.", Icon: Atom, tint: "from-cyan-500/25 to-indigo-500/10 text-cyan-300", tag: "Learn" },
@@ -268,7 +293,7 @@ const TryChat = () => {
           <section className="mb-3 shrink-0">
             <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight leading-tight">
-                Try 50+ AI models{" "}
+                Try 250+ AI models{" "}
                 <span className="bg-gradient-to-r from-primary via-fuchsia-400 to-cyan-400 bg-clip-text text-transparent">
                   at 1/5 the price
                 </span>
