@@ -203,6 +203,12 @@ const TryChat = () => {
       });
       const data = await resp.json();
       if (!resp.ok) {
+        if (resp.status === 429 || data?.limitReached) {
+          setRequestCount(FREE_LIMIT);
+          setShowPaywall(true);
+          setMessages((prev) => prev.filter((m) => m.id !== userMsg.id));
+          return;
+        }
         const errMsg = data?.error || "Failed to get response";
         toast.error(errMsg);
         setMessages((prev) => [...prev, {
@@ -218,7 +224,9 @@ const TryChat = () => {
         imageUrl: data.imageUrl || undefined,
         timestamp: new Date(),
       }]);
-      const next = requestCount + 1;
+      const next = typeof data.remaining === "number"
+        ? FREE_LIMIT - data.remaining
+        : requestCount + 1;
       setRequestCount(next);
       if (next >= FREE_LIMIT) {
         setTimeout(() => setShowPaywall(true), 800);
