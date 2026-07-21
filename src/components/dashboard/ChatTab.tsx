@@ -40,6 +40,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import CodeBlock from "@/components/CodeBlock";
 import { supabase } from "@/integrations/supabase/client";
+import { CATALOG_MODELS } from "@/data/catalogModels";
 
 interface ChatMessage {
   id: string;
