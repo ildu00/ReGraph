@@ -54,8 +54,9 @@ const changelog: ChangelogEntry[] = [
       { category: "fix", description: "Replaced api.regraph.ai with api.regraph.tech across the platform and documentation." },
     ]
   },
-
+  {
     version: "3.8.1",
+
     date: "July 10, 2026",
     title: "TryChat Landing Page & Demo Tour Fixes",
     type: "minor",
