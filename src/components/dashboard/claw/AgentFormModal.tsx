@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Globe, Code2, Image, Calculator, BookOpen, Mic, Volume2, FileText, Terminal } from "lucide-react";
+import { CATALOG_MODELS } from "@/data/catalogModels";
 
 export interface ClawAgent {
   id?: string;
