@@ -346,6 +346,29 @@ serve(async (req) => {
       "phi-3-vision": "microsoft/phi-3-medium-128k-instruct",
       "cogvlm2": "vis-google/gemini-flash-1.5",
       "internvl-2": "vis-google/gemini-flash-1.5",
+      // Frontier chat models — friendly names → real upstream provider IDs
+      "gpt-5": "openai/gpt-5",
+      "gpt-5-mini": "openai/gpt-5-mini",
+      "gpt-5-nano": "openai/gpt-5-nano",
+      "gpt-5.1": "openai/gpt-5.1",
+      "gpt-5.2": "openai/gpt-5.2",
+      "GPT-5": "openai/gpt-5",
+      "GPT-5.1": "openai/gpt-5.1",
+      "GPT-5.2": "openai/gpt-5.2",
+      "claude-opus-4.5": "anthropic/claude-opus-4.5",
+      "claude-opus-4-5": "anthropic/claude-opus-4.5",
+      "claude-sonnet-4.5": "anthropic/claude-sonnet-4.5",
+      "claude-sonnet-4-5": "anthropic/claude-sonnet-4.5",
+      "claude-opus-4": "anthropic/claude-opus-4",
+      "claude-sonnet-4": "anthropic/claude-sonnet-4",
+      "gemini-3-pro": "google/gemini-3-pro-preview",
+      "gemini-3-pro-preview": "google/gemini-3-pro-preview",
+      "gemini-3-flash": "google/gemini-3-flash-preview",
+      "gemini-3-flash-preview": "google/gemini-3-flash-preview",
+      "gemini-2.5-pro": "google/gemini-2.5-pro",
+      "gemini-2.5-flash": "google/gemini-2.5-flash",
+      "llama-3.1-70b-instruct": "meta-llama/llama-3.1-70b-instruct",
+      "mistral-large-latest": "mistralai/mistral-large",
       // Image generation - direct provider IDs pass-through
       "img-google/nano-banana-2": "img-google/nano-banana-2",
       "img-google/nano-banana-pro": "img-google/nano-banana-pro",
@@ -438,7 +461,7 @@ serve(async (req) => {
     };
 
     // For txt2vid/img/stt/tts/tta/txt2sng models not in map, pass through as-is
-    const vsegptModel = modelMapping[model] ?? (
+    const vsegptModel = modelMapping[model] ?? modelMapping[model.toLowerCase()] ?? (
       model.startsWith("txt2vid-") ||
       model.startsWith("img2vid-") ||
       model.startsWith("img-") ||
@@ -451,7 +474,16 @@ serve(async (req) => {
       model.startsWith("utils/") ||
       model.startsWith("deepseek/") ||
       model.startsWith("aion/") ||
-      model.startsWith("perplexity/")
+      model.startsWith("perplexity/") ||
+      model.startsWith("anthropic/") ||
+      model.startsWith("openai/") ||
+      model.startsWith("google/") ||
+      model.startsWith("meta-llama/") ||
+      model.startsWith("mistralai/") ||
+      model.startsWith("qwen/") ||
+      model.startsWith("cohere/") ||
+      model.startsWith("microsoft/") ||
+      model.startsWith("x-ai/")
         ? model
         : "openai/gpt-4o-mini"
     );
