@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
+import { authenticateRequest, unauthorizedResponse } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,69 +21,11 @@ interface InferenceRequest {
   stream?: boolean;
 }
 
-/** Extract authenticated user_id from JWT or API key in the Authorization header */
-async function extractUserId(req: Request): Promise<string | null> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) return null;
-  const token = authHeader.replace("Bearer ", "");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  if (token === anonKey) return null;
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
-  );
-
-  // Try JWT first
-  try {
-    const { data } = await supabase.auth.getUser(token);
-    if (data?.user?.id) return data.user.id;
-  } catch { /* not a JWT */ }
-
-  // Try API key lookup (full_key stored in api_keys table)
-  if (token.startsWith("rg-") || token.startsWith("rg_")) {
-    try {
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
-      const { data: keyRow } = await adminClient
-        .from("api_keys")
-        .select("user_id")
-        .eq("full_key", token)
-        .eq("is_active", true)
-        .single();
-      if (keyRow?.user_id) return keyRow.user_id;
-    } catch { /* no match */ }
-  }
-
-  return null;
-}
-
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
-// ── Resilient fetch: timeout + retry + Lovable AI Gateway fallback ──────────
+// ── Resilient fetch: timeout + retry without cross-model substitution ──────
 const PRIMARY_TIMEOUT_MS = 20_000;   // 20s per attempt on primary provider
-const FALLBACK_TIMEOUT_MS = 25_000;  // 25s for fallback
 const MAX_PRIMARY_ATTEMPTS = 2;
-
-// Models available on Lovable AI Gateway (used as fallback)
-const LOVABLE_FALLBACK_MAP: Record<string, string> = {
-  "anthropic/claude-sonnet-4": "openai/gpt-5",
-  "anthropic/claude-sonnet-4.5": "openai/gpt-5",
-  "anthropic/claude-opus-4": "openai/gpt-5",
-  "anthropic/claude-3.5-sonnet": "openai/gpt-5",
-  "openai/gpt-4o": "openai/gpt-5-mini",
-  "openai/gpt-4o-mini": "openai/gpt-5-nano",
-  "openai/gpt-4-turbo": "openai/gpt-5-mini",
-  "openai/gpt-5": "openai/gpt-5",
-  "openai/gpt-5-mini": "openai/gpt-5-mini",
-  "openai/gpt-5-nano": "openai/gpt-5-nano",
-  "google/gemini-2.5-pro": "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash": "google/gemini-2.5-flash",
-  "meta-llama/llama-3.1-70b-instruct": "openai/gpt-5-mini",
-  "deepseek/deepseek-r1": "openai/gpt-5",
-};
 
 interface ResilientResult {
   response: Response;
@@ -104,13 +47,13 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 
 /**
  * Resilient chat completion: try primary provider with timeout + retry,
- * then fall back to Lovable AI Gateway if available.
+ * Never substitutes a different model: model identity is part of the API contract.
  */
 async function resilientChatFetch(
   primaryUrl: string,
   primaryHeaders: Record<string, string>,
   chatBody: Record<string, unknown>,
-  vsegptModel: string,
+  _requestedModel: string,
 ): Promise<ResilientResult> {
   const bodyStr = JSON.stringify(chatBody);
 
@@ -128,10 +71,9 @@ async function resilientChatFetch(
         console.warn(`Primary provider attempt ${attempt} returned ${resp.status}, retrying…`);
         continue;
       }
-      // 429 rate limit — go straight to fallback
+      // A retry cannot resolve an immediate rate limit.
       if (resp.status === 429) {
-        console.warn("Primary provider rate-limited (429), trying fallback…");
-        break;
+        return { response: resp, usedFallback: false };
       }
 
       return { response: resp, usedFallback: false };
@@ -142,33 +84,7 @@ async function resilientChatFetch(
     }
   }
 
-  // ── Fallback: Lovable AI Gateway ──
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const fallbackModel = LOVABLE_FALLBACK_MAP[vsegptModel];
-
-  if (LOVABLE_API_KEY && fallbackModel) {
-    console.log(`Falling back to Lovable Gateway: ${fallbackModel} (original: ${vsegptModel})`);
-    const fallbackBody = { ...chatBody, model: fallbackModel, stream: false };
-    // Remove stream_options for non-streaming fallback
-    delete (fallbackBody as any).stream_options;
-
-    try {
-      const resp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(fallbackBody),
-      }, FALLBACK_TIMEOUT_MS);
-
-      return { response: resp, usedFallback: true };
-    } catch (fallbackErr) {
-      console.error("Lovable Gateway fallback also failed:", fallbackErr);
-    }
-  }
-
-  // Both failed — return a synthetic error response
+  // All attempts failed; do not silently serve a different model.
   return {
     response: new Response(JSON.stringify({ error: "All inference providers unavailable" }), {
       status: 503,
@@ -266,7 +182,9 @@ serve(async (req) => {
   const apiKeyPrefix = extractApiKeyPrefix(req);
   let statusCode = 200;
 
-  const userId = await extractUserId(req);
+  const identity = await authenticateRequest(req);
+  if (!identity) return unauthorizedResponse(corsHeaders);
+  const userId = identity.userId;
 
   // Check balance before processing request
   if (userId) {
@@ -322,16 +240,25 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: statusCode, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Prompt is required", request_body: requestBodyLog });
       return new Response(body, { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (!model || typeof model !== "string") {
+      return new Response(JSON.stringify({ error: "Model is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > 40000) {
+      return new Response(JSON.stringify({ error: "maxTokens must be an integer between 1 and 40000" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const modelMapping: Record<string, string> = {
       "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
       "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
       "mistral-large": "mistralai/mistral-large",
+      "mixtral-8x7b": "mistralai/mixtral-8x7b-instruct",
       "mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
       "qwen-72b": "qwen/qwen-2.5-72b-instruct",
       "gemma-2-27b": "google/gemma-2-27b-it",
       "claude-3-opus": "anthropic/claude-opus-4",
       "gpt-4-turbo": "openai/gpt-4-turbo",
+      "gpt-4o": "openai/gpt-4o",
+      "gpt-4o-mini": "openai/gpt-4o-mini",
       "gemini-pro": "google/gemini-2.5-pro",
       "command-r-plus": "cohere/command-r-plus-08-2024",
       "o1-preview": "openai/o3-mini",
@@ -359,6 +286,10 @@ serve(async (req) => {
       "claude-opus-4-5": "anthropic/claude-opus-4.5",
       "claude-sonnet-4.5": "anthropic/claude-sonnet-4.5",
       "claude-sonnet-4-5": "anthropic/claude-sonnet-4.5",
+      "claude-opus-4-6": "anthropic/claude-opus-4.6",
+      "claude-opus-4.6": "anthropic/claude-opus-4.6",
+      "claude-sonnet-4-6": "anthropic/claude-sonnet-4.6",
+      "claude-sonnet-4.6": "anthropic/claude-sonnet-4.6",
       "claude-opus-4": "anthropic/claude-opus-4",
       "claude-sonnet-4": "anthropic/claude-sonnet-4",
       "gemini-3-pro": "google/gemini-3-pro-preview",
@@ -454,6 +385,11 @@ serve(async (req) => {
       "open-interpreter": "openai/gpt-5-mini",
       "regraph-llm": "openai/gpt-4o-mini",
       "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
+      "regraph/regraph-llm": "openai/gpt-4o-mini",
+      "meta-llama/llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
+      "meta-llama/llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
+      "mistralai/mixtral-8x7b": "mistralai/mixtral-8x7b-instruct",
+      "mistralai/mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
       "llama-3.1-8b-ft": "meta-llama/llama-3.1-8b-instruct",
       "mistral-7b-ft": "mistralai/mistral-7b-instruct",
       "phi-2-ft": "microsoft/phi-3-mini-128k-instruct",
@@ -495,8 +431,12 @@ serve(async (req) => {
       model.startsWith("gryphe/") ||
       model.startsWith("xiaomi/")
         ? model
-        : "openai/gpt-4o-mini"
+        : null
     );
+
+    if (!vsegptModel) {
+      return new Response(JSON.stringify({ error: `Unknown model: ${model}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Helper to log, bill, and return response (with optional actual provider cost)
     const respond = (
@@ -543,6 +483,7 @@ serve(async (req) => {
         messages: chatMessages,
         temperature,
         max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
@@ -630,7 +571,7 @@ serve(async (req) => {
         const errorText = await response.text();
         console.error("Inference error:", response.status, errorText, usedFallback ? "(fallback)" : "(primary)");
         if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
-        if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }), 402, "Insufficient credits");
+        if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
 

@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
+import { authenticateRequest, unauthorizedResponse } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -14,6 +15,12 @@ serve(async (req) => {
 
   const startTime = Date.now();
   const apiKeyPrefix = extractApiKeyPrefix(req);
+
+  const identity = await authenticateRequest(req);
+  if (!identity) {
+    logApiRequest({ method: req.method, endpoint: "/v1/inference", status_code: 401, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Invalid or missing API key" });
+    return unauthorizedResponse(corsHeaders);
+  }
 
   // Validate HTTP method
   if (req.method !== "POST") {
@@ -218,7 +225,7 @@ serve(async (req) => {
       "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
       "Content-Type": "application/json",
     };
-    const userApiKey = req.headers.get("x-api-key");
+    const userApiKey = identity.apiKey;
     if (userApiKey) {
       forwardHeaders["X-API-Key"] = userApiKey;
     }

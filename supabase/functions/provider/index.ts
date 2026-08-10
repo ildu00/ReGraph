@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authenticateRequest } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -57,18 +58,11 @@ Deno.serve(async (req) => {
       deviceId = device.id;
     } else {
       // API key auth (dashboard / SDK)
-      const keyPrefix = token.substring(0, 8);
-      const { data: keyData, error: keyError } = await supabase
-        .from("api_keys")
-        .select("user_id")
-        .eq("key_prefix", keyPrefix)
-        .eq("is_active", true)
-        .single();
-
-      if (keyError || !keyData) {
+      const identity = await authenticateRequest(req);
+      if (!identity) {
         return err(401, "Unauthorized", "Invalid or inactive API key");
       }
-      userId = keyData.user_id;
+      userId = identity.userId;
     }
 
     // ═══════════════════════════════════════════════════════
