@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
+import { authenticateRequest, unauthorizedResponse } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,45 +19,6 @@ interface InferenceRequest {
   tools?: unknown[];
   tool_choice?: unknown;
   stream?: boolean;
-}
-
-/** Extract authenticated user_id from JWT or API key in the Authorization header */
-async function extractUserId(req: Request): Promise<string | null> {
-  const authHeader = req.headers.get("authorization");
-  if (!authHeader) return null;
-  const token = authHeader.replace("Bearer ", "");
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  if (token === anonKey) return null;
-
-  const supabase = createClient(
-    Deno.env.get("SUPABASE_URL")!,
-    Deno.env.get("SUPABASE_ANON_KEY")!
-  );
-
-  // Try JWT first
-  try {
-    const { data } = await supabase.auth.getUser(token);
-    if (data?.user?.id) return data.user.id;
-  } catch { /* not a JWT */ }
-
-  // Try API key lookup (full_key stored in api_keys table)
-  if (token.startsWith("rg-") || token.startsWith("rg_")) {
-    try {
-      const adminClient = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
-      );
-      const { data: keyRow } = await adminClient
-        .from("api_keys")
-        .select("user_id")
-        .eq("full_key", token)
-        .eq("is_active", true)
-        .single();
-      if (keyRow?.user_id) return keyRow.user_id;
-    } catch { /* no match */ }
-  }
-
-  return null;
 }
 
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
@@ -266,7 +228,9 @@ serve(async (req) => {
   const apiKeyPrefix = extractApiKeyPrefix(req);
   let statusCode = 200;
 
-  const userId = await extractUserId(req);
+  const identity = await authenticateRequest(req);
+  if (!identity) return unauthorizedResponse(corsHeaders);
+  const userId = identity.userId;
 
   // Check balance before processing request
   if (userId) {
@@ -322,6 +286,12 @@ serve(async (req) => {
       logApiRequest({ method: req.method, endpoint: "/v1/model-inference", status_code: statusCode, response_time_ms: Date.now() - startTime, api_key_prefix: apiKeyPrefix, error_message: "Prompt is required", request_body: requestBodyLog });
       return new Response(body, { status: statusCode, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
+    if (!model || typeof model !== "string") {
+      return new Response(JSON.stringify({ error: "Model is required" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+    if (!Number.isInteger(maxTokens) || maxTokens < 1 || maxTokens > 40000) {
+      return new Response(JSON.stringify({ error: "maxTokens must be an integer between 1 and 40000" }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     const modelMapping: Record<string, string> = {
       "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
@@ -359,6 +329,10 @@ serve(async (req) => {
       "claude-opus-4-5": "anthropic/claude-opus-4.5",
       "claude-sonnet-4.5": "anthropic/claude-sonnet-4.5",
       "claude-sonnet-4-5": "anthropic/claude-sonnet-4.5",
+      "claude-opus-4-6": "anthropic/claude-opus-4.6",
+      "claude-opus-4.6": "anthropic/claude-opus-4.6",
+      "claude-sonnet-4-6": "anthropic/claude-sonnet-4.6",
+      "claude-sonnet-4.6": "anthropic/claude-sonnet-4.6",
       "claude-opus-4": "anthropic/claude-opus-4",
       "claude-sonnet-4": "anthropic/claude-sonnet-4",
       "gemini-3-pro": "google/gemini-3-pro-preview",
@@ -454,6 +428,11 @@ serve(async (req) => {
       "open-interpreter": "openai/gpt-5-mini",
       "regraph-llm": "openai/gpt-4o-mini",
       "regraph/ReGraph-LLM": "openai/gpt-4o-mini",
+      "regraph/regraph-llm": "openai/gpt-4o-mini",
+      "meta-llama/llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
+      "meta-llama/llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
+      "mistralai/mixtral-8x7b": "mistralai/mixtral-8x7b-instruct",
+      "mistralai/mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
       "llama-3.1-8b-ft": "meta-llama/llama-3.1-8b-instruct",
       "mistral-7b-ft": "mistralai/mistral-7b-instruct",
       "phi-2-ft": "microsoft/phi-3-mini-128k-instruct",
@@ -495,8 +474,12 @@ serve(async (req) => {
       model.startsWith("gryphe/") ||
       model.startsWith("xiaomi/")
         ? model
-        : "openai/gpt-4o-mini"
+        : null
     );
+
+    if (!vsegptModel) {
+      return new Response(JSON.stringify({ error: `Unknown model: ${model}` }), { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
 
     // Helper to log, bill, and return response (with optional actual provider cost)
     const respond = (

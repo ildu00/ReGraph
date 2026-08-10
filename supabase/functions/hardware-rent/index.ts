@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authenticateRequest, unauthorizedResponse } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -22,33 +23,8 @@ Deno.serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get API key from header for user identification
-    const apiKeyHeader = req.headers.get("x-api-key") || req.headers.get("authorization");
-    
-    if (!apiKeyHeader) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "API key required in Authorization header" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const apiKey = apiKeyHeader.replace(/^Bearer\s+/i, "");
-    const keyPrefix = apiKey.substring(0, 8);
-
-    // Find user by API key prefix
-    const { data: keyData, error: keyError } = await supabase
-      .from("api_keys")
-      .select("user_id")
-      .eq("key_prefix", keyPrefix)
-      .eq("is_active", true)
-      .single();
-
-    if (keyError || !keyData) {
-      return new Response(
-        JSON.stringify({ error: "Unauthorized", message: "Invalid or inactive API key" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    const identity = await authenticateRequest(req);
+    if (!identity) return unauthorizedResponse(corsHeaders);
 
     let body;
     try {
@@ -97,7 +73,7 @@ Deno.serve(async (req) => {
     const { data: wallet } = await supabase
       .from("wallets")
       .select("balance_usd")
-      .eq("user_id", keyData.user_id)
+      .eq("user_id", identity.userId)
       .single();
 
     if (!wallet || wallet.balance_usd < totalCost) {
@@ -134,7 +110,7 @@ Deno.serve(async (req) => {
     const rentalId = `rent_${crypto.randomUUID().replace(/-/g, "").substring(0, 12)}`;
     const nodeId = Math.floor(Math.random() * 999) + 1;
     const expiresAt = new Date(Date.now() + duration_hours * 60 * 60 * 1000).toISOString();
-    const sshUser = `user_${keyData.user_id.substring(0, 8)}`;
+    const sshUser = `user_${identity.userId.substring(0, 8)}`;
 
     return new Response(
       JSON.stringify({

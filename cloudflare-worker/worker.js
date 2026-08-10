@@ -152,11 +152,10 @@ export default {
       headers.set("Content-Type", "application/json");
     }
     headers.set("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
-    headers.set("Authorization", `Bearer ${SUPABASE_ANON_KEY}`);
     
     // Pass through API key if provided
     if (apiKey) {
-      headers.set("X-API-Key", apiKey);
+      headers.set("X-API-Key", apiKey.replace(/^Bearer\s+/i, "").trim());
     }
 
     const options = {
