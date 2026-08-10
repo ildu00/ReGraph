@@ -728,6 +728,17 @@ for await (const chunk of stream) {
                           <td className="py-3 px-4 font-mono text-xs">/tasks/:id</td>
                           <td className="py-3 px-4 text-muted-foreground">Poll async task status</td>
                         </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/hardware/rent</td>
+                          <td className="py-3 px-4 text-muted-foreground">Reserve dedicated GPUs (charged up-front)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/models/deploy</td>
+                          <td className="py-3 px-4 text-muted-foreground">Deploy custom weights (HF / S3) with vLLM</td>
+                        </tr>
+
                       </tbody>
                     </table>
                   </div>
