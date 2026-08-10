@@ -135,6 +135,60 @@ volumes:
     "webhook_url": "https://your-app.com/webhook"
   }'`;
 
+  const hardwareRentExample = `curl -X POST https://api.regraph.tech/v1/hardware/rent \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "gpu_type": "A100",
+    "gpu_count": 4,
+    "duration_hours": 2
+  }'`;
+
+  const hardwareRentResponseExample = `{
+  "rental_id": "rent_9f3ab21c4d",
+  "status": "provisioning",
+  "gpu_type": "A100",
+  "gpu_count": 4,
+  "duration_hours": 2,
+  "price_per_hour": 2.00,
+  "total_cost": 16.00,
+  "expires_at": "2026-08-10T20:00:00.000Z"
+}
+
+// 402 when the wallet balance is too low:
+{
+  "error": "Insufficient funds",
+  "message": "Required: $16.00, Available: $1.00",
+  "top_up_url": "https://regraph.tech/dashboard?tab=wallet"
+}`;
+
+  const modelsDeployExample = `curl -X POST https://api.regraph.tech/v1/models/deploy \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model_url": "hf:meta-llama/Llama-3.1-8B-Instruct",
+    "framework": "vllm",
+    "config": {
+      "model_type": "llm",
+      "context_length": 8192,
+      "quantization": "fp16"
+    }
+  }'`;
+
+  const modelsDeployResponseExample = `{
+  "deployment_id": "dep_4c81ba0e7f12",
+  "status": "deploying",
+  "model_name": "a1b2c3d4/Llama-3.1-8B-Instruct",
+  "model_url": "hf:meta-llama/Llama-3.1-8B-Instruct",
+  "source": "huggingface",
+  "framework": "vllm",
+  "estimated_minutes": 9,
+  "endpoints": {
+    "inference": "https://api.regraph.tech/v1/inference",
+    "status": "https://api.regraph.tech/v1/models/deploy/dep_4c81ba0e7f12"
+  }
+}`;
+
   const imageGenExample = `curl -X POST https://api.regraph.tech/v1/images/generations \\
   -H "Authorization: Bearer rg_your_api_key_here" \\
   -H "Content-Type: application/json" \\
@@ -674,6 +728,17 @@ for await (const chunk of stream) {
                           <td className="py-3 px-4 font-mono text-xs">/tasks/:id</td>
                           <td className="py-3 px-4 text-muted-foreground">Poll async task status</td>
                         </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/hardware/rent</td>
+                          <td className="py-3 px-4 text-muted-foreground">Reserve dedicated GPUs (charged up-front)</td>
+                        </tr>
+                        <tr>
+                          <td className="py-3 px-4"><span className="text-green-500 font-mono">POST</span></td>
+                          <td className="py-3 px-4 font-mono text-xs">/models/deploy</td>
+                          <td className="py-3 px-4 text-muted-foreground">Deploy custom weights (HF / S3) with vLLM</td>
+                        </tr>
+
                       </tbody>
                     </table>
                   </div>
@@ -1385,6 +1450,143 @@ for await (const chunk of stream) {
                     </div>
                   </div>
                 </section>
+
+                {/* Hardware Rental */}
+                <section id="hardware-rent" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Server className="h-8 w-8 text-primary" />
+                    Hardware Rental
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Reserve dedicated GPUs from the provider network for a fixed duration. The full rental cost is
+                    charged to your wallet up-front, so top up before calling this endpoint.
+                  </p>
+
+                  <div className="glass-card p-6 rounded-xl mb-6">
+                    <h4 className="font-semibold mb-4">Rent GPUs</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground font-mono">POST /v1/hardware/rent</span>
+                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(hardwareRentExample, "hardware-rent")}>
+                        {copiedSection === "hardware-rent" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <CodeBlock code={hardwareRentExample} language="bash" />
+                  </div>
+
+                  <div className="glass-card p-6 rounded-xl mb-6">
+                    <h4 className="font-semibold mb-4">Parameters</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-2 px-3">Parameter</th>
+                            <th className="text-left py-2 px-3">Type</th>
+                            <th className="text-left py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border text-muted-foreground">
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">gpu_type</td>
+                            <td className="py-2 px-3">string</td>
+                            <td className="py-2 px-3">Required. E.g. A100, H100, RTX4090, L40S</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">gpu_count</td>
+                            <td className="py-2 px-3">integer</td>
+                            <td className="py-2 px-3">Number of GPUs (default 1)</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">duration_hours</td>
+                            <td className="py-2 px-3">number</td>
+                            <td className="py-2 px-3">Rental duration in hours (default 1)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-6 rounded-xl">
+                    <h4 className="font-semibold mb-4">Response</h4>
+                    <CodeBlock code={hardwareRentResponseExample} language="json" />
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Status codes: <code className="text-primary">200</code> reserved ·{" "}
+                      <code className="text-primary">400</code> invalid parameters ·{" "}
+                      <code className="text-primary">401</code> invalid or missing API key ·{" "}
+                      <code className="text-primary">402</code> insufficient wallet balance.
+                    </p>
+                  </div>
+                </section>
+
+                {/* Custom Model Deployment */}
+                <section id="models-deploy" className="mb-16">
+                  <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <Webhook className="h-8 w-8 text-primary" />
+                    Custom Model Deployment
+                  </h2>
+                  <p className="text-muted-foreground mb-6">
+                    Deploy your own weights — a Hugging Face repository, an S3 object, or a direct HTTPS artifact — onto
+                    the network and serve them with vLLM, Transformers, llama.cpp, ONNX, or TensorRT. Deployed models
+                    are private to your account and callable through <code className="text-primary">/v1/inference</code>.
+                  </p>
+
+                  <div className="glass-card p-6 rounded-xl mb-6">
+                    <h4 className="font-semibold mb-4">Deploy from Hugging Face with vLLM</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-xs text-muted-foreground font-mono">POST /v1/models/deploy</span>
+                      <Button variant="ghost" size="sm" onClick={() => copyToClipboard(modelsDeployExample, "models-deploy")}>
+                        {copiedSection === "models-deploy" ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
+                      </Button>
+                    </div>
+                    <CodeBlock code={modelsDeployExample} language="bash" />
+                  </div>
+
+                  <div className="glass-card p-6 rounded-xl mb-6">
+                    <h4 className="font-semibold mb-4">Parameters</h4>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-border">
+                            <th className="text-left py-2 px-3">Parameter</th>
+                            <th className="text-left py-2 px-3">Type</th>
+                            <th className="text-left py-2 px-3">Description</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border text-muted-foreground">
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">model_url</td>
+                            <td className="py-2 px-3">string</td>
+                            <td className="py-2 px-3">
+                              Required. <code className="text-primary">hf:owner/repo</code>, a full
+                              huggingface.co URL, <code className="text-primary">s3://bucket/model.safetensors</code>, or an HTTPS artifact
+                            </td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">framework</td>
+                            <td className="py-2 px-3">string</td>
+                            <td className="py-2 px-3">transformers (default), vllm, llama.cpp, onnx, tensorrt. Hugging Face sources support vllm and transformers</td>
+                          </tr>
+                          <tr>
+                            <td className="py-2 px-3 font-mono text-primary">config</td>
+                            <td className="py-2 px-3">object</td>
+                            <td className="py-2 px-3">Optional serving config: model_type, context_length, quantization</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <div className="glass-card p-6 rounded-xl">
+                    <h4 className="font-semibold mb-4">Response (202 Accepted)</h4>
+                    <CodeBlock code={modelsDeployResponseExample} language="json" />
+                    <p className="text-sm text-muted-foreground mt-4">
+                      Poll the <code className="text-primary">status</code> endpoint from the response until the
+                      deployment reports <code className="text-primary">ready</code>. Note that
+                      <code className="text-primary"> GET /v1/models</code> lists the shared catalog only — your private
+                      deployments are addressed by the returned <code className="text-primary">model_name</code>.
+                    </p>
+                  </div>
+                </section>
+
 
                 {/* Async Tasks */}
                 <section id="async-tasks" className="mb-16">

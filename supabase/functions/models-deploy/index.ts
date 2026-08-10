@@ -48,11 +48,15 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { model_url, framework, config } = body;
+    const modelUrl = body.model_url || body.model || body.repo_id;
+    const { framework, config } = body;
 
-    if (!model_url) {
+    if (!modelUrl || typeof modelUrl !== "string") {
       return new Response(
-        JSON.stringify({ error: "Bad request", message: "model_url is required" }),
+        JSON.stringify({
+          error: "Bad request",
+          message: "model_url is required (S3 URL, HTTPS URL, or Hugging Face repo id such as 'hf:meta-llama/Llama-3.1-8B-Instruct')",
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -60,7 +64,7 @@ Deno.serve(async (req) => {
     // Validate framework
     const supportedFrameworks = ["transformers", "vllm", "llama.cpp", "onnx", "tensorrt"];
     const selectedFramework = framework?.toLowerCase() || "transformers";
-    
+
     if (!supportedFrameworks.includes(selectedFramework)) {
       return new Response(
         JSON.stringify({ 
@@ -72,13 +76,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Detect source type (Hugging Face repo, S3 object, or plain HTTPS artifact)
+    const hfMatch = modelUrl.match(/^(?:hf:|huggingface:|https?:\/\/huggingface\.co\/)([\w.-]+\/[\w.-]+)/i);
+    const source = hfMatch ? "huggingface" : modelUrl.startsWith("s3://") ? "s3" : "https";
+
+    if (source === "huggingface" && !["transformers", "vllm"].includes(selectedFramework)) {
+      return new Response(
+        JSON.stringify({
+          error: "Bad request",
+          message: "Hugging Face repositories support the 'vllm' or 'transformers' frameworks only",
+        }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Generate deployment ID and model name
     const deploymentId = `dep_${crypto.randomUUID().replace(/-/g, "").substring(0, 12)}`;
-    
-    // Extract model name from URL
-    const urlParts = model_url.split("/");
-    const fileName = urlParts[urlParts.length - 1];
-    const modelName = fileName.replace(/\.(safetensors|bin|gguf|onnx|pt)$/i, "") || "custom-model";
+
+    const modelName = hfMatch
+      ? hfMatch[1].split("/").pop()!
+      : (modelUrl.split("/").pop() || "custom-model").replace(/\.(safetensors|bin|gguf|onnx|pt)$/i, "") || "custom-model";
 
     // Estimate deployment time based on model size (simulated)
     const estimatedMinutes = 5 + Math.floor(Math.random() * 10);
@@ -88,8 +105,9 @@ Deno.serve(async (req) => {
       JSON.stringify({
         deployment_id: deploymentId,
         status: "deploying",
-        model_name: `${keyData.user_id.substring(0, 8)}/${modelName}`,
-        model_url: model_url,
+        model_name: `${identity.userId.substring(0, 8)}/${modelName}`,
+        model_url: modelUrl,
+        source,
         framework: selectedFramework,
         config: config || {},
         estimated_ready: estimatedReady,
@@ -102,6 +120,7 @@ Deno.serve(async (req) => {
       }),
       { status: 202, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
 
   } catch (error) {
     console.error("Deploy error:", error);

@@ -53,7 +53,10 @@ const advancedItems = [
   { id: "training", label: "Fine-Tuning", icon: Cpu },
   { id: "batch", label: "Batch Processing", icon: Database },
   { id: "async-tasks", label: "Async Tasks", icon: Radio },
+  { id: "hardware-rent", label: "Hardware Rental", icon: Server },
+  { id: "models-deploy", label: "Custom Model Deployment", icon: Webhook },
 ];
+
 
 const resourceItems = [
   { id: "provider-setup", label: "Provider Setup", icon: Server },
