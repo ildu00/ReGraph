@@ -39,6 +39,25 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.3",
+    date: "August 10, 2026",
+    title: "API Authentication Hardening, Hardware Rental & Custom Model Deployment",
+    type: "minor",
+    changes: [
+      { category: "security", description: "Centralized API authentication in a shared edge-function module — every protected endpoint now validates JWT sessions and `rg_` API keys through one hardened path, rejecting unknown or malformed credentials with a clear 401 response." },
+      { category: "security", description: "Removed silent cross-model substitution in the inference router; a requested model is either routed exactly as specified or the call fails with a descriptive error, eliminating cases where a client received output from the wrong model." },
+      { category: "security", description: "Strict model mapping enforcement for chat and embeddings — only recognized model IDs are accepted, and unrecognized or empty model identifiers now return 400 instead of falling back to a default." },
+      { category: "improvement", description: "Cloudflare Worker now preserves user-supplied API keys in the `X-API-Key` header and routes requests by longest-prefix match, so nested endpoints such as `/v1/models/deploy` are no longer shadowed by `/v1/models`." },
+      { category: "feature", description: "Hardware rental endpoint `POST /v1/hardware/rent` is live and fully documented — rent GPU nodes by type (A100, H100, RTX 4090, and more), count, and duration; returns a quoted price, 402 when wallet balance is insufficient, and clear parameter validation errors." },
+      { category: "feature", description: "Custom model deployment endpoint `POST /v1/models/deploy` is fixed and documented — deploy models from Hugging Face repositories (`hf:org/repo` or `https://huggingface.co/...`), S3 URLs, or direct HTTPS URLs with support for vLLM, transformers, llama.cpp, ONNX, and TensorRT backends." },
+      { category: "improvement", description: "Deployment responses include a generated `deployment_id`, chosen framework, source origin, and initial status so clients can track custom-model rollouts programmatically." },
+      { category: "improvement", description: "Docs site expanded with dedicated Hardware Rental and Custom Model Deployment sections, including parameter tables, cURL examples, response schemas, and error-code explanations." },
+      { category: "improvement", description: "Quick Reference table in Docs now lists both `/v1/hardware/rent` and `/v1/models/deploy` with method, auth, and summary." },
+      { category: "fix", description: "Fixed variable-name mismatch in the model deployment edge function that caused deployments to fail even when authentication was valid." },
+      { category: "fix", description: "Inference and usage endpoints now share the same authentication helper, eliminating inconsistent validation behavior between `/v1/inference`, `/v1/chat/completions`, and `/v1/usage`." },
+    ]
+  },
+  {
     version: "3.8.2",
     date: "July 21, 2026",
     title: "Expanded Model Catalog & Server-Side Trial Enforcement",
