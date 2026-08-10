@@ -23,28 +23,9 @@ interface InferenceRequest {
 
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
-// ── Resilient fetch: timeout + retry + Lovable AI Gateway fallback ──────────
+// ── Resilient fetch: timeout + retry without cross-model substitution ──────
 const PRIMARY_TIMEOUT_MS = 20_000;   // 20s per attempt on primary provider
-const FALLBACK_TIMEOUT_MS = 25_000;  // 25s for fallback
 const MAX_PRIMARY_ATTEMPTS = 2;
-
-// Models available on Lovable AI Gateway (used as fallback)
-const LOVABLE_FALLBACK_MAP: Record<string, string> = {
-  "anthropic/claude-sonnet-4": "openai/gpt-5",
-  "anthropic/claude-sonnet-4.5": "openai/gpt-5",
-  "anthropic/claude-opus-4": "openai/gpt-5",
-  "anthropic/claude-3.5-sonnet": "openai/gpt-5",
-  "openai/gpt-4o": "openai/gpt-5-mini",
-  "openai/gpt-4o-mini": "openai/gpt-5-nano",
-  "openai/gpt-4-turbo": "openai/gpt-5-mini",
-  "openai/gpt-5": "openai/gpt-5",
-  "openai/gpt-5-mini": "openai/gpt-5-mini",
-  "openai/gpt-5-nano": "openai/gpt-5-nano",
-  "google/gemini-2.5-pro": "google/gemini-2.5-pro",
-  "google/gemini-2.5-flash": "google/gemini-2.5-flash",
-  "meta-llama/llama-3.1-70b-instruct": "openai/gpt-5-mini",
-  "deepseek/deepseek-r1": "openai/gpt-5",
-};
 
 interface ResilientResult {
   response: Response;
@@ -66,13 +47,13 @@ async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs: numbe
 
 /**
  * Resilient chat completion: try primary provider with timeout + retry,
- * then fall back to Lovable AI Gateway if available.
+ * Never substitutes a different model: model identity is part of the API contract.
  */
 async function resilientChatFetch(
   primaryUrl: string,
   primaryHeaders: Record<string, string>,
   chatBody: Record<string, unknown>,
-  vsegptModel: string,
+  _requestedModel: string,
 ): Promise<ResilientResult> {
   const bodyStr = JSON.stringify(chatBody);
 
@@ -90,10 +71,9 @@ async function resilientChatFetch(
         console.warn(`Primary provider attempt ${attempt} returned ${resp.status}, retrying…`);
         continue;
       }
-      // 429 rate limit — go straight to fallback
+      // A retry cannot resolve an immediate rate limit.
       if (resp.status === 429) {
-        console.warn("Primary provider rate-limited (429), trying fallback…");
-        break;
+        return { response: resp, usedFallback: false };
       }
 
       return { response: resp, usedFallback: false };
@@ -104,33 +84,7 @@ async function resilientChatFetch(
     }
   }
 
-  // ── Fallback: Lovable AI Gateway ──
-  const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-  const fallbackModel = LOVABLE_FALLBACK_MAP[vsegptModel];
-
-  if (LOVABLE_API_KEY && fallbackModel) {
-    console.log(`Falling back to Lovable Gateway: ${fallbackModel} (original: ${vsegptModel})`);
-    const fallbackBody = { ...chatBody, model: fallbackModel, stream: false };
-    // Remove stream_options for non-streaming fallback
-    delete (fallbackBody as any).stream_options;
-
-    try {
-      const resp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${LOVABLE_API_KEY}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(fallbackBody),
-      }, FALLBACK_TIMEOUT_MS);
-
-      return { response: resp, usedFallback: true };
-    } catch (fallbackErr) {
-      console.error("Lovable Gateway fallback also failed:", fallbackErr);
-    }
-  }
-
-  // Both failed — return a synthetic error response
+  // All attempts failed; do not silently serve a different model.
   return {
     response: new Response(JSON.stringify({ error: "All inference providers unavailable" }), {
       status: 503,
@@ -613,7 +567,7 @@ serve(async (req) => {
         const errorText = await response.text();
         console.error("Inference error:", response.status, errorText, usedFallback ? "(fallback)" : "(primary)");
         if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
-        if (response.status === 402) return respond(JSON.stringify({ error: "Insufficient credits. Please top up your VseGPT account." }), 402, "Insufficient credits");
+        if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
 
