@@ -251,11 +251,14 @@ serve(async (req) => {
       "llama-3.1-70b": "meta-llama/llama-3.1-70b-instruct",
       "llama-3.1-8b": "meta-llama/llama-3.1-8b-instruct",
       "mistral-large": "mistralai/mistral-large",
+      "mixtral-8x7b": "mistralai/mixtral-8x7b-instruct",
       "mixtral-8x22b": "mistralai/mixtral-8x22b-instruct",
       "qwen-72b": "qwen/qwen-2.5-72b-instruct",
       "gemma-2-27b": "google/gemma-2-27b-it",
       "claude-3-opus": "anthropic/claude-opus-4",
       "gpt-4-turbo": "openai/gpt-4-turbo",
+      "gpt-4o": "openai/gpt-4o",
+      "gpt-4o-mini": "openai/gpt-4o-mini",
       "gemini-pro": "google/gemini-2.5-pro",
       "command-r-plus": "cohere/command-r-plus-08-2024",
       "o1-preview": "openai/o3-mini",
@@ -480,6 +483,7 @@ serve(async (req) => {
         messages: chatMessages,
         temperature,
         max_tokens: maxTokens,
+        max_completion_tokens: maxTokens,
       };
       if (tools && Array.isArray(tools) && tools.length > 0) chatBody.tools = tools;
       if (tool_choice) chatBody.tool_choice = tool_choice;
