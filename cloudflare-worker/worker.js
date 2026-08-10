@@ -91,7 +91,10 @@ export default {
     // Find matching route
     let functionName = null;
     let matchedPath = null;
-    for (const [routePath, fn] of Object.entries(ROUTES)) {
+    // Longest prefix wins so nested routes (e.g. /v1/models/deploy)
+    // are not shadowed by their parent (/v1/models)
+    const sortedRoutes = Object.entries(ROUTES).sort((a, b) => b[0].length - a[0].length);
+    for (const [routePath, fn] of sortedRoutes) {
       if (path === routePath || path.startsWith(routePath + "/")) {
         functionName = fn;
         matchedPath = routePath;
