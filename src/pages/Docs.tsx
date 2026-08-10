@@ -135,6 +135,60 @@ volumes:
     "webhook_url": "https://your-app.com/webhook"
   }'`;
 
+  const hardwareRentExample = `curl -X POST https://api.regraph.tech/v1/hardware/rent \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "gpu_type": "A100",
+    "gpu_count": 4,
+    "duration_hours": 2
+  }'`;
+
+  const hardwareRentResponseExample = `{
+  "rental_id": "rent_9f3ab21c4d",
+  "status": "provisioning",
+  "gpu_type": "A100",
+  "gpu_count": 4,
+  "duration_hours": 2,
+  "price_per_hour": 2.00,
+  "total_cost": 16.00,
+  "expires_at": "2026-08-10T20:00:00.000Z"
+}
+
+// 402 when the wallet balance is too low:
+{
+  "error": "Insufficient funds",
+  "message": "Required: $16.00, Available: $1.00",
+  "top_up_url": "https://regraph.tech/dashboard?tab=wallet"
+}`;
+
+  const modelsDeployExample = `curl -X POST https://api.regraph.tech/v1/models/deploy \\
+  -H "Authorization: Bearer rg_your_api_key_here" \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "model_url": "hf:meta-llama/Llama-3.1-8B-Instruct",
+    "framework": "vllm",
+    "config": {
+      "model_type": "llm",
+      "context_length": 8192,
+      "quantization": "fp16"
+    }
+  }'`;
+
+  const modelsDeployResponseExample = `{
+  "deployment_id": "dep_4c81ba0e7f12",
+  "status": "deploying",
+  "model_name": "a1b2c3d4/Llama-3.1-8B-Instruct",
+  "model_url": "hf:meta-llama/Llama-3.1-8B-Instruct",
+  "source": "huggingface",
+  "framework": "vllm",
+  "estimated_minutes": 9,
+  "endpoints": {
+    "inference": "https://api.regraph.tech/v1/inference",
+    "status": "https://api.regraph.tech/v1/models/deploy/dep_4c81ba0e7f12"
+  }
+}`;
+
   const imageGenExample = `curl -X POST https://api.regraph.tech/v1/images/generations \\
   -H "Authorization: Bearer rg_your_api_key_here" \\
   -H "Content-Type: application/json" \\
