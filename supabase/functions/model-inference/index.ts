@@ -25,8 +25,9 @@ interface InferenceRequest {
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
 // ── Resilient fetch: timeout + retry without cross-model substitution ──────
-const PRIMARY_TIMEOUT_MS = 20_000;   // 20s per attempt on primary provider
+const PRIMARY_TIMEOUT_MS = 8_000;
 const MAX_PRIMARY_ATTEMPTS = 2;
+const PRIMARY_RETRY_DELAY_MS = 500;
 
 interface ResilientResult {
   response: Response;
@@ -67,9 +68,16 @@ async function resilientChatFetch(
         body: bodyStr,
       }, PRIMARY_TIMEOUT_MS);
 
-      // Retriable server errors
+      // A 522 means the provider's model worker itself timed out. Repeating the
+      // identical request immediately only doubles latency and cannot heal it.
+      if (resp.status === 522) {
+        return { response: resp, usedFallback: false };
+      }
+
+      // Retry other transient server errors once, with bounded backoff.
       if (resp.status >= 500 && attempt < MAX_PRIMARY_ATTEMPTS) {
         console.warn(`Primary provider attempt ${attempt} returned ${resp.status}, retrying…`);
+        await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS));
         continue;
       }
       // A retry cannot resolve an immediate rate limit.
@@ -81,7 +89,10 @@ async function resilientChatFetch(
     } catch (err) {
       const isTimeout = err instanceof DOMException && err.name === "AbortError";
       console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"}: ${err}`);
-      if (attempt < MAX_PRIMARY_ATTEMPTS) continue;
+      if (attempt < MAX_PRIMARY_ATTEMPTS) {
+        await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS));
+        continue;
+      }
     }
   }
 
@@ -607,7 +618,26 @@ serve(async (req) => {
           }
         }
 
-        return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
+        if (response.status === 522) {
+          return respond(
+            JSON.stringify({
+              error: "The selected model timed out at the inference provider. Please retry later or choose another model.",
+              code: "MODEL_UPSTREAM_TIMEOUT",
+              model: vsegptModel,
+            }),
+            503,
+            errorText.substring(0, 500),
+          );
+        }
+
+        let providerMessage = "Failed to get response from AI model";
+        try {
+          const parsedError = JSON.parse(errorText);
+          providerMessage = parsedError?.message || parsedError?.error?.message || parsedError?.error || providerMessage;
+        } catch {
+          if (errorText.trim()) providerMessage = errorText.trim().slice(0, 500);
+        }
+        return respond(JSON.stringify({ error: providerMessage }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
 
 
