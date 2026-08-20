@@ -3,6 +3,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -508,7 +509,7 @@ serve(async (req) => {
       if (stream) {
         let streamResp: Response;
         try {
-          streamResp = await fetchWithTimeout("https://api.vsegpt.ru/v1/chat/completions", {
+          streamResp = await fetchWithTimeout(`${PROVIDER_BASE}/v1/chat/completions`, {
             method: "POST",
             headers: primaryHeaders,
             body: JSON.stringify(chatBody),
@@ -563,7 +564,7 @@ serve(async (req) => {
 
       // ── Non-streaming: use resilient fetch with retry + fallback ──
       const { response, usedFallback } = await resilientChatFetch(
-        "https://api.vsegpt.ru/v1/chat/completions",
+        `${PROVIDER_BASE}/v1/chat/completions`,
         primaryHeaders,
         chatBody,
         vsegptModel,
@@ -574,8 +575,41 @@ serve(async (req) => {
         console.error("Inference error:", response.status, errorText, usedFallback ? "(fallback)" : "(primary)");
         if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
         if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
+
+        // Provider transport failure (relay missing / host unreachable / 5xx):
+        // retry the SAME model id on the secondary gateway when it serves it.
+        const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
+        const secondaryKey = Deno.env.get("LOVABLE_API_KEY");
+        const secondaryEligible = vsegptModel.startsWith("google/gemini");
+        if (transportFailure && secondaryKey && secondaryEligible) {
+          try {
+            const secondaryResp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { "Lovable-API-Key": secondaryKey, "Content-Type": "application/json" },
+              body: JSON.stringify({ ...chatBody, stream: false, stream_options: undefined }),
+            }, PRIMARY_TIMEOUT_MS);
+            if (secondaryResp.ok) {
+              const sData = await secondaryResp.json();
+              const sMessage = sData.choices?.[0]?.message;
+              const sPayload: Record<string, unknown> = {
+                response: sMessage?.content || "No response generated",
+                model: vsegptModel,
+                usage: sData.usage,
+              };
+              if (Array.isArray(sMessage?.tool_calls) && sMessage.tool_calls.length > 0) {
+                sPayload.tool_calls = sMessage.tool_calls;
+              }
+              return respond(JSON.stringify(sPayload), 200, undefined, sData.usage, null);
+            }
+            console.error("Secondary gateway failed:", secondaryResp.status, (await secondaryResp.text()).slice(0, 300));
+          } catch (err) {
+            console.error("Secondary gateway error:", err);
+          }
+        }
+
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
+
 
       const providerCost = usedFallback ? null : extractProviderCost(response.headers);
       const data = await response.json();
@@ -637,7 +671,7 @@ serve(async (req) => {
 
       if (isVseGPTImageModel) {
         // Route through the image provider endpoint
-        const imageResp = await fetch("https://api.vsegpt.ru/v1/images/generations", {
+        const imageResp = await fetch(`${PROVIDER_BASE}/v1/images/generations`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({ model: vsegptModel, prompt, n: 1, response_format: "b64_json" }),
@@ -705,7 +739,7 @@ serve(async (req) => {
 
     // 4. TTS
     if (category === "tts") {
-      const response = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+      const response = await fetch(`${PROVIDER_BASE}/v1/audio/speech`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({ model: vsegptModel, input: prompt, voice: "nova", response_format: "mp3" }),
@@ -749,7 +783,7 @@ serve(async (req) => {
       };
 
       // Step 1: Submit video generation task → get request_id
-      const videoResp = await fetch("https://api.vsegpt.ru/v1/video/generate", {
+      const videoResp = await fetch(`${PROVIDER_BASE}/v1/video/generate`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -805,7 +839,7 @@ serve(async (req) => {
       let musicPrompt = prompt;
       if (hasNonLatin) {
         try {
-          const transResp = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+          const transResp = await fetch(`${PROVIDER_BASE}/v1/chat/completions`, {
             method: "POST",
             headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -835,7 +869,7 @@ serve(async (req) => {
       const MUSIC_FAILOVER_CHAIN = [vsegptModel, "tta-google/lyria2", "tta-cassette/music-generator", "tta-stable/stable-audio"].filter((m, i, a) => a.indexOf(m) === i);
 
       const tryMusicModel = async (modelId: string): Promise<Response | null> => {
-        const musicResp = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+        const musicResp = await fetch(`${PROVIDER_BASE}/v1/audio/speech`, {
           method: "POST",
           headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
           body: JSON.stringify({ model: modelId, input: musicPrompt, voice: "alloy", response_format: "mp3" }),
@@ -904,7 +938,7 @@ serve(async (req) => {
 
       for (let attempt = 1; attempt <= EMB_MAX_ATTEMPTS; attempt++) {
         try {
-          response = await fetchWithTimeout("https://api.vsegpt.ru/v1/embeddings", {
+          response = await fetchWithTimeout(`${PROVIDER_BASE}/v1/embeddings`, {
             method: "POST",
             headers: embHeaders,
             body: embBody,
@@ -969,7 +1003,7 @@ serve(async (req) => {
     // 9. Moderation
     if (category === "moderation") {
       const moderationModel = "openai/gpt-4o-mini";
-      const response = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+      const response = await fetch(`${PROVIDER_BASE}/v1/chat/completions`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
         body: JSON.stringify({

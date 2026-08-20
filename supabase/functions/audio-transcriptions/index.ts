@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -104,7 +105,7 @@ serve(async (req) => {
       return respond(JSON.stringify({ error: "Unsupported Content-Type. Use multipart/form-data or application/json." }), 400, "Bad content type");
     }
 
-    const response = await fetch("https://api.vsegpt.ru/v1/audio/transcriptions", {
+    const response = await fetch(`${PROVIDER_BASE}/v1/audio/transcriptions`, {
       method: "POST",
       headers: vsegptHeaders,
       body: vsegptBody,

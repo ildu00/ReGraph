@@ -95,4 +95,3 @@ verify_jwt = false
 
 [functions.try-chat]
 verify_jwt = false
-

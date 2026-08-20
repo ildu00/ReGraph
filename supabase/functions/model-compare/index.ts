@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,7 +19,7 @@ const EXTERNAL_MODELS: Record<string, string> = {
 
 const REGRAPH_MODEL = "google/gemini-3-flash-preview";
 const LOVABLE_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const EXTERNAL_GATEWAY = "https://api.vsegpt.ru/v1/chat/completions";
+const EXTERNAL_GATEWAY = `${PROVIDER_BASE}/v1/chat/completions`;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

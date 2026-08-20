@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -1196,7 +1197,7 @@ serve(async (req) => {
       reqBody.tool_choice = "auto";
     }
 
-    const aiRes = await fetch("https://api.vsegpt.ru/v1/chat/completions", {
+    const aiRes = await fetch(`${PROVIDER_BASE}/v1/chat/completions`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
