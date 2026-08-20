@@ -612,24 +612,36 @@ serve(async (req) => {
         if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
         if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
 
-        // Provider transport failure (relay missing / host unreachable / 5xx):
-        // retry the SAME model id on the secondary gateway when it serves it.
+        // Provider transport failure (relay missing / host unreachable / 5xx /
+        // 522 upstream worker timeout): retry on the secondary gateway so the
+        // request still completes instead of surfacing an outage.
         const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
         const secondaryKey = Deno.env.get("LOVABLE_API_KEY");
-        const secondaryEligible = vsegptModel.startsWith("google/gemini");
-        if (transportFailure && secondaryKey && secondaryEligible) {
+        // The secondary gateway serves Gemini and GPT-5 ids natively; anything
+        // else is served by the closest available model and flagged as fallback.
+        const secondaryModel =
+          vsegptModel.startsWith("google/gemini") || vsegptModel.startsWith("openai/gpt-5")
+            ? vsegptModel
+            : "google/gemini-2.5-flash";
+        const secondaryIsSubstitute = secondaryModel !== vsegptModel;
+        if (transportFailure && secondaryKey) {
           try {
             const secondaryResp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
               headers: { "Lovable-API-Key": secondaryKey, "Content-Type": "application/json" },
-              body: JSON.stringify({ ...chatBody, stream: false, stream_options: undefined }),
+              body: JSON.stringify({
+                ...chatBody,
+                model: secondaryModel,
+                stream: false,
+                stream_options: undefined,
+              }),
             }, PRIMARY_TIMEOUT_MS);
             if (secondaryResp.ok) {
               const sData = await secondaryResp.json();
               const sMessage = sData.choices?.[0]?.message;
               const sPayload: Record<string, unknown> = {
                 response: sMessage?.content || "No response generated",
-                model: vsegptModel,
+                model: secondaryIsSubstitute ? `${secondaryModel} (fallback)` : vsegptModel,
                 usage: sData.usage,
               };
               if (Array.isArray(sMessage?.tool_calls) && sMessage.tool_calls.length > 0) {
