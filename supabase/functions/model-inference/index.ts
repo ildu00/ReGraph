@@ -63,9 +63,11 @@ async function resilientChatFetch(
   _requestedModel: string,
 ): Promise<ResilientResult> {
   const bodyStr = JSON.stringify(chatBody);
+  let lastError: string | null = null;
 
   // ── Primary provider attempts ──
   for (let attempt = 1; attempt <= MAX_PRIMARY_ATTEMPTS; attempt++) {
+    const startedAt = Date.now();
     try {
       const resp = await fetchWithTimeout(primaryUrl, {
         method: "POST",
