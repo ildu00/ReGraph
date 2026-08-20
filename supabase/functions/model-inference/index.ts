@@ -28,7 +28,9 @@ const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 // Generation requests must not be aborted by an artificial deadline. The
 // provider can legitimately take minutes for large models and reasoning jobs.
 const PRIMARY_TIMEOUT_MS = 55_000;
-const MAX_PRIMARY_ATTEMPTS = 3;
+// The relay warms its provider connection before dispatch. One retry remains
+// for a genuinely transient 5xx, avoiding the previous 3 × ~20s 522 queue.
+const MAX_PRIMARY_ATTEMPTS = 2;
 const PRIMARY_RETRY_DELAY_MS = 500;
 // Only retry transport failures that died fast (connection level), never
 // aborted long generations — repeating those just doubles the wait.
