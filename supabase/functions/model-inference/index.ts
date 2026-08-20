@@ -3,7 +3,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
-import { PROVIDER_BASE, PROVIDER_DIRECT_BASE } from "../_shared/provider.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -589,10 +589,17 @@ serve(async (req) => {
       }
 
       // ── Non-streaming: use resilient fetch with retry + fallback ──
+      // The relay must receive bytes while long generations run. Request an
+      // upstream SSE stream for Sonnet 5 even when this client expects JSON,
+      // then assemble the chunks below into the normal response shape.
+      const assembleUpstreamStream = vsegptModel === "anthropic/claude-sonnet-5";
+      const upstreamChatBody = assembleUpstreamStream
+        ? { ...chatBody, stream: true, stream_options: { include_usage: true } }
+        : chatBody;
       const { response, usedFallback } = await resilientChatFetch(
-        `${PROVIDER_DIRECT_BASE}/v1/chat/completions`,
+        `${PROVIDER_BASE}/v1/chat/completions`,
         primaryHeaders,
-        chatBody,
+        upstreamChatBody,
         vsegptModel,
       );
 
@@ -668,7 +675,28 @@ serve(async (req) => {
 
 
       const providerCost = usedFallback ? null : extractProviderCost(response.headers);
-      const data = await response.json();
+      let data: Record<string, any>;
+      if (assembleUpstreamStream) {
+        const streamText = await response.text();
+        let content = "";
+        let usage: Record<string, number> | undefined;
+        for (const line of streamText.split("\n")) {
+          if (!line.startsWith("data: ") || line.trim() === "data: [DONE]") continue;
+          try {
+            const chunk = JSON.parse(line.slice(6));
+            content += chunk?.choices?.[0]?.delta?.content ?? "";
+            if (chunk?.usage) usage = chunk.usage;
+          } catch {
+            // Ignore non-JSON SSE keepalive lines.
+          }
+        }
+        if (!content) {
+          return respond(JSON.stringify({ error: "The inference provider returned an empty stream" }), 503, "Empty provider stream");
+        }
+        data = { choices: [{ message: { content } }], usage };
+      } else {
+        data = await response.json();
+      }
       const message = data.choices?.[0]?.message;
       const content = message?.content || "No response generated";
       const toolCalls = message?.tool_calls;
