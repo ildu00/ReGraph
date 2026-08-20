@@ -72,6 +72,8 @@ export const CATALOG_MODELS: CatalogModel[] = [
   { id: "openai/gpt-3.5-turbo", name: "GPT-3.5 Turbo", provider: "OpenAI", category: "llm" },
   { id: "anthropic/claude-sonnet-5-thinking-high", name: "Claude Sonnet 5", provider: "Anthropic", category: "reasoning" },
   { id: "anthropic/claude-sonnet-5", name: "Claude Sonnet 5", provider: "Anthropic", category: "llm" },
+  { id: "anthropic/claude-opus-5-thinking", name: "Claude Opus 5 Thinking", provider: "Anthropic", category: "reasoning" },
+  { id: "anthropic/claude-opus-5", name: "Claude Opus 5", provider: "Anthropic", category: "llm" },
   { id: "anthropic/claude-opus-4.8-thinking", name: "Claude Opus 4.8", provider: "Anthropic", category: "reasoning" },
   { id: "anthropic/claude-opus-4.8", name: "Claude Opus 4.8", provider: "Anthropic", category: "llm" },
   { id: "anthropic/claude-opus-4.7-thinking", name: "Claude Opus 4.7 Thinking", provider: "Anthropic", category: "reasoning" },
