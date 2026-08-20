@@ -396,10 +396,10 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          // The dashboard is an interactive chat, not a long-form batch job.
-          // Sending the API-wide 40K ceiling makes reasoning variants reserve
-          // an oversized generation and can time out before producing output.
-          maxTokens: 4096,
+          // Keep the interactive chat request inside the provider's fast lane.
+          // Larger reservations for Sonnet 5 are queued before reaching the
+          // model worker and repeatedly hit the upstream 522 timeout.
+          maxTokens: 256,
           category: modelInfo?.category || "chat",
         }),
       });
