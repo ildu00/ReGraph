@@ -58,11 +58,16 @@ function logApiRequest(ctx, logData) {
   );
 }
 
+// Upstream provider relay (backend egress is blocked by the provider host)
+const PROVIDER_RELAY_PREFIX = "/_provider";
+const PROVIDER_UPSTREAM = "https://api.vsegpt.ru";
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const path = url.pathname;
     const startTime = Date.now();
+
 
     // CORS headers
     const corsHeaders = {
