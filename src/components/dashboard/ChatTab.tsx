@@ -213,6 +213,17 @@ const getOrCreateApiKey = async (userId: string): Promise<string | null> => {
 };
 const MODEL_STORAGE_KEY = "regraph-chat-model";
 
+const loadSelectedModel = () => {
+  const stored = localStorage.getItem(MODEL_STORAGE_KEY);
+  // This reasoning variant previously had the same visible label as the base
+  // model, so users could select it unknowingly. Migrate that ambiguous saved
+  // choice to the model its old label promised.
+  if (stored === "anthropic/claude-opus-4.8-thinking") {
+    return "anthropic/claude-opus-4.8";
+  }
+  return stored || "regraph-llm";
+};
+
 const loadMessages = (): ChatMessage[] => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -235,9 +246,7 @@ const saveMessages = (msgs: ChatMessage[]) => {
 const ChatTab = () => {
   const [messages, setMessages] = useState<ChatMessage[]>(loadMessages);
   const [input, setInput] = useState("");
-  const [selectedModel, setSelectedModel] = useState(
-    () => localStorage.getItem(MODEL_STORAGE_KEY) || "regraph-llm"
-  );
+  const [selectedModel, setSelectedModel] = useState(loadSelectedModel);
   const [isLoading, setIsLoading] = useState(false);
   const [attachedFiles, setAttachedFiles] = useState<File[]>([]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -374,7 +383,10 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          maxTokens: 40000,
+          // The dashboard is an interactive chat, not a long-form batch job.
+          // Sending the API-wide 40K ceiling makes reasoning variants reserve
+          // an oversized generation and can time out before producing output.
+          maxTokens: 4096,
           category: modelInfo?.category || "chat",
         }),
       });
