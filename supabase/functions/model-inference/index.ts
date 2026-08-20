@@ -613,25 +613,51 @@ serve(async (req) => {
         if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
 
         // Provider transport failure (relay missing / host unreachable / 5xx /
-        // 522 upstream worker timeout): retry on the secondary gateway so the
-        // request still completes instead of surfacing an outage.
+        // 522 upstream worker timeout).
         const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
+
+        // First: retry the SAME model on the primary provider once. A 522 is a
+        // per-worker hiccup and usually clears on the next attempt.
+        if (transportFailure) {
+          try {
+            const retryResp = await fetchWithTimeout(`${PROVIDER_BASE}/v1/chat/completions`, {
+              method: "POST",
+              headers: primaryHeaders,
+              body: JSON.stringify(chatBody),
+            }, PRIMARY_TIMEOUT_MS);
+            if (retryResp.ok) {
+              const rData = await retryResp.json();
+              const rMessage = rData.choices?.[0]?.message;
+              const rPayload: Record<string, unknown> = {
+                response: rMessage?.content || "No response generated",
+                model: vsegptModel,
+                usage: rData.usage,
+              };
+              if (Array.isArray(rMessage?.tool_calls) && rMessage.tool_calls.length > 0) {
+                rPayload.tool_calls = rMessage.tool_calls;
+              }
+              return respond(JSON.stringify(rPayload), 200, undefined, rData.usage, extractProviderCost(retryResp.headers));
+            }
+            console.error("Primary retry failed:", retryResp.status);
+          } catch (err) {
+            console.error("Primary retry error:", err);
+          }
+        }
+
+        // Secondary gateway is used ONLY when it serves the exact requested
+        // model. Model identity is part of the contract: never answer a Claude
+        // request with a different vendor's model.
         const secondaryKey = Deno.env.get("LOVABLE_API_KEY");
-        // The secondary gateway serves Gemini and GPT-5 ids natively; anything
-        // else is served by the closest available model and flagged as fallback.
-        const secondaryModel =
-          vsegptModel.startsWith("google/gemini") || vsegptModel.startsWith("openai/gpt-5")
-            ? vsegptModel
-            : "google/gemini-2.5-flash";
-        const secondaryIsSubstitute = secondaryModel !== vsegptModel;
-        if (transportFailure && secondaryKey) {
+        const secondaryServesModel =
+          vsegptModel.startsWith("google/gemini") || vsegptModel.startsWith("openai/gpt-5");
+        if (transportFailure && secondaryKey && secondaryServesModel) {
           try {
             const secondaryResp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
               method: "POST",
               headers: { "Lovable-API-Key": secondaryKey, "Content-Type": "application/json" },
               body: JSON.stringify({
                 ...chatBody,
-                model: secondaryModel,
+                model: vsegptModel,
                 stream: false,
                 stream_options: undefined,
               }),
@@ -641,7 +667,7 @@ serve(async (req) => {
               const sMessage = sData.choices?.[0]?.message;
               const sPayload: Record<string, unknown> = {
                 response: sMessage?.content || "No response generated",
-                model: secondaryIsSubstitute ? `${secondaryModel} (fallback)` : vsegptModel,
+                model: vsegptModel,
                 usage: sData.usage,
               };
               if (Array.isArray(sMessage?.tool_calls) && sMessage.tool_calls.length > 0) {
@@ -654,6 +680,7 @@ serve(async (req) => {
             console.error("Secondary gateway error:", err);
           }
         }
+
 
         if (response.status === 522) {
           return respond(
