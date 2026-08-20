@@ -93,17 +93,33 @@ async function resilientChatFetch(
       return { response: resp, usedFallback: false };
     } catch (err) {
       const isTimeout = err instanceof DOMException && err.name === "AbortError";
-      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"}: ${err}`);
-      if (attempt < MAX_PRIMARY_ATTEMPTS) {
+      const elapsed = Date.now() - startedAt;
+      lastError = err instanceof Error ? err.message : String(err);
+      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"} after ${elapsed}ms: ${err}`);
+      // Retry only fast transport failures; an aborted long generation would
+      // just be aborted again.
+      if (attempt < MAX_PRIMARY_ATTEMPTS && !isTimeout && elapsed < FAST_FAILURE_MS) {
         await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS));
         continue;
       }
+      if (isTimeout) {
+        return {
+          response: new Response(JSON.stringify({
+            error: `Model timed out after ${Math.round(PRIMARY_TIMEOUT_MS / 1000)}s. Try a smaller max_tokens or a faster model variant.`,
+          }), { status: 504, headers: { "Content-Type": "application/json" } }),
+          usedFallback: false,
+        };
+      }
+      break;
     }
   }
 
   // All attempts failed; do not silently serve a different model.
   return {
-    response: new Response(JSON.stringify({ error: "All inference providers unavailable" }), {
+    response: new Response(JSON.stringify({
+      error: "All inference providers unavailable",
+      detail: lastError,
+    }), {
       status: 503,
       headers: { "Content-Type": "application/json" },
     }),
