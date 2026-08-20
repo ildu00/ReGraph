@@ -3,7 +3,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
-import { PROVIDER_BASE } from "../_shared/provider.ts";
+import { PROVIDER_BASE, PROVIDER_DIRECT_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -24,9 +24,9 @@ interface InferenceRequest {
 
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
-// ── Resilient fetch: timeout + retry without cross-model substitution ──────
-// Large models (70B+, reasoning models) legitimately need 20-40s to answer.
-// An aggressive timeout aborts healthy generations and looks like an outage.
+// ── Resilient fetch: retry without cross-model substitution ────────────────
+// Generation requests must not be aborted by an artificial deadline. The
+// provider can legitimately take minutes for large models and reasoning jobs.
 const PRIMARY_TIMEOUT_MS = 55_000;
 const MAX_PRIMARY_ATTEMPTS = 2;
 const PRIMARY_RETRY_DELAY_MS = 500;
@@ -69,11 +69,11 @@ async function resilientChatFetch(
   for (let attempt = 1; attempt <= MAX_PRIMARY_ATTEMPTS; attempt++) {
     const startedAt = Date.now();
     try {
-      const resp = await fetchWithTimeout(primaryUrl, {
+      const resp = await fetch(primaryUrl, {
         method: "POST",
         headers: primaryHeaders,
         body: bodyStr,
-      }, PRIMARY_TIMEOUT_MS);
+      });
 
       // A 522 means the provider's model worker itself timed out. Repeating the
       // identical request immediately only doubles latency and cannot heal it.
@@ -94,23 +94,13 @@ async function resilientChatFetch(
 
       return { response: resp, usedFallback: false };
     } catch (err) {
-      const isTimeout = err instanceof DOMException && err.name === "AbortError";
       const elapsed = Date.now() - startedAt;
       lastError = err instanceof Error ? err.message : String(err);
-      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"} after ${elapsed}ms: ${err}`);
-      // Retry only fast transport failures; an aborted long generation would
-      // just be aborted again.
-      if (attempt < MAX_PRIMARY_ATTEMPTS && !isTimeout && elapsed < FAST_FAILURE_MS) {
+      console.warn(`Primary attempt ${attempt} failed after ${elapsed}ms: ${err}`);
+      // Retry only fast connection-level failures.
+      if (attempt < MAX_PRIMARY_ATTEMPTS && elapsed < FAST_FAILURE_MS) {
         await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS));
         continue;
-      }
-      if (isTimeout) {
-        return {
-          response: new Response(JSON.stringify({
-            error: `Model timed out after ${Math.round(PRIMARY_TIMEOUT_MS / 1000)}s. Try a smaller max_tokens or a faster model variant.`,
-          }), { status: 504, headers: { "Content-Type": "application/json" } }),
-          usedFallback: false,
-        };
       }
       break;
     }
@@ -600,7 +590,7 @@ serve(async (req) => {
 
       // ── Non-streaming: use resilient fetch with retry + fallback ──
       const { response, usedFallback } = await resilientChatFetch(
-        `${PROVIDER_BASE}/v1/chat/completions`,
+        `${PROVIDER_DIRECT_BASE}/v1/chat/completions`,
         primaryHeaders,
         chatBody,
         vsegptModel,
