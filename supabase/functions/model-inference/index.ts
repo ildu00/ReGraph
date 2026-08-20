@@ -25,9 +25,14 @@ interface InferenceRequest {
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
 // ── Resilient fetch: timeout + retry without cross-model substitution ──────
-const PRIMARY_TIMEOUT_MS = 8_000;
+// Large models (70B+, reasoning models) legitimately need 20-40s to answer.
+// An aggressive timeout aborts healthy generations and looks like an outage.
+const PRIMARY_TIMEOUT_MS = 55_000;
 const MAX_PRIMARY_ATTEMPTS = 2;
 const PRIMARY_RETRY_DELAY_MS = 500;
+// Only retry transport failures that died fast (connection level), never
+// aborted long generations — repeating those just doubles the wait.
+const FAST_FAILURE_MS = 5_000;
 
 interface ResilientResult {
   response: Response;
