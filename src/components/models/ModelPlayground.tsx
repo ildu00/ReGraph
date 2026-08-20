@@ -63,6 +63,7 @@ function isImageCategory(category: string): boolean {
 }
 
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
+  const { session } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
