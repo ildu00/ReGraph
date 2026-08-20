@@ -234,23 +234,36 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
 
     try {
       const accessToken = session?.access_token;
-      const resp = await fetch(accessToken ? INFERENCE_URL : TRY_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${accessToken ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          model: model.id,
-          prompt: prompt,
-          temperature: temperature[0],
-          maxTokens: maxTokens[0],
-          category: model.category,
-          ...(uploadedFileUrl ? { imageUrl: uploadedFileUrl } : {}),
-        }),
+      const payload = JSON.stringify({
+        model: model.id,
+        prompt: prompt,
+        temperature: temperature[0],
+        maxTokens: maxTokens[0],
+        category: model.category,
+        ...(uploadedFileUrl ? { imageUrl: uploadedFileUrl } : {}),
       });
 
+      const send = (url: string, token: string) =>
+        fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`,
+          },
+          body: payload,
+        });
+
+      const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      let resp = accessToken ? await send(INFERENCE_URL, accessToken) : await send(TRY_URL, anonKey);
+
+      // Stale/expired session token: fall back to the anonymous trial endpoint
+      // so Try keeps working instead of showing "Unauthorized".
+      if (resp.status === 401 && accessToken) {
+        resp = await send(TRY_URL, anonKey);
+      }
+
       const data = await resp.json();
+
 
       if (!resp.ok) {
         if (resp.status === 429) {
