@@ -28,7 +28,7 @@ const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 // Generation requests must not be aborted by an artificial deadline. The
 // provider can legitimately take minutes for large models and reasoning jobs.
 const PRIMARY_TIMEOUT_MS = 55_000;
-const MAX_PRIMARY_ATTEMPTS = 2;
+const MAX_PRIMARY_ATTEMPTS = 3;
 const PRIMARY_RETRY_DELAY_MS = 500;
 // Only retry transport failures that died fast (connection level), never
 // aborted long generations — repeating those just doubles the wait.
@@ -75,9 +75,16 @@ async function resilientChatFetch(
         body: bodyStr,
       });
 
-      // A 522 means the provider's model worker itself timed out. Repeating the
-      // identical request immediately only doubles latency and cannot heal it.
+      // 522 is emitted by the relay/CDN when it cannot establish the upstream
+      // connection. The request has not reached the model yet, so retrying is
+      // required (and cannot duplicate a completed generation).
       if (resp.status === 522) {
+        if (attempt < MAX_PRIMARY_ATTEMPTS) {
+          console.warn(`Primary relay attempt ${attempt} returned 522 before model dispatch, retrying…`);
+          await resp.body?.cancel();
+          await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS * attempt));
+          continue;
+        }
         return { response: resp, usedFallback: false };
       }
 

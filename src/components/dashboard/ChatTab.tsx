@@ -379,7 +379,20 @@ const ChatTab = () => {
       }
 
       // Build conversation history (last 50 messages) for context
-      const historyMessages = messages.slice(-50).map((m) => ({
+      const completedHistory: ChatMessage[] = [];
+      for (let index = 0; index < messages.length - 1; index += 1) {
+        const userMessage = messages[index];
+        const assistantMessage = messages[index + 1];
+        if (
+          userMessage.role === "user" &&
+          assistantMessage.role === "assistant" &&
+          !assistantMessage.content.startsWith("⚠️ ")
+        ) {
+          completedHistory.push(userMessage, assistantMessage);
+          index += 1;
+        }
+      }
+      const historyMessages = completedHistory.slice(-50).map((m) => ({
         role: m.role,
         content: m.content,
       }));
