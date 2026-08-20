@@ -268,7 +268,9 @@ serve(async (req) => {
     const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = parsedBody;
     // Allow _endpoint injection from the gateway to override category
     const _endpoint = (parsedBody as any)._endpoint as string | undefined;
-    const category = (parsedBody as any).category || rawCategory;
+    // Text/chat is the default surface: an absent or unrecognised category must
+    // never degrade into a placeholder response.
+    const category = (parsedBody as any).category || rawCategory || "llm";
     const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
