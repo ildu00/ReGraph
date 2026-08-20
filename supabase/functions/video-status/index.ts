@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,7 +31,7 @@ serve(async (req) => {
     }
 
     const statusResp = await fetch(
-      `https://api.vsegpt.ru/v1/video/status?request_id=${requestId}`,
+      `${PROVIDER_BASE}/v1/video/status?request_id=${requestId}`,
       { headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}` } }
     );
 

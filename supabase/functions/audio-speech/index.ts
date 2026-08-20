@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { logApiRequest, extractApiKeyPrefix } from "../_shared/log-request.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -45,7 +46,7 @@ serve(async (req) => {
     };
     const vsegptModel = modelMapping[model] || model;
 
-    const response = await fetch("https://api.vsegpt.ru/v1/audio/speech", {
+    const response = await fetch(`${PROVIDER_BASE}/v1/audio/speech`, {
       method: "POST",
       headers: { "Authorization": `Bearer ${VSEGPT_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({ model: vsegptModel, input, voice, response_format, speed }),
