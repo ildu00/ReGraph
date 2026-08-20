@@ -17,7 +17,6 @@ interface ModelPlaygroundProps {
   onClose: () => void;
 }
 
-const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
 // Anonymous visitors go through the trial endpoint, which holds the internal key server-side.
 const TRY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/try-chat`;
 const VIDEO_STATUS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-status`;
