@@ -39,6 +39,18 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.4",
+    date: "August 20, 2026",
+    title: "Universal Inference Failover for Chat Models",
+    type: "patch",
+    changes: [
+      { category: "improvement", description: "Automatic fallback for any chat model on upstream provider timeouts (522/504/5xx) — the router now reroutes to a reserve gateway so large models and high-traffic endpoints stay available instead of returning a timeout error." },
+      { category: "improvement", description: "Gemini and GPT-5 family requests keep their original model IDs during fallback; other models are mapped to the nearest available alternative with a clear (fallback) label." },
+      { category: "improvement", description: "Failover responses include the x-regraph-fallback header so API clients can detect when a reserve model handled the request." },
+      { category: "fix", description: "Resolved cases where Claude Sonnet 4.5 and other large chat models returned a provider timeout even though the model was online — requests now complete successfully via the reserve gateway." },
+    ]
+  },
+  {
     version: "3.8.3",
     date: "August 10, 2026",
     title: "API Authentication Hardening, Hardware Rental & Custom Model Deployment",
