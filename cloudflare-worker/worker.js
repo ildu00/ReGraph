@@ -92,9 +92,12 @@ export default {
         const v = request.headers.get(h);
         if (v) relayHeaders.set(h, v);
       }
-      const relayInit = { method: request.method, headers: relayHeaders };
+      const relayInit = { method: request.method, headers: relayHeaders, redirect: "follow" };
       if (request.method !== "GET" && request.method !== "HEAD") {
-        relayInit.body = request.body;
+        // Buffer the small API payload before opening the upstream request.
+        // Forwarding the incoming stream directly can defer the origin request
+        // on some Worker POPs and makes it look absent from upstream logs.
+        relayInit.body = await request.arrayBuffer();
       }
       try {
         const upstream = await fetch(`${PROVIDER_UPSTREAM}${upstreamPath}${url.search}`, relayInit);

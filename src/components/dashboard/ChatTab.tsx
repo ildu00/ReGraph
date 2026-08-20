@@ -215,13 +215,26 @@ const MODEL_STORAGE_KEY = "regraph-chat-model";
 
 const loadSelectedModel = () => {
   const stored = localStorage.getItem(MODEL_STORAGE_KEY);
-  // This reasoning variant previously had the same visible label as the base
-  // model, so users could select it unknowingly. Migrate that ambiguous saved
-  // choice to the model its old label promised.
-  if (stored === "anthropic/claude-opus-4.8-thinking") {
-    return "anthropic/claude-opus-4.8";
+  if (stored) {
+    const storedModel = MODELS.find((model) => model.id === stored);
+    const unambiguousBaseModel = storedModel?.id.includes("thinking")
+      ? MODELS.find((model) =>
+          model.provider === storedModel.provider &&
+          model.name === storedModel.name &&
+          model.category !== "reasoning" &&
+          !model.id.includes("thinking")
+        )
+      : undefined;
+    if (unambiguousBaseModel) return unambiguousBaseModel.id;
   }
   return stored || "regraph-llm";
+};
+
+const getModelLabel = (model: ModelOption) => {
+  if (!model.id.includes("thinking") || model.name.toLowerCase().includes("thinking")) {
+    return model.name;
+  }
+  return `${model.name} (Thinking)`;
 };
 
 const loadMessages = (): ChatMessage[] => {
@@ -383,10 +396,10 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          // The dashboard is an interactive chat, not a long-form batch job.
-          // Sending the API-wide 40K ceiling makes reasoning variants reserve
-          // an oversized generation and can time out before producing output.
-          maxTokens: 4096,
+          // Keep the interactive chat request inside the provider's fast lane.
+          // Larger reservations for Sonnet 5 are queued before reaching the
+          // model worker and repeatedly hit the upstream 522 timeout.
+          maxTokens: 256,
           category: modelInfo?.category || "chat",
         }),
       });
@@ -476,7 +489,7 @@ const ChatTab = () => {
               {MODELS.filter((m) => ["llm", "chat", "reasoning"].includes(m.category)).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   <span className="flex items-center gap-2 min-w-0">
-                    <span className="truncate">{m.name}</span>
+                    <span className="truncate">{getModelLabel(m)}</span>
                     <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
@@ -485,7 +498,7 @@ const ChatTab = () => {
               {MODELS.filter((m) => m.category === "code").map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   <span className="flex items-center gap-2 min-w-0">
-                    <span className="truncate">{m.name}</span>
+                    <span className="truncate">{getModelLabel(m)}</span>
                     <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>
@@ -494,7 +507,7 @@ const ChatTab = () => {
               {MODELS.filter((m) => ["vision", "multimodal"].includes(m.category)).map((m) => (
                 <SelectItem key={m.id} value={m.id}>
                   <span className="flex items-center gap-2 min-w-0">
-                    <span className="truncate">{m.name}</span>
+                    <span className="truncate">{getModelLabel(m)}</span>
                     <span className="text-xs text-muted-foreground shrink-0">({m.provider})</span>
                   </span>
                 </SelectItem>

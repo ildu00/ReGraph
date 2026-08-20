@@ -3,7 +3,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
-import { PROVIDER_BASE, PROVIDER_DIRECT_BASE } from "../_shared/provider.ts";
+import { PROVIDER_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -615,36 +615,6 @@ serve(async (req) => {
         // Provider transport failure (relay missing / host unreachable / 5xx /
         // 522 upstream worker timeout).
         const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
-
-        // The primary URL is an edge relay. Retrying that same relay after a
-        // 522 repeats the broken network path and may never reach the provider
-        // application (so no request appears in its logs). Retry the exact same
-        // model once against the provider's direct API instead.
-        if (transportFailure) {
-          try {
-            const retryResp = await fetchWithTimeout(`${PROVIDER_DIRECT_BASE}/v1/chat/completions`, {
-              method: "POST",
-              headers: primaryHeaders,
-              body: JSON.stringify(chatBody),
-            }, PRIMARY_TIMEOUT_MS);
-            if (retryResp.ok) {
-              const rData = await retryResp.json();
-              const rMessage = rData.choices?.[0]?.message;
-              const rPayload: Record<string, unknown> = {
-                response: rMessage?.content || "No response generated",
-                model: vsegptModel,
-                usage: rData.usage,
-              };
-              if (Array.isArray(rMessage?.tool_calls) && rMessage.tool_calls.length > 0) {
-                rPayload.tool_calls = rMessage.tool_calls;
-              }
-              return respond(JSON.stringify(rPayload), 200, undefined, rData.usage, extractProviderCost(retryResp.headers));
-            }
-            console.error("Direct provider retry failed:", retryResp.status);
-          } catch (err) {
-            console.error("Direct provider retry error:", err);
-          }
-        }
 
         // Secondary gateway is used ONLY when it serves the exact requested
         // model. Model identity is part of the contract: never answer a Claude
