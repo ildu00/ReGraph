@@ -39,6 +39,22 @@ interface ChangelogEntry {
 
 const changelog: ChangelogEntry[] = [
   {
+    version: "3.8.5",
+    date: "August 20, 2026",
+    title: "Chat Latency Fix: Sub-Second Routing to Upstream Models",
+    type: "patch",
+    changes: [
+      { category: "performance", description: "Eliminated the ~60-second delay before chat requests reached the upstream inference host. The edge relay now warms its outbound TLS connection with a lightweight probe before dispatching the generation request, so the request is no longer the connection probe itself." },
+      { category: "performance", description: "Reduced primary inference attempts from 3 to 2. Previously two consecutive 20-second connection timeouts (522) were serialized before a successful third attempt, stacking up to a full minute of latency; real chat responses now land in ~3 seconds." },
+      { category: "fix", description: "Relay now buffers the request payload before opening the upstream connection. Streaming the incoming body through on some edge locations deferred the origin request, which made requests appear entirely absent from upstream logs." },
+      { category: "fix", description: "AI Chat no longer replays failed assistant turns back into conversation history. Error placeholders (⚠️ notices) were being sent as valid assistant messages, corrupting the payload and causing upstream routing to reject the request." },
+      { category: "fix", description: "Chat requests no longer send both `max_tokens` and `max_completion_tokens`. Claude-family models reject the combination; `max_completion_tokens` is now sent only for OpenAI models." },
+      { category: "improvement", description: "Connection-level 522 responses are now classified as transient transport errors rather than model timeouts, so retries are bounded and the user-facing error message reflects the real cause." },
+      { category: "improvement", description: "Disabled cross-vendor model substitution in the chat router — selecting a Claude model can no longer be answered by a different vendor's model." },
+      { category: "feature", description: "Added Claude Opus 5 and Claude Sonnet 5 variants to the model catalog, selectable in AI Chat, Claw, and the Models pages." },
+    ]
+  },
+  {
     version: "3.8.4",
     date: "August 20, 2026",
     title: "Universal Inference Failover for Chat Models",
