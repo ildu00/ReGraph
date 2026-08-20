@@ -3,7 +3,7 @@ import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/b
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
 import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
-import { PROVIDER_BASE } from "../_shared/provider.ts";
+import { PROVIDER_BASE, PROVIDER_DIRECT_BASE } from "../_shared/provider.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -616,11 +616,13 @@ serve(async (req) => {
         // 522 upstream worker timeout).
         const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
 
-        // First: retry the SAME model on the primary provider once. A 522 is a
-        // per-worker hiccup and usually clears on the next attempt.
+        // The primary URL is an edge relay. Retrying that same relay after a
+        // 522 repeats the broken network path and may never reach the provider
+        // application (so no request appears in its logs). Retry the exact same
+        // model once against the provider's direct API instead.
         if (transportFailure) {
           try {
-            const retryResp = await fetchWithTimeout(`${PROVIDER_BASE}/v1/chat/completions`, {
+            const retryResp = await fetchWithTimeout(`${PROVIDER_DIRECT_BASE}/v1/chat/completions`, {
               method: "POST",
               headers: primaryHeaders,
               body: JSON.stringify(chatBody),
@@ -638,9 +640,9 @@ serve(async (req) => {
               }
               return respond(JSON.stringify(rPayload), 200, undefined, rData.usage, extractProviderCost(retryResp.headers));
             }
-            console.error("Primary retry failed:", retryResp.status);
+            console.error("Direct provider retry failed:", retryResp.status);
           } catch (err) {
-            console.error("Primary retry error:", err);
+            console.error("Direct provider retry error:", err);
           }
         }
 
