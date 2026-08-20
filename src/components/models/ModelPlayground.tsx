@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
 import ReactMarkdown from "react-markdown";
-import { useAuth } from "@/hooks/useAuth";
 import remarkGfm from "remark-gfm";
 
 interface ModelPlaygroundProps {
@@ -63,7 +62,6 @@ function isImageCategory(category: string): boolean {
 }
 
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
-  const { session } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -233,7 +231,6 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     setError(null);
 
     try {
-      const accessToken = session?.access_token;
       const payload = JSON.stringify({
         model: model.id,
         prompt: prompt,
@@ -254,13 +251,7 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
         });
 
       const anonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-      let resp = accessToken ? await send(INFERENCE_URL, accessToken) : await send(TRY_URL, anonKey);
-
-      // Stale/expired session token: fall back to the anonymous trial endpoint
-      // so Try keeps working instead of showing "Unauthorized".
-      if (resp.status === 401 && accessToken) {
-        resp = await send(TRY_URL, anonKey);
-      }
+      const resp = await send(TRY_URL, anonKey);
 
       const data = await resp.json();
 
