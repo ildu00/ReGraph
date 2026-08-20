@@ -13,6 +13,16 @@ function extractCredential(req: Request): string | null {
   return credential || null;
 }
 
+/**
+ * Internal, server-to-server trial requests (public /try + /models playground).
+ * The key never reaches the browser; only edge functions hold it.
+ */
+export function isInternalTrialRequest(req: Request): boolean {
+  const provided = req.headers.get("x-internal-key");
+  const expected = Deno.env.get("INTERNAL_TRIAL_KEY");
+  return !!provided && !!expected && provided === expected;
+}
+
 export async function authenticateRequest(req: Request): Promise<ApiIdentity | null> {
   const credential = extractCredential(req);
   if (!credential) return null;

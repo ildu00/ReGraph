@@ -2,11 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { encode as base64Encode } from "https://deno.land/std@0.168.0/encoding/base64.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { logApiRequest, extractApiKeyPrefix, touchApiKeyLastUsed } from "../_shared/log-request.ts";
-import { authenticateRequest, unauthorizedResponse } from "../_shared/api-auth.ts";
+import { authenticateRequest, unauthorizedResponse, isInternalTrialRequest } from "../_shared/api-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-api-key, x-internal-key",
 };
 
 interface InferenceRequest {
@@ -182,9 +182,11 @@ serve(async (req) => {
   const apiKeyPrefix = extractApiKeyPrefix(req);
   let statusCode = 200;
 
-  const identity = await authenticateRequest(req);
-  if (!identity) return unauthorizedResponse(corsHeaders);
-  const userId = identity.userId;
+  const internalTrial = isInternalTrialRequest(req);
+  const identity = internalTrial ? null : await authenticateRequest(req);
+  if (!internalTrial && !identity) return unauthorizedResponse(corsHeaders);
+  // Trial requests are unbilled and have no wallet: empty userId skips balance/billing.
+  const userId = identity?.userId ?? "";
 
   // Check balance before processing request
   if (userId) {

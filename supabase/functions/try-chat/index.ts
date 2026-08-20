@@ -77,6 +77,7 @@ Deno.serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${ANON_KEY}`,
+        "x-internal-key": Deno.env.get("INTERNAL_TRIAL_KEY") ?? "",
       },
       body: JSON.stringify(body),
     });

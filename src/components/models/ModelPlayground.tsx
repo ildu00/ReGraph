@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import type { Model } from "./ModelCard";
 import CodeBlock from "@/components/CodeBlock";
 import ReactMarkdown from "react-markdown";
+import { useAuth } from "@/hooks/useAuth";
 import remarkGfm from "remark-gfm";
 
 interface ModelPlaygroundProps {
@@ -18,6 +19,8 @@ interface ModelPlaygroundProps {
 }
 
 const INFERENCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/model-inference`;
+// Anonymous visitors go through the trial endpoint, which holds the internal key server-side.
+const TRY_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/try-chat`;
 const VIDEO_STATUS_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/video-status`;
 
 // Categories that require a file upload
@@ -60,6 +63,7 @@ function isImageCategory(category: string): boolean {
 }
 
 const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
+  const { session } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [response, setResponse] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -229,11 +233,12 @@ const ModelPlayground = ({ model, onClose }: ModelPlaygroundProps) => {
     setError(null);
 
     try {
-      const resp = await fetch(INFERENCE_URL, {
+      const accessToken = session?.access_token;
+      const resp = await fetch(accessToken ? INFERENCE_URL : TRY_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          "Authorization": `Bearer ${accessToken ?? import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
         body: JSON.stringify({
           model: model.id,
