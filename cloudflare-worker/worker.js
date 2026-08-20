@@ -81,6 +81,34 @@ export default {
       return new Response(null, { status: 204, headers: corsHeaders });
     }
 
+    // ── Upstream provider relay ───────────────────────────────────────────
+    // Backend edge functions cannot reach the provider host directly (its
+    // firewall drops our egress IPs), so they call this relay instead.
+    // Auth is the provider key itself, forwarded untouched — no key, no access.
+    if (path === PROVIDER_RELAY_PREFIX || path.startsWith(PROVIDER_RELAY_PREFIX + "/")) {
+      const upstreamPath = path.substring(PROVIDER_RELAY_PREFIX.length) || "/";
+      const relayHeaders = new Headers();
+      for (const h of ["authorization", "content-type", "accept"]) {
+        const v = request.headers.get(h);
+        if (v) relayHeaders.set(h, v);
+      }
+      const relayInit = { method: request.method, headers: relayHeaders };
+      if (request.method !== "GET" && request.method !== "HEAD") {
+        relayInit.body = request.body;
+      }
+      try {
+        const upstream = await fetch(`${PROVIDER_UPSTREAM}${upstreamPath}${url.search}`, relayInit);
+        const outHeaders = new Headers(upstream.headers);
+        outHeaders.set("Access-Control-Allow-Origin", "*");
+        return new Response(upstream.body, { status: upstream.status, headers: outHeaders });
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ error: "Upstream relay error", message: error.message }),
+          { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
     // Handle root path
     if (path === "/" || path === "") {
       return new Response(
