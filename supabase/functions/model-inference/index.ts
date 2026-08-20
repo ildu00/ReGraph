@@ -25,9 +25,14 @@ interface InferenceRequest {
 const MARKUP_MULTIPLIER = 1.20; // 20% markup over provider cost
 
 // ── Resilient fetch: timeout + retry without cross-model substitution ──────
-const PRIMARY_TIMEOUT_MS = 8_000;
+// Large models (70B+, reasoning models) legitimately need 20-40s to answer.
+// An aggressive timeout aborts healthy generations and looks like an outage.
+const PRIMARY_TIMEOUT_MS = 55_000;
 const MAX_PRIMARY_ATTEMPTS = 2;
 const PRIMARY_RETRY_DELAY_MS = 500;
+// Only retry transport failures that died fast (connection level), never
+// aborted long generations — repeating those just doubles the wait.
+const FAST_FAILURE_MS = 5_000;
 
 interface ResilientResult {
   response: Response;
@@ -58,9 +63,11 @@ async function resilientChatFetch(
   _requestedModel: string,
 ): Promise<ResilientResult> {
   const bodyStr = JSON.stringify(chatBody);
+  let lastError: string | null = null;
 
   // ── Primary provider attempts ──
   for (let attempt = 1; attempt <= MAX_PRIMARY_ATTEMPTS; attempt++) {
+    const startedAt = Date.now();
     try {
       const resp = await fetchWithTimeout(primaryUrl, {
         method: "POST",
@@ -88,17 +95,33 @@ async function resilientChatFetch(
       return { response: resp, usedFallback: false };
     } catch (err) {
       const isTimeout = err instanceof DOMException && err.name === "AbortError";
-      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"}: ${err}`);
-      if (attempt < MAX_PRIMARY_ATTEMPTS) {
+      const elapsed = Date.now() - startedAt;
+      lastError = err instanceof Error ? err.message : String(err);
+      console.warn(`Primary attempt ${attempt} ${isTimeout ? "timed out" : "failed"} after ${elapsed}ms: ${err}`);
+      // Retry only fast transport failures; an aborted long generation would
+      // just be aborted again.
+      if (attempt < MAX_PRIMARY_ATTEMPTS && !isTimeout && elapsed < FAST_FAILURE_MS) {
         await new Promise((resolve) => setTimeout(resolve, PRIMARY_RETRY_DELAY_MS));
         continue;
       }
+      if (isTimeout) {
+        return {
+          response: new Response(JSON.stringify({
+            error: `Model timed out after ${Math.round(PRIMARY_TIMEOUT_MS / 1000)}s. Try a smaller max_tokens or a faster model variant.`,
+          }), { status: 504, headers: { "Content-Type": "application/json" } }),
+          usedFallback: false,
+        };
+      }
+      break;
     }
   }
 
   // All attempts failed; do not silently serve a different model.
   return {
-    response: new Response(JSON.stringify({ error: "All inference providers unavailable" }), {
+    response: new Response(JSON.stringify({
+      error: "All inference providers unavailable",
+      detail: lastError,
+    }), {
       status: 503,
       headers: { "Content-Type": "application/json" },
     }),
@@ -245,7 +268,9 @@ serve(async (req) => {
     const { model, prompt, temperature = 0.7, maxTokens = 40000, category: rawCategory, messages: originalMessages, tools, tool_choice, stream = false, response_format, top_p, frequency_penalty, presence_penalty, stop, seed } = parsedBody;
     // Allow _endpoint injection from the gateway to override category
     const _endpoint = (parsedBody as any)._endpoint as string | undefined;
-    const category = (parsedBody as any).category || rawCategory;
+    // Text/chat is the default surface: an absent or unrecognised category must
+    // never degrade into a placeholder response.
+    const category = (parsedBody as any).category || rawCategory || "llm";
     const requestBodyLog = rawBody.substring(0, 1000);
 
     if (!prompt?.trim()) {
