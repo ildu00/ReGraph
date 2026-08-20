@@ -396,7 +396,10 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          maxTokens: 4096,
+          // Keep interactive chat requests in the provider's fast lane.
+          // Large token reservations queue before reaching the model worker
+          // and repeatedly hit the upstream timeout.
+          maxTokens: 256,
           category: modelInfo?.category || "chat",
         }),
       });
