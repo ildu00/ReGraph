@@ -100,6 +100,17 @@ export default {
         relayInit.body = await request.arrayBuffer();
       }
       try {
+        // The provider intermittently stalls new TLS connections from a Worker
+        // POP for ~20 seconds and Cloudflare then emits 522. Open and consume a
+        // cheap connection first so the generation POST can reuse the healthy
+        // origin path instead of becoming the connection probe itself.
+        if (request.method === "POST" && upstreamPath === "/v1/chat/completions") {
+          const warmup = await fetch(`${PROVIDER_UPSTREAM}/v1/models`, {
+            method: "GET",
+            headers: { accept: "application/json" },
+          });
+          await warmup.body?.cancel();
+        }
         const upstream = await fetch(`${PROVIDER_UPSTREAM}${upstreamPath}${url.search}`, relayInit);
         const outHeaders = new Headers(upstream.headers);
         outHeaders.set("Access-Control-Allow-Origin", "*");
