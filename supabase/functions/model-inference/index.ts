@@ -580,7 +580,7 @@ serve(async (req) => {
         // retry the SAME model id on the secondary gateway when it serves it.
         const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
         const secondaryKey = Deno.env.get("LOVABLE_API_KEY");
-        const secondaryEligible = vsegptModel.startsWith("openai/") || vsegptModel.startsWith("google/");
+        const secondaryEligible = vsegptModel.startsWith("google/gemini");
         if (transportFailure && secondaryKey && secondaryEligible) {
           try {
             const secondaryResp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
