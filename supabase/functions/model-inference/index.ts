@@ -575,8 +575,41 @@ serve(async (req) => {
         console.error("Inference error:", response.status, errorText, usedFallback ? "(fallback)" : "(primary)");
         if (response.status === 429) return respond(JSON.stringify({ error: "Rate limit exceeded. Please try again later." }), 429, "Rate limit exceeded");
         if (response.status === 402) return respond(JSON.stringify({ error: "Inference capacity is temporarily unavailable." }), 503, "Upstream capacity unavailable");
+
+        // Provider transport failure (relay missing / host unreachable / 5xx):
+        // retry the SAME model id on the secondary gateway when it serves it.
+        const transportFailure = response.status === 404 || response.status === 502 || response.status >= 503;
+        const secondaryKey = Deno.env.get("LOVABLE_API_KEY");
+        const secondaryEligible = vsegptModel.startsWith("openai/") || vsegptModel.startsWith("google/");
+        if (transportFailure && secondaryKey && secondaryEligible) {
+          try {
+            const secondaryResp = await fetchWithTimeout("https://ai.gateway.lovable.dev/v1/chat/completions", {
+              method: "POST",
+              headers: { "Lovable-API-Key": secondaryKey, "Content-Type": "application/json" },
+              body: JSON.stringify({ ...chatBody, stream: false, stream_options: undefined }),
+            }, PRIMARY_TIMEOUT_MS);
+            if (secondaryResp.ok) {
+              const sData = await secondaryResp.json();
+              const sMessage = sData.choices?.[0]?.message;
+              const sPayload: Record<string, unknown> = {
+                response: sMessage?.content || "No response generated",
+                model: vsegptModel,
+                usage: sData.usage,
+              };
+              if (Array.isArray(sMessage?.tool_calls) && sMessage.tool_calls.length > 0) {
+                sPayload.tool_calls = sMessage.tool_calls;
+              }
+              return respond(JSON.stringify(sPayload), 200, undefined, sData.usage, null);
+            }
+            console.error("Secondary gateway failed:", secondaryResp.status, (await secondaryResp.text()).slice(0, 300));
+          } catch (err) {
+            console.error("Secondary gateway error:", err);
+          }
+        }
+
         return respond(JSON.stringify({ error: "Failed to get response from AI model" }), response.status >= 500 ? 503 : response.status, errorText.substring(0, 500));
       }
+
 
       const providerCost = usedFallback ? null : extractProviderCost(response.headers);
       const data = await response.json();
