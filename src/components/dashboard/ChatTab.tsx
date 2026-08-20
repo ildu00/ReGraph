@@ -396,10 +396,7 @@ const ChatTab = () => {
           prompt: fullPrompt,
           messages: messagesForApi,
           temperature: 0.7,
-          // Keep the interactive chat request inside the provider's fast lane.
-          // Larger reservations for Sonnet 5 are queued before reaching the
-          // model worker and repeatedly hit the upstream 522 timeout.
-          maxTokens: 256,
+          maxTokens: 4096,
           category: modelInfo?.category || "chat",
         }),
       });
