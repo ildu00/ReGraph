@@ -67,27 +67,14 @@ serve(async (req) => {
       return new Response("Wallet not found", { status: 404 });
     }
 
-    // Check for duplicate — idempotency via session.id
-    const { data: existing } = await supabaseAdmin
-      .from("wallet_transactions")
-      .select("id")
-      .eq("external_id", session.id)
-      .maybeSingle();
-
-    if (existing) {
-      logStep("Duplicate event, already processed", { sessionId: session.id });
-      return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
-    }
-
-    // Create confirmed transaction
-    const { error: txError } = await supabaseAdmin.from("wallet_transactions").insert({
-      user_id: userId,
-      wallet_id: wallet.id,
-      transaction_type: "deposit",
-      status: "confirmed",
-      amount_usd: amountUsd,
-      external_id: session.id,
-      metadata: {
+    // Record the deposit and credit the wallet in one database transaction. The unique
+    // external_id makes a repeated or concurrent delivery of the same session a no-op.
+    const { data: credited, error: creditError } = await supabaseAdmin.rpc("credit_wallet_deposit", {
+      p_user_id: userId,
+      p_wallet_id: wallet.id,
+      p_amount_usd: amountUsd,
+      p_external_id: session.id,
+      p_metadata: {
         source: "stripe",
         session_id: session.id,
         payment_intent: session.payment_intent,
@@ -95,24 +82,17 @@ serve(async (req) => {
       },
     });
 
-    if (txError) {
-      logStep("Failed to insert transaction", { error: txError.message });
-      return new Response("Transaction insert failed", { status: 500 });
+    if (creditError) {
+      logStep("Failed to credit wallet", { error: creditError.message });
+      return new Response("Wallet credit failed", { status: 500 });
     }
 
-    // Credit wallet balance
-    const newBalance = (wallet.balance_usd || 0) + amountUsd;
-    const { error: updateError } = await supabaseAdmin
-      .from("wallets")
-      .update({ balance_usd: newBalance })
-      .eq("id", wallet.id);
-
-    if (updateError) {
-      logStep("Failed to update wallet balance", { error: updateError.message });
-      return new Response("Balance update failed", { status: 500 });
+    if (!credited) {
+      logStep("Duplicate event, already processed", { sessionId: session.id });
+      return new Response(JSON.stringify({ received: true, duplicate: true }), { status: 200 });
     }
 
-    logStep("Payment credited successfully", { walletId: wallet.id, newBalance, amountUsd });
+    logStep("Payment credited successfully", { walletId: wallet.id, amountUsd });
   }
 
   return new Response(JSON.stringify({ received: true }), {
